@@ -1,0 +1,438 @@
+:root {
+  --fortune-bg-1: #fff5e8;
+  --fortune-bg-2: #ffe7cd;
+  --fortune-surface: rgba(255, 255, 255, 0.86);
+  --fortune-surface-border: rgba(255, 255, 255, 0.78);
+  --fortune-main: #472714;
+  --fortune-muted: #8f5f3c;
+  --fortune-primary: #ff7a3d;
+  --fortune-primary-dark: #d95a1e;
+  --fortune-shadow: 0 22px 52px rgba(163, 87, 44, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  color: var(--fortune-main);
+  font-family: "Noto Sans SC", sans-serif;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.95) 0%, transparent 36%),
+    linear-gradient(135deg, var(--fortune-bg-1), var(--fortune-bg-2));
+}
+
+/* 主题动效背景：仅做 transform 和 opacity 变化，避免重排开销。 */
+.fortune-aura {
+  position: fixed;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(2px);
+  opacity: 0.48;
+  animation: fortuneFloat 9s ease-in-out infinite alternate;
+}
+
+.aura-left {
+  width: 200px;
+  height: 200px;
+  left: -72px;
+  top: -56px;
+  background: radial-gradient(circle at 30% 30%, #ffd59e, #ffb871);
+}
+
+.aura-right {
+  width: 220px;
+  height: 220px;
+  right: -92px;
+  bottom: 14%;
+  background: radial-gradient(circle at 30% 30%, #ffb78a, #ff8f61);
+  animation-delay: 1.2s;
+}
+
+.fortune-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-image:
+    linear-gradient(rgba(191, 127, 86, 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(191, 127, 86, 0.35) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(circle at center, #000 40%, transparent 84%);
+}
+
+.fortune-page {
+  position: relative;
+  z-index: 2;
+  padding: 22px 14px 34px;
+}
+
+.fortune-shell {
+  width: min(100%, 560px);
+  margin: 0 auto;
+}
+
+.fortune-header {
+  margin: 8px 4px 20px;
+  animation: fortuneFadeUp 550ms ease both;
+}
+
+.fortune-badge {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: #be5a21;
+  text-transform: uppercase;
+}
+
+.fortune-header h1 {
+  margin: 10px 0 8px;
+  font-size: clamp(26px, 7.4vw, 36px);
+  line-height: 1.24;
+  font-family: "Noto Serif SC", serif;
+}
+
+.fortune-desc {
+  margin: 0;
+  line-height: 1.64;
+  color: var(--fortune-muted);
+  font-size: 14px;
+}
+
+.fortune-card {
+  border-radius: 22px;
+  padding: 18px 16px;
+  border: 1px solid var(--fortune-surface-border);
+  background: var(--fortune-surface);
+  box-shadow: var(--fortune-shadow);
+  backdrop-filter: blur(7px);
+}
+
+.card-in {
+  animation: fortuneCardIn 500ms ease both;
+}
+
+.fortune-progress-meta {
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--fortune-muted);
+  font-size: 12px;
+}
+
+.fortune-question-wrap {
+  min-height: 358px;
+  margin-top: 16px;
+}
+
+.fortune-question-title {
+  margin: 0 0 8px;
+  font-size: clamp(22px, 5.8vw, 29px);
+  line-height: 1.35;
+  font-family: "Noto Serif SC", serif;
+}
+
+.fortune-question-desc {
+  margin: 0 0 16px;
+  color: var(--fortune-muted);
+  line-height: 1.62;
+  font-size: 13px;
+}
+
+.fortune-cell-group {
+  background: transparent !important;
+}
+
+.fortune-option {
+  margin-bottom: 10px;
+  border-radius: 14px;
+  border: 1px solid #f3d8c0;
+  background: #fffdfb;
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background 220ms ease;
+  animation: fortuneFadeUp 420ms ease both;
+}
+
+.fortune-option:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.fortune-option:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.fortune-option:nth-child(4) {
+  animation-delay: 150ms;
+}
+
+.fortune-option:active {
+  transform: scale(0.99);
+}
+
+.fortune-option-selected {
+  border-color: #ff9a63;
+  background: linear-gradient(180deg, #fffaf5, #ffeedb);
+  box-shadow: 0 10px 20px rgba(178, 91, 39, 0.14);
+}
+
+.fortune-option-group .van-radio__icon .van-icon {
+  border-color: #f3b18a;
+}
+
+.fortune-option-group .van-radio__icon--checked .van-icon {
+  box-shadow: 0 5px 14px rgba(204, 102, 42, 0.2);
+}
+
+.fortune-actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fortune-btn {
+  border-radius: 12px !important;
+  min-height: 42px;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.fortune-btn-primary {
+  color: #fff !important;
+  border: 0 !important;
+  background: linear-gradient(
+    135deg,
+    var(--fortune-primary),
+    var(--fortune-primary-dark)
+  ) !important;
+}
+
+.fortune-btn-secondary {
+  color: var(--fortune-main) !important;
+  border: 1px solid #efcfb4 !important;
+  background: #fff !important;
+}
+
+.fortune-result-card {
+  margin-top: 12px;
+}
+
+.fortune-loading-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 30px 4px;
+}
+
+.fortune-loading-wrap p {
+  margin: 0;
+  color: var(--fortune-muted);
+}
+
+.fortune-loading-swap-enter-active,
+.fortune-loading-swap-leave-active {
+  transition:
+    opacity 240ms ease,
+    transform 240ms ease,
+    filter 240ms ease;
+}
+
+.fortune-loading-swap-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+  filter: blur(2px);
+}
+
+.fortune-loading-swap-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+  filter: blur(2px);
+}
+
+.fortune-result-state {
+  animation: fortuneFadeUp 500ms ease both;
+}
+
+.fortune-source-wrap {
+  margin-bottom: 8px;
+}
+
+.fortune-result-prefix {
+  margin: 0;
+  color: var(--fortune-muted);
+  font-size: 12px;
+}
+
+.fortune-main-keyword {
+  margin: 8px 0 6px;
+  font-size: clamp(38px, 11vw, 54px);
+  line-height: 1.12;
+  font-family: "Noto Serif SC", serif;
+  letter-spacing: 0.05em;
+  background: linear-gradient(135deg, #e95f22, #ff9a42 52%, #e85f2f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.fortune-main-score {
+  margin: 0 0 12px;
+  color: #b9531f;
+  font-weight: 700;
+}
+
+.fortune-theme-box {
+  border-radius: 12px;
+  border: 1px solid #ffd2af;
+  padding: 11px 12px;
+  background: linear-gradient(180deg, #fff9f3, #fff2e5);
+}
+
+.fortune-theme-box h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.fortune-theme-box p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.62;
+}
+
+.fortune-insight {
+  margin: 12px 0 0;
+  line-height: 1.72;
+  font-size: 14px;
+}
+
+.fortune-top-wrap,
+.fortune-advice-wrap,
+.fortune-warning-wrap,
+.fortune-summary-wrap {
+  margin-top: 16px;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #f4dcc8;
+  background: linear-gradient(180deg, #fff, #fff8f1);
+}
+
+.fortune-top-wrap h3,
+.fortune-advice-wrap h3,
+.fortune-warning-wrap h3,
+.fortune-summary-wrap h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.fortune-top-list,
+.fortune-bullet-list,
+.fortune-summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.fortune-top-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid #f6e5d6;
+}
+
+.fortune-bullet-list li,
+.fortune-summary-item {
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #f8ebdf;
+  background: #fff;
+}
+
+.fortune-restart-btn {
+  margin-top: 16px;
+}
+
+.fortune-fade-enter-active,
+.fortune-fade-leave-active {
+  transition: all 260ms ease;
+}
+
+.fortune-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.fortune-fade-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+@keyframes fortuneFloat {
+  from {
+    transform: translateY(0px);
+  }
+  to {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes fortuneCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fortuneFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 360px) {
+  .fortune-question-wrap {
+    min-height: 376px;
+  }
+}
+
+@media (min-width: 760px) {
+  .fortune-page {
+    padding-top: 30px;
+  }
+
+  .fortune-card {
+    padding: 22px;
+  }
+
+  .fortune-question-wrap {
+    min-height: 332px;
+  }
+}
