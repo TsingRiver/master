@@ -1,2 +1,8 @@
 node_modules
 /node_modules
+# 建议把这些写进 .gitignore
+printf "\ndist\n.env\n.env.local\n" >> .gitignore
+
+# 取消 Git 跟踪（不删除本地文件）
+git rm -r --cached dist || true
+git rm --cached .env || true
