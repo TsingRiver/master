@@ -221,13 +221,13 @@ let loadingMessageTimer = null;
 /**
  * 题库源与抽题规则：
  * 1. questionPool 为完整题库。
- * 2. questionSelection 控制每次抽题范围（默认 8~15）。
+ * 2. questionSelection 控制每次抽题范围（默认 10~15）。
  */
 const questionPool = computed(() => props.themeConfig.survey.questions);
 const questionSelection = computed(() => {
   const selectionConfig = props.themeConfig.survey.questionSelection ?? {};
   return {
-    minCount: selectionConfig.minCount ?? 8,
+    minCount: selectionConfig.minCount ?? 10,
     maxCount: selectionConfig.maxCount ?? 15,
   };
 });

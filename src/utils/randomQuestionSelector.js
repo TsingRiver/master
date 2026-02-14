@@ -62,13 +62,13 @@ function dedupeQuestionsById(questions) {
  * 总体复杂度：O(N)
  * @param {object} params 抽题参数。
  * @param {Array<object>} params.questions 完整题库。
- * @param {number} [params.minCount=8] 最小抽题数。
+ * @param {number} [params.minCount=10] 最小抽题数。
  * @param {number} [params.maxCount=15] 最大抽题数。
  * @returns {Array<object>} 本次测试题目列表（无重复）。
  */
 export function selectRandomQuestionsWithoutRepeat({
   questions,
-  minCount = 8,
+  minCount = 10,
   maxCount = 15,
 }) {
   const normalizedQuestions = Array.isArray(questions) ? questions : [];

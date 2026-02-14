@@ -479,7 +479,7 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: QUESTION_BANK,
-      questionSelection: { minCount: 8, maxCount: 15 },
+      questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: (selectedQuestions, answerIds) =>
         analyzeCitiesLocally({
           questions: selectedQuestions,
@@ -532,7 +532,7 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: FORTUNE_2026_QUESTION_BANK,
-      questionSelection: { minCount: 8, maxCount: 15 },
+      questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: (selectedQuestions, answerIds) =>
         analyzeFortune2026Locally({
           questions: selectedQuestions,
@@ -584,7 +584,7 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: ANCIENT_IDENTITY_QUESTION_BANK,
-      questionSelection: { minCount: 8, maxCount: 15 },
+      questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: (selectedQuestions, answerIds) =>
         analyzeAncientIdentityLocally({
           questions: selectedQuestions,
@@ -636,7 +636,7 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: HIDDEN_TALENT_QUESTION_BANK,
-      questionSelection: { minCount: 8, maxCount: 15 },
+      questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: (selectedQuestions, answerIds) =>
         analyzeHiddenTalentLocally({
           questions: selectedQuestions,
