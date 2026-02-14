@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1200" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8e63ea"/>
+      <stop offset="1" stop-color="#bf95ff"/>
+    </linearGradient>
+    <radialGradient id="r" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(870 96) rotate(145) scale(520 380)">
+      <stop stop-color="white" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="500" rx="28" fill="url(#g)"/>
+  <rect width="1200" height="500" rx="28" fill="url(#r)"/>
+
+  <g stroke="rgba(255,255,255,0.36)" stroke-width="2" fill="none">
+    <circle cx="930" cy="250" r="170"/>
+    <circle cx="930" cy="250" r="118"/>
+    <path d="M760 250H1100"/>
+    <path d="M930 80V420"/>
+    <path d="M818 138L1042 362"/>
+    <path d="M1042 138L818 362"/>
+  </g>
+
+  <g filter="url(#glow)">
+    <path d="M905 136L974 228L1081 228L994 293L1027 394L930 331L833 394L866 293L779 228L886 228L905 136Z" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.82)" stroke-width="2"/>
+  </g>
+
+  <circle cx="183" cy="118" r="6" fill="rgba(255,255,255,0.75)"/>
+  <circle cx="254" cy="160" r="4" fill="rgba(255,255,255,0.58)"/>
+  <circle cx="332" cy="97" r="5" fill="rgba(255,255,255,0.66)"/>
+  <circle cx="104" cy="184" r="3" fill="rgba(255,255,255,0.58)"/>
+
+  <text x="90" y="210" fill="rgba(255,255,255,0.95)" font-size="64" font-family="Noto Serif SC,serif" font-weight="700" letter-spacing="2">ATTITUDE</text>
+  <text x="90" y="264" fill="rgba(255,255,255,0.88)" font-size="28" font-family="Noto Sans SC,sans-serif">Typeology Visual Signature</text>
+  <text x="90" y="308" fill="rgba(255,255,255,0.72)" font-size="20" font-family="Noto Sans SC,sans-serif">Insight · Pattern · Growth</text>
+</svg>

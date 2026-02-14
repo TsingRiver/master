@@ -216,7 +216,7 @@ const RAW_QUESTION_BANK = [
   {
     id: "ancient-02-name-style",
     title: "你的古代名字，偏好？",
-    options: ["霸气复姓（如皇甫）", "文雅单字（如雪、风）", "接地气（如二狗）", "甚至不想要名字"],
+    options: ["霸气复姓（如皇甫）", "文雅单字（如雪、风）", "接地气（如二狗）", "不想要名字"],
   },
   {
     id: "ancient-03-call-someone",
@@ -226,7 +226,7 @@ const RAW_QUESTION_BANK = [
   {
     id: "ancient-04-vehicle",
     title: "出门代步工具？",
-    options: ["豪华八抬大轿", "汗血宝马", "甚至想骑驴", "轻功飞过去"],
+    options: ["豪华八抬大轿", "汗血宝马", "想骑驴", "轻功飞过去"],
   },
   {
     id: "ancient-05-bully-scene",
@@ -252,8 +252,8 @@ const RAW_QUESTION_BANK = [
   },
   {
     id: "ancient-09-pet",
-    title: "甚至想养的宠物？",
-    options: ["鹤/孔雀（祥瑞）", "老虎/鹰（猛兽）", "甚至养条龙", "土狗/大橘"],
+    title: "想养的宠物？",
+    options: ["鹤/孔雀（祥瑞）", "老虎/鹰（猛兽）", "养条龙", "土狗/大橘"],
   },
   {
     id: "ancient-10-night-time",
@@ -263,44 +263,44 @@ const RAW_QUESTION_BANK = [
   {
     id: "ancient-11-learn-skill",
     title: "如果要学一门手艺？",
-    options: ["治国之道", "琴棋书画", "医术/炼丹", "甚至想学偷东西"],
+    options: ["治国之道", "琴棋书画", "医术/炼丹", "想学偷东西"],
   },
   {
     id: "ancient-12-beggar",
     title: "看到路边乞丐？",
-    options: ["扔一锭金子", "叹口气走开", "买个包子给他", "甚至想加入他"],
+    options: ["扔一锭金子", "叹口气走开", "买个包子给他", "想加入他"],
   },
   {
     id: "ancient-13-power-view",
     title: "对于“权位”？",
     weight: 1.25,
-    options: ["我要一人之下", "甚至想当皇帝", "看着累，不要", "只要自由"],
+    options: ["我要一人之下", "想当皇帝", "看着累，不要", "只要自由"],
   },
   {
     id: "ancient-14-alcohol",
     title: "你的酒量？",
-    options: ["千杯不醉", "一杯就倒", "只喝茶，不喝酒", "甚至喝白水"],
+    options: ["千杯不醉", "一杯就倒", "只喝茶，不喝酒", "喝白水"],
   },
   {
     id: "ancient-15-martial-marriage",
     title: "遇到比武招亲？",
-    options: ["上去打赢带走", "在台下起哄", "甚至想去摆擂台", "绕道走"],
+    options: ["上去打赢带走", "在台下起哄", "想去摆擂台", "绕道走"],
   },
   {
     id: "ancient-16-catchphrase",
     title: "你的口头禅风格？",
-    options: ["甚至全是成语", "脏话连篇", "阴阳怪气", "沉默是金"],
+    options: ["全是成语", "脏话连篇", "阴阳怪气", "沉默是金"],
   },
   {
     id: "ancient-17-exile",
     title: "被流放到边疆？",
     weight: 1.25,
-    options: ["甚至想造反", "写诗发牢骚", "做生意东山再起", "种田过日子"],
+    options: ["想造反", "写诗发牢骚", "做生意东山再起", "种田过日子"],
   },
   {
     id: "ancient-18-study-room",
     title: "你的书房里放着？",
-    options: ["兵书/地图", "甚至全是小黄书", "账本", "武功秘籍"],
+    options: ["兵书/地图", "全是小黄书", "账本", "武功秘籍"],
   },
   {
     id: "ancient-19-debt-friend",
@@ -311,28 +311,28 @@ const RAW_QUESTION_BANK = [
     id: "ancient-20-death-ideal",
     title: "你的理想死法？",
     weight: 1.25,
-    options: ["战死沙场", "牡丹花下死", "老死/睡死", "甚至成仙飞升"],
+    options: ["战死沙场", "牡丹花下死", "老死/睡死", "成仙飞升"],
   },
   {
     id: "ancient-21-live-where",
-    title: "甚至想住在？",
+    title: "想住在？",
     options: ["皇宫深处", "桃花源", "闹市豪宅", "山洞/古墓"],
   },
   {
     id: "ancient-22-beauty",
     title: "看到绝世美人？",
-    options: ["甚至想抢回家", "甚至想画下来", "甚至想比比谁美", "无动于衷"],
+    options: ["想抢回家", "想画下来", "想比比谁美", "无动于衷"],
   },
   {
     id: "ancient-23-weakness",
     title: "你的致命弱点？",
-    options: ["太贪财", "太心软", "太好色", "甚至太聪明"],
+    options: ["太贪财", "太心软", "太好色", "太聪明"],
   },
   {
     id: "ancient-24-if-eunuch",
     title: "如果你是太监？",
     weight: 1.25,
-    options: ["也要做最有权的太监", "甚至想自尽", "甚至想祸乱朝纲", "甚至想找对食"],
+    options: ["也要做最有权的太监", "想自尽", "想祸乱朝纲", "想找对食"],
   },
   {
     id: "ancient-25-eye-style",
@@ -341,7 +341,7 @@ const RAW_QUESTION_BANK = [
   },
   {
     id: "ancient-26-color",
-    title: "甚至喜欢什么颜色？",
+    title: "喜欢什么颜色？",
     options: ["明黄（帝王色）", "纯白/水墨", "大红大紫", "全黑"],
   },
   {
@@ -353,12 +353,12 @@ const RAW_QUESTION_BANK = [
     id: "ancient-28-famine",
     title: "遇到饥荒年份？",
     weight: 1.25,
-    options: ["开仓放粮", "甚至囤积居奇", "甚至带头抢劫", "甚至自己种地"],
+    options: ["开仓放粮", "囤积居奇", "带头抢劫", "自己种地"],
   },
   {
     id: "ancient-29-waist-item",
     title: "你的腰间挂着？",
-    options: ["玉佩", "酒壶", "人头（甚至）", "钥匙串"],
+    options: ["玉佩", "酒壶", "人头（）", "钥匙串"],
   },
   {
     id: "ancient-30-best-skill",
@@ -367,8 +367,8 @@ const RAW_QUESTION_BANK = [
   },
   {
     id: "ancient-31-date-place",
-    title: "甚至想在哪里约会？",
-    options: ["御花园", "房顶上", "赌场里", "甚至不去约会"],
+    title: "想在哪里约会？",
+    options: ["御花园", "房顶上", "赌场里", "不去约会"],
   },
   {
     id: "ancient-32-loyalty",
@@ -379,94 +379,94 @@ const RAW_QUESTION_BANK = [
   {
     id: "ancient-33-handwriting",
     title: "你的字迹？",
-    options: ["甚至看不懂（狂草）", "工整娟秀", "甚至不会写字", "像鬼画符"],
+    options: ["看不懂（狂草）", "工整娟秀", "不会写字", "像鬼画符"],
   },
   {
     id: "ancient-34-superpower",
-    title: "甚至想拥有的超能力？",
+    title: "想拥有的超能力？",
     options: ["长生不老", "读心术", "隐身术", "点石成金"],
   },
   {
     id: "ancient-35-hairstyle",
     title: "你的日常发型？",
-    options: ["一丝不苟", "甚至披头散发", "插满金钗", "甚至是个光头"],
+    options: ["一丝不苟", "披头散发", "插满金钗", "是个光头"],
   },
   {
     id: "ancient-36-brotherhood",
-    title: "甚至想和谁结拜？",
-    options: ["甚至不想结拜", "关羽/张飞", "李白/杜甫", "财神爷"],
+    title: "想和谁结拜？",
+    options: ["不想结拜", "关羽/张飞", "李白/杜甫", "财神爷"],
   },
   {
     id: "ancient-37-sitting-posture",
     title: "你的坐姿？",
-    options: ["正襟危坐", "葛优躺（古代版）", "甚至蹲在椅子上", "甚至翘二郎腿"],
+    options: ["正襟危坐", "葛优躺（古代版）", "蹲在椅子上", "翘二郎腿"],
   },
   {
     id: "ancient-38-assassin",
     title: "遇到刺客？",
     weight: 1.25,
-    options: ["“有种别跑！”", "“壮士饶命！”", "“多少钱？我出双倍”", "甚至反杀"],
+    options: ["“有种别跑！”", "“壮士饶命！”", "“多少钱？我出双倍”", "反杀"],
   },
   {
     id: "ancient-39-heirloom",
     title: "你的传家宝？",
-    options: ["甚至是一把菜刀", "免死金牌", "藏宝图", "一本破书"],
+    options: ["是一把菜刀", "免死金牌", "藏宝图", "一本破书"],
   },
   {
     id: "ancient-40-travel",
-    title: "甚至想去哪里旅游？",
-    options: ["甚至想下西洋", "西域/沙漠", "江南水乡", "甚至不想动"],
+    title: "想去哪里旅游？",
+    options: ["想下西洋", "西域/沙漠", "江南水乡", "不想动"],
   },
   {
     id: "ancient-41-bath-water",
     title: "你的洗澡水？",
-    options: ["甚至要撒花瓣", "甚至要加牛奶", "甚至洗冷水澡", "甚至去河里洗"],
+    options: ["要撒花瓣", "要加牛奶", "洗冷水澡", "去河里洗"],
   },
   {
     id: "ancient-42-gossip",
     title: "听到八卦？",
-    options: ["甚至拿小本记下来", "甚至不屑一顾", "甚至去添油加醋", "甚至这就是我传的"],
+    options: ["拿小本记下来", "不屑一顾", "去添油加醋", "这就是我传的"],
   },
   {
     id: "ancient-43-fan-text",
     title: "你的扇子上写着？",
-    options: ["“难得糊涂”", "“天下第一”", "“甚至全是美女图”", "空白"],
+    options: ["“难得糊涂”", "“天下第一”", "“全是美女图”", "空白"],
   },
   {
     id: "ancient-44-hate-food",
-    title: "甚至讨厌的食物？",
-    options: ["粗茶淡饭", "山珍海味（吃腻了）", "甚至不挑食", "甚至讨厌吃肉"],
+    title: "讨厌的食物？",
+    options: ["粗茶淡饭", "山珍海味（吃腻了）", "不挑食", "讨厌吃肉"],
   },
   {
     id: "ancient-45-wakeup-mood",
     title: "你的起床气？",
-    options: ["甚至想杀人", "甚至会哭", "甚至没有", "甚至还要睡回笼觉"],
+    options: ["想杀人", "会哭", "没有", "还要睡回笼觉"],
   },
   {
     id: "ancient-46-disciple",
-    title: "甚至想收的徒弟？",
-    options: ["天赋极高的", "甚至只要长得好看", "甚至要有钱交学费", "甚至不想教"],
+    title: "想收的徒弟？",
+    options: ["天赋极高的", "只要长得好看", "要有钱交学费", "不想教"],
   },
   {
     id: "ancient-47-last-words",
     title: "你的遗言风格？",
-    options: ["“甚至还没活够”", "“甚至把钱都烧给我”", "“甚至什么都不想说”", "“甚至想再笑五百年”"],
+    options: ["“还没活够”", "“把钱都烧给我”", "“什么都不想说”", "“想再笑五百年”"],
   },
   {
     id: "ancient-48-favorite-weather",
-    title: "甚至喜欢的天气？",
+    title: "喜欢的天气？",
     options: ["大雪纷飞（有意境）", "狂风暴雨（有杀气）", "晴空万里（好晒书）", "阴天（好睡觉）"],
   },
   {
     id: "ancient-49-birthday",
-    title: "甚至想怎么过生日？",
-    options: ["普天同庆", "甚至不过", "甚至只想吃碗面", "大摆流水席"],
+    title: "想怎么过生日？",
+    options: ["普天同庆", "不过", "只想吃碗面", "大摆流水席"],
   },
   {
     id: "ancient-50-life-feeling",
     title: "这一生，你觉得？",
     weight: 1.25,
-    options: ["甚至像一场梦", "甚至很爽", "甚至很累", "甚至是个笑话"],
+    options: ["像一场梦", "很爽", "很累", "是个笑话"],
   },
 ];
 

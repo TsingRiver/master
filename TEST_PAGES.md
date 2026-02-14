@@ -6,6 +6,8 @@
 - `/#/fortune`：2026 转运关键词测试（能量主题）
 - `/#/ancient`：测测你在古代会是什么身份（古风身份主题）
 - `/#/talent`：凭直觉选看你隐藏的天赋是什么（直觉天赋主题）
+- `/#/mbti`：类型学卡片中心（12 类类型学测试）
+  支持：MBTI（72/32）、九型人格（120/36）、社会人格（64）、理想型（64）、经典荣格（60）、DISC（60）、态度心理（64）、体液气质（60）、大五人格（60）、DnD 阵营（60）、依恋类型（24）、霍兰德（60），每轮题量按模式基础值上下浮动 10 题。
 
 ## 兼容访问路径（本地开发或有 rewrite 时）
 
@@ -13,6 +15,7 @@
 - `/fortune`：2026 转运关键词测试（能量主题）
 - `/ancient`：测测你在古代会是什么身份（古风身份主题）
 - `/talent`：凭直觉选看你隐藏的天赋是什么（直觉天赋主题）
+- `/mbti`：类型学卡片中心（12 类类型学测试，动态题量）
 
 ## 隐藏主题中心（特定方式访问）
 
@@ -26,6 +29,7 @@
 - 转运关键词：`/fortune.html`、`/fortune-2026`、`/fortune-2026.html`
 - 古代身份：`/ancient-identity`、`/ancient-identity.html`
 - 隐藏天赋：`/hidden-talent`、`/hidden-talent.html`
+- 十六型人格：`/mbti16`、`/mbti.html`
 
 ## 新增主题标准流程
 
@@ -40,9 +44,11 @@
 
 ## 架构说明
 
-- 页面结构统一由 `src/components/SurveyEngine.vue` 渲染。
+- 城市/转运/古代/天赋主题由 `src/components/SurveyEngine.vue` 渲染。
+- 类型学卡片中心由 `src/components/TypeologyLab.vue` 渲染。
 - 主题中心页面由 `src/components/ThemeHub.vue` 渲染。
 - 主题差异（文案、题库、颜色、分析器、结果区字段）全部由 `src/config/surveyThemes.js` 配置驱动。
 - 主题中心鉴权与会话参数由 `src/config/appPortal.js` 控制。
-- 抽题逻辑由 `src/utils/randomQuestionSelector.js` 负责：每轮按配置随机抽 8~15 题且不重复。
+- 抽题逻辑由 `src/utils/randomQuestionSelector.js` 负责：每轮按配置随机抽 10~15 题且不重复。
+- 类型学测试目录由 `src/data/typeologyCatalog.js` 管理，结果缓存由 `src/services/typeologyStorage.js` 管理。
 - 深度分析统一复用 `src/services/bailianClient.js`。

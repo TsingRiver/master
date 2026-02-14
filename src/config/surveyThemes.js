@@ -24,6 +24,7 @@ export const UNIFIED_RESULT_TEMPLATE = {
   main: { name: "", score: 0 },
   highlightCard: { title: "", content: "" },
   insight: "",
+  typeCard: { title: "", items: [] },
   topThreeTitle: "",
   topThree: [],
   detailSections: [],
@@ -41,6 +42,7 @@ export const UNIFIED_RESULT_TEMPLATE = {
  * @param {{ name: string, score: number }} payload.main 主结果对象。
  * @param {{ title: string, content: string }} payload.highlightCard 高亮卡片。
  * @param {string} payload.insight 解释文案。
+ * @param {{ title: string, items: Array<{ label: string, value: string }> }} [payload.typeCard] 类型学卡片。
  * @param {string} payload.topThreeTitle Top3 标题。
  * @param {Array<{ name: string, score: number }>} payload.topThree Top3 列表。
  * @param {Array<{ title: string, items: Array<string> }>} payload.detailSections 详情分组。
@@ -438,6 +440,7 @@ function buildTalentLocalUnifiedResult(localResult) {
  * survey 字段约定：
  * 1. questions：完整题库。
  * 2. questionSelection：抽题数量区间（每轮随机抽题）。
+ *    可选字段：ensureDimensionCoverage + dimensionKey，用于按维度覆盖抽题。
  * 3. runLocalAnalysis(selectedQuestions, answerIds)：本地分析方法。
  */
 export const SURVEY_THEME_CONFIGS = [
@@ -649,6 +652,50 @@ export const SURVEY_THEME_CONFIGS = [
       buildLocalUnifiedResult: buildTalentLocalUnifiedResult,
       deepFailToast: "深度生成暂不可用，已切换基础生成",
     },
+  },
+  {
+    key: "mbti",
+    routePaths: ["/mbti", "/mbti16", "/mbti.html"],
+    pageMeta: {
+      title: "类型学卡片中心",
+      description:
+        "12 类类型学测试中心：支持独立测试、结果卡片、本地缓存与进阶解读。",
+    },
+    theme: {
+      className: "theme-mbti",
+      badge: "TYPEOLOGY LAB",
+      title: "类型学卡片中心",
+      description:
+        "统一管理 MBTI、九型人格、DISC 等 12 类测试，形成你的完整类型学卡片。",
+      progressColor: "linear-gradient(90deg, #ef5a78, #8f8df5)",
+      progressTrackColor: "rgba(76, 78, 122, 0.2)",
+      checkedColor: "#ef5a78",
+      sourceTag: {
+        deep: {
+          label: "深度解析结果",
+          color: "#ffeaf0",
+          textColor: "#9d2242",
+        },
+        local: {
+          label: "基础解析结果",
+          color: "#eef0ff",
+          textColor: "#3d3f7b",
+        },
+      },
+      loadingMessages: [
+        "正在校准你的四维度偏好...",
+        "正在比对 16 型人格画像...",
+        "正在生成你的类型学卡片...",
+        "正在整理你的人格建议...",
+      ],
+      submitButtonText: "生成类型学卡片",
+      nextButtonText: "下一题",
+    },
+    /**
+     * 关键逻辑：
+     * `mbti` 主题由独立组件 `TypeologyLab.vue` 渲染，
+     * 不走通用 SurveyEngine 的 survey 配置流程。
+     */
   },
 ];
 

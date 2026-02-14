@@ -56,7 +56,7 @@ export const QUESTION_BANK = [
       },
       {
         id: "takeout-free",
-        label: "甚至不穿内衣",
+        label: "不穿内衣",
         vector: { paceFast: 2, climateWarm: 8, naturePreference: 6, familyFriendly: 4 },
       },
     ],
@@ -616,14 +616,14 @@ export const QUESTION_BANK = [
       },
       {
         id: "city-scale-village",
-        label: "甚至可以是村里",
+        label: "可以是村里",
         vector: { naturePreference: 10, familyFriendly: 8, paceFast: 1, budgetHigh: 2 },
       },
     ],
   },
   {
     id: "acceptable-drawback",
-    title: "甚至能接受的缺点？",
+    title: "能接受的缺点？",
     description: "你能接受的代价，就是你真正看重的城市价值。",
     weight: 1.25,
     options: [
@@ -679,7 +679,7 @@ export const QUESTION_BANK = [
   },
   {
     id: "activity-try",
-    title: "甚至想尝试的活动？",
+    title: "想尝试的活动？",
     description: "你想玩的活动类型决定了城市资源偏好。",
     weight: 1.0,
     options: [

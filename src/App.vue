@@ -4,6 +4,12 @@
     :theme-configs="themeConfigs"
     :build-theme-href="buildThemeHref"
   />
+  <TypeologyLab
+    v-else-if="isTypeologyLabTheme"
+    :theme-config="activeThemeConfig"
+    :portal-mode="portalSession"
+    :portal-home-href="portalHubHref"
+  />
   <SurveyEngine
     v-else
     :theme-config="activeThemeConfig"
@@ -16,6 +22,7 @@
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import SurveyEngine from "./components/SurveyEngine.vue";
 import ThemeHub from "./components/ThemeHub.vue";
+import TypeologyLab from "./components/TypeologyLab.vue";
 import {
   DEFAULT_SURVEY_THEME,
   SURVEY_THEME_CONFIGS,
@@ -53,6 +60,14 @@ const activeThemeConfig = computed(() =>
  */
 const showPortalHub = computed(() =>
   shouldShowPortalHub(currentPath.value, currentSearch.value),
+);
+
+/**
+ * 是否走类型学卡片中心组件：
+ * 关键逻辑：`mbti` 主题已升级为 12 类类型学测试中心。
+ */
+const isTypeologyLabTheme = computed(
+  () => activeThemeConfig.value?.key === "mbti",
 );
 
 /**

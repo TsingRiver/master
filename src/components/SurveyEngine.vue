@@ -107,6 +107,23 @@
 
           <p class="survey-insight">{{ unifiedResult.insight }}</p>
 
+          <div
+            v-if="unifiedResult.typeCard?.items?.length"
+            class="survey-type-card-wrap"
+          >
+            <h3>{{ unifiedResult.typeCard.title }}</h3>
+            <div class="survey-type-card-grid">
+              <article
+                v-for="(cardItem, cardIndex) in unifiedResult.typeCard.items"
+                :key="`${cardItem.label}-${cardIndex}`"
+                class="survey-type-card-item"
+              >
+                <p class="survey-type-card-value">{{ cardItem.value }}</p>
+                <p class="survey-type-card-label">{{ cardItem.label }}</p>
+              </article>
+            </div>
+          </div>
+
           <div class="survey-top-wrap">
             <h3>{{ unifiedResult.topThreeTitle }}</h3>
             <ul class="survey-top-list">
@@ -175,7 +192,10 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { showToast } from "vant";
-import { selectRandomQuestionsWithoutRepeat } from "../utils/randomQuestionSelector";
+import {
+  selectRandomQuestionsWithoutRepeat,
+  selectRandomQuestionsWithDimensionCoverage,
+} from "../utils/randomQuestionSelector";
 
 /**
  * 组件参数：
@@ -222,6 +242,7 @@ let loadingMessageTimer = null;
  * 题库源与抽题规则：
  * 1. questionPool 为完整题库。
  * 2. questionSelection 控制每次抽题范围（默认 10~15）。
+ * 3. 可选维度覆盖策略用于保证多维题库每轮都有代表题。
  */
 const questionPool = computed(() => props.themeConfig.survey.questions);
 const questionSelection = computed(() => {
@@ -229,6 +250,8 @@ const questionSelection = computed(() => {
   return {
     minCount: selectionConfig.minCount ?? 10,
     maxCount: selectionConfig.maxCount ?? 15,
+    ensureDimensionCoverage: Boolean(selectionConfig.ensureDimensionCoverage),
+    dimensionKey: selectionConfig.dimensionKey ?? "",
   };
 });
 
@@ -281,6 +304,19 @@ const sourceTagStyle = computed(() => {
  * 生成本轮随机题集。
  */
 function rebuildQuestionBank() {
+  if (
+    questionSelection.value.ensureDimensionCoverage &&
+    questionSelection.value.dimensionKey
+  ) {
+    selectedQuestionBank.value = selectRandomQuestionsWithDimensionCoverage({
+      questions: questionPool.value,
+      minCount: questionSelection.value.minCount,
+      maxCount: questionSelection.value.maxCount,
+      dimensionKey: questionSelection.value.dimensionKey,
+    });
+    return;
+  }
+
   selectedQuestionBank.value = selectRandomQuestionsWithoutRepeat({
     questions: questionPool.value,
     minCount: questionSelection.value.minCount,
