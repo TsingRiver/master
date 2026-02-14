@@ -1,5 +1,6 @@
 node_modules
 /node_modules
+/askingbuild
 # 建议把这些写进 .gitignore
 printf "\ndist\n.env\n.env.local\n" >> .gitignore
 

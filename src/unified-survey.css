@@ -1,0 +1,565 @@
+:root {
+  --survey-font-body: "Noto Sans SC", sans-serif;
+  --survey-font-title: "Noto Serif SC", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  font-family: var(--survey-font-body);
+}
+
+/* 通用页面容器：
+ * 每个主题通过 class 覆盖变量，避免复制结构样式。 */
+.survey-page {
+  --page-bg: linear-gradient(135deg, #f4f8f6, #e9f0ec);
+  --text-main: #1f2a26;
+  --text-muted: #5f6f68;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-border: rgba(255, 255, 255, 0.7);
+  --shadow: 0 24px 48px rgba(30, 50, 42, 0.14);
+  --primary: #0f8a63;
+  --primary-dark: #0a6749;
+  --aura-left: radial-gradient(circle at 35% 35%, #f7d8a4, #efc177);
+  --aura-right: radial-gradient(circle at 35% 35%, #9adcbf, #5cb38f);
+  --noise-dot: rgba(35, 81, 84, 0.4);
+  --option-border: #dce7e2;
+  --option-selected-border: #66b89a;
+  --option-selected-bg: linear-gradient(180deg, #f6fffb, #ecf8f3);
+  --option-selected-shadow: rgba(34, 125, 93, 0.14);
+  --detail-border: #e3efea;
+  --detail-bg: linear-gradient(180deg, #fff, #f7fbf9);
+  --highlight-border: #d7ece2;
+  --highlight-bg: #eef8f3;
+  --title-font: var(--survey-font-title);
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  padding: 22px 14px 34px;
+  color: var(--text-main);
+  background:
+    radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.85), transparent 34%),
+    var(--page-bg);
+}
+
+.theme-city {
+  --page-bg: linear-gradient(140deg, #f4f8f6, #e9f0ec);
+  --text-main: #1f2a26;
+  --text-muted: #5f6f68;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-border: rgba(255, 255, 255, 0.72);
+  --shadow: 0 24px 48px rgba(30, 50, 42, 0.14);
+  --primary: #0f8a63;
+  --primary-dark: #0a6749;
+  --aura-left: radial-gradient(circle at 35% 35%, #f7d8a4, #efc177);
+  --aura-right: radial-gradient(circle at 35% 35%, #9adcbf, #5cb38f);
+  --noise-dot: rgba(35, 81, 84, 0.4);
+  --option-border: #dce7e2;
+  --option-selected-border: #66b89a;
+  --option-selected-bg: linear-gradient(180deg, #f6fffb, #ecf8f3);
+  --option-selected-shadow: rgba(34, 125, 93, 0.14);
+  --detail-border: #e3efea;
+  --detail-bg: linear-gradient(180deg, #ffffff, #f6fbf8);
+  --highlight-border: #d7ece2;
+  --highlight-bg: #eef8f3;
+  --title-font: "Noto Serif SC", serif;
+}
+
+.theme-fortune {
+  --page-bg: linear-gradient(130deg, #fff1e6, #ffe6bf 56%, #f7e4ca);
+  --text-main: #342619;
+  --text-muted: #7a5b43;
+  --surface: rgba(255, 250, 244, 0.9);
+  --surface-border: rgba(255, 234, 208, 0.9);
+  --shadow: 0 24px 50px rgba(122, 72, 38, 0.16);
+  --primary: #ff7a3d;
+  --primary-dark: #c95a21;
+  --aura-left: radial-gradient(circle at 35% 35%, #ffd58a, #f6a650);
+  --aura-right: radial-gradient(circle at 35% 35%, #ffc0a1, #ff8f5c);
+  --noise-dot: rgba(130, 80, 36, 0.42);
+  --option-border: #f2d7bf;
+  --option-selected-border: #f2a86a;
+  --option-selected-bg: linear-gradient(180deg, #fff7ef, #ffefd9);
+  --option-selected-shadow: rgba(180, 102, 33, 0.15);
+  --detail-border: #f0dbc6;
+  --detail-bg: linear-gradient(180deg, #fff, #fff6ea);
+  --highlight-border: #f0cfaf;
+  --highlight-bg: #fff1e2;
+  --title-font: "Noto Serif SC", serif;
+}
+
+.theme-ancient {
+  --page-bg: linear-gradient(140deg, #f5eddc, #e7d8bd);
+  --text-main: #3f2d1f;
+  --text-muted: #78614d;
+  --surface: rgba(255, 252, 245, 0.9);
+  --surface-border: rgba(244, 232, 205, 0.9);
+  --shadow: 0 24px 54px rgba(86, 58, 34, 0.18);
+  --primary: #8f6138;
+  --primary-dark: #694428;
+  --aura-left: radial-gradient(circle at 30% 30%, #dac19d, #b79a73);
+  --aura-right: radial-gradient(circle at 30% 30%, #c5a67e, #9b7852);
+  --noise-dot: rgba(122, 95, 70, 0.45);
+  --option-border: #e1d0b4;
+  --option-selected-border: #b38961;
+  --option-selected-bg: linear-gradient(180deg, #fff9ef, #f5e8d4);
+  --option-selected-shadow: rgba(121, 88, 56, 0.14);
+  --detail-border: #e7d7c0;
+  --detail-bg: linear-gradient(180deg, #fff, #faf3e8);
+  --highlight-border: #dec7a8;
+  --highlight-bg: linear-gradient(180deg, #fdf7ec, #f4e6cf);
+  --title-font: "Noto Serif SC", serif;
+}
+
+.theme-talent {
+  --page-bg: linear-gradient(135deg, #edf9f7, #fdf2e2 56%, #e8f2ff);
+  --text-main: #173339;
+  --text-muted: #4f666a;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-border: rgba(214, 236, 235, 0.9);
+  --shadow: 0 24px 56px rgba(15, 83, 84, 0.16);
+  --primary: #0c9894;
+  --primary-dark: #0a6d76;
+  --aura-left: radial-gradient(circle at 30% 30%, #9ee9dd, #5ec9bf);
+  --aura-right: radial-gradient(circle at 30% 30%, #ffd5a0, #f7b35d);
+  --noise-dot: rgba(35, 81, 84, 0.44);
+  --option-border: #d3eeeb;
+  --option-selected-border: #7bcfc9;
+  --option-selected-bg: linear-gradient(180deg, #ffffff, #ecfffb);
+  --option-selected-shadow: rgba(22, 114, 116, 0.14);
+  --detail-border: #d8eceb;
+  --detail-bg: linear-gradient(180deg, #fff, #f5fbfb);
+  --highlight-border: #cceeed;
+  --highlight-bg: linear-gradient(180deg, #f3fffd, #fff8ef);
+  --title-font: "ZCOOL XiaoWei", serif;
+}
+
+/* 背景氛围层：
+ * 动画只做 transform/opacity，保证移动端性能稳定。 */
+.survey-aura {
+  position: fixed;
+  border-radius: 999px;
+  pointer-events: none;
+  opacity: 0.48;
+  filter: blur(3px);
+  animation: surveyFloat 8.5s ease-in-out infinite alternate;
+}
+
+.aura-left {
+  width: 220px;
+  height: 220px;
+  left: -72px;
+  top: -72px;
+  background: var(--aura-left);
+}
+
+.aura-right {
+  width: 240px;
+  height: 240px;
+  right: -88px;
+  bottom: 9%;
+  background: var(--aura-right);
+  animation-delay: 1.2s;
+}
+
+.survey-noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image:
+    radial-gradient(var(--noise-dot) 0.4px, transparent 0.4px),
+    radial-gradient(var(--noise-dot) 0.28px, transparent 0.28px);
+  background-size:
+    16px 16px,
+    20px 20px;
+  background-position:
+    0 0,
+    9px 11px;
+}
+
+.survey-shell {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 564px);
+  margin: 0 auto;
+}
+
+.survey-header {
+  margin: 8px 4px 20px;
+  animation: surveyFadeUp 550ms ease both;
+}
+
+.survey-hub-back-wrap {
+  margin-bottom: 8px;
+}
+
+.survey-hub-back-link {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+.survey-badge {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--primary-dark);
+  text-transform: uppercase;
+}
+
+.survey-header h1 {
+  margin: 10px 0 8px;
+  font-size: clamp(25px, 7.2vw, 37px);
+  line-height: 1.26;
+  font-family: var(--title-font);
+}
+
+.survey-desc {
+  margin: 0;
+  line-height: 1.64;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.survey-card {
+  border-radius: 22px;
+  padding: 18px 16px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+.card-in {
+  animation: surveyCardIn 520ms ease both;
+}
+
+.survey-progress-meta {
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.survey-question-wrap {
+  min-height: 356px;
+  margin-top: 16px;
+}
+
+.survey-question-title {
+  margin: 0 0 8px;
+  font-size: clamp(22px, 5.8vw, 29px);
+  line-height: 1.35;
+  font-family: var(--title-font);
+}
+
+.survey-question-desc {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  line-height: 1.62;
+  font-size: 13px;
+}
+
+.survey-cell-group {
+  background: transparent !important;
+}
+
+.survey-option {
+  margin-bottom: 10px;
+  border-radius: 14px;
+  border: 1px solid var(--option-border);
+  background: #fff;
+  transition:
+    transform 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background 220ms ease;
+  animation: surveyFadeUp 420ms ease both;
+}
+
+.survey-option:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.survey-option:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.survey-option:nth-child(4) {
+  animation-delay: 150ms;
+}
+
+.survey-option:active {
+  transform: scale(0.99);
+}
+
+.survey-option-selected {
+  border-color: var(--option-selected-border);
+  background: var(--option-selected-bg);
+  box-shadow: 0 12px 22px var(--option-selected-shadow);
+}
+
+.survey-actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.survey-btn {
+  border-radius: 12px !important;
+  min-height: 42px;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+.survey-btn-primary {
+  color: #fff !important;
+  border: 0 !important;
+  background: linear-gradient(132deg, var(--primary), var(--primary-dark)) !important;
+}
+
+.survey-btn-secondary {
+  color: var(--text-main) !important;
+  border: 1px solid var(--option-border) !important;
+  background: #fff !important;
+}
+
+.survey-result-card {
+  margin-top: 12px;
+}
+
+.survey-loading-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 30px 4px;
+}
+
+.survey-loading-wrap p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.survey-loading-swap-enter-active,
+.survey-loading-swap-leave-active {
+  transition:
+    opacity 240ms ease,
+    transform 240ms ease,
+    filter 240ms ease;
+}
+
+.survey-loading-swap-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+  filter: blur(2px);
+}
+
+.survey-loading-swap-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+  filter: blur(2px);
+}
+
+.survey-result-state {
+  animation: surveyFadeUp 520ms ease both;
+}
+
+.survey-source-wrap {
+  margin-bottom: 8px;
+}
+
+.survey-result-prefix {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.survey-main-title {
+  margin: 8px 0 6px;
+  font-size: clamp(35px, 10.6vw, 50px);
+  line-height: 1.12;
+  font-family: var(--title-font);
+  letter-spacing: 0.02em;
+}
+
+.survey-main-score {
+  margin: 0 0 12px;
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+.survey-highlight-box {
+  border-radius: 12px;
+  border: 1px solid var(--highlight-border);
+  padding: 11px 12px;
+  background: var(--highlight-bg);
+}
+
+.survey-highlight-box h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.survey-highlight-box p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.62;
+}
+
+.survey-insight {
+  margin: 12px 0 0;
+  line-height: 1.72;
+  font-size: 14px;
+}
+
+.survey-top-wrap,
+.survey-detail-wrap,
+.survey-summary-wrap {
+  margin-top: 16px;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--detail-border);
+  background: var(--detail-bg);
+}
+
+.survey-top-wrap h3,
+.survey-detail-wrap h3,
+.survey-summary-wrap h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.survey-top-list,
+.survey-bullet-list,
+.survey-summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.survey-top-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid var(--detail-border);
+}
+
+.survey-bullet-list li,
+.survey-summary-item {
+  font-size: 12px;
+  line-height: 1.62;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--detail-border);
+  background: #fff;
+}
+
+.survey-restart-btn {
+  margin-top: 16px;
+}
+
+.survey-floating-home {
+  position: fixed;
+  right: 14px;
+  bottom: 16px;
+  z-index: 20;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(130deg, var(--primary), var(--primary-dark));
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 8px 12px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.survey-fade-enter-active,
+.survey-fade-leave-active {
+  transition: all 260ms ease;
+}
+
+.survey-fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.survey-fade-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+@keyframes surveyFloat {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-18px);
+  }
+}
+
+@keyframes surveyCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes surveyFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 360px) {
+  .survey-question-wrap {
+    min-height: 380px;
+  }
+}
+
+@media (min-width: 760px) {
+  .survey-page {
+    padding-top: 30px;
+  }
+
+  .survey-card {
+    padding: 22px;
+  }
+
+  .survey-question-wrap {
+    min-height: 332px;
+  }
+}
