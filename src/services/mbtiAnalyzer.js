@@ -392,6 +392,91 @@ function resolveTemperament(bigFiveScores) {
 }
 
 /**
+ * 将轴分值转换为“正向/反向占比”。
+ * 计算规则：
+ * 1. axisScore 取值范围 [-100, 100]，其中 0 表示完全平衡。
+ * 2. 通过线性映射转换为 [0, 100] 占比，便于用户理解。
+ * 复杂度评估：O(1)。
+ * @param {number} axisScore 轴分值。
+ * @returns {{ positiveRatio: number, negativeRatio: number }} 占比对象。
+ */
+function resolveAxisRatios(axisScore) {
+  const normalizedAxisScore = Number.isFinite(axisScore) ? axisScore : 0;
+  const positiveRatio = clampPercentage((normalizedAxisScore + 100) / 2);
+  const negativeRatio = clampPercentage(100 - positiveRatio);
+
+  return {
+    positiveRatio,
+    negativeRatio,
+  };
+}
+
+/**
+ * 将维度强度映射为可读等级。
+ * 复杂度评估：O(1)。
+ * @param {number} axisStrength 轴强度（0~100）。
+ * @returns {string} 强度等级。
+ */
+function resolveAxisStrengthLevel(axisStrength) {
+  const normalizedStrength = clampPercentage(axisStrength);
+
+  if (normalizedStrength >= 60) {
+    return "强";
+  }
+
+  if (normalizedStrength >= 30) {
+    return "中";
+  }
+
+  return "弱";
+}
+
+/**
+ * 构建维度平衡提示。
+ * 关键逻辑：占比接近 50/50 时明确提示“边界维度”，降低用户误解概率。
+ * 复杂度评估：O(1)。
+ * @param {number} positiveRatio 正向字母占比。
+ * @param {number} negativeRatio 反向字母占比。
+ * @returns {string} 提示文本。
+ */
+function resolveAxisBalanceHint(positiveRatio, negativeRatio) {
+  const ratioGap = Math.abs(positiveRatio - negativeRatio);
+
+  if (ratioGap <= 10) {
+    return "（接近平衡，可能随场景波动）";
+  }
+
+  return "";
+}
+
+/**
+ * 构建维度占比展示顺序：
+ * 关键逻辑：默认将占比更高的字母放在前面；同分时保持原始字母顺序稳定展示。
+ * 复杂度评估：O(1)。
+ * @param {{ positive: string, negative: string }} axisConfig 维度字母配置。
+ * @param {number} positiveRatio 正向字母占比。
+ * @param {number} negativeRatio 反向字母占比。
+ * @returns {{ firstLabel: string, firstRatio: number, secondLabel: string, secondRatio: number }} 展示顺序对象。
+ */
+function resolveAxisRatioDisplayOrder(axisConfig, positiveRatio, negativeRatio) {
+  if (positiveRatio >= negativeRatio) {
+    return {
+      firstLabel: axisConfig.positive,
+      firstRatio: positiveRatio,
+      secondLabel: axisConfig.negative,
+      secondRatio: negativeRatio,
+    };
+  }
+
+  return {
+    firstLabel: axisConfig.negative,
+    firstRatio: negativeRatio,
+    secondLabel: axisConfig.positive,
+    secondRatio: positiveRatio,
+  };
+}
+
+/**
  * 生成维度倾向摘要。
  * @param {object} axisScores 轴分值。
  * @returns {Array<string>} 维度摘要。
@@ -399,8 +484,18 @@ function resolveTemperament(bigFiveScores) {
 function buildAxisSummaryLines(axisScores) {
   return MBTI_AXIS_KEYS.map((axisKey) => {
     const axisConfig = MBTI_AXIS_CONFIG[axisKey];
-    const signLabel = axisScores[axisKey] >= 0 ? axisConfig.positive : axisConfig.negative;
-    return `${axisConfig.label}：${signLabel}（${Math.abs(axisScores[axisKey])}%）`;
+    const axisScore = Number(axisScores[axisKey] ?? 0);
+    const { positiveRatio, negativeRatio } = resolveAxisRatios(axisScore);
+    const ratioDisplayOrder = resolveAxisRatioDisplayOrder(
+      axisConfig,
+      positiveRatio,
+      negativeRatio,
+    );
+    const axisStrength = clampPercentage(Math.abs(axisScore));
+    const strengthLevel = resolveAxisStrengthLevel(axisStrength);
+    const balanceHint = resolveAxisBalanceHint(positiveRatio, negativeRatio);
+
+    return `${axisConfig.label}：${ratioDisplayOrder.firstLabel} ${ratioDisplayOrder.firstRatio}% / ${ratioDisplayOrder.secondLabel} ${ratioDisplayOrder.secondRatio}% · 倾向强度 ${axisStrength}%（${strengthLevel}）${balanceHint}`;
   });
 }
 
@@ -436,13 +531,34 @@ function buildTypeCard({ typeCode, axisScores, bigFiveScores }) {
  * @returns {string} 本地叙事。
  */
 function buildLocalNarrative({ typeCode, typeTitle, axisScores }) {
+  const eiRatios = resolveAxisRatios(axisScores.ei);
+  const snRatios = resolveAxisRatios(axisScores.sn);
+  const tfRatios = resolveAxisRatios(axisScores.tf);
+  const jpRatios = resolveAxisRatios(axisScores.jp);
+  const eiDisplayOrder = resolveAxisRatioDisplayOrder(
+    MBTI_AXIS_CONFIG.ei,
+    eiRatios.positiveRatio,
+    eiRatios.negativeRatio,
+  );
+  const snDisplayOrder = resolveAxisRatioDisplayOrder(
+    MBTI_AXIS_CONFIG.sn,
+    snRatios.positiveRatio,
+    snRatios.negativeRatio,
+  );
+  const tfDisplayOrder = resolveAxisRatioDisplayOrder(
+    MBTI_AXIS_CONFIG.tf,
+    tfRatios.positiveRatio,
+    tfRatios.negativeRatio,
+  );
+  const jpDisplayOrder = resolveAxisRatioDisplayOrder(
+    MBTI_AXIS_CONFIG.jp,
+    jpRatios.positiveRatio,
+    jpRatios.negativeRatio,
+  );
+
   return [
     `你的主类型更接近 ${typeCode}（${typeTitle}）。`,
-    `在 E/I、S/N、T/F、J/P 四条轴上，你当前表现为 ${
-      axisScores.ei >= 0 ? "E" : "I"
-    } / ${axisScores.sn >= 0 ? "N" : "S"} / ${
-      axisScores.tf >= 0 ? "T" : "F"
-    } / ${axisScores.jp >= 0 ? "J" : "P"}。`,
+    `四条维度占比约为 ${MBTI_AXIS_CONFIG.ei.label}（${eiDisplayOrder.firstLabel} ${eiDisplayOrder.firstRatio}% / ${eiDisplayOrder.secondLabel} ${eiDisplayOrder.secondRatio}%）、${MBTI_AXIS_CONFIG.sn.label}（${snDisplayOrder.firstLabel} ${snDisplayOrder.firstRatio}% / ${snDisplayOrder.secondLabel} ${snDisplayOrder.secondRatio}%）、${MBTI_AXIS_CONFIG.tf.label}（${tfDisplayOrder.firstLabel} ${tfDisplayOrder.firstRatio}% / ${tfDisplayOrder.secondLabel} ${tfDisplayOrder.secondRatio}%）、${MBTI_AXIS_CONFIG.jp.label}（${jpDisplayOrder.firstLabel} ${jpDisplayOrder.firstRatio}% / ${jpDisplayOrder.secondLabel} ${jpDisplayOrder.secondRatio}%）。`,
     "这说明你在决策时兼顾思路清晰与场景适配，适合把优势放在高反馈的长期赛道。",
   ].join("");
 }

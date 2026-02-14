@@ -1641,17 +1641,37 @@ async function submitCurrentTest() {
     modeConfig,
   });
 
-  const persistedResult = {
+  const localPersistedResult = {
     ...localResult,
     aiInsight: null,
   };
 
+  let nextPersistedResult = localPersistedResult;
+
+  try {
+    const aiInsightResult = await analyzeTypeologyWithAi({
+      testConfig: activeTestConfig.value,
+      localResult: localPersistedResult,
+      timeoutMs: 16000,
+    });
+
+    nextPersistedResult = {
+      ...localPersistedResult,
+      aiInsight: aiInsightResult,
+      // 关键逻辑：结果摘要优先展示 AI 叙事，避免本地模板文案过于固定。
+      insight: aiInsightResult?.narrative ?? localPersistedResult.insight,
+    };
+  } catch {
+    // 关键逻辑：AI 失败时回退本地结果，不阻断主流程。
+    nextPersistedResult = localPersistedResult;
+  }
+
   resultCache.value = upsertTypeologyCachedResult(
     activeTestConfig.value.key,
-    persistedResult,
+    nextPersistedResult,
   );
 
-  currentResult.value = persistedResult;
+  currentResult.value = nextPersistedResult;
   stage.value = STAGE_DETAIL;
   showAllSummary.value = false;
 }
@@ -1722,6 +1742,7 @@ async function generateAiInsight() {
     const mergedResult = {
       ...currentResult.value,
       aiInsight: aiInsightResult,
+      insight: aiInsightResult?.narrative ?? currentResult.value.insight,
     };
 
     resultCache.value = upsertTypeologyCachedResult(
