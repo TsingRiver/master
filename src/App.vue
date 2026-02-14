@@ -9,7 +9,7 @@
     :theme-config="activeThemeConfig"
     :portal-mode="portalSession"
     :portal-home-href="portalHubHref"
-  />
+  /> 
 </template>
 
 <script setup>
