@@ -102,6 +102,7 @@ function parseHashRoute(hashValue) {
     return { hasHashRoute: false, path: "/", search: "" };
   }
 
+  
   const hashBody = rawHash.slice(1).trim();
   if (!hashBody) {
     return { hasHashRoute: false, path: "/", search: "" };
