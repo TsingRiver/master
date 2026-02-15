@@ -107,8 +107,6 @@ function parseHashRoute(hashValue) {
     return { hasHashRoute: false, path: "/", search: "" };
   }
 
-  
-
   // 关键逻辑：把 "#/fortune?hub=1" 解析为 path="/fortune"、search="?hub=1"。
   const [rawPath = "/", rawQuery = ""] = hashBody.split("?");
   const normalizedPath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
