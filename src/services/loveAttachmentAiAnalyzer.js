@@ -42,20 +42,29 @@ function clampScore(score) {
  * 归一化标签数组。
  * @param {unknown} tags 标签输入。
  * @param {Array<string>} fallbackTags 兜底标签。
- * @returns {Array<string>} 标签数组（最多 6 条）。
+ * @returns {Array<string>} 标签数组（最多 6 条，不带 # 前缀）。
  */
 function normalizeTags(tags, fallbackTags) {
   if (!Array.isArray(tags)) {
-    return fallbackTags.slice(0, 6);
+    return fallbackTags
+      .map((tagItem) => String(tagItem ?? "").replace(/^#/, "").trim())
+      .filter(Boolean)
+      .slice(0, 6);
   }
 
   const normalizedTags = tags
     .map((tagItem) => String(tagItem ?? "").trim())
     .filter(Boolean)
-    .map((tagItem) => (tagItem.startsWith("#") ? tagItem : `#${tagItem}`))
+    // 关键逻辑：恋爱主题标签按“卡片化文字”展示，不保留 # 前缀。
+    .map((tagItem) => tagItem.replace(/^#/, "").trim())
     .slice(0, 6);
 
-  return normalizedTags.length > 0 ? normalizedTags : fallbackTags.slice(0, 6);
+  return normalizedTags.length > 0
+    ? normalizedTags
+    : fallbackTags
+        .map((tagItem) => String(tagItem ?? "").replace(/^#/, "").trim())
+        .filter(Boolean)
+        .slice(0, 6);
 }
 
 /**
@@ -101,6 +110,56 @@ function splitTextToPoints(text, fallbackList, limit) {
 }
 
 /**
+ * 判断文本是否包含“家庭成员/照料关系”线索。
+ * 关键逻辑：用于校验原生家庭画像语义，避免输出仅对个人感受做抽象描述。
+ * @param {unknown} value 文本值。
+ * @returns {boolean} 是否包含家庭线索。
+ */
+function hasFamilyContext(value) {
+  const normalizedText = String(value ?? "").trim();
+  if (!normalizedText) {
+    return false;
+  }
+
+  const familyKeywordPattern =
+    /(家里|家庭|父母|爸爸|妈妈|照料者|养育者|监护人|长辈|家人|原生家庭)/;
+  return familyKeywordPattern.test(normalizedText);
+}
+
+/**
+ * 归一化“原生家庭画像”长文。
+ * 关键逻辑：若 AI 输出缺少家庭视角，则回退到可靠兜底文案。
+ * @param {unknown} value AI 输出。
+ * @param {string} fallbackText 兜底文本。
+ * @returns {string} 规范化后的画像文本。
+ */
+function normalizeFamilyPortraitText(value, fallbackText) {
+  const normalizedValue = String(value ?? "").trim();
+  if (!normalizedValue) {
+    return fallbackText;
+  }
+
+  return hasFamilyContext(normalizedValue) ? normalizedValue : fallbackText;
+}
+
+/**
+ * 归一化“原生家庭画像”要点列表。
+ * 关键逻辑：若要点缺少家庭角色线索，则回退到预置家庭画像要点，保证语义稳定。
+ * @param {unknown} value AI 输出列表。
+ * @param {Array<string>} fallbackList 兜底列表。
+ * @param {number} limit 上限。
+ * @returns {Array<string>} 规范化要点列表。
+ */
+function normalizeFamilyPortraitPoints(value, fallbackList, limit) {
+  const normalizedList = normalizeStringList(value, fallbackList, limit);
+  const joinedText = normalizedList.join("。");
+
+  return hasFamilyContext(joinedText)
+    ? normalizedList
+    : fallbackList.slice(0, limit);
+}
+
+/**
  * 构建发送给 AI 的提示词。
  * @param {object} payload 请求负载。
  * @returns {string} 用户提示词。
@@ -110,12 +169,16 @@ function buildUserPrompt(payload) {
     "你是一位中文亲密关系测评分析师。",
     "请基于答卷输出恋爱依恋结果报告。",
     "必须只输出 JSON，不要输出任何额外说明。",
+    "写作约束：",
+    "1. 原生家庭画像必须以“家庭成员与互动模式”为主体（如父母/照料者/家人）。",
+    "2. 不要把原生家庭画像写成纯“你如何如何”的自我感受总结。",
+    "3. familyPortraitPoints 至少 2 条要明确出现家庭角色或家庭互动场景。",
     "字段规范：",
     JSON.stringify(
       {
         mainType: { key: "secure|anxious|avoidant|fearful", name: "类型名", score: 0 },
         oneLineSummary: "一句话概述，50字以内",
-        tags: ["#标签1", "#标签2", "#标签3", "#标签4"],
+        tags: ["标签1", "标签2", "标签3", "标签4"],
         distribution: [
           { key: "secure", score: 0 },
           { key: "anxious", score: 0 },
@@ -214,11 +277,11 @@ function normalizeAiResult(aiData, payload) {
       score: clampScore(payload.localMainType?.score ?? localDistribution[0]?.score ?? 0),
     },
     oneLineSummary: fallbackTypeEntry?.summary ?? "你的依恋模式具有可调整空间，关系质量可以通过练习持续优化。",
-    tags: fallbackTypeEntry?.tags ?? ["#关系修复", "#情绪觉察", "#边界沟通"],
+    tags: fallbackTypeEntry?.tags ?? ["关系修复", "情绪觉察", "边界沟通"],
     distribution: localDistribution,
     familyPortrait:
       fallbackTypeEntry?.familyPortrait ??
-      "你在亲密关系中的反应模式，通常与早期“被回应方式”有关。看见它，并不等于被它限制。",
+      "你的原生家庭中，至少有一位关键照料者在情绪回应上形成了稳定脚本：可能是可接近、也可能是缺席或波动。这种家庭互动模式会影响你在亲密关系里的安全感建立方式。",
     whyPattern:
       fallbackTypeEntry?.whyPattern ??
       "当关系触发不确定感时，你会使用熟悉的保护策略。这些策略曾经帮助过你，但在当前关系中可能需要升级。",
@@ -227,10 +290,10 @@ function normalizeAiResult(aiData, payload) {
       splitTextToPoints(
         fallbackTypeEntry?.familyPortrait,
         [
-          "你对关系安全感的形成，和早期回应体验高度相关。",
-          "你在亲密中的默认反应并非“性格缺陷”，而是历史策略。",
-          "看见自己的模式，是开始调整关系质量的第一步。",
-          "稳定、可预测的连接，会逐步改写旧有关系脚本。",
+          "家里至少有一位关键照料者的回应方式，塑造了你对亲密的初始预期。",
+          "家庭如何处理冲突与情绪，会直接影响你后来表达需求的方式。",
+          "如果家庭里常见冷处理或失联，你会更快启动关系警觉与自保。",
+          "当家庭给过稳定承接，你更容易形成“冲突可修复”的关系信念。",
         ],
         5,
       ),
@@ -317,15 +380,15 @@ function normalizeAiResult(aiData, payload) {
         : fallbackTypeInfo?.summary ?? fallbackResult.oneLineSummary,
     tags: normalizeTags(aiData.tags, fallbackTypeInfo?.tags ?? fallbackResult.tags),
     distribution: normalizedDistribution,
-    familyPortrait:
-      typeof aiData.familyPortrait === "string" && aiData.familyPortrait.trim()
-        ? aiData.familyPortrait.trim()
-        : fallbackTypeInfo?.familyPortrait ?? fallbackResult.familyPortrait,
+    familyPortrait: normalizeFamilyPortraitText(
+      aiData.familyPortrait,
+      fallbackTypeInfo?.familyPortrait ?? fallbackResult.familyPortrait,
+    ),
     whyPattern:
       typeof aiData.whyPattern === "string" && aiData.whyPattern.trim()
         ? aiData.whyPattern.trim()
         : fallbackTypeInfo?.whyPattern ?? fallbackResult.whyPattern,
-    familyPortraitPoints: normalizeStringList(
+    familyPortraitPoints: normalizeFamilyPortraitPoints(
       aiData.familyPortraitPoints,
       fallbackTypeInfo?.familyPortraitPoints ??
         splitTextToPoints(

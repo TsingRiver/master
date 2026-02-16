@@ -18,7 +18,10 @@ import { analyzeBenefactor2026Locally } from "../services/benefactor2026Analyzer
 import { analyzeBenefactor2026WithAI } from "../services/benefactor2026AiAnalyzer";
 import { analyzeColor2026Locally } from "../services/color2026Analyzer";
 import { analyzeColor2026WithAI } from "../services/color2026AiAnalyzer";
-import { analyzeLoveAttachmentLocally } from "../services/loveAttachmentAnalyzer";
+import {
+  analyzeLoveAttachmentLocally,
+  deriveAttachmentSubtypeProfile,
+} from "../services/loveAttachmentAnalyzer";
 import { analyzeLoveAttachmentWithAI } from "../services/loveAttachmentAiAnalyzer";
 
 /**
@@ -835,9 +838,33 @@ function buildColorThemeLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 恋爱主题：清洗标签展示文本。
+ * @param {unknown} tag 标签输入。
+ * @returns {string} 去除 # 后的标签文本。
+ */
+function sanitizeLoveTagLabel(tag) {
+  return String(tag ?? "")
+    .replace(/^#/, "")
+    .trim();
+}
+
+/**
+ * 恋爱主题：合并并去重标签（不保留 #）。
+ * @param {Array<unknown>} tags 标签列表。
+ * @returns {Array<string>} 清洗后的标签列表。
+ */
+function normalizeLoveTagChips(tags) {
+  const normalizedList = tags
+    .map(sanitizeLoveTagLabel)
+    .filter(Boolean);
+
+  return [...new Set(normalizedList)].slice(0, 8);
+}
+
+/**
  * 恋爱心理主题：构建深度分析请求负载。
  * @param {object} localResult 本地分析结果。
- * @returns {{ typeCandidates: Array<object>, localDistribution: Array<object>, localMainType: object, summaryLines: Array<string> }} 深度分析负载。
+ * @returns {{ typeCandidates: Array<object>, localDistribution: Array<object>, localMainType: object, localSubtypeProfile: object, summaryLines: Array<string> }} 深度分析负载。
  */
 function buildLoveAttachmentDeepPayload(localResult) {
   const profileMap = localResult.profileMap ?? {};
@@ -859,6 +886,7 @@ function buildLoveAttachmentDeepPayload(localResult) {
     typeCandidates,
     localDistribution: localResult.distribution,
     localMainType: localResult.topType,
+    localSubtypeProfile: localResult.subtypeProfile,
     summaryLines: localResult.summaryLines,
   };
 }
@@ -876,7 +904,9 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
 
   const fallbackMainType = sortedDistribution[0] ?? localResult.topType;
   const mainType = deepResult.mainType ?? fallbackMainType;
-  const secondaryType = sortedDistribution[1] ?? null;
+  const subtypeProfile = deriveAttachmentSubtypeProfile(
+    sortedDistribution.length > 0 ? sortedDistribution : localResult.distribution,
+  );
 
   // 关键逻辑：优先使用 AI 返回的结构化要点，缺失时再回退到单段文本，保证展示密度与兼容性。
   const familyPortraitItems =
@@ -895,20 +925,26 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
         ? [deepResult.whyPattern]
         : ["暂无"];
 
+  // 关键逻辑：把细分亚型标签并入标签区，增强可读性和结果辨识度。
+  const mergedTagChips = normalizeLoveTagChips([
+    subtypeProfile.subtypeTag,
+    ...(deepResult.tags ?? []),
+  ]);
+
   return createUnifiedResult({
     source: "deep",
-    prefixLabel: "你的依恋类型",
+    prefixLabel: "你的恋爱心理画像",
     scoreLabel: "主类型匹配度",
     main: {
-      name: mainType.name,
+      name: subtypeProfile.signature,
       score: mainType.score,
     },
     highlightCard: {
       title: "一句话概述",
       content: deepResult.oneLineSummary,
     },
-    insight: deepResult.insight,
-    tagChips: deepResult.tags,
+    insight: `${subtypeProfile.subtypeBrief} ${deepResult.insight}`.trim(),
+    tagChips: mergedTagChips,
     distributionChart: {
       title: "类型分布",
       items: sortedDistribution.map((item) => ({
@@ -921,9 +957,13 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
     typeCard: {
       title: "恋爱心理卡片",
       items: [
-        { label: "主类型", value: mainType.name },
-        { label: "副倾向", value: secondaryType?.name ?? "暂无" },
-        { label: "关系节奏", value: deepResult.tags?.[0] ?? "#关系觉察" },
+        { label: "核心类型", value: subtypeProfile.coreTypeName },
+        { label: "细分亚型", value: subtypeProfile.subtypeName },
+        { label: "次类型", value: subtypeProfile.secondaryTypeName },
+        {
+          label: "倾向强度",
+          value: `${subtypeProfile.intensityLabel}（主次差值 ${subtypeProfile.tendencyGap}%）`,
+        },
       ],
     },
     topThreeTitle: "Top 3 类型倾向",
@@ -932,6 +972,13 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
       score: item.score,
     })),
     detailSections: [
+      {
+        title: "细分亚型说明",
+        items: [
+          `${subtypeProfile.subtypeName}：${subtypeProfile.subtypeBrief}`,
+          `你的次类型为${subtypeProfile.secondaryTypeName}，说明在部分关系场景会出现复合倾向。`,
+        ],
+      },
       { title: "原生家庭画像", items: familyPortraitItems },
       { title: "为什么会这样", items: whyPatternItems },
       { title: "你的关系优势", items: deepResult.strengths },
@@ -953,6 +1000,9 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
   const topType = localResult.topType;
   const topTypeProfile = localResult.profileMap[topType.key] ?? {};
   const secondaryType = localResult.distribution[1] ?? null;
+  const subtypeProfile =
+    localResult.subtypeProfile ??
+    deriveAttachmentSubtypeProfile(localResult.distribution);
 
   // 关键逻辑：本地兜底也保持多条目展示，避免在 AI 不可用时信息密度明显下降。
   const familyPortraitItems =
@@ -974,18 +1024,21 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
 
   return createUnifiedResult({
     source: "local",
-    prefixLabel: "你的依恋类型",
+    prefixLabel: "你的恋爱心理画像",
     scoreLabel: "主类型匹配度",
     main: {
-      name: topType.name,
+      name: subtypeProfile.signature,
       score: topType.score,
     },
     highlightCard: {
       title: "一句话概述",
       content: topTypeProfile.summary ?? localResult.localNarrative,
     },
-    insight: localResult.localNarrative,
-    tagChips: topTypeProfile.tags ?? [],
+    insight: `${subtypeProfile.subtypeBrief} ${localResult.localNarrative}`.trim(),
+    tagChips: normalizeLoveTagChips([
+      subtypeProfile.subtypeTag,
+      ...(topTypeProfile.tags ?? []),
+    ]),
     distributionChart: {
       title: "类型分布",
       items: localResult.distribution.map((item) => ({
@@ -998,9 +1051,13 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
     typeCard: {
       title: "恋爱心理卡片",
       items: [
-        { label: "主类型", value: topType.name },
-        { label: "副倾向", value: secondaryType?.name ?? "暂无" },
-        { label: "关系节奏", value: topTypeProfile.tags?.[0] ?? "#关系觉察" },
+        { label: "核心类型", value: subtypeProfile.coreTypeName },
+        { label: "细分亚型", value: subtypeProfile.subtypeName },
+        { label: "次类型", value: secondaryType?.name ?? subtypeProfile.secondaryTypeName ?? "暂无" },
+        {
+          label: "倾向强度",
+          value: `${subtypeProfile.intensityLabel}（主次差值 ${subtypeProfile.tendencyGap}%）`,
+        },
       ],
     },
     topThreeTitle: "Top 3 类型倾向",
@@ -1009,6 +1066,13 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
       score: item.score,
     })),
     detailSections: [
+      {
+        title: "细分亚型说明",
+        items: [
+          `${subtypeProfile.subtypeName}：${subtypeProfile.subtypeBrief}`,
+          `你的次类型为${subtypeProfile.secondaryTypeName}，在高压场景可能会放大该倾向。`,
+        ],
+      },
       { title: "原生家庭画像", items: familyPortraitItems },
       { title: "为什么会这样", items: whyPatternItems },
       { title: "你的关系优势", items: topTypeProfile.strengths ?? [] },

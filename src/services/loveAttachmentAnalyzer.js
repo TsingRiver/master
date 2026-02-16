@@ -9,14 +9,14 @@ const ATTACHMENT_PROFILE_MAP = {
     name: "安全依恋型",
     color: "#45A67E",
     summary: "你通常能在亲密与边界之间找到平衡，既敢表达也能稳定修复。",
-    tags: ["#稳定连接", "#边界清晰", "#敢沟通", "#可修复", "#高安全感", "#关系韧性"],
+    tags: ["稳定连接", "边界清晰", "敢沟通", "可修复", "高安全感", "关系韧性"],
     familyPortrait:
-      "你的成长环境里大概率出现过“可回应、可依靠”的照顾体验。即使并不完美，你也较早学会了“情绪可以被表达，关系可以被修复”。在冲突后回到连接，对你来说是可行的。",
+      "家里通常至少有一位情绪上可接近的照料者：你难过时会被安抚，你表达时会被听见。即便家人风格不同，家庭整体仍倾向“先沟通再修复”，让你更早建立了“关系可被修好”的底层感受。",
     familyPortraitPoints: [
-      "成长中较常体验到“我表达了，会被听见”。",
-      "照顾者在你需要时有较稳定回应，不总是失联式照护。",
-      "你较早形成“问题可以谈、关系可修复”的认知。",
-      "你对亲密与独立的边界感相对清晰，不容易全有全无。",
+      "家里常见场景是：你情绪上来时，至少一位大人会停下来听你说。",
+      "父母或主要照料者在冲突后更倾向解释和修补，而非长期冷战。",
+      "家庭规则虽然存在要求，但通常会说明原因，边界相对清晰。",
+      "你从家庭互动里学到：亲密是安全的，分歧也可以被讨论。",
     ],
     whyPattern:
       "你对关系的底层预期偏正向：亲密不等于失控，冲突不等于结束，所以你更愿意在问题里寻找协商空间。你能把“情绪波动”与“关系终局”区分开。",
@@ -54,14 +54,14 @@ const ATTACHMENT_PROFILE_MAP = {
     name: "焦虑依恋型",
     color: "#F3A45A",
     summary: "你很重视关系连接，但在不确定时容易放大担忧并寻求高频确认。",
-    tags: ["#高敏感", "#怕失去", "#确认需求", "#情绪投入高", "#关系警觉高", "#反复确认"],
+    tags: ["高敏感", "怕失去", "确认需求", "情绪投入高", "关系警觉高", "反复确认"],
     familyPortrait:
-      "你可能经历过“回应不稳定”或情绪支持时有时无的成长体验，导致你更容易把关系波动解读成“可能被抛下”的信号。你对“关系温度变化”非常敏感。",
+      "家里可能出现过“回应忽近忽远”的照料模式：有时很亲近，有时突然冷下来。你需要靠表现、懂事或反复确认，才能换来稳定关注，这会让你对关系温度变化异常敏感。",
     familyPortraitPoints: [
-      "成长中“被回应”体验可能存在波动，难以稳定预测。",
-      "你可能需要通过表现/努力来争取情感确定感。",
-      "关系中的微小变化更容易触发你的警觉系统。",
-      "你较早学会“先确认关系，再考虑自己感受”。",
+      "家里某位重要照料者回应节奏不稳定，今天靠近、明天疏离。",
+      "你可能从小习惯先“做对、做好”，再争取被看见和被安慰。",
+      "家庭对情绪的接纳不连续，安慰常取决于对方当下状态。",
+      "你因此学会了先盯紧关系，再考虑自己的真实感受。",
     ],
     whyPattern:
       "当安全感下降时，你会通过加深连接来降低焦虑，但高压确认也可能让关系进入“越追越慌”的循环。你越在乎，越容易把沉默解读成危险。",
@@ -99,14 +99,14 @@ const ATTACHMENT_PROFILE_MAP = {
     name: "回避依恋型",
     color: "#5F88DF",
     summary: "你重视独立和边界，面对高情绪或高压力亲密场景时更倾向先后撤。",
-    tags: ["#独立", "#怕束缚", "#低暴露", "#理性自保", "#情绪克制", "#高边界"],
+    tags: ["独立", "怕束缚", "低暴露", "理性自保", "情绪克制", "高边界"],
     familyPortrait:
-      "你可能在成长中更早学会“靠自己解决问题”，情绪支持体验相对有限，于是形成了“减少依赖=减少受伤”的保护策略。独立曾经是你的核心生存优势。",
+      "家里可能有一位“情感隐形人”：ta 不一定打骂，但常缺席你的情绪时刻。你难过时得到的是道理和要求，不是安慰与承接。久而久之，你学会了“靠自己最安全”。",
     familyPortraitPoints: [
-      "早期可能更常被鼓励“先自己处理”，情绪承接偏少。",
-      "你习惯通过理性和效率管理关系压力。",
-      "“不麻烦别人”可能长期被强化为默认原则。",
-      "你在亲密中容易把“需要帮助”解读为“失去掌控”。",
+      "家里可能重结果轻感受，情绪话题经常被快速跳过或打断。",
+      "当你脆弱时，家庭反馈常是“自己处理”，求助容易被视为麻烦。",
+      "家庭沟通偏功能化：学习、工作能聊，委屈和害怕不太能聊。",
+      "你因此把独立当成盔甲，用距离来避免再次失望。",
     ],
     whyPattern:
       "当关系压力上升时，你会优先守住自主感和可控性，这能短期降噪，但也可能让对方感到被隔离。你并非不在乎，而是更习惯先撤退再整理。",
@@ -144,14 +144,14 @@ const ATTACHMENT_PROFILE_MAP = {
     name: "焦虑-回避矛盾型",
     color: "#A973DA",
     summary: "你既渴望亲密又害怕受伤，关系中容易出现“靠近-退开”的拉扯循环。",
-    tags: ["#矛盾拉扯", "#怕亲密", "#怕失去", "#高波动", "#靠近又逃离", "#高触发"],
+    tags: ["矛盾拉扯", "怕亲密", "怕失去", "高波动", "靠近又逃离", "高触发"],
     familyPortrait:
-      "你的成长体验里可能同时存在“想靠近却不够安全”的信号，比如支持与压力并存、亲密与受伤交替，让你难以稳定建立关系预期。你对关系有很强渴望，也有很强防御。",
+      "家庭里可能同时存在“给温暖的人”和“制造压力的人”，或者同一位照料者忽冷忽热。你靠近时可能被刺痛，后退时又想被理解，这种双重体验让亲密与防御长期并存。",
     familyPortraitPoints: [
-      "成长中可能出现“靠近有温暖，但也伴随风险”的双重体验。",
-      "你对关系信号高度敏感，但安全感基础不稳定。",
-      "你可能学会了“先试探亲密，再快速自保”。",
-      "内在系统常在“想被爱”与“怕受伤”之间摇摆。",
+      "家里关系氛围可能忽冷忽热，亲密与冲突切换速度很快。",
+      "某位长辈一边给关心一边给压力，让你靠近时也保持紧绷。",
+      "家庭处理矛盾时可能出现爆发、指责或突然断联。",
+      "你在家庭脚本中学到“想靠近又要防备”，形成拉扯式自保。",
     ],
     whyPattern:
       "当你感到被需要会靠近，一旦触发受伤预警又会撤离，这种双向驱动会让你在关系里反复消耗。你在“信任”与“防御”之间切换很快。",
@@ -190,6 +190,104 @@ const ATTACHMENT_PROFILE_MAP = {
  * 依恋类型键数组。
  */
 const ATTACHMENT_TYPE_KEYS = Object.keys(ATTACHMENT_PROFILE_MAP);
+
+/**
+ * 依恋亚型映射：
+ * 关键逻辑：在 4 大核心依恋类型基础上，使用“主类型 + 次类型”形成 12 个细分亚型，
+ * 既保持理论稳定性，也让结果更具个体区分度。
+ */
+const ATTACHMENT_SUBTYPE_MAP = {
+  secure: {
+    anxious: {
+      key: "secure-empathic",
+      name: "共情守护型",
+      tag: "稳中带敏",
+      brief: "你整体稳定，同时对关系细节敏感，擅长在照顾与边界间找平衡。",
+    },
+    avoidant: {
+      key: "secure-boundary",
+      name: "边界稳健型",
+      tag: "稳定独立",
+      brief: "你重视亲密也重视空间，关系推进更看重节奏与实际行动的一致性。",
+    },
+    fearful: {
+      key: "secure-growth",
+      name: "修复成长型",
+      tag: "修复驱动",
+      brief: "你能在波动里回到理性协商，愿意通过复盘和修复提升关系质量。",
+    },
+  },
+  anxious: {
+    secure: {
+      key: "anxious-warm",
+      name: "投入共情型",
+      tag: "高投入高感知",
+      brief: "你情感投入度高、愿意靠近，若获得稳定反馈，关系表现会非常正向。",
+    },
+    fearful: {
+      key: "anxious-alert",
+      name: "高敏守望型",
+      tag: "高警觉",
+      brief: "你对关系温度变化很敏锐，容易先预判风险，需要更稳定的安全锚点。",
+    },
+    avoidant: {
+      key: "anxious-pullpush",
+      name: "追退拉扯型",
+      tag: "拉扯循环",
+      brief: "你一方面想要确认连接，一方面又怕受伤，容易出现“靠近-担忧-后撤”。",
+    },
+  },
+  avoidant: {
+    secure: {
+      key: "avoidant-rational",
+      name: "理性边界型",
+      tag: "独立理性",
+      brief: "你擅长保持冷静和独立，在关系里更偏向先处理事实再处理情绪。",
+    },
+    fearful: {
+      key: "avoidant-guarded",
+      name: "防御观察型",
+      tag: "防御先行",
+      brief: "你在高压场景会优先自保，情绪暴露阈值高，需要更温和的信任建立路径。",
+    },
+    anxious: {
+      key: "avoidant-coldwarm",
+      name: "冷暖切换型",
+      tag: "外冷内敏",
+      brief: "你表面克制、内在敏感，关系里常通过“保持距离”来维持掌控感。",
+    },
+  },
+  fearful: {
+    anxious: {
+      key: "fearful-turbulent",
+      name: "情绪湍流型",
+      tag: "靠近又担忧",
+      brief: "你既强烈渴望连接又担心受伤，情绪波动常与关系不确定感绑定出现。",
+    },
+    avoidant: {
+      key: "fearful-defensive",
+      name: "矛盾防御型",
+      tag: "想靠近又逃离",
+      brief: "你在亲密中更容易启动双重防御，常在表达与撤离之间快速切换。",
+    },
+    secure: {
+      key: "fearful-healing",
+      name: "重建安全型",
+      tag: "修复式成长",
+      brief: "你有明显的自我觉察和修复意愿，稳定关系节奏后改善速度通常很快。",
+    },
+  },
+};
+
+/**
+ * 依恋亚型默认兜底映射。
+ */
+const ATTACHMENT_SUBTYPE_DEFAULT_MAP = {
+  secure: ATTACHMENT_SUBTYPE_MAP.secure.anxious,
+  anxious: ATTACHMENT_SUBTYPE_MAP.anxious.secure,
+  avoidant: ATTACHMENT_SUBTYPE_MAP.avoidant.secure,
+  fearful: ATTACHMENT_SUBTYPE_MAP.fearful.anxious,
+};
 
 /**
  * 创建零分值映射。
@@ -328,13 +426,105 @@ function buildDistribution(rawScoreMap) {
 }
 
 /**
+ * 计算依恋结果强度等级。
+ * 复杂度评估：O(1)
+ * @param {number} topScore 主类型占比。
+ * @param {number} gapScore 主次类型分差。
+ * @returns {{ label: string, description: string }} 强度信息。
+ */
+function resolveAttachmentIntensity(topScore, gapScore) {
+  if (topScore >= 36 || gapScore >= 14) {
+    return {
+      label: "高",
+      description: "你的主导模式非常清晰，在多数亲密场景会稳定出现。",
+    };
+  }
+
+  if (topScore >= 30 || gapScore >= 8) {
+    return {
+      label: "中",
+      description: "你有较明显倾向，但在不同关系阶段会出现一定波动。",
+    };
+  }
+
+  return {
+    label: "轻",
+    description: "你的模式更接近平衡型，实际表现会随关系对象与情境变化。",
+  };
+}
+
+/**
+ * 根据分布推导细分依恋亚型。
+ * 复杂度评估：O(T)
+ * T 为类型数量（固定 4）。
+ * @param {Array<{ key: string, name: string, score: number }>} distribution 类型分布列表。
+ * @returns {{ coreTypeKey: string, coreTypeName: string, secondaryTypeKey: string, secondaryTypeName: string, subtypeKey: string, subtypeName: string, subtypeTag: string, subtypeBrief: string, signature: string, tendencyGap: number, intensityLabel: string, intensityDescription: string }} 细分亚型结果。
+ */
+export function deriveAttachmentSubtypeProfile(distribution) {
+  const safeDistribution = Array.isArray(distribution)
+    ? distribution
+        .map((item) => ({
+          key: String(item?.key ?? ""),
+          name: String(item?.name ?? ""),
+          score: Number(item?.score ?? 0),
+        }))
+        .filter((item) => ATTACHMENT_TYPE_KEYS.includes(item.key))
+        .sort((leftItem, rightItem) => rightItem.score - leftItem.score)
+    : [];
+
+  const topType = safeDistribution[0] ?? {
+    key: "secure",
+    name: ATTACHMENT_PROFILE_MAP.secure.name,
+    score: 0,
+  };
+  const secondaryType = safeDistribution[1] ?? {
+    key: topType.key === "secure" ? "anxious" : "secure",
+    name:
+      ATTACHMENT_PROFILE_MAP[topType.key === "secure" ? "anxious" : "secure"]?.name ??
+      ATTACHMENT_PROFILE_MAP.anxious.name,
+    score: 0,
+  };
+
+  const subtype =
+    ATTACHMENT_SUBTYPE_MAP[topType.key]?.[secondaryType.key] ??
+    ATTACHMENT_SUBTYPE_DEFAULT_MAP[topType.key] ??
+    ATTACHMENT_SUBTYPE_DEFAULT_MAP.secure;
+
+  const tendencyGap = clampPercentage(topType.score - secondaryType.score);
+  const intensity = resolveAttachmentIntensity(topType.score, tendencyGap);
+
+  return {
+    coreTypeKey: topType.key,
+    coreTypeName: topType.name || ATTACHMENT_PROFILE_MAP[topType.key]?.name || "安全依恋型",
+    secondaryTypeKey: secondaryType.key,
+    secondaryTypeName:
+      secondaryType.name ||
+      ATTACHMENT_PROFILE_MAP[secondaryType.key]?.name ||
+      ATTACHMENT_PROFILE_MAP.anxious.name,
+    subtypeKey: subtype.key,
+    subtypeName: subtype.name,
+    subtypeTag: subtype.tag,
+    subtypeBrief: subtype.brief,
+    signature: `${topType.name || ATTACHMENT_PROFILE_MAP[topType.key]?.name} · ${subtype.name}`,
+    tendencyGap,
+    intensityLabel: intensity.label,
+    intensityDescription: intensity.description,
+  };
+}
+
+/**
  * 生成本地说明文本。
  * @param {object} topType 主类型对象。
+ * @param {object} subtypeProfile 细分亚型信息。
  * @returns {string} 本地说明。
  */
-function buildLocalNarrative(topType) {
+function buildLocalNarrative(topType, subtypeProfile) {
   const profile = ATTACHMENT_PROFILE_MAP[topType.key] ?? ATTACHMENT_PROFILE_MAP.secure;
-  return `你的当前主类型是「${profile.name}」。${profile.summary}`;
+  const subtypeSummary = subtypeProfile?.subtypeBrief
+    ? `细分结果为「${subtypeProfile.subtypeName}」，${subtypeProfile.subtypeBrief}`
+    : "";
+
+  return `你的当前主类型是「${profile.name}」。${profile.summary}${subtypeSummary}`;
 }
 
 /**
@@ -342,18 +532,20 @@ function buildLocalNarrative(topType) {
  * 复杂度评估：
  * 1. 原始分值累加：O(Q * K)
  * 2. 类型分布排序：O(T log T)
+ * 3. 亚型推导：O(T)
  * 总体复杂度：O(Q * K + T log T)
  * 其中 Q 为题量（固定 15），K=4，T=4。
  * @param {object} params 参数对象。
  * @param {Array<object>} params.questions 本轮题目。
  * @param {Array<string|null>} params.answerIds 用户答案。
- * @returns {{ topType: object, topThree: Array<object>, distribution: Array<object>, rawScoreMap: object, answerSummary: Array<object>, summaryLines: Array<string>, localNarrative: string, profileMap: object }} 本地分析结果。
+ * @returns {{ topType: object, topThree: Array<object>, distribution: Array<object>, rawScoreMap: object, answerSummary: Array<object>, summaryLines: Array<string>, localNarrative: string, subtypeProfile: object, profileMap: object }} 本地分析结果。
  */
 export function analyzeLoveAttachmentLocally({ questions, answerIds }) {
   const answerSummary = buildAnswerSummary(questions, answerIds);
   const summaryLines = buildSummaryLines(answerSummary);
   const rawScoreMap = buildRawScoreMap(questions, answerIds);
   const distribution = buildDistribution(rawScoreMap);
+  const subtypeProfile = deriveAttachmentSubtypeProfile(distribution);
 
   const topType = distribution[0] ?? {
     key: "secure",
@@ -370,7 +562,8 @@ export function analyzeLoveAttachmentLocally({ questions, answerIds }) {
     rawScoreMap,
     answerSummary,
     summaryLines,
-    localNarrative: buildLocalNarrative(topType),
+    localNarrative: buildLocalNarrative(topType, subtypeProfile),
+    subtypeProfile,
     profileMap: ATTACHMENT_PROFILE_MAP,
   };
 }
