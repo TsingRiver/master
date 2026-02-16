@@ -61,23 +61,31 @@
           >
             <svg class="romancex-heart-svg" viewBox="0 0 200 180" aria-hidden="true">
               <defs>
-                <linearGradient id="romancex-heart-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient :id="heartGradientId" x1="0%" y1="100%" x2="0%" y2="0%">
                   <stop offset="0%" stop-color="#f06ca6" />
                   <stop offset="100%" stop-color="#8f7ef6" />
                 </linearGradient>
                 <clipPath :id="heartClipPathId">
-                  <rect x="0" y="0" :width="heartClipWidth" height="180" />
+                  <path
+                    d="M100 164 C100 164 16 112 16 60 C16 30 40 12 64 12 C80 12 94 20 100 34 C106 20 120 12 136 12 C160 12 184 30 184 60 C184 112 100 164 100 164 Z"
+                  />
                 </clipPath>
               </defs>
               <path
                 class="romancex-heart-base"
                 d="M100 164 C100 164 16 112 16 60 C16 30 40 12 64 12 C80 12 94 20 100 34 C106 20 120 12 136 12 C160 12 184 30 184 60 C184 112 100 164 100 164 Z"
               />
-              <path
-                class="romancex-heart-fill"
-                :clip-path="`url(#${heartClipPathId})`"
-                d="M100 164 C100 164 16 112 16 60 C16 30 40 12 64 12 C80 12 94 20 100 34 C106 20 120 12 136 12 C160 12 184 30 184 60 C184 112 100 164 100 164 Z"
-              />
+              <g :clip-path="`url(#${heartClipPathId})`">
+                <path
+                  class="romancex-heart-water-back"
+                  :d="heartWaveBackPath"
+                />
+                <path
+                  class="romancex-heart-water-front"
+                  :d="heartWaveFrontPath"
+                  :fill="`url(#${heartGradientId})`"
+                />
+              </g>
               <path
                 class="romancex-heart-stroke"
                 d="M100 164 C100 164 16 112 16 60 C16 30 40 12 64 12 C80 12 94 20 100 34 C106 20 120 12 136 12 C160 12 184 30 184 60 C184 112 100 164 100 164 Z"
@@ -306,7 +314,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { showToast } from "vant";
 import {
   selectRandomQuestionsWithoutRepeat,
@@ -323,6 +331,8 @@ const LOCAL_RESULT_FALLBACK_DELAY_MS = 14000;
 const DEEP_RESULT_HARD_TIMEOUT_MS = 45000;
 const SUMMARY_PREVIEW_LIMIT = 3;
 const HEART_VIEWBOX_WIDTH = 200;
+const HEART_VIEWBOX_HEIGHT = 180;
+const HEART_WAVE_SAMPLE_STEP = 6;
 
 /**
  * 雷达图固定尺寸常量。
@@ -399,6 +409,15 @@ const answers = ref([]);
 const selectedQuestionBank = ref([]);
 const unifiedResult = ref(null);
 const showAllSummary = ref(false);
+
+/**
+ * 爱心进度波浪状态：
+ * 1. heartDisplayedFillPercent 用于平滑追踪实际进度，避免水位突变。
+ * 2. heartWavePhase 控制波浪相位，形成持续“海浪”效果。
+ */
+const heartDisplayedFillPercent = ref(0);
+const heartWavePhase = ref(0);
+let heartWaveAnimationFrameId = 0;
 
 /**
  * 加载文案轮播状态。
@@ -564,12 +583,87 @@ const romanceProgressHint = computed(() => {
 });
 
 /**
- * 爱心进度裁剪参数：
- * 关键逻辑：通过 SVG clipPath 控制爱心填充宽度，保留神秘感且不显示题号。
+ * 爱心 SVG 资源 ID：
+ * 关键逻辑：使用组件级唯一 ID，避免页面存在多个实例时 clipPath/gradient 冲突。
  */
-const heartClipPathId = "romancex-heart-clip";
-const heartClipWidth = computed(
-  () => (HEART_VIEWBOX_WIDTH * progressPercent.value) / 100,
+const heartSvgUid = Math.random().toString(36).slice(2, 8);
+const heartClipPathId = `romancex-heart-clip-${heartSvgUid}`;
+const heartGradientId = `romancex-heart-gradient-${heartSvgUid}`;
+
+/**
+ * 平滑后的爱心填充百分比。
+ */
+const heartFillPercent = computed(() =>
+  Math.max(0, Math.min(100, heartDisplayedFillPercent.value)),
+);
+
+/**
+ * 构建爱心水位波浪路径。
+ * 复杂度评估：O(P)
+ * P 为波浪采样点数量（固定约 34 个），属于常数级渲染开销。
+ * @param {object} params 路径参数。
+ * @param {number} params.fillPercent 当前填充百分比（0~100）。
+ * @param {number} params.amplitude 波峰振幅。
+ * @param {number} params.wavelength 波长。
+ * @param {number} params.phaseOffset 相位偏移。
+ * @returns {string} SVG path 字符串。
+ */
+function buildHeartWavePath({
+  fillPercent,
+  amplitude,
+  wavelength,
+  phaseOffset,
+}) {
+  const clampedFillPercent = Math.max(0, Math.min(100, Number(fillPercent) || 0));
+  const waterBaseY =
+    HEART_VIEWBOX_HEIGHT -
+    (HEART_VIEWBOX_HEIGHT * clampedFillPercent) / 100;
+  const clampedWaterBaseY = Math.max(0, Math.min(HEART_VIEWBOX_HEIGHT, waterBaseY));
+
+  let pathData = `M 0 ${HEART_VIEWBOX_HEIGHT} L 0 ${clampedWaterBaseY.toFixed(2)}`;
+  for (
+    let sampleX = 0;
+    sampleX <= HEART_VIEWBOX_WIDTH;
+    sampleX += HEART_WAVE_SAMPLE_STEP
+  ) {
+    const waveRadians =
+      (sampleX / wavelength) * Math.PI * 2 +
+      heartWavePhase.value +
+      phaseOffset;
+    const waveY =
+      clampedWaterBaseY + Math.sin(waveRadians) * amplitude;
+    const clampedWaveY = Math.max(0, Math.min(HEART_VIEWBOX_HEIGHT, waveY));
+    pathData += ` L ${sampleX.toFixed(2)} ${clampedWaveY.toFixed(2)}`;
+  }
+
+  pathData += ` L ${HEART_VIEWBOX_WIDTH} ${HEART_VIEWBOX_HEIGHT} Z`;
+  return pathData;
+}
+
+/**
+ * 前景波浪路径：
+ * 关键逻辑：更高振幅与更短波长，形成更清晰的动态“海浪”顶边。
+ */
+const heartWaveFrontPath = computed(() =>
+  buildHeartWavePath({
+    fillPercent: heartFillPercent.value,
+    amplitude: 4.4,
+    wavelength: 56,
+    phaseOffset: 0,
+  }),
+);
+
+/**
+ * 背景波浪路径：
+ * 关键逻辑：较低振幅叠加，增强层次感与流体质感。
+ */
+const heartWaveBackPath = computed(() =>
+  buildHeartWavePath({
+    fillPercent: heartFillPercent.value,
+    amplitude: 3.2,
+    wavelength: 74,
+    phaseOffset: Math.PI / 2,
+  }),
 );
 
 /**
@@ -845,6 +939,8 @@ function resetSurveyState() {
   answers.value = Array.from({ length: questionBank.value.length }, () => null);
   unifiedResult.value = null;
   stage.value = "survey";
+  heartDisplayedFillPercent.value = progressPercent.value;
+  heartWavePhase.value = 0;
 }
 
 /**
@@ -887,6 +983,47 @@ function stopEncouragementTimer() {
     window.clearTimeout(encouragementTimer);
     encouragementTimer = null;
   }
+}
+
+/**
+ * 停止爱心波浪动画。
+ */
+function stopHeartWaveAnimation() {
+  if (heartWaveAnimationFrameId) {
+    window.cancelAnimationFrame(heartWaveAnimationFrameId);
+    heartWaveAnimationFrameId = 0;
+  }
+}
+
+/**
+ * 单帧推进爱心水位与波浪相位。
+ * 复杂度评估：O(1)
+ * 每帧仅更新常量级状态，波浪路径计算由固定采样点驱动，整体开销稳定。
+ */
+function tickHeartWaveAnimation() {
+  const targetFillPercent = Math.max(
+    0,
+    Math.min(100, Number(progressPercent.value) || 0),
+  );
+  const currentFillPercent = heartDisplayedFillPercent.value;
+  const deltaPercent = targetFillPercent - currentFillPercent;
+
+  heartDisplayedFillPercent.value =
+    Math.abs(deltaPercent) < 0.12
+      ? targetFillPercent
+      : currentFillPercent + deltaPercent * 0.08;
+
+  // 关键逻辑：相位缓慢推进，形成“海浪”般平缓流动效果。
+  heartWavePhase.value = (heartWavePhase.value + 0.016) % (Math.PI * 2);
+  heartWaveAnimationFrameId = window.requestAnimationFrame(tickHeartWaveAnimation);
+}
+
+/**
+ * 启动爱心波浪动画。
+ */
+function startHeartWaveAnimation() {
+  stopHeartWaveAnimation();
+  tickHeartWaveAnimation();
 }
 
 /**
@@ -1747,6 +1884,14 @@ watch(
 );
 
 /**
+ * 组件挂载后启动爱心水位动画。
+ */
+onMounted(() => {
+  heartDisplayedFillPercent.value = progressPercent.value;
+  startHeartWaveAnimation();
+});
+
+/**
  * 组件卸载清理。
  */
 onBeforeUnmount(() => {
@@ -1754,6 +1899,7 @@ onBeforeUnmount(() => {
   stopLoadingMessageTicker();
   stopAutoAdvanceTimer();
   stopEncouragementTimer();
+  stopHeartWaveAnimation();
   isDestinyOverlayVisible.value = false;
   resetPosterState();
 });
@@ -1903,9 +2049,14 @@ onBeforeUnmount(() => {
   fill: rgba(255, 255, 255, 0.85);
 }
 
-.romancex-heart-fill {
-  fill: url(#romancex-heart-gradient);
-  transition: clip-path 320ms ease;
+.romancex-heart-water-back {
+  fill: rgba(240, 108, 166, 0.52);
+  transition: fill 320ms ease, opacity 320ms ease, filter 320ms ease;
+}
+
+.romancex-heart-water-front {
+  opacity: 0.96;
+  transition: opacity 320ms ease, filter 320ms ease;
 }
 
 .romancex-heart-stroke {
@@ -1914,16 +2065,20 @@ onBeforeUnmount(() => {
   stroke-width: 2.3;
 }
 
-.romancex-progress-box.is-processing .romancex-heart-fill {
+.romancex-progress-box.is-processing .romancex-heart-water-front {
   filter: hue-rotate(14deg) saturate(1.14);
 }
 
-.romancex-progress-box.is-success .romancex-heart-fill {
+.romancex-progress-box.is-success .romancex-heart-water-front {
   animation: romancexWaveBurst 0.62s ease-out 1;
 }
 
-.romancex-progress-box.is-fail .romancex-heart-fill {
+.romancex-progress-box.is-fail .romancex-heart-water-back {
   fill: rgba(178, 186, 206, 0.84);
+  opacity: 0.72;
+}
+
+.romancex-progress-box.is-fail .romancex-heart-water-front {
   opacity: 0.72;
   filter: grayscale(0.2);
 }
