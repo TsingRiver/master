@@ -831,6 +831,8 @@ onBeforeUnmount(() => {
 }
 
 .mbti-cell-group {
+  /* 关键逻辑：覆盖 Vant inset 默认外边距，避免答案选项出现额外缩进。 */
+  --van-cell-group-inset-padding: 0;
   background: transparent !important;
 }
 

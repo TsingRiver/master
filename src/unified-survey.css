@@ -144,6 +144,125 @@ body {
   --title-font: "ZCOOL XiaoWei", serif;
 }
 
+.theme-benefactor {
+  --page-bg: linear-gradient(138deg, #f2f3ff, #eaf1ff 50%, #fff1e8);
+  --text-main: #2b2a45;
+  --text-muted: #666287;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-border: rgba(217, 222, 255, 0.9);
+  --shadow: 0 24px 56px rgba(56, 70, 134, 0.16);
+  --primary: #5a6bff;
+  --primary-dark: #ff7f9a;
+  --aura-left: radial-gradient(circle at 30% 30%, #b6c1ff, #8090ff);
+  --aura-right: radial-gradient(circle at 30% 30%, #ffd1df, #ff98b2);
+  --noise-dot: rgba(82, 92, 152, 0.36);
+  --option-border: #dbe0ff;
+  --option-selected-border: #8ea0ff;
+  --option-selected-bg: linear-gradient(180deg, #ffffff, #f2f5ff);
+  --option-selected-shadow: rgba(90, 107, 255, 0.16);
+  --detail-border: #dfe3ff;
+  --detail-bg: linear-gradient(180deg, #ffffff, #f7f8ff);
+  --highlight-border: #e4d6f6;
+  --highlight-bg: linear-gradient(180deg, #f6f7ff, #fff3f8);
+  --title-font: "Noto Serif SC", serif;
+}
+
+.theme-color-2026 {
+  --page-bg:
+    linear-gradient(
+      138deg,
+      var(--runtime-bg-start, #f4f6ff),
+      var(--runtime-bg-mid, #eef2ff) 50%,
+      var(--runtime-bg-end, #fff5ef)
+    );
+  --text-main: var(--runtime-text-main, #2d3250);
+  --text-muted: var(--runtime-text-muted, #676e8e);
+  --surface: color-mix(in srgb, var(--runtime-surface, #ffffff) 90%, transparent);
+  --surface-border: color-mix(
+    in srgb,
+    var(--runtime-surface-border, #d8ddf5) 92%,
+    transparent
+  );
+  --shadow: var(--runtime-shadow, 0 24px 54px rgba(108, 121, 198, 0.16));
+  --primary: var(--runtime-primary, #6c79c6);
+  --primary-dark: var(--runtime-primary-dark, #a9b4e6);
+  --aura-left:
+    radial-gradient(
+      circle at 30% 30%,
+      var(--runtime-aura-left, #aebbff),
+      color-mix(in srgb, var(--runtime-aura-left, #aebbff) 72%, #ffffff 28%)
+    );
+  --aura-right:
+    radial-gradient(
+      circle at 30% 30%,
+      var(--runtime-aura-right, #f3b7c8),
+      color-mix(in srgb, var(--runtime-aura-right, #f3b7c8) 72%, #ffffff 28%)
+    );
+  --noise-dot: color-mix(in srgb, var(--runtime-primary, #6c79c6) 42%, #000000 58%);
+  --option-border: var(--runtime-option-border, #d3d9f0);
+  --option-selected-border: var(--runtime-option-selected-border, #9ca8df);
+  --option-selected-bg:
+    linear-gradient(
+      180deg,
+      var(--runtime-option-selected-bg-start, #ffffff),
+      var(--runtime-option-selected-bg-end, #eef2ff)
+    );
+  --option-selected-shadow: var(--runtime-option-shadow, rgba(108, 121, 198, 0.17));
+  --detail-border: color-mix(in srgb, var(--runtime-option-border, #d3d9f0) 84%, #ffffff 16%);
+  --detail-bg:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--runtime-surface, #ffffff) 98%, #ffffff 2%),
+      color-mix(in srgb, var(--runtime-option-selected-bg-end, #eef2ff) 42%, #ffffff 58%)
+    );
+  --highlight-border: var(--runtime-highlight-border, #d7dcf4);
+  --highlight-bg:
+    linear-gradient(
+      180deg,
+      var(--runtime-highlight-bg-start, #f6f8ff),
+      var(--runtime-highlight-bg-end, #fdeff5)
+    );
+  --title-font: "Noto Serif SC", serif;
+}
+
+.theme-color-2026,
+.theme-color-2026 .survey-card,
+.theme-color-2026 .survey-option,
+.theme-color-2026 .survey-detail-wrap,
+.theme-color-2026 .survey-top-wrap,
+.theme-color-2026 .survey-summary-wrap,
+.theme-color-2026 .survey-highlight-box,
+.theme-color-2026 .survey-type-card-item {
+  transition:
+    background 360ms ease,
+    border-color 320ms ease,
+    box-shadow 320ms ease,
+    color 260ms ease;
+}
+
+.theme-love-attachment {
+  --page-bg: linear-gradient(138deg, #fff2f7, #f4efff 48%, #eef4ff);
+  --text-main: #3e2f53;
+  --text-muted: #7a6b93;
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface-border: rgba(229, 215, 247, 0.92);
+  --shadow: 0 24px 54px rgba(105, 80, 139, 0.16);
+  --primary: #e989ad;
+  --primary-dark: #7c96e9;
+  --aura-left: radial-gradient(circle at 30% 30%, #f8b9ce, #ec8fb0);
+  --aura-right: radial-gradient(circle at 30% 30%, #b9c6ff, #8fa7f8);
+  --noise-dot: rgba(112, 92, 143, 0.36);
+  --option-border: #e7d7f2;
+  --option-selected-border: #c7a5df;
+  --option-selected-bg: linear-gradient(180deg, #fff, #f8f2ff);
+  --option-selected-shadow: rgba(136, 109, 171, 0.16);
+  --detail-border: #e7dbf3;
+  --detail-bg: linear-gradient(180deg, #fff, #f8f3ff);
+  --highlight-border: #ead6ee;
+  --highlight-bg: linear-gradient(180deg, #fff8fb, #f5f0ff);
+  --title-font: "Noto Serif SC", serif;
+}
+
 .theme-mbti {
   --page-bg: linear-gradient(138deg, #141522, #1f2035 54%, #2e2143);
   --text-main: #f6f2ff;
@@ -302,6 +421,8 @@ body {
 }
 
 .survey-cell-group {
+  /* 关键逻辑：覆盖 Vant inset 组默认外边距，保证答案选项与容器对齐。 */
+  --van-cell-group-inset-padding: 0;
   background: transparent !important;
 }
 
@@ -454,6 +575,31 @@ body {
   font-size: 14px;
 }
 
+.survey-tag-wrap {
+  margin-top: 14px;
+}
+
+.survey-tag-wrap h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.survey-tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.survey-tag-item {
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  border: 1px solid var(--detail-border);
+  background: color-mix(in srgb, var(--highlight-bg) 88%, #ffffff 12%);
+}
+
 .survey-type-card-wrap {
   margin-top: 16px;
   border-radius: 14px;
@@ -498,6 +644,40 @@ body {
   margin: 8px 0 0;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.survey-distribution-wrap {
+  margin-top: 16px;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--detail-border);
+  background: var(--detail-bg);
+}
+
+.survey-distribution-wrap h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.survey-distribution-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.survey-distribution-item {
+  display: grid;
+  gap: 6px;
+}
+
+.survey-distribution-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  color: var(--text-main);
 }
 
 .theme-mbti .survey-type-card-item {

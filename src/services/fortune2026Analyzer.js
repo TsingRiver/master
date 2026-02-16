@@ -28,7 +28,7 @@ const FORTUNE_DIMENSION_KEYS = Object.keys(FORTUNE_DIMENSION_LABELS);
  */
 const KEYWORD_PROFILES = [
   {
-    keyword: "破局",
+    keyword: "开干模式",
     profile: {
       discipline: 7,
       execution: 10,
@@ -43,10 +43,10 @@ const KEYWORD_PROFILES = [
       riskControl: 5,
       growth: 7,
     },
-    meaning: "先行动再修正，2026 的机会会在“启动后”出现。",
+    meaning: "先动起来再优化，你的机会大多出现在“开始做了以后”。",
   },
   {
-    keyword: "聚焦",
+    keyword: "专注主线",
     profile: {
       discipline: 10,
       execution: 8,
@@ -61,10 +61,10 @@ const KEYWORD_PROFILES = [
       riskControl: 8,
       growth: 8,
     },
-    meaning: "减少分散投入，把资源集中到一个主战场更容易转运。",
+    meaning: "别分太多支线，把精力集中到一个主战场更容易出成绩。",
   },
   {
-    keyword: "链接",
+    keyword: "人脉加分",
     profile: {
       discipline: 6,
       execution: 7,
@@ -79,10 +79,10 @@ const KEYWORD_PROFILES = [
       riskControl: 6,
       growth: 7,
     },
-    meaning: "贵人和协作机会是你的放大器，关系经营会带来关键转折。",
+    meaning: "多和人连接、主动协作，贵人和机会都会明显变多。",
   },
   {
-    keyword: "复利",
+    keyword: "稳步变好",
     profile: {
       discipline: 9,
       execution: 7,
@@ -97,10 +97,10 @@ const KEYWORD_PROFILES = [
       riskControl: 9,
       growth: 9,
     },
-    meaning: "稳定积累会在 2026 下半年显化，关键是连续性而非爆发。",
+    meaning: "保持连续小进步就会看到变化，关键不是爆发而是不断档。",
   },
   {
-    keyword: "出圈",
+    keyword: "被看见",
     profile: {
       discipline: 6,
       execution: 8,
@@ -115,10 +115,10 @@ const KEYWORD_PROFILES = [
       riskControl: 5,
       growth: 7,
     },
-    meaning: "曝光度和表达力将决定你的增量，主动展示会带来新机会。",
+    meaning: "多表达、多展示，你的增量机会更容易被你主动争取到。",
   },
   {
-    keyword: "稳场",
+    keyword: "稳住节奏",
     profile: {
       discipline: 8,
       execution: 6,
@@ -133,10 +133,10 @@ const KEYWORD_PROFILES = [
       riskControl: 10,
       growth: 7,
     },
-    meaning: "先稳状态再提速度，你的好运来自高质量、低波动的节奏。",
+    meaning: "先把作息、情绪和工作节奏稳住，你的好运会更持续。",
   },
   {
-    keyword: "提速",
+    keyword: "效率在线",
     profile: {
       discipline: 7,
       execution: 10,
@@ -151,10 +151,10 @@ const KEYWORD_PROFILES = [
       riskControl: 6,
       growth: 8,
     },
-    meaning: "减少犹豫和内耗，你的关键收益点在于“更快交付”。",
+    meaning: "少犹豫、少内耗、快交付，今年最容易靠执行效率拉开差距。",
   },
   {
-    keyword: "蓄能",
+    keyword: "状态回暖",
     profile: {
       discipline: 7,
       execution: 5,
@@ -169,7 +169,7 @@ const KEYWORD_PROFILES = [
       riskControl: 8,
       growth: 7,
     },
-    meaning: "转运不是硬冲，而是先把能量场调到稳定可持续状态。",
+    meaning: "先把状态养回来，不硬冲，后面反而更容易顺起来。",
   },
 ];
 
@@ -302,7 +302,7 @@ function extractTopDimensions(preferenceVector) {
  */
 function buildLocalNarrative(topKeyword, preferenceVector) {
   const topDimensions = extractTopDimensions(preferenceVector);
-  return `你的 2026 主轴更偏向“${topKeyword.keyword}”，因为你在${topDimensions.join("、")}方面势能更强。${topKeyword.meaning}`;
+  return `你在 2026 更适合走「${topKeyword.keyword}」这条路，因为你在${topDimensions.join("、")}这些方面更有优势。${topKeyword.meaning}`;
 }
 
 /**

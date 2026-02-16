@@ -3,6 +3,9 @@ import { CITY_PROFILES } from "../data/cityProfiles";
 import { FORTUNE_2026_QUESTION_BANK } from "../data/fortune2026QuestionBank";
 import { ANCIENT_IDENTITY_QUESTION_BANK } from "../data/ancientIdentityQuestionBank";
 import { HIDDEN_TALENT_QUESTION_BANK } from "../data/hiddenTalentQuestionBank";
+import { BENEFACTOR_2026_QUESTION_BANK } from "../data/benefactor2026QuestionBank";
+import { COLOR_2026_QUESTION_BANK } from "../data/color2026QuestionBank";
+import { LOVE_ATTACHMENT_QUESTION_BANK } from "../data/loveAttachmentQuestionBank";
 import { analyzeCitiesLocally } from "../services/localAnalyzer";
 import { analyzeCityWithAI } from "../services/aiAnalyzer";
 import { analyzeFortune2026Locally } from "../services/fortune2026Analyzer";
@@ -11,6 +14,12 @@ import { analyzeAncientIdentityLocally } from "../services/ancientIdentityAnalyz
 import { analyzeAncientIdentityWithDeepInsight } from "../services/ancientIdentityAiAnalyzer";
 import { analyzeHiddenTalentLocally } from "../services/hiddenTalentAnalyzer";
 import { analyzeHiddenTalentWithDeepInsight } from "../services/hiddenTalentAiAnalyzer";
+import { analyzeBenefactor2026Locally } from "../services/benefactor2026Analyzer";
+import { analyzeBenefactor2026WithAI } from "../services/benefactor2026AiAnalyzer";
+import { analyzeColor2026Locally } from "../services/color2026Analyzer";
+import { analyzeColor2026WithAI } from "../services/color2026AiAnalyzer";
+import { analyzeLoveAttachmentLocally } from "../services/loveAttachmentAnalyzer";
+import { analyzeLoveAttachmentWithAI } from "../services/loveAttachmentAiAnalyzer";
 
 /**
  * 统一结果结构说明：
@@ -24,6 +33,8 @@ export const UNIFIED_RESULT_TEMPLATE = {
   main: { name: "", score: 0 },
   highlightCard: { title: "", content: "" },
   insight: "",
+  tagChips: [],
+  distributionChart: { title: "", items: [] },
   typeCard: { title: "", items: [] },
   topThreeTitle: "",
   topThree: [],
@@ -432,6 +443,585 @@ function buildTalentLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 贵人星座主题：构建深度分析请求负载。
+ * @param {object} localResult 本地分析结果。
+ * @returns {{ summaryLines: Array<string>, preferenceVector: object, signCandidates: Array<object>, localTopThree: Array<object> }} 深度分析负载。
+ */
+function buildBenefactorDeepPayload(localResult) {
+  return {
+    summaryLines: localResult.summaryLines,
+    preferenceVector: localResult.preferenceVector,
+    signCandidates: localResult.scoredSigns.map((item) => ({
+      sign: item.sign,
+      code: item.code,
+      supportStyle: item.supportStyle,
+      profile: item.profile,
+    })),
+    localTopThree: localResult.topThree.map((item) => ({
+      sign: item.sign,
+      score: item.score,
+      supportStyle: item.supportStyle,
+    })),
+  };
+}
+
+/**
+ * 贵人星座主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildBenefactorDeepUnifiedResult(deepResult, localResult) {
+  return createUnifiedResult({
+    source: "deep",
+    prefixLabel: "你在 2026 的贵人星座",
+    scoreLabel: "星座契合度",
+    main: deepResult.mainSign,
+    highlightCard: {
+      title: "贵人信号",
+      content: deepResult.guardianSignal,
+    },
+    insight: deepResult.insight,
+    topThreeTitle: "贵人星座 Top 3",
+    topThree: deepResult.topThree,
+    detailSections: [
+      { title: "机会动作", items: deepResult.keyOpportunities },
+      { title: "避坑提醒", items: deepResult.avoidSignals },
+    ],
+    summaryTitle: "答卷摘要",
+    summaryLines: localResult.summaryLines,
+    restartButtonText: "重新测试",
+  });
+}
+
+/**
+ * 贵人星座主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildBenefactorLocalUnifiedResult(localResult) {
+  return createUnifiedResult({
+    source: "local",
+    prefixLabel: "你在 2026 的贵人星座",
+    scoreLabel: "星座契合度",
+    main: {
+      name: localResult.topSign.sign,
+      score: localResult.topSign.score,
+    },
+    highlightCard: {
+      title: "贵人信号",
+      content: localResult.topSign.supportStyle,
+    },
+    insight: localResult.localNarrative,
+    topThreeTitle: "贵人星座 Top 3",
+    topThree: localResult.topThree.map((item) => ({
+      name: item.sign,
+      score: item.score,
+    })),
+    detailSections: [
+      {
+        title: "机会动作",
+        items: [
+          "把你当前最重要的一件事公开表达，主动释放协作信号。",
+          "优先维护 2-3 位能互补你短板的关键联系人。",
+          "遇到卡点时，不只问“怎么做”，也问“和谁一起做”。",
+        ],
+      },
+      {
+        title: "避坑提醒",
+        items: ["闭门单打独斗太久", "情绪上头后切断沟通链路"],
+      },
+    ],
+    summaryTitle: "答卷摘要",
+    summaryLines: localResult.summaryLines,
+    restartButtonText: "重新测试",
+  });
+}
+
+/**
+ * 2026 主题色运行时调色板：
+ * 关键逻辑：全部为“降饱和适配值”，避免黑/红等高冲击颜色直接铺满页面造成可读性问题。
+ */
+const COLOR_2026_RUNTIME_PALETTE = {
+  black: {
+    key: "black",
+    name: "曜石黑",
+    accent: "#454B58",
+    accentSoft: "#8B94A6",
+    bgStart: "#F2F4F8",
+    bgMid: "#EAEFF5",
+    bgEnd: "#F8F9FC",
+    textMain: "#2A2F3A",
+    textMuted: "#646D7C",
+    surface: "#FFFFFF",
+    surfaceBorder: "#D7DEE9",
+    optionBorder: "#D0D8E4",
+    optionSelectedBorder: "#8E99AB",
+    optionSelectedBgStart: "#FFFFFF",
+    optionSelectedBgEnd: "#EEF2F7",
+    highlightBorder: "#D5DCE7",
+    highlightBgStart: "#F7F9FC",
+    highlightBgEnd: "#EEF2F8",
+    auraLeft: "#A7B1C0",
+    auraRight: "#CDD4DF",
+  },
+  blue: {
+    key: "blue",
+    name: "深海蓝",
+    accent: "#4B6DD9",
+    accentSoft: "#8CA4F2",
+    bgStart: "#EFF3FF",
+    bgMid: "#E8F0FF",
+    bgEnd: "#F5F8FF",
+    textMain: "#27335C",
+    textMuted: "#5E6C97",
+    surface: "#FFFFFF",
+    surfaceBorder: "#D7E0FF",
+    optionBorder: "#D3DCFA",
+    optionSelectedBorder: "#8EA4EC",
+    optionSelectedBgStart: "#FFFFFF",
+    optionSelectedBgEnd: "#EEF3FF",
+    highlightBorder: "#D6E0FF",
+    highlightBgStart: "#F5F8FF",
+    highlightBgEnd: "#EDF2FF",
+    auraLeft: "#A9BEFF",
+    auraRight: "#C7D4FF",
+  },
+  red: {
+    key: "red",
+    name: "赤焰红",
+    accent: "#D26072",
+    accentSoft: "#E8A0AB",
+    bgStart: "#FFF1F4",
+    bgMid: "#FFE9EE",
+    bgEnd: "#FFF6F8",
+    textMain: "#4E2A35",
+    textMuted: "#855E69",
+    surface: "#FFFFFF",
+    surfaceBorder: "#F6D7DF",
+    optionBorder: "#F2D1DA",
+    optionSelectedBorder: "#E099A7",
+    optionSelectedBgStart: "#FFFFFF",
+    optionSelectedBgEnd: "#FFF0F3",
+    highlightBorder: "#F1CED8",
+    highlightBgStart: "#FFF7F9",
+    highlightBgEnd: "#FFEFF3",
+    auraLeft: "#F0B3BF",
+    auraRight: "#FFD1D8",
+  },
+  green: {
+    key: "green",
+    name: "松柏绿",
+    accent: "#4D9A78",
+    accentSoft: "#8ECBAF",
+    bgStart: "#EEF9F3",
+    bgMid: "#E7F5EE",
+    bgEnd: "#F6FCF9",
+    textMain: "#274537",
+    textMuted: "#5D7F71",
+    surface: "#FFFFFF",
+    surfaceBorder: "#D3EDDF",
+    optionBorder: "#CEE7DA",
+    optionSelectedBorder: "#8FC5AD",
+    optionSelectedBgStart: "#FFFFFF",
+    optionSelectedBgEnd: "#ECF8F2",
+    highlightBorder: "#CEE8DA",
+    highlightBgStart: "#F5FCF8",
+    highlightBgEnd: "#ECF7F1",
+    auraLeft: "#A8DCC4",
+    auraRight: "#CBECDD",
+  },
+  yellow: {
+    key: "yellow",
+    name: "日光黄",
+    accent: "#C79A38",
+    accentSoft: "#E0C17E",
+    bgStart: "#FFF8EB",
+    bgMid: "#FFF3DF",
+    bgEnd: "#FFFBEF",
+    textMain: "#4E3D1E",
+    textMuted: "#7C6841",
+    surface: "#FFFFFF",
+    surfaceBorder: "#F0E1BC",
+    optionBorder: "#EEDDB2",
+    optionSelectedBorder: "#DBBE79",
+    optionSelectedBgStart: "#FFFFFF",
+    optionSelectedBgEnd: "#FFF6E5",
+    highlightBorder: "#EDDDAF",
+    highlightBgStart: "#FFFCEE",
+    highlightBgEnd: "#FFF4DF",
+    auraLeft: "#F1DAA0",
+    auraRight: "#FFE9B8",
+  },
+  purple: {
+    key: "purple",
+    name: "雾霭紫",
+    accent: "#7A65BE",
+    accentSoft: "#AA98DE",
+    bgStart: "#F4F0FF",
+    bgMid: "#EEE8FF",
+    bgEnd: "#F9F6FF",
+    textMain: "#3B2F62",
+    textMuted: "#6C6090",
+    surface: "#FFFFFF",
+    surfaceBorder: "#E1D9F8",
+    optionBorder: "#DCD2F4",
+    optionSelectedBorder: "#A999D8",
+    optionSelectedBgStart: "#FFFFFF",
+    optionSelectedBgEnd: "#F1ECFF",
+    highlightBorder: "#DDD2F5",
+    highlightBgStart: "#F8F4FF",
+    highlightBgEnd: "#F0E9FF",
+    auraLeft: "#C8BAEC",
+    auraRight: "#E1D7FA",
+  },
+  orange: {
+    key: "orange",
+    name: "珊瑚橙",
+    accent: "#D07A4C",
+    accentSoft: "#E5A782",
+    bgStart: "#FFF4EC",
+    bgMid: "#FFEDE1",
+    bgEnd: "#FFF8F1",
+    textMain: "#543425",
+    textMuted: "#886350",
+    surface: "#FFFFFF",
+    surfaceBorder: "#F4DDCE",
+    optionBorder: "#F0D7C7",
+    optionSelectedBorder: "#E3AF8F",
+    optionSelectedBgStart: "#FFFFFF",
+    optionSelectedBgEnd: "#FFF2E8",
+    highlightBorder: "#EFD7C6",
+    highlightBgStart: "#FFF9F3",
+    highlightBgEnd: "#FFEFE3",
+    auraLeft: "#F0BF9F",
+    auraRight: "#FFD9C1",
+  },
+  white: {
+    key: "white",
+    name: "云朵白",
+    accent: "#8A94A8",
+    accentSoft: "#B8C0D1",
+    bgStart: "#FAFBFD",
+    bgMid: "#F4F6FA",
+    bgEnd: "#FFFFFF",
+    textMain: "#2D3442",
+    textMuted: "#697285",
+    surface: "#FFFFFF",
+    surfaceBorder: "#E0E5EF",
+    optionBorder: "#DAE0EA",
+    optionSelectedBorder: "#AAB3C5",
+    optionSelectedBgStart: "#FFFFFF",
+    optionSelectedBgEnd: "#F4F7FC",
+    highlightBorder: "#DDE3EE",
+    highlightBgStart: "#FBFCFF",
+    highlightBgEnd: "#F4F7FC",
+    auraLeft: "#D6DDE8",
+    auraRight: "#EAEFF7",
+  },
+};
+
+/**
+ * 主题色主题：构建深度分析请求负载。
+ * @param {object} localResult 本地分析结果。
+ * @returns {{ summaryLines: Array<string>, colorCandidates: Array<object>, localTopThree: Array<object> }} 深度分析负载。
+ */
+function buildColorThemeDeepPayload(localResult) {
+  return {
+    summaryLines: localResult.summaryLines,
+    colorCandidates: localResult.scoredColors.map((item) => ({
+      key: item.key,
+      name: item.name,
+      hex: item.hex,
+      vibe: item.vibe,
+      lifeHint: item.lifeHint,
+    })),
+    localTopThree: localResult.topThree.map((item) => ({
+      key: item.key,
+      name: item.name,
+      score: item.score,
+      hex: item.hex,
+    })),
+  };
+}
+
+/**
+ * 主题色主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildColorThemeDeepUnifiedResult(deepResult, localResult) {
+  return createUnifiedResult({
+    source: "deep",
+    prefixLabel: "你的 2026 主题色",
+    scoreLabel: "主题色匹配度",
+    main: deepResult.mainColor,
+    highlightCard: {
+      title: "颜色气质",
+      content: deepResult.dailyMood,
+    },
+    insight: deepResult.insight,
+    typeCard: {
+      title: "我的主题色卡",
+      items: deepResult.topThree.map((item, index) => ({
+        label: index === 0 ? "主色" : index === 1 ? "辅助色" : "点缀色",
+        value: item.name,
+      })),
+    },
+    topThreeTitle: "主题色 Top 3",
+    topThree: deepResult.topThree,
+    detailSections: [
+      { title: "日常建议", items: deepResult.keyActions },
+      { title: "避坑提醒", items: deepResult.avoidSignals },
+    ],
+    summaryTitle: "答卷摘要",
+    summaryLines: localResult.summaryLines,
+    restartButtonText: "重新测试",
+    runtimeColorKey: deepResult.mainColor?.key ?? localResult.topColor.key,
+  });
+}
+
+/**
+ * 主题色主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildColorThemeLocalUnifiedResult(localResult) {
+  return createUnifiedResult({
+    source: "local",
+    prefixLabel: "你的 2026 主题色",
+    scoreLabel: "主题色匹配度",
+    main: {
+      name: localResult.topColor.name,
+      score: localResult.topColor.score,
+    },
+    highlightCard: {
+      title: "颜色气质",
+      content: `${localResult.topColor.vibe}。${localResult.topColor.lifeHint}`,
+    },
+    insight: localResult.localNarrative,
+    typeCard: {
+      title: "我的主题色卡",
+      items: localResult.topThree.map((item, index) => ({
+        label: index === 0 ? "主色" : index === 1 ? "辅助色" : "点缀色",
+        value: item.name,
+      })),
+    },
+    topThreeTitle: "主题色 Top 3",
+    topThree: localResult.topThree.map((item) => ({
+      name: item.name,
+      score: item.score,
+    })),
+    detailSections: [
+      {
+        title: "日常建议",
+        items: [
+          "把主色用于壁纸、待办封面或常用物品，强化目标感。",
+          "每周围绕一个核心任务推进，减少频繁切换。",
+          "用你最舒服的节奏安排生活，让状态长期在线。",
+        ],
+      },
+      {
+        title: "避坑提醒",
+        items: ["短期冲动后连续摆烂", "目标过多导致执行分散"],
+      },
+    ],
+    summaryTitle: "答卷摘要",
+    summaryLines: localResult.summaryLines,
+    restartButtonText: "重新测试",
+    runtimeColorKey: localResult.topColor.key,
+  });
+}
+
+/**
+ * 恋爱心理主题：构建深度分析请求负载。
+ * @param {object} localResult 本地分析结果。
+ * @returns {{ typeCandidates: Array<object>, localDistribution: Array<object>, localMainType: object, summaryLines: Array<string> }} 深度分析负载。
+ */
+function buildLoveAttachmentDeepPayload(localResult) {
+  const profileMap = localResult.profileMap ?? {};
+  const typeCandidates = Object.values(profileMap).map((profileItem) => ({
+    key: profileItem.key,
+    name: profileItem.name,
+    summary: profileItem.summary,
+    tags: profileItem.tags,
+    familyPortrait: profileItem.familyPortrait,
+    whyPattern: profileItem.whyPattern,
+    familyPortraitPoints: profileItem.familyPortraitPoints,
+    whyPatternPoints: profileItem.whyPatternPoints,
+    strengths: profileItem.strengths,
+    risks: profileItem.risks,
+    actions: profileItem.actions,
+  }));
+
+  return {
+    typeCandidates,
+    localDistribution: localResult.distribution,
+    localMainType: localResult.topType,
+    summaryLines: localResult.summaryLines,
+  };
+}
+
+/**
+ * 恋爱心理主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
+  const sortedDistribution = [...(deepResult.distribution ?? [])].sort(
+    (leftItem, rightItem) => rightItem.score - leftItem.score,
+  );
+
+  const fallbackMainType = sortedDistribution[0] ?? localResult.topType;
+  const mainType = deepResult.mainType ?? fallbackMainType;
+  const secondaryType = sortedDistribution[1] ?? null;
+
+  // 关键逻辑：优先使用 AI 返回的结构化要点，缺失时再回退到单段文本，保证展示密度与兼容性。
+  const familyPortraitItems =
+    Array.isArray(deepResult.familyPortraitPoints) &&
+    deepResult.familyPortraitPoints.length > 0
+      ? deepResult.familyPortraitPoints
+      : deepResult.familyPortrait
+        ? [deepResult.familyPortrait]
+        : ["暂无"];
+
+  // 关键逻辑：保持“机制解释”模块与“画像模块”同样的多条目策略，避免结果过于简短。
+  const whyPatternItems =
+    Array.isArray(deepResult.whyPatternPoints) && deepResult.whyPatternPoints.length > 0
+      ? deepResult.whyPatternPoints
+      : deepResult.whyPattern
+        ? [deepResult.whyPattern]
+        : ["暂无"];
+
+  return createUnifiedResult({
+    source: "deep",
+    prefixLabel: "你的依恋类型",
+    scoreLabel: "主类型匹配度",
+    main: {
+      name: mainType.name,
+      score: mainType.score,
+    },
+    highlightCard: {
+      title: "一句话概述",
+      content: deepResult.oneLineSummary,
+    },
+    insight: deepResult.insight,
+    tagChips: deepResult.tags,
+    distributionChart: {
+      title: "类型分布",
+      items: sortedDistribution.map((item) => ({
+        key: item.key,
+        name: item.name,
+        score: item.score,
+        color: item.color,
+      })),
+    },
+    typeCard: {
+      title: "恋爱心理卡片",
+      items: [
+        { label: "主类型", value: mainType.name },
+        { label: "副倾向", value: secondaryType?.name ?? "暂无" },
+        { label: "关系节奏", value: deepResult.tags?.[0] ?? "#关系觉察" },
+      ],
+    },
+    topThreeTitle: "Top 3 类型倾向",
+    topThree: sortedDistribution.slice(0, 3).map((item) => ({
+      name: item.name,
+      score: item.score,
+    })),
+    detailSections: [
+      { title: "原生家庭画像", items: familyPortraitItems },
+      { title: "为什么会这样", items: whyPatternItems },
+      { title: "你的关系优势", items: deepResult.strengths },
+      { title: "高风险触发点", items: deepResult.risks },
+      { title: "关系升级建议", items: deepResult.actions },
+    ],
+    summaryTitle: "答卷摘要",
+    summaryLines: localResult.summaryLines,
+    restartButtonText: "重新测试",
+  });
+}
+
+/**
+ * 恋爱心理主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildLoveAttachmentLocalUnifiedResult(localResult) {
+  const topType = localResult.topType;
+  const topTypeProfile = localResult.profileMap[topType.key] ?? {};
+  const secondaryType = localResult.distribution[1] ?? null;
+
+  // 关键逻辑：本地兜底也保持多条目展示，避免在 AI 不可用时信息密度明显下降。
+  const familyPortraitItems =
+    Array.isArray(topTypeProfile.familyPortraitPoints) &&
+    topTypeProfile.familyPortraitPoints.length > 0
+      ? topTypeProfile.familyPortraitPoints
+      : topTypeProfile.familyPortrait
+        ? [topTypeProfile.familyPortrait]
+        : ["暂无"];
+
+  // 关键逻辑：机制说明模块使用与画像模块一致的兜底策略，保证展示结构稳定。
+  const whyPatternItems =
+    Array.isArray(topTypeProfile.whyPatternPoints) &&
+    topTypeProfile.whyPatternPoints.length > 0
+      ? topTypeProfile.whyPatternPoints
+      : topTypeProfile.whyPattern
+        ? [topTypeProfile.whyPattern]
+        : ["暂无"];
+
+  return createUnifiedResult({
+    source: "local",
+    prefixLabel: "你的依恋类型",
+    scoreLabel: "主类型匹配度",
+    main: {
+      name: topType.name,
+      score: topType.score,
+    },
+    highlightCard: {
+      title: "一句话概述",
+      content: topTypeProfile.summary ?? localResult.localNarrative,
+    },
+    insight: localResult.localNarrative,
+    tagChips: topTypeProfile.tags ?? [],
+    distributionChart: {
+      title: "类型分布",
+      items: localResult.distribution.map((item) => ({
+        key: item.key,
+        name: item.name,
+        score: item.score,
+        color: item.color,
+      })),
+    },
+    typeCard: {
+      title: "恋爱心理卡片",
+      items: [
+        { label: "主类型", value: topType.name },
+        { label: "副倾向", value: secondaryType?.name ?? "暂无" },
+        { label: "关系节奏", value: topTypeProfile.tags?.[0] ?? "#关系觉察" },
+      ],
+    },
+    topThreeTitle: "Top 3 类型倾向",
+    topThree: localResult.topThree.map((item) => ({
+      name: item.name,
+      score: item.score,
+    })),
+    detailSections: [
+      { title: "原生家庭画像", items: familyPortraitItems },
+      { title: "为什么会这样", items: whyPatternItems },
+      { title: "你的关系优势", items: topTypeProfile.strengths ?? [] },
+      { title: "高风险触发点", items: topTypeProfile.risks ?? [] },
+      { title: "关系升级建议", items: topTypeProfile.actions ?? [] },
+    ],
+    summaryTitle: "答卷摘要",
+    summaryLines: localResult.summaryLines,
+    restartButtonText: "重新测试",
+  });
+}
+
+/**
  * 统一主题配置列表。
  * 新增测试时只需：
  * 1. 加题库和分析器
@@ -651,6 +1241,172 @@ export const SURVEY_THEME_CONFIGS = [
       buildDeepUnifiedResult: buildTalentDeepUnifiedResult,
       buildLocalUnifiedResult: buildTalentLocalUnifiedResult,
       deepFailToast: "深度生成暂不可用，已切换基础生成",
+    },
+  },
+  {
+    key: "benefactor",
+    routePaths: [
+      "/benefactor",
+      "/benefactor.html",
+      "/helper-star",
+      "/helper",
+    ],
+    pageMeta: {
+      title: "测试2026你的贵人星座",
+      description: "通过日常选择匹配你在 2026 年最容易遇到的贵人星座类型。",
+    },
+    theme: {
+      className: "theme-benefactor",
+      badge: "BENEFACTOR STAR",
+      title: "测试2026你的贵人星座",
+      description: "从日常反应里匹配最契合你的贵人星座，并给出可执行的协作提示。",
+      progressColor: "linear-gradient(90deg, #5a6bff, #ff8aa0)",
+      progressTrackColor: "rgba(75, 87, 149, 0.2)",
+      checkedColor: "#5a6bff",
+      sourceTag: {
+        deep: {
+          label: "深度匹配结果",
+          color: "#edf0ff",
+          textColor: "#3f4ca8",
+        },
+        local: {
+          label: "基础匹配结果",
+          color: "#fff0f4",
+          textColor: "#a44b66",
+        },
+      },
+      loadingMessages: [
+        "正在捕捉你的贵人频率...",
+        "正在比对 12 星座支持画像...",
+        "正在匹配你的贵人协作轨迹...",
+        "正在生成你的 2026 贵人提示...",
+      ],
+      submitButtonText: "开始贵人星座匹配",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: BENEFACTOR_2026_QUESTION_BANK,
+      questionSelection: { minCount: 10, maxCount: 15 },
+      runLocalAnalysis: (selectedQuestions, answerIds) =>
+        analyzeBenefactor2026Locally({
+          questions: selectedQuestions,
+          answerIds,
+        }),
+      buildDeepPayload: buildBenefactorDeepPayload,
+      runDeepAnalysis: (payload) =>
+        analyzeBenefactor2026WithAI(payload, { timeoutMs: 18000 }),
+      buildDeepUnifiedResult: buildBenefactorDeepUnifiedResult,
+      buildLocalUnifiedResult: buildBenefactorLocalUnifiedResult,
+      deepFailToast: "深度匹配暂不可用，已切换基础匹配",
+    },
+  },
+  {
+    key: "color-2026",
+    routePaths: ["/color", "/color2026", "/color-2026", "/theme-color"],
+    pageMeta: {
+      title: "测试2026年你的主题色",
+      description: "通过日常偏好匹配你的 2026 主题色，并给出生活化建议。",
+    },
+    theme: {
+      className: "theme-color-2026",
+      badge: "COLOR MOOD · 2026",
+      title: "测试2026年你的主题色",
+      description:
+        "从日常选择中识别你的年度主色调，作答中页面会逐步靠近你的主题色。",
+      progressColor: "linear-gradient(90deg, #6a78df, #f090a5)",
+      progressTrackColor: "rgba(105, 114, 164, 0.2)",
+      checkedColor: "#6a78df",
+      sourceTag: {
+        deep: {
+          label: "深度配色结果",
+          color: "#edf1ff",
+          textColor: "#3f50aa",
+        },
+        local: {
+          label: "基础配色结果",
+          color: "#fff0f5",
+          textColor: "#9f4f69",
+        },
+      },
+      loadingMessages: [
+        "正在提取你的配色偏好...",
+        "正在比对 2026 主题色画像...",
+        "正在生成你的年度色卡...",
+        "正在整理你的日常色彩建议...",
+      ],
+      submitButtonText: "生成我的2026主题色",
+      nextButtonText: "下一题",
+      runtimeDefaultKey: "blue",
+      runtimePalette: COLOR_2026_RUNTIME_PALETTE,
+    },
+    survey: {
+      questions: COLOR_2026_QUESTION_BANK,
+      questionSelection: { minCount: 10, maxCount: 15 },
+      runLocalAnalysis: (selectedQuestions, answerIds) =>
+        analyzeColor2026Locally({
+          questions: selectedQuestions,
+          answerIds,
+        }),
+      buildDeepPayload: buildColorThemeDeepPayload,
+      runDeepAnalysis: (payload) =>
+        analyzeColor2026WithAI(payload, { timeoutMs: 18000 }),
+      buildDeepUnifiedResult: buildColorThemeDeepUnifiedResult,
+      buildLocalUnifiedResult: buildColorThemeLocalUnifiedResult,
+      deepFailToast: "深度配色暂不可用，已切换基础配色结果",
+    },
+  },
+  {
+    key: "love-attachment",
+    routePaths: ["/love", "/love-attachment", "/love-psych", "/love-test"],
+    pageMeta: {
+      title: "恋爱心理测试",
+      description:
+        "通过日常关系场景识别你的依恋模式，输出类型分布、家庭画像与关系建议。",
+    },
+    theme: {
+      className: "theme-love-attachment",
+      badge: "LOVE PSYCHOLOGY",
+      title: "恋爱心理测试",
+      description:
+        "50题题库中每轮随机抽取15题，识别你的依恋类型并生成深度关系画像。",
+      progressColor: "linear-gradient(90deg, #f08ca8, #7ea0f4)",
+      progressTrackColor: "rgba(142, 111, 157, 0.2)",
+      checkedColor: "#f08ca8",
+      sourceTag: {
+        deep: {
+          label: "AI深度分析结果",
+          color: "#fff0f6",
+          textColor: "#9a3c67",
+        },
+        local: {
+          label: "本地基础结果",
+          color: "#eef3ff",
+          textColor: "#4458a5",
+        },
+      },
+      loadingMessages: [
+        "正在整理你的亲密互动信号...",
+        "正在拟合依恋模式分布...",
+        "正在生成你的关系心理画像...",
+        "正在输出个性化关系建议...",
+      ],
+      submitButtonText: "生成我的恋爱心理报告",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: LOVE_ATTACHMENT_QUESTION_BANK,
+      questionSelection: { minCount: 15, maxCount: 15 },
+      runLocalAnalysis: (selectedQuestions, answerIds) =>
+        analyzeLoveAttachmentLocally({
+          questions: selectedQuestions,
+          answerIds,
+        }),
+      buildDeepPayload: buildLoveAttachmentDeepPayload,
+      runDeepAnalysis: (payload) =>
+        analyzeLoveAttachmentWithAI(payload, { timeoutMs: 22000 }),
+      buildDeepUnifiedResult: buildLoveAttachmentDeepUnifiedResult,
+      buildLocalUnifiedResult: buildLoveAttachmentLocalUnifiedResult,
+      deepFailToast: "AI结果暂不可用，已切换本地基础结果",
     },
   },
   {

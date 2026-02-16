@@ -44,9 +44,21 @@ const currentSearch = ref("");
 
 /**
  * 主题配置列表：
- * 关键逻辑：主题中心只显示可直接进入的主题集合，避免分散配置来源。
+ * 关键逻辑：主题中心只显示允许在 Hub 暴露的主题集合，避免误展示已下线入口。
+ * 复杂度评估：每次计算为 O(T)，T 为主题总数；当前 T 较小（常量级），可忽略性能影响。
  */
-const themeConfigs = computed(() => SURVEY_THEME_CONFIGS);
+/**
+ * 主题中心隐藏项：
+ * 关键逻辑：仅影响 app-center 展示层，不影响实际主题路由解析。
+ */
+const HUB_HIDDEN_THEME_KEYS = new Set(["mbti"]);
+const themeConfigs = computed(() =>
+  SURVEY_THEME_CONFIGS.filter(
+    (themeConfig) =>
+      // 关键逻辑：仅移除 app-center 卡片入口，不影响该主题的独立路由能力。
+      !HUB_HIDDEN_THEME_KEYS.has(themeConfig.key),
+  ),
+);
 
 /**
  * 当前路径对应的主题配置。

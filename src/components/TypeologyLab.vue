@@ -2091,6 +2091,8 @@ onBeforeUnmount(() => {
 }
 
 .typeology-cell-group {
+  /* 关键逻辑：移除 Vant inset 默认左右 margin，仅保留本组件的顶部节奏间距。 */
+  --van-cell-group-inset-padding: 0;
   margin: 10px 0 0;
   background: transparent !important;
 }

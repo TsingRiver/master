@@ -1,5 +1,5 @@
 <template>
-  <div class="survey-page" :class="themeConfig.theme.className">
+  <div class="survey-page" :class="themeConfig.theme.className" :style="runtimeThemeStyle">
     <div class="survey-aura aura-left" aria-hidden="true"></div>
     <div class="survey-aura aura-right" aria-hidden="true"></div>
     <div class="survey-noise" aria-hidden="true"></div>
@@ -23,7 +23,7 @@
           :percentage="progressPercent"
           :show-pivot="false"
           :stroke-width="8"
-          :color="themeConfig.theme.progressColor"
+          :color="activeProgressColor"
           :track-color="themeConfig.theme.progressTrackColor"
         />
 
@@ -48,7 +48,7 @@
                   @click="selectOption(option.id)"
                 >
                   <template #right-icon>
-                    <van-radio :name="option.id" :checked-color="themeConfig.theme.checkedColor" />
+                    <van-radio :name="option.id" :checked-color="activeCheckedColor" />
                   </template>
                 </van-cell>
               </van-cell-group>
@@ -78,7 +78,7 @@
 
       <section v-else-if="stage !== 'survey'" class="survey-card survey-result-card">
         <div v-if="stage === 'analyzing'" class="survey-loading-wrap">
-          <van-loading :color="themeConfig.theme.checkedColor" size="28px" />
+          <van-loading :color="activeCheckedColor" size="28px" />
           <transition name="survey-loading-swap" mode="out-in">
             <p :key="activeLoadingMessage">{{ activeLoadingMessage }}</p>
           </transition>
@@ -108,6 +108,22 @@
           <p class="survey-insight">{{ unifiedResult.insight }}</p>
 
           <div
+            v-if="unifiedResult.tagChips?.length"
+            class="survey-tag-wrap"
+          >
+            <h3>类型标签</h3>
+            <div class="survey-tag-grid">
+              <span
+                v-for="(tagItem, tagIndex) in unifiedResult.tagChips"
+                :key="`${tagItem}-${tagIndex}`"
+                class="survey-tag-item"
+              >
+                {{ tagItem }}
+              </span>
+            </div>
+          </div>
+
+          <div
             v-if="unifiedResult.typeCard?.items?.length"
             class="survey-type-card-wrap"
           >
@@ -122,6 +138,32 @@
                 <p class="survey-type-card-label">{{ cardItem.label }}</p>
               </article>
             </div>
+          </div>
+
+          <div
+            v-if="unifiedResult.distributionChart?.items?.length"
+            class="survey-distribution-wrap"
+          >
+            <h3>{{ unifiedResult.distributionChart.title }}</h3>
+            <ul class="survey-distribution-list">
+              <li
+                v-for="(item, index) in unifiedResult.distributionChart.items"
+                :key="`${item.name}-${index}`"
+                class="survey-distribution-item"
+              >
+                <div class="survey-distribution-meta">
+                  <span>{{ item.name }}</span>
+                  <span>{{ item.score }}%</span>
+                </div>
+                <van-progress
+                  :percentage="item.score"
+                  :show-pivot="false"
+                  :stroke-width="7"
+                  :color="item.color || activeCheckedColor"
+                  :track-color="themeConfig.theme.progressTrackColor"
+                />
+              </li>
+            </ul>
           </div>
 
           <div class="survey-top-wrap">
@@ -239,6 +281,126 @@ const loadingMessageIndex = ref(0);
 let loadingMessageTimer = null;
 
 /**
+ * 2026 主题色页基础色板（中性态）：
+ * 关键逻辑：用户未作答前先使用中性色，随着作答进度逐步向目标主题色过渡。
+ */
+const COLOR_2026_NEUTRAL_TOKENS = {
+  bgStart: "#F4F6FF",
+  bgMid: "#EEF2FF",
+  bgEnd: "#FFF5EF",
+  textMain: "#2D3250",
+  textMuted: "#676E8E",
+  surface: "#FFFFFF",
+  surfaceBorder: "#D8DDF5",
+  optionBorder: "#D3D9F0",
+  optionSelectedBorder: "#9CA8DF",
+  optionSelectedBgStart: "#FFFFFF",
+  optionSelectedBgEnd: "#EEF2FF",
+  highlightBorder: "#D7DCF4",
+  highlightBgStart: "#F6F8FF",
+  highlightBgEnd: "#FDEFF5",
+  accent: "#6C79C6",
+  accentSoft: "#A9B4E6",
+  auraLeft: "#AEBBFF",
+  auraRight: "#F3B7C8",
+};
+
+/**
+ * 将 16 进制颜色转为 RGB 对象。
+ * @param {string} hexColor 16 进制颜色（#RRGGBB 或 #RGB）。
+ * @returns {{ r: number, g: number, b: number } | null} RGB 对象。
+ */
+function hexToRgb(hexColor) {
+  const normalizedHex = String(hexColor ?? "")
+    .trim()
+    .replace(/^#/, "");
+
+  if (![3, 6].includes(normalizedHex.length)) {
+    return null;
+  }
+
+  const expandedHex =
+    normalizedHex.length === 3
+      ? normalizedHex
+          .split("")
+          .map((charItem) => `${charItem}${charItem}`)
+          .join("")
+      : normalizedHex;
+
+  const parsedNumber = Number.parseInt(expandedHex, 16);
+  if (Number.isNaN(parsedNumber)) {
+    return null;
+  }
+
+  return {
+    r: (parsedNumber >> 16) & 255,
+    g: (parsedNumber >> 8) & 255,
+    b: parsedNumber & 255,
+  };
+}
+
+/**
+ * 将 RGB 对象转为 16 进制颜色。
+ * @param {{ r: number, g: number, b: number }} rgbColor RGB 对象。
+ * @returns {string} 16 进制颜色字符串。
+ */
+function rgbToHex(rgbColor) {
+  const toHex = (value) =>
+    Math.max(0, Math.min(255, Math.round(value)))
+      .toString(16)
+      .padStart(2, "0");
+
+  return `#${toHex(rgbColor.r)}${toHex(rgbColor.g)}${toHex(rgbColor.b)}`;
+}
+
+/**
+ * 混合两种 16 进制颜色。
+ * @param {string} fromColor 起始颜色。
+ * @param {string} toColor 目标颜色。
+ * @param {number} ratio 混合比例（0~1）。
+ * @returns {string} 混合后的 16 进制颜色。
+ */
+function blendHexColor(fromColor, toColor, ratio) {
+  const fromRgb = hexToRgb(fromColor);
+  const toRgb = hexToRgb(toColor);
+  const safeRatio = Math.max(0, Math.min(1, Number(ratio) || 0));
+
+  if (!fromRgb && !toRgb) {
+    return "#FFFFFF";
+  }
+
+  if (!fromRgb) {
+    return rgbToHex(toRgb);
+  }
+
+  if (!toRgb) {
+    return rgbToHex(fromRgb);
+  }
+
+  return rgbToHex({
+    r: fromRgb.r + (toRgb.r - fromRgb.r) * safeRatio,
+    g: fromRgb.g + (toRgb.g - fromRgb.g) * safeRatio,
+    b: fromRgb.b + (toRgb.b - fromRgb.b) * safeRatio,
+  });
+}
+
+/**
+ * 生成 RGBA 颜色字符串。
+ * @param {string} hexColor 16 进制颜色。
+ * @param {number} alpha 透明度（0~1）。
+ * @returns {string} RGBA 字符串。
+ */
+function toRgbaString(hexColor, alpha) {
+  const rgbColor = hexToRgb(hexColor);
+  if (!rgbColor) {
+    return `rgba(0, 0, 0, ${alpha})`;
+  }
+
+  const safeAlpha = Math.max(0, Math.min(1, Number(alpha) || 0));
+  return `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${safeAlpha})`;
+}
+
+/**
  * 题库源与抽题规则：
  * 1. questionPool 为完整题库。
  * 2. questionSelection 控制每次抽题范围（默认 10~15）。
@@ -298,6 +460,220 @@ const activeLoadingMessage = computed(() => {
 const sourceTagStyle = computed(() => {
   const sourceType = unifiedResult.value?.source === "local" ? "local" : "deep";
   return props.themeConfig.theme.sourceTag[sourceType];
+});
+
+/**
+ * 是否是“2026 主题色”主题。
+ */
+const isColorTheme2026 = computed(
+  () => props.themeConfig.key === "color-2026",
+);
+
+/**
+ * 当前主题可用的运行时色板映射。
+ */
+const runtimePaletteMap = computed(
+  () => props.themeConfig.theme.runtimePalette ?? {},
+);
+
+/**
+ * 默认运行时颜色键。
+ */
+const runtimeDefaultColorKey = computed(
+  () => props.themeConfig.theme.runtimeDefaultKey ?? "blue",
+);
+
+/**
+ * 计算已作答题数。
+ */
+const answeredCount = computed(
+  () => answers.value.filter((answerItem) => Boolean(answerItem)).length,
+);
+
+/**
+ * 计算当前答卷颜色分值映射。
+ * 复杂度评估：O(Q * K)，Q 为当前题量，K 为选项向量键数量（通常较小）。
+ * @returns {{ [key: string]: number }} 颜色分值映射。
+ */
+function buildRuntimeColorScoreMap() {
+  const paletteKeys = Object.keys(runtimePaletteMap.value);
+  const scoreMap = paletteKeys.reduce((accumulator, colorKey) => {
+    accumulator[colorKey] = 0;
+    return accumulator;
+  }, {});
+
+  questionBank.value.forEach((questionItem, questionIndex) => {
+    const selectedAnswerId = answers.value[questionIndex];
+    if (!selectedAnswerId) {
+      return;
+    }
+
+    const selectedOption = questionItem.options.find(
+      (optionItem) => optionItem.id === selectedAnswerId,
+    );
+    if (!selectedOption) {
+      return;
+    }
+
+    const questionWeight = Number(questionItem.weight ?? 1);
+    Object.entries(selectedOption.vector ?? {}).forEach(([vectorKey, rawValue]) => {
+      if (typeof scoreMap[vectorKey] !== "number") {
+        return;
+      }
+
+      const safeValue = Number(rawValue ?? 0);
+      if (!Number.isFinite(safeValue)) {
+        return;
+      }
+
+      scoreMap[vectorKey] += safeValue * questionWeight;
+    });
+  });
+
+  return scoreMap;
+}
+
+/**
+ * 从分值映射中解析主导颜色键。
+ * @param {{ [key: string]: number }} scoreMap 颜色分值映射。
+ * @returns {string} 主导颜色键。
+ */
+function resolveDominantColorKey(scoreMap) {
+  const scoreEntries = Object.entries(scoreMap ?? {});
+  if (scoreEntries.length === 0) {
+    return runtimeDefaultColorKey.value;
+  }
+
+  const sortedEntries = scoreEntries.sort((leftItem, rightItem) => {
+    const scoreDiff = Number(rightItem[1] ?? 0) - Number(leftItem[1] ?? 0);
+    if (scoreDiff !== 0) {
+      return scoreDiff;
+    }
+
+    return String(leftItem[0]).localeCompare(String(rightItem[0]), "zh-Hans-CN");
+  });
+
+  return sortedEntries[0][0] ?? runtimeDefaultColorKey.value;
+}
+
+/**
+ * 运行时主导颜色键：
+ * 1. 结果页优先使用最终结果的 runtimeColorKey。
+ * 2. 作答阶段根据当前已选答案实时计算。
+ * 3. 都不可用时回退默认键。
+ */
+const runtimeDominantColorKey = computed(() => {
+  if (!isColorTheme2026.value) {
+    return runtimeDefaultColorKey.value;
+  }
+
+  if (stage.value === "result" && unifiedResult.value?.runtimeColorKey) {
+    return unifiedResult.value.runtimeColorKey;
+  }
+
+  return resolveDominantColorKey(buildRuntimeColorScoreMap());
+});
+
+/**
+ * 计算主题色混合进度：
+ * 1. 作答阶段随进度逐步提升，形成“颜色渐变靠近”的体验。
+ * 2. 结果页固定为 1，展示最终主题色状态。
+ */
+const runtimeBlendRatio = computed(() => {
+  if (!isColorTheme2026.value) {
+    return 0;
+  }
+
+  if (stage.value === "result") {
+    return 1;
+  }
+
+  if (questionBank.value.length === 0) {
+    return 0;
+  }
+
+  const progressRatio = answeredCount.value / questionBank.value.length;
+  return Math.max(0, Math.min(0.82, progressRatio * 0.82));
+});
+
+/**
+ * 运行时主题样式：
+ * 关键逻辑：只覆盖颜色相关 CSS 变量，不改动结构布局变量，保证通用组件稳定性。
+ */
+const runtimeThemeStyle = computed(() => {
+  if (!isColorTheme2026.value) {
+    return {};
+  }
+
+  const targetPalette =
+    runtimePaletteMap.value[runtimeDominantColorKey.value] ??
+    runtimePaletteMap.value[runtimeDefaultColorKey.value] ??
+    {};
+  const blendRatio = runtimeBlendRatio.value;
+
+  const blendToken = (tokenKey) =>
+    blendHexColor(
+      COLOR_2026_NEUTRAL_TOKENS[tokenKey],
+      targetPalette[tokenKey] ?? COLOR_2026_NEUTRAL_TOKENS[tokenKey],
+      blendRatio,
+    );
+
+  const mixedAccent = blendToken("accent");
+
+  return {
+    "--runtime-bg-start": blendToken("bgStart"),
+    "--runtime-bg-mid": blendToken("bgMid"),
+    "--runtime-bg-end": blendToken("bgEnd"),
+    "--runtime-text-main": blendToken("textMain"),
+    "--runtime-text-muted": blendToken("textMuted"),
+    "--runtime-surface": blendToken("surface"),
+    "--runtime-surface-border": blendToken("surfaceBorder"),
+    "--runtime-option-border": blendToken("optionBorder"),
+    "--runtime-option-selected-border": blendToken("optionSelectedBorder"),
+    "--runtime-option-selected-bg-start": blendToken("optionSelectedBgStart"),
+    "--runtime-option-selected-bg-end": blendToken("optionSelectedBgEnd"),
+    "--runtime-highlight-border": blendToken("highlightBorder"),
+    "--runtime-highlight-bg-start": blendToken("highlightBgStart"),
+    "--runtime-highlight-bg-end": blendToken("highlightBgEnd"),
+    "--runtime-primary": mixedAccent,
+    "--runtime-primary-dark": blendToken("accentSoft"),
+    "--runtime-aura-left": blendToken("auraLeft"),
+    "--runtime-aura-right": blendToken("auraRight"),
+    "--runtime-shadow": `0 24px 54px ${toRgbaString(mixedAccent, 0.17)}`,
+    "--runtime-option-shadow": toRgbaString(mixedAccent, 0.17),
+  };
+});
+
+/**
+ * 当前激活的选中颜色：
+ * 关键逻辑：主题色页面使用运行时主色，其他主题沿用静态配置色。
+ */
+const activeCheckedColor = computed(() => {
+  if (!isColorTheme2026.value) {
+    return props.themeConfig.theme.checkedColor;
+  }
+
+  return (
+    runtimeThemeStyle.value["--runtime-primary"] ??
+    props.themeConfig.theme.checkedColor
+  );
+});
+
+/**
+ * 当前进度条颜色。
+ */
+const activeProgressColor = computed(() => {
+  if (!isColorTheme2026.value) {
+    return props.themeConfig.theme.progressColor;
+  }
+
+  const primaryColor =
+    runtimeThemeStyle.value["--runtime-primary"] ?? props.themeConfig.theme.checkedColor;
+  const secondaryColor =
+    runtimeThemeStyle.value["--runtime-primary-dark"] ??
+    props.themeConfig.theme.checkedColor;
+
+  return `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`;
 });
 
 /**

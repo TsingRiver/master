@@ -72,7 +72,7 @@ function normalizeFortuneResult(aiData, keywordCandidates, localTopThree) {
       return keyword;
     }
 
-    return localTopThree[0]?.keyword ?? keywordCandidates[0]?.keyword ?? "聚焦";
+    return localTopThree[0]?.keyword ?? keywordCandidates[0]?.keyword ?? "专注主线";
   };
 
   const fallbackTopThree = localTopThree.slice(0, 3).map((item) => ({
@@ -81,11 +81,11 @@ function normalizeFortuneResult(aiData, keywordCandidates, localTopThree) {
   }));
 
   const fallbackResult = {
-    mainKeyword: fallbackTopThree[0] ?? { name: "聚焦", score: 0 },
+    mainKeyword: fallbackTopThree[0] ?? { name: "专注主线", score: 0 },
     topThree: fallbackTopThree,
-    annualTheme: "把有限精力投入在最有复利的一件事上。",
+    annualTheme: "先把最重要的一件事做稳，再逐步放大结果。",
     insight:
-      "你在执行和成长维度上具备优势，2026 更适合做“少而深”的推进策略。",
+      "你在执行和稳定维度上更有优势，2026 更适合少分心、稳推进。",
     opportunityActions: [
       "每周固定一次复盘，把目标压缩到三个关键动作。",
       "优先推进最接近结果的任务，减少低价值忙碌。",
