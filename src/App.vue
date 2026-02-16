@@ -1,6 +1,7 @@
 <template>
+  <LinkErrorPage v-if="showIncompleteLinkError" />
   <ThemeHub
-    v-if="showPortalHub"
+    v-else-if="showPortalHub"
     :theme-configs="themeConfigs"
     :build-theme-href="buildThemeHref"
   />
@@ -20,17 +21,20 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import LinkErrorPage from "./components/LinkErrorPage.vue";
 import SurveyEngine from "./components/SurveyEngine.vue";
 import ThemeHub from "./components/ThemeHub.vue";
 import TypeologyLab from "./components/TypeologyLab.vue";
 import {
   DEFAULT_SURVEY_THEME,
   SURVEY_THEME_CONFIGS,
+  hasSurveyThemePath,
   resolveSurveyThemeByPath,
 } from "./config/surveyThemes";
 import {
   buildPortalHubUrl,
   buildPortalThemeUrl,
+  isPortalPath,
   isPortalSession,
   shouldShowPortalHub,
 } from "./config/appPortal";
@@ -41,6 +45,7 @@ import {
  */
 const currentPath = ref("/");
 const currentSearch = ref("");
+const hasInvalidHashLink = ref(false);
 
 /**
  * 主题配置列表：
@@ -72,6 +77,15 @@ const activeThemeConfig = computed(() =>
  */
 const showPortalHub = computed(() =>
   shouldShowPortalHub(currentPath.value, currentSearch.value),
+);
+
+/**
+ * 是否展示无效链接错误页：
+ * 关键逻辑：当 hash 路径不存在或参数不完整时阻断默认主题渲染。
+ * 复杂度评估：每次计算为 O(1)。
+ */
+const showIncompleteLinkError = computed(
+  () => hasInvalidHashLink.value && !showPortalHub.value,
 );
 
 /**
@@ -114,10 +128,10 @@ function parseHashRoute(hashValue) {
     return { hasHashRoute: false, path: "/", search: "" };
   }
 
-  
   const hashBody = rawHash.slice(1).trim();
   if (!hashBody) {
-    return { hasHashRoute: false, path: "/", search: "" };
+    // 关键逻辑："#" 视为根 hash 路径，后续由不完整链接判定统一拦截。
+    return { hasHashRoute: true, path: "/", search: "" };
   }
 
   // 关键逻辑：把 "#/fortune?hub=1" 解析为 path="/fortune"、search="?hub=1"。
@@ -133,6 +147,47 @@ function parseHashRoute(hashValue) {
 }
 
 /**
+ * 判断 hash 地址是否无效。
+ * @param {{ hasHashRoute: boolean, path: string, search: string }} parsedHashRoute hash 解析结果。
+ * @returns {boolean} 是否需要进入错误页。
+ */
+function isInvalidHashRoute(parsedHashRoute) {
+  if (!parsedHashRoute.hasHashRoute) {
+    return false;
+  }
+
+  // 关键逻辑：根路径 hash（如 "#/"）代表未携带具体主题路径，按无效链接处理。
+  if (parsedHashRoute.path === "/") {
+    return true;
+  }
+
+  // 关键逻辑：命中任一已注册主题路径则视为有效。
+  if (hasSurveyThemePath(parsedHashRoute.path)) {
+    return false;
+  }
+
+  if (isPortalPath(parsedHashRoute.path)) {
+    // 关键逻辑：主题中心路径必须携带完整校验参数，否则按不完整链接处理。
+    return !shouldShowPortalHub(parsedHashRoute.path, parsedHashRoute.search);
+  }
+
+  // 关键逻辑：未知 hash 路径（例如 "#/love2"）统一进入错误页，避免兜底到城市主题。
+  return true;
+}
+
+/**
+ * 判断非 hash 地址是否无效。
+ * @param {string} pathname 浏览器 pathname。
+ * @returns {boolean} 是否需要进入错误页。
+ */
+function isInvalidPlainEntry(pathname) {
+  const normalizedPathname = String(pathname ?? "").toLowerCase();
+
+  // 关键逻辑：裸域名入口（"/" 或 "/index.html"）视为不完整链接，统一提示完整复制。
+  return normalizedPathname === "/" || normalizedPathname === "/index.html";
+}
+
+/**
  * 同步地址状态：
  * 1. 优先采用 hash 路径（适配无 Nginx rewrite 场景）。
  * 2. hash 不存在时回退到 pathname（兼容本地旧访问方式）。
@@ -143,11 +198,13 @@ function syncLocationFromBrowser() {
   if (parsedHashRoute.hasHashRoute) {
     currentPath.value = parsedHashRoute.path;
     currentSearch.value = parsedHashRoute.search;
+    hasInvalidHashLink.value = isInvalidHashRoute(parsedHashRoute);
     return;
   }
 
   currentPath.value = window.location.pathname;
   currentSearch.value = window.location.search;
+  hasInvalidHashLink.value = isInvalidPlainEntry(currentPath.value);
 }
 
 /**
@@ -167,8 +224,22 @@ window.addEventListener("popstate", syncLocationFromBrowser);
  * 路径变化时同步页面 Meta 信息。
  */
 watch(
-  [showPortalHub, activeThemeConfig],
-  ([isHubPage, themeConfig]) => {
+  [showIncompleteLinkError, showPortalHub, activeThemeConfig],
+  ([isInvalidLinkPage, isHubPage, themeConfig]) => {
+    if (isInvalidLinkPage) {
+      document.title = "链接错误";
+      const invalidLinkDescriptionMeta = document.querySelector(
+        'meta[name="description"]',
+      );
+      if (invalidLinkDescriptionMeta) {
+        invalidLinkDescriptionMeta.setAttribute(
+          "content",
+          "当前访问链接不完整，请完整复制整个链接后重新访问。",
+        );
+      }
+      return;
+    }
+
     if (isHubPage) {
       document.title = "问卷主题中心";
       const hubDescriptionMeta = document.querySelector(

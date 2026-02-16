@@ -167,6 +167,25 @@ body {
   --title-font: "Noto Serif SC", serif;
 }
 
+/*
+ * 关键逻辑：贵人协作卡片文案长度波动较大，使用单列布局避免内容被三列挤压导致可读性下降。
+ * 仅作用于贵人主题，不影响其他主题的类型卡片布局。
+ */
+.theme-benefactor .survey-type-card-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.theme-benefactor .survey-type-card-item {
+  min-height: 0;
+  padding: 12px 14px;
+}
+
+.theme-benefactor .survey-type-card-value {
+  font-size: clamp(17px, 4.9vw, 24px);
+  line-height: 1.42;
+}
+
 .theme-color-2026 {
   --page-bg:
     linear-gradient(

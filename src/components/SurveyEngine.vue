@@ -281,6 +281,21 @@ const loadingMessageIndex = ref(0);
 let loadingMessageTimer = null;
 
 /**
+ * 深度分析交互策略：
+ * 1. 14 秒内若拿到深度结果，直接展示深度结果。
+ * 2. 超过 14 秒先展示本地结果，深度分析在后台继续。
+ * 3. 深度分析设置 45 秒硬超时，避免超长等待。
+ */
+const LOCAL_RESULT_FALLBACK_DELAY_MS = 14000;
+const DEEP_RESULT_HARD_TIMEOUT_MS = 45000;
+
+/**
+ * 深度分析会话令牌：
+ * 用于防止旧请求在重测/切换主题后覆盖新状态。
+ */
+let deepAnalysisSessionToken = 0;
+
+/**
  * 2026 主题色页基础色板（中性态）：
  * 关键逻辑：用户未作答前先使用中性色，随着作答进度逐步向目标主题色过渡。
  */
@@ -705,6 +720,8 @@ function rebuildQuestionBank() {
  * 主题切换或点击重测时都复用该方法。
  */
 function resetSurveyState() {
+  // 关键逻辑：重置时递增会话令牌，使历史深度请求全部失效。
+  deepAnalysisSessionToken += 1;
   rebuildQuestionBank();
   currentQuestionIndex.value = 0;
   answers.value = Array.from({ length: questionBank.value.length }, () => null);
@@ -736,6 +753,43 @@ function stopLoadingMessageTicker() {
 }
 
 /**
+ * 睡眠等待工具。
+ * @param {number} durationMs 等待时长（毫秒）。
+ * @returns {Promise<void>} Promise。
+ */
+function waitFor(durationMs) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, Math.max(0, Number(durationMs) || 0));
+  });
+}
+
+/**
+ * 为 Promise 增加硬超时限制。
+ * 复杂度评估：O(1)
+ * 仅引入常数级计时器开销，不改变分析主流程复杂度。
+ * @template T
+ * @param {Promise<T>} promise 原始 Promise。
+ * @param {number} timeoutMs 超时时间（毫秒）。
+ * @param {string} timeoutMessage 超时提示语。
+ * @returns {Promise<T>} 带硬超时控制的 Promise。
+ */
+function withHardTimeout(promise, timeoutMs, timeoutMessage) {
+  let timeoutHandle = null;
+
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutHandle = window.setTimeout(() => {
+      reject(new Error(timeoutMessage));
+    }, Math.max(0, Number(timeoutMs) || 0));
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeoutHandle) {
+      window.clearTimeout(timeoutHandle);
+    }
+  });
+}
+
+/**
  * 监听主题切换：
  * 关键逻辑：同一套组件可切换多主题，必须在主题变更时重置状态。
  */
@@ -763,6 +817,8 @@ watch(stage, (nextStage) => {
  * 组件卸载时清理资源。
  */
 onBeforeUnmount(() => {
+  // 关键逻辑：组件销毁时令牌失效，避免卸载后异步写入。
+  deepAnalysisSessionToken += 1;
   stopLoadingMessageTicker();
 });
 
@@ -786,7 +842,8 @@ function goPrev() {
 /**
  * 下一步：
  * 1. 非最后一题，直接进入下一题。
- * 2. 最后一题，执行本地分析 + 深度分析，失败时回退本地结果。
+ * 2. 最后一题执行“14 秒快速回显 + 深度后台升级”策略。
+ * 3. 深度失败时回退本地结果，保证流程稳定可用。
  */
 async function goNext() {
   if (!canGoNext.value) {
@@ -800,29 +857,89 @@ async function goNext() {
   }
 
   stage.value = "analyzing";
+  const currentSessionToken = ++deepAnalysisSessionToken;
 
   const localResult = props.themeConfig.survey.runLocalAnalysis(
     questionBank.value,
     answers.value,
   );
+  const localUnifiedResult = props.themeConfig.survey.buildLocalUnifiedResult(
+    localResult,
+  );
+
+  /**
+   * 深度统一结果 Promise：
+   * 关键逻辑：包含硬超时限制，避免长时间挂起影响用户体验。
+   */
+  const deepUnifiedPromise = withHardTimeout(
+    (async () => {
+      const deepPayload = props.themeConfig.survey.buildDeepPayload(localResult);
+      const deepResult = await props.themeConfig.survey.runDeepAnalysis(deepPayload);
+      return props.themeConfig.survey.buildDeepUnifiedResult(
+        deepResult,
+        localResult,
+      );
+    })(),
+    DEEP_RESULT_HARD_TIMEOUT_MS,
+    "深度分析耗时较长，已切换基础结果",
+  );
 
   try {
-    const deepPayload = props.themeConfig.survey.buildDeepPayload(localResult);
-    const deepResult = await props.themeConfig.survey.runDeepAnalysis(deepPayload);
-    unifiedResult.value = props.themeConfig.survey.buildDeepUnifiedResult(
-      deepResult,
-      localResult,
-    );
-  } catch (error) {
+    /**
+     * 首屏结果竞争：
+     * 1. 14 秒内拿到深度结果 -> 直接展示深度结果。
+     * 2. 14 秒仍未拿到 -> 先展示本地结果，深度结果后台继续。
+     */
+    const firstResult = await Promise.race([
+      deepUnifiedPromise.then((deepUnifiedResult) => ({
+        type: "deep",
+        result: deepUnifiedResult,
+      })),
+      waitFor(LOCAL_RESULT_FALLBACK_DELAY_MS).then(() => ({
+        type: "local_timeout",
+      })),
+    ]);
+
+    // 关键逻辑：若会话已失效（重测/切换主题），不写入任何过期结果。
+    if (currentSessionToken !== deepAnalysisSessionToken) {
+      return;
+    }
+
+    if (firstResult.type === "deep") {
+      unifiedResult.value = firstResult.result;
+      stage.value = "result";
+      return;
+    }
+
+    unifiedResult.value = localUnifiedResult;
+    stage.value = "result";
+
+    /**
+     * 后台静默升级：
+     * 本地结果先回显后，深度结果返回时自动替换，不额外打断用户。
+     */
+    deepUnifiedPromise
+      .then((deepUnifiedResult) => {
+        if (currentSessionToken !== deepAnalysisSessionToken) {
+          return;
+        }
+
+        unifiedResult.value = deepUnifiedResult;
+      })
+      .catch(() => {
+        // 关键逻辑：后台升级失败不额外提示，避免阅读中断。
+      });
+  } catch {
+    if (currentSessionToken !== deepAnalysisSessionToken) {
+      return;
+    }
+
     // 关键逻辑：深度调用失败时必须可用本地兜底，保证核心流程可用。
-    unifiedResult.value = props.themeConfig.survey.buildLocalUnifiedResult(
-      localResult,
-    );
-
-    showToast(error?.message || props.themeConfig.survey.deepFailToast);
+    unifiedResult.value = localUnifiedResult;
+    stage.value = "result";
+    showToast(props.themeConfig.survey.deepFailToast);
+    return;
   }
-
-  stage.value = "result";
 }
 
 /**

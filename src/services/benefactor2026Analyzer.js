@@ -19,6 +19,25 @@ const BENEFACTOR_DIMENSION_LABELS = {
 const BENEFACTOR_DIMENSION_KEYS = Object.keys(BENEFACTOR_DIMENSION_LABELS);
 
 /**
+ * 星座分布图配色映射：
+ * 用于结果页进度条颜色区分，提升可读性。
+ */
+const BENEFACTOR_SIGN_COLOR_MAP = {
+  白羊座: "#FF6B6B",
+  金牛座: "#C29B5A",
+  双子座: "#56C2C9",
+  巨蟹座: "#6F9BFF",
+  狮子座: "#FF9F43",
+  处女座: "#7FC08D",
+  天秤座: "#C084FC",
+  天蝎座: "#9B5DE5",
+  射手座: "#F97316",
+  摩羯座: "#6B7280",
+  水瓶座: "#38BDF8",
+  双鱼座: "#A78BFA",
+};
+
+/**
  * 贵人星座画像库：
  * profile 与题库选项向量处于同一维度空间，便于统一匹配评分。
  */
@@ -320,29 +339,200 @@ function calculateSignScore(signProfile, preferenceVector, dimensionWeights) {
 }
 
 /**
- * 提取用户优势维度。
+ * 构建维度对照明细。
+ * 复杂度评估：O(D)
+ * D 为维度数量（固定 8）。
  * @param {object} preferenceVector 用户偏好向量。
- * @returns {Array<string>} 中文维度标签（最多 3 项）。
+ * @param {object} signProfile 主星座画像向量。
+ * @returns {Array<{ key: string, label: string, userValue: number, signValue: number, gapValue: number, absGapValue: number }>} 维度明细数组。
  */
-function extractTopDimensions(preferenceVector) {
-  return BENEFACTOR_DIMENSION_KEYS.map((dimensionKey) => ({
-    label: BENEFACTOR_DIMENSION_LABELS[dimensionKey],
-    value: Number(preferenceVector[dimensionKey] ?? 0),
-  }))
-    .sort((leftItem, rightItem) => rightItem.value - leftItem.value)
-    .slice(0, 3)
-    .map((item) => item.label);
+function buildDimensionRows(preferenceVector, signProfile) {
+  return BENEFACTOR_DIMENSION_KEYS.map((dimensionKey) => {
+    const userValue = Number(preferenceVector[dimensionKey] ?? 0);
+    const signValue = Number(signProfile[dimensionKey] ?? 0);
+    const gapValue = Number((signValue - userValue).toFixed(2));
+
+    return {
+      key: dimensionKey,
+      label: BENEFACTOR_DIMENSION_LABELS[dimensionKey],
+      userValue: Number(userValue.toFixed(2)),
+      signValue: Number(signValue.toFixed(2)),
+      gapValue,
+      absGapValue: Number(Math.abs(gapValue).toFixed(2)),
+    };
+  });
+}
+
+/**
+ * 提取维度洞察信息。
+ * 复杂度评估：O(D log D)
+ * D 为维度数量（固定 8）。
+ * @param {object} preferenceVector 用户偏好向量。
+ * @param {object} topSign 主匹配星座对象。
+ * @returns {{ rows: Array<object>, selfStrength: Array<object>, resonance: Array<object>, supportBoost: Array<object>, caution: Array<object> }} 维度洞察对象。
+ */
+function buildDimensionInsights(preferenceVector, topSign) {
+  const rows = buildDimensionRows(preferenceVector, topSign.profile ?? {});
+
+  const selfStrength = [...rows]
+    .sort((leftItem, rightItem) => rightItem.userValue - leftItem.userValue)
+    .slice(0, 3);
+
+  const resonance = [...rows]
+    .sort((leftItem, rightItem) => leftItem.absGapValue - rightItem.absGapValue)
+    .slice(0, 3);
+
+  const supportBoost = [...rows]
+    .filter((item) => item.gapValue > 0)
+    .sort((leftItem, rightItem) => rightItem.gapValue - leftItem.gapValue)
+    .slice(0, 3);
+
+  const caution = [...rows]
+    .sort((leftItem, rightItem) => leftItem.userValue - rightItem.userValue)
+    .slice(0, 2);
+
+  return { rows, selfStrength, resonance, supportBoost, caution };
+}
+
+/**
+ * 构建贵人主题标签。
+ * @param {object} topSign 主匹配星座对象。
+ * @param {object} dimensionInsights 维度洞察。
+ * @returns {Array<string>} 标签列表。
+ */
+function buildBenefactorTagChips(topSign, dimensionInsights) {
+  const resonanceTag = dimensionInsights.resonance[0]?.label ?? "协作同频";
+  const boostTag = dimensionInsights.supportBoost[0]?.label ?? "短板补位";
+  const strengthTag = dimensionInsights.selfStrength[0]?.label ?? "优势放大";
+
+  return [
+    `${topSign.sign}贵人`,
+    `${resonanceTag}同频`,
+    `${boostTag}补位`,
+    `${strengthTag}放大`,
+    "关键节点助推",
+    "关系协作增益",
+  ];
+}
+
+/**
+ * 构建本地“贵人出现地图”。
+ * @param {object} topSign 主匹配星座对象。
+ * @param {object} dimensionInsights 维度洞察。
+ * @returns {Array<string>} 场景列表。
+ */
+function buildEncounterScenes(topSign, dimensionInsights) {
+  const topResonance = dimensionInsights.resonance[0]?.label ?? "互动节奏";
+  const topBoost = dimensionInsights.supportBoost[0]?.label ?? "关系支持";
+
+  return [
+    `高概率场景：涉及${topResonance}的朋友聚会、兴趣社群、同城活动与日常聊天圈。`,
+    `关键触发点：当你在${topBoost}上有明显需求时，${topSign.sign}类型的人更容易主动靠近并给你实质帮助。`,
+    "出现方式更多是“朋友的朋友、共同爱好、长期互动中的自然靠近”，而不是一次性陌生社交。",
+    "你越是自然分享近况和真实情绪，越容易被真正愿意支持你的人识别到。",
+  ];
+}
+
+/**
+ * 构建本地“人际互动画像”。
+ * @param {object} topSign 主匹配星座对象。
+ * @returns {Array<string>} 互动画像列表。
+ */
+function buildCollaborationStyles(topSign) {
+  return [
+    `你和${topSign.sign}类型的人更容易形成“你先表达、对方接住并补位”的互动节奏。`,
+    "关系升温通常不是靠一次深聊，而是靠多次稳定、真诚、不过度用力的往来。",
+    "当你愿意把边界说清楚、把情绪说具体，对方会更愿意长期站在你这边。",
+  ];
+}
+
+/**
+ * 构建本地“沟通钥匙”。
+ * @param {object} dimensionInsights 维度洞察。
+ * @returns {Array<string>} 沟通建议列表。
+ */
+function buildCommunicationTips(dimensionInsights) {
+  const cautionLabel = dimensionInsights.caution[0]?.label ?? "情绪管理";
+
+  return [
+    "沟通时先说感受，再说你希望对方怎么做，关系会更顺畅。",
+    "出现误会时先确认对方真实意思，不要用猜测替代对话。",
+    `当你在${cautionLabel}维度波动时，先慢下来整理情绪，再决定要不要继续聊。`,
+  ];
+}
+
+/**
+ * 构建本地“情绪支持方式”。
+ * @param {object} topSign 主匹配星座对象。
+ * @returns {Array<string>} 情绪支持列表。
+ */
+function buildResourceChannels(topSign) {
+  return [
+    `${topSign.sign}类型的贵人更常见的支持方式是：先稳定你的情绪，再帮你理清下一步。`,
+    "你最容易感受到支持的渠道是“日常持续联系的人”，而不是临时出现的强关系。",
+    "建议把“谁会安慰你、谁会给建议、谁会陪你行动”区分开来，支持会更精准。",
+  ];
+}
+
+/**
+ * 构建本地“年度人际节奏提示”。
+ * @returns {Array<string>} 年度节奏列表。
+ */
+function buildMonthlyRhythm() {
+  return [
+    "Q1（1-3月）：适合修复旧关系、清理低消耗社交，保留真正同频的人。",
+    "Q2（4-6月）：人际扩张期，容易在兴趣圈和朋友局遇到愿意拉你一把的人。",
+    "Q3-Q4（7-12月）：关系沉淀期，重点经营高质量长期连接，减少无效来往。",
+  ];
+}
+
+/**
+ * 构建本地“关系升温动作”。
+ * @param {object} dimensionInsights 维度洞察。
+ * @returns {Array<string>} 机会动作列表。
+ */
+function buildKeyOpportunities(dimensionInsights) {
+  const topStrength = dimensionInsights.selfStrength[0]?.label ?? "表达能力";
+  const topBoost = dimensionInsights.supportBoost[0]?.label ?? "情绪承接";
+
+  return [
+    `先把你的${topStrength}优势用日常方式展示出来，让别人知道你真实的闪光点。`,
+    `在你容易卡住的${topBoost}场景，主动找值得信任的人聊，不要一个人硬扛。`,
+    "每周主动联系 1 位你认可的人，保持低压力但稳定的关系温度。",
+    "在关系里先给出具体善意（倾听、回应、兑现），贵人更愿意长期回馈你。",
+    "把“感谢”说出口，把“需要”说具体，你会更容易得到真实支持。",
+  ];
+}
+
+/**
+ * 构建本地“社交避坑提醒”。
+ * @param {object} dimensionInsights 维度洞察。
+ * @returns {Array<string>} 避坑列表。
+ */
+function buildAvoidSignals(dimensionInsights) {
+  const cautionLabel = dimensionInsights.caution[0]?.label ?? "稳定表达";
+  const secondCautionLabel = dimensionInsights.caution[1]?.label ?? "情绪承接";
+
+  return [
+    `在${cautionLabel}不稳定时，容易把“别人的节奏问题”误读成“别人不在乎你”。`,
+    `若${secondCautionLabel}起伏较大，关系里会出现“想靠近又想后退”的反复拉扯。`,
+    "只倾诉但不说清楚自己真正需要什么，会让支持你的人无从下手。",
+    "把所有人都当成潜在贵人会消耗你自己，先经营少量高质量关系更有效。",
+  ];
 }
 
 /**
  * 构建本地叙事文本。
  * @param {object} topSign 主匹配星座对象。
- * @param {object} preferenceVector 用户偏好向量。
+ * @param {object} dimensionInsights 维度洞察对象。
  * @returns {string} 本地结论文本。
  */
-function buildLocalNarrative(topSign, preferenceVector) {
-  const topDimensions = extractTopDimensions(preferenceVector);
-  return `2026 年与你最容易形成“贵人同频”的星座是「${topSign.sign}」。你在${topDimensions.join("、")}上与该星座的支持方式更契合。${topSign.supportStyle}`;
+function buildLocalNarrative(topSign, dimensionInsights) {
+  const topDimensions = dimensionInsights.selfStrength
+    .slice(0, 3)
+    .map((item) => item.label);
+
+  return `2026 年与你最容易形成“贵人同频”的星座是「${topSign.sign}」。你在${topDimensions.join("、")}上与该星座更容易形成协作共振。${topSign.supportStyle}`;
 }
 
 /**
@@ -357,7 +547,7 @@ function buildLocalNarrative(topSign, preferenceVector) {
  * @param {object} params 参数对象。
  * @param {Array<object>} params.questions 本轮题目。
  * @param {Array<string|null>} params.answerIds 用户答案列表。
- * @returns {{ topSign: object, topThree: Array<object>, scoredSigns: Array<object>, preferenceVector: object, dimensionWeights: object, answerSummary: Array<object>, summaryLines: Array<string>, localNarrative: string }} 本地分析结果。
+ * @returns {{ topSign: object, topThree: Array<object>, scoredSigns: Array<object>, preferenceVector: object, dimensionWeights: object, answerSummary: Array<object>, summaryLines: Array<string>, localNarrative: string, tagChips: Array<string>, dimensionInsights: object, encounterScenes: Array<string>, collaborationStyles: Array<string>, communicationTips: Array<string>, resourceChannels: Array<string>, monthlyRhythm: Array<string>, keyOpportunities: Array<string>, avoidSignals: Array<string> }} 本地分析结果。
  */
 export function analyzeBenefactor2026Locally({ questions, answerIds }) {
   const answerSummary = buildAnswerSummary(questions, answerIds);
@@ -369,11 +559,22 @@ export function analyzeBenefactor2026Locally({ questions, answerIds }) {
 
   const scoredSigns = BENEFACTOR_SIGN_PROFILES.map((signItem) => ({
     ...signItem,
+    // 关键逻辑：把颜色映射挂在评分对象上，供结果分布模块直接使用。
+    color: BENEFACTOR_SIGN_COLOR_MAP[signItem.sign] ?? "#7A8CB8",
     score: calculateSignScore(signItem.profile, preferenceVector, dimensionWeights),
   })).sort((leftItem, rightItem) => rightItem.score - leftItem.score);
 
   const topSign = scoredSigns[0];
   const topThree = scoredSigns.slice(0, 3);
+  const dimensionInsights = buildDimensionInsights(preferenceVector, topSign);
+  const tagChips = buildBenefactorTagChips(topSign, dimensionInsights);
+  const encounterScenes = buildEncounterScenes(topSign, dimensionInsights);
+  const collaborationStyles = buildCollaborationStyles(topSign);
+  const communicationTips = buildCommunicationTips(dimensionInsights);
+  const resourceChannels = buildResourceChannels(topSign);
+  const monthlyRhythm = buildMonthlyRhythm();
+  const keyOpportunities = buildKeyOpportunities(dimensionInsights);
+  const avoidSignals = buildAvoidSignals(dimensionInsights);
 
   return {
     topSign,
@@ -383,6 +584,15 @@ export function analyzeBenefactor2026Locally({ questions, answerIds }) {
     dimensionWeights,
     answerSummary,
     summaryLines,
-    localNarrative: buildLocalNarrative(topSign, preferenceVector),
+    localNarrative: buildLocalNarrative(topSign, dimensionInsights),
+    tagChips,
+    dimensionInsights,
+    encounterScenes,
+    collaborationStyles,
+    communicationTips,
+    resourceChannels,
+    monthlyRhythm,
+    keyOpportunities,
+    avoidSignals,
   };
 }

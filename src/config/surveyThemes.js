@@ -448,9 +448,108 @@ function buildTalentLocalUnifiedResult(localResult) {
 /**
  * 贵人星座主题：构建深度分析请求负载。
  * @param {object} localResult 本地分析结果。
- * @returns {{ summaryLines: Array<string>, preferenceVector: object, signCandidates: Array<object>, localTopThree: Array<object> }} 深度分析负载。
+ * @returns {{ summaryLines: Array<string>, preferenceVector: object, signCandidates: Array<object>, localTopThree: Array<object>, localFallback: object }} 深度分析负载。
  */
+function buildBenefactorDimensionHintItems(items, mode) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return [];
+  }
+
+  return items.map((item) => {
+    const label = item.label ?? "关键维度";
+    const userValue = Number(item.userValue ?? 0).toFixed(1);
+    const signValue = Number(item.signValue ?? 0).toFixed(1);
+    const gapValue = Number(item.gapValue ?? 0).toFixed(1);
+
+    if (mode === "resonance") {
+      return `${label}：你 ${userValue} / 贵人 ${signValue}，互动阻力更低，彼此更容易自然同频。`;
+    }
+
+    if (mode === "boost") {
+      return `${label}：贵人侧高出 ${gapValue}，在这块更能接住你、补足你短板。`;
+    }
+
+    return `${label}：你当前约 ${userValue}，这块波动时更容易出现关系误会。`;
+  });
+}
+
+/**
+ * 构建贵人主题本地兜底模块。
+ * @param {object} localResult 本地分析结果。
+ * @returns {{ tagChips: Array<string>, encounterScenes: Array<string>, collaborationStyles: Array<string>, communicationTips: Array<string>, resourceChannels: Array<string>, monthlyRhythm: Array<string>, resonanceHints: Array<string>, supplementHints: Array<string>, cautionHints: Array<string>, keyOpportunities: Array<string>, avoidSignals: Array<string> }} 本地兜底模块。
+ */
+function buildBenefactorLocalFallback(localResult) {
+  const dimensionInsights = localResult.dimensionInsights ?? {};
+
+  return {
+    tagChips: localResult.tagChips ?? [],
+    encounterScenes: localResult.encounterScenes ?? [],
+    collaborationStyles: localResult.collaborationStyles ?? [],
+    communicationTips: localResult.communicationTips ?? [],
+    resourceChannels: localResult.resourceChannels ?? [],
+    monthlyRhythm: localResult.monthlyRhythm ?? [],
+    resonanceHints: buildBenefactorDimensionHintItems(
+      dimensionInsights.resonance ?? [],
+      "resonance",
+    ),
+    supplementHints: buildBenefactorDimensionHintItems(
+      dimensionInsights.supportBoost ?? [],
+      "boost",
+    ),
+    cautionHints: buildBenefactorDimensionHintItems(
+      dimensionInsights.caution ?? [],
+      "caution",
+    ),
+    keyOpportunities: localResult.keyOpportunities ?? [],
+    avoidSignals: localResult.avoidSignals ?? [],
+  };
+}
+
+/**
+ * 获取首个可用字符串。
+ * @param {Array<unknown>} candidates 候选项。
+ * @param {string} fallbackText 兜底文本。
+ * @returns {string} 首个可用文案。
+ */
+function pickFirstAvailableText(candidates, fallbackText) {
+  for (const candidateItem of candidates) {
+    const normalizedText = String(candidateItem ?? "").trim();
+    if (normalizedText) {
+      return normalizedText;
+    }
+  }
+
+  return fallbackText;
+}
+
+/**
+ * 把多条要点压缩为一段可读性更强的文本。
+ * @param {Array<unknown>} items 候选条目。
+ * @param {string} fallbackText 兜底文本。
+ * @returns {string} 段落文本。
+ */
+function buildParagraphFromItems(items, fallbackText) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return fallbackText;
+  }
+
+  const normalizedItems = items
+    .map((item) => String(item ?? "").trim())
+    .filter(Boolean);
+
+  if (normalizedItems.length === 0) {
+    return fallbackText;
+  }
+
+  // 关键逻辑：统一用“。 ”连接，确保模块展示为连续段落而非列表断句。
+  const paragraphText = normalizedItems.join("。 ");
+  const normalizedParagraph = paragraphText.replace(/。+\s*$/u, "");
+  return `${normalizedParagraph}。`;
+}
+
 function buildBenefactorDeepPayload(localResult) {
+  const localFallback = buildBenefactorLocalFallback(localResult);
+
   return {
     summaryLines: localResult.summaryLines,
     preferenceVector: localResult.preferenceVector,
@@ -465,6 +564,7 @@ function buildBenefactorDeepPayload(localResult) {
       score: item.score,
       supportStyle: item.supportStyle,
     })),
+    localFallback,
   };
 }
 
@@ -475,9 +575,88 @@ function buildBenefactorDeepPayload(localResult) {
  * @returns {object} 统一结果对象。
  */
 function buildBenefactorDeepUnifiedResult(deepResult, localResult) {
+  const localFallback = buildBenefactorLocalFallback(localResult);
+  const topDistribution = (localResult.scoredSigns ?? []).slice(0, 6);
+  const mainSignSupportStyle =
+    localResult.scoredSigns?.find((item) => item.sign === deepResult.mainSign?.name)
+      ?.supportStyle ?? localResult.topSign.supportStyle;
+
+  const encounterScenes = deepResult.encounterScenes?.length
+    ? deepResult.encounterScenes
+    : localFallback.encounterScenes;
+  const collaborationStyles = deepResult.collaborationStyles?.length
+    ? deepResult.collaborationStyles
+    : localFallback.collaborationStyles;
+  const communicationTips = deepResult.communicationTips?.length
+    ? deepResult.communicationTips
+    : localFallback.communicationTips;
+  const resourceChannels = deepResult.resourceChannels?.length
+    ? deepResult.resourceChannels
+    : localFallback.resourceChannels;
+  const monthlyRhythm = deepResult.monthlyRhythm?.length
+    ? deepResult.monthlyRhythm
+    : localFallback.monthlyRhythm;
+  const resonanceHints = deepResult.resonanceHints?.length
+    ? deepResult.resonanceHints
+    : localFallback.resonanceHints;
+  const supplementHints = deepResult.supplementHints?.length
+    ? deepResult.supplementHints
+    : localFallback.supplementHints;
+  const cautionHints = deepResult.cautionHints?.length
+    ? deepResult.cautionHints
+    : localFallback.cautionHints;
+  const keyOpportunities = deepResult.keyOpportunities?.length
+    ? deepResult.keyOpportunities
+    : localFallback.keyOpportunities;
+  const avoidSignals = deepResult.avoidSignals?.length
+    ? deepResult.avoidSignals
+    : localFallback.avoidSignals;
+  const tagChips = deepResult.tags?.length ? deepResult.tags : localFallback.tagChips;
+
+  const encounterSceneParagraph = buildParagraphFromItems(
+    encounterScenes,
+    "你的贵人更容易在生活圈与稳定互动里出现，而不是一次性陌生社交。",
+  );
+  const relationStyleParagraph = buildParagraphFromItems(
+    collaborationStyles,
+    "你更适合通过稳定往来建立信任，让关系在自然互动中逐步升温。",
+  );
+  const communicationParagraph = buildParagraphFromItems(
+    communicationTips,
+    "沟通时先说感受再说需求，会更容易得到对方真实回应。",
+  );
+  const supportParagraph = buildParagraphFromItems(
+    resourceChannels,
+    "真正的支持通常来自日常可持续联系的人，而不是临时关系。",
+  );
+  const rhythmParagraph = buildParagraphFromItems(
+    monthlyRhythm,
+    "先清理无效社交，再经营同频关系，你的人际运势会更稳。",
+  );
+  const resonanceParagraph = buildParagraphFromItems(
+    resonanceHints,
+    "你与贵人在关键互动维度上有天然同频，关系推进阻力较小。",
+  );
+  const supplementParagraph = buildParagraphFromItems(
+    supplementHints,
+    "贵人会在你当前薄弱环节形成补位，帮你更快走出卡点。",
+  );
+  const cautionParagraph = buildParagraphFromItems(
+    cautionHints,
+    "情绪上头时先暂停再沟通，能显著减少关系误判。",
+  );
+  const keyActionParagraph = buildParagraphFromItems(
+    keyOpportunities,
+    "先保持真诚表达与稳定联系，你更容易获得持续支持。",
+  );
+  const avoidSignalParagraph = buildParagraphFromItems(
+    avoidSignals,
+    "避免高频内耗和无效社交，聚焦高质量连接更关键。",
+  );
+
   return createUnifiedResult({
     source: "deep",
-    prefixLabel: "你在 2026 的贵人星座",
+    prefixLabel: "你在 2026 的贵人星座画像",
     scoreLabel: "星座契合度",
     main: deepResult.mainSign,
     highlightCard: {
@@ -485,11 +664,47 @@ function buildBenefactorDeepUnifiedResult(deepResult, localResult) {
       content: deepResult.guardianSignal,
     },
     insight: deepResult.insight,
+    tagChips,
+    typeCard: {
+      title: "贵人协作卡片",
+      items: [
+        { label: "主贵人", value: deepResult.mainSign.name },
+        { label: "支持风格", value: mainSignSupportStyle },
+        {
+          label: "高频出现",
+          value: pickFirstAvailableText(
+            encounterScenes,
+            "跨团队协作和资源整合场景",
+          ),
+        },
+        {
+          label: "沟通关键词",
+          value: pickFirstAvailableText(communicationTips, "目标清晰、请求具体"),
+        },
+      ],
+    },
+    distributionChart: {
+      title: "星座契合分布（Top 6）",
+      items: topDistribution.map((item) => ({
+        key: item.code,
+        name: item.sign,
+        score: item.score,
+        color: item.color,
+      })),
+    },
     topThreeTitle: "贵人星座 Top 3",
     topThree: deepResult.topThree,
     detailSections: [
-      { title: "机会动作", items: deepResult.keyOpportunities },
-      { title: "避坑提醒", items: deepResult.avoidSignals },
+      { title: "生活圈遇见场景", items: [encounterSceneParagraph] },
+      { title: "人际互动画像", items: [relationStyleParagraph] },
+      { title: "沟通钥匙", items: [communicationParagraph] },
+      { title: "情绪支持方式", items: [supportParagraph] },
+      { title: "年度人际节奏", items: [rhythmParagraph] },
+      { title: "同频点", items: [resonanceParagraph] },
+      { title: "互补点", items: [supplementParagraph] },
+      { title: "温柔提醒", items: [cautionParagraph] },
+      { title: "关系升温动作", items: [keyActionParagraph] },
+      { title: "社交避坑提示", items: [avoidSignalParagraph] },
     ],
     summaryTitle: "答卷摘要",
     summaryLines: localResult.summaryLines,
@@ -503,9 +718,52 @@ function buildBenefactorDeepUnifiedResult(deepResult, localResult) {
  * @returns {object} 统一结果对象。
  */
 function buildBenefactorLocalUnifiedResult(localResult) {
+  const localFallback = buildBenefactorLocalFallback(localResult);
+  const topDistribution = (localResult.scoredSigns ?? []).slice(0, 6);
+  const encounterSceneParagraph = buildParagraphFromItems(
+    localFallback.encounterScenes,
+    "你的贵人更容易在日常生活圈里通过稳定互动慢慢出现。",
+  );
+  const relationStyleParagraph = buildParagraphFromItems(
+    localFallback.collaborationStyles,
+    "你的人际关系更适合慢热建立信任，不需要刻意用力社交。",
+  );
+  const communicationParagraph = buildParagraphFromItems(
+    localFallback.communicationTips,
+    "先表达感受再提出需求，会让沟通更轻松更有效。",
+  );
+  const supportParagraph = buildParagraphFromItems(
+    localFallback.resourceChannels,
+    "真正能帮到你的人通常来自长期稳定联系，而非短期热络关系。",
+  );
+  const rhythmParagraph = buildParagraphFromItems(
+    localFallback.monthlyRhythm,
+    "今年的人际重点是减少无效连接，经营少量但高质量的关系。",
+  );
+  const resonanceParagraph = buildParagraphFromItems(
+    localFallback.resonanceHints,
+    "你和贵人在关键关系维度上有天然同频。",
+  );
+  const supplementParagraph = buildParagraphFromItems(
+    localFallback.supplementHints,
+    "贵人更擅长补你短板，让你在关系里更有底气。",
+  );
+  const cautionParagraph = buildParagraphFromItems(
+    localFallback.cautionHints,
+    "当情绪波动时放慢节奏，会减少关系误会。",
+  );
+  const keyActionParagraph = buildParagraphFromItems(
+    localFallback.keyOpportunities,
+    "把联系、表达和感谢做成习惯，贵人运会逐步变强。",
+  );
+  const avoidSignalParagraph = buildParagraphFromItems(
+    localFallback.avoidSignals,
+    "尽量减少高消耗关系，把精力留给真正值得的人。",
+  );
+
   return createUnifiedResult({
     source: "local",
-    prefixLabel: "你在 2026 的贵人星座",
+    prefixLabel: "你在 2026 的贵人星座画像",
     scoreLabel: "星座契合度",
     main: {
       name: localResult.topSign.sign,
@@ -516,24 +774,53 @@ function buildBenefactorLocalUnifiedResult(localResult) {
       content: localResult.topSign.supportStyle,
     },
     insight: localResult.localNarrative,
+    tagChips: localFallback.tagChips,
+    typeCard: {
+      title: "贵人协作卡片",
+      items: [
+        { label: "主贵人", value: localResult.topSign.sign },
+        { label: "支持风格", value: localResult.topSign.supportStyle },
+        {
+          label: "高频出现",
+          value: pickFirstAvailableText(
+            localFallback.encounterScenes,
+            "项目协作和资源联动场景",
+          ),
+        },
+        {
+          label: "沟通关键词",
+          value: pickFirstAvailableText(
+            localFallback.communicationTips,
+            "目标清晰、节奏对齐",
+          ),
+        },
+      ],
+    },
+    distributionChart: {
+      title: "星座契合分布（Top 6）",
+      items: topDistribution.map((item) => ({
+        key: item.code,
+        name: item.sign,
+        score: item.score,
+        color: item.color,
+      })),
+    },
     topThreeTitle: "贵人星座 Top 3",
     topThree: localResult.topThree.map((item) => ({
       name: item.sign,
       score: item.score,
     })),
     detailSections: [
-      {
-        title: "机会动作",
-        items: [
-          "把你当前最重要的一件事公开表达，主动释放协作信号。",
-          "优先维护 2-3 位能互补你短板的关键联系人。",
-          "遇到卡点时，不只问“怎么做”，也问“和谁一起做”。",
-        ],
-      },
-      {
-        title: "避坑提醒",
-        items: ["闭门单打独斗太久", "情绪上头后切断沟通链路"],
-      },
+      { title: "生活圈遇见场景", items: [encounterSceneParagraph] },
+      { title: "人际互动画像", items: [relationStyleParagraph] },
+      { title: "沟通钥匙", items: [communicationParagraph] },
+      { title: "情绪支持方式", items: [supportParagraph] },
+      { title: "年度人际节奏", items: [rhythmParagraph] },
+      { title: "同频点", items: [resonanceParagraph] },
+      { title: "互补点", items: [supplementParagraph] },
+      { title: "温柔提醒", items: [cautionParagraph] },
+      { title: "关系升温动作", items: [keyActionParagraph] },
+      { title: "社交避坑提示", items: [avoidSignalParagraph] },
     ],
     summaryTitle: "答卷摘要",
     summaryLines: localResult.summaryLines,
@@ -1145,7 +1432,7 @@ export const SURVEY_THEME_CONFIGS = [
         }),
       buildDeepPayload: buildCityDeepPayload,
       runDeepAnalysis: (payload) =>
-        analyzeCityWithAI(payload, { timeoutMs: 18000 }),
+        analyzeCityWithAI(payload, { timeoutMs: 26000 }),
       buildDeepUnifiedResult: buildCityDeepUnifiedResult,
       buildLocalUnifiedResult: buildCityLocalUnifiedResult,
       deepFailToast: "深度匹配暂不可用，已切换本地规则结果",
@@ -1197,7 +1484,7 @@ export const SURVEY_THEME_CONFIGS = [
         }),
       buildDeepPayload: buildFortuneDeepPayload,
       runDeepAnalysis: (payload) =>
-        analyzeFortune2026WithAI(payload, { timeoutMs: 18000 }),
+        analyzeFortune2026WithAI(payload, { timeoutMs: 26000 }),
       buildDeepUnifiedResult: buildFortuneDeepUnifiedResult,
       buildLocalUnifiedResult: buildFortuneLocalUnifiedResult,
       deepFailToast: "深度解读暂不可用，已切换基础解析",
@@ -1249,7 +1536,7 @@ export const SURVEY_THEME_CONFIGS = [
         }),
       buildDeepPayload: buildAncientDeepPayload,
       runDeepAnalysis: (payload) =>
-        analyzeAncientIdentityWithDeepInsight(payload, { timeoutMs: 18000 }),
+        analyzeAncientIdentityWithDeepInsight(payload, { timeoutMs: 26000 }),
       buildDeepUnifiedResult: buildAncientDeepUnifiedResult,
       buildLocalUnifiedResult: buildAncientLocalUnifiedResult,
       deepFailToast: "深度判定暂不可用，已切换基础判定",
@@ -1301,7 +1588,7 @@ export const SURVEY_THEME_CONFIGS = [
         }),
       buildDeepPayload: buildTalentDeepPayload,
       runDeepAnalysis: (payload) =>
-        analyzeHiddenTalentWithDeepInsight(payload, { timeoutMs: 18000 }),
+        analyzeHiddenTalentWithDeepInsight(payload, { timeoutMs: 26000 }),
       buildDeepUnifiedResult: buildTalentDeepUnifiedResult,
       buildLocalUnifiedResult: buildTalentLocalUnifiedResult,
       deepFailToast: "深度生成暂不可用，已切换基础生成",
@@ -1358,7 +1645,7 @@ export const SURVEY_THEME_CONFIGS = [
         }),
       buildDeepPayload: buildBenefactorDeepPayload,
       runDeepAnalysis: (payload) =>
-        analyzeBenefactor2026WithAI(payload, { timeoutMs: 18000 }),
+        analyzeBenefactor2026WithAI(payload, { timeoutMs: 26000 }),
       buildDeepUnifiedResult: buildBenefactorDeepUnifiedResult,
       buildLocalUnifiedResult: buildBenefactorLocalUnifiedResult,
       deepFailToast: "深度匹配暂不可用，已切换基础匹配",
@@ -1413,7 +1700,7 @@ export const SURVEY_THEME_CONFIGS = [
         }),
       buildDeepPayload: buildColorThemeDeepPayload,
       runDeepAnalysis: (payload) =>
-        analyzeColor2026WithAI(payload, { timeoutMs: 18000 }),
+        analyzeColor2026WithAI(payload, { timeoutMs: 26000 }),
       buildDeepUnifiedResult: buildColorThemeDeepUnifiedResult,
       buildLocalUnifiedResult: buildColorThemeLocalUnifiedResult,
       deepFailToast: "深度配色暂不可用，已切换基础配色结果",
@@ -1467,7 +1754,7 @@ export const SURVEY_THEME_CONFIGS = [
         }),
       buildDeepPayload: buildLoveAttachmentDeepPayload,
       runDeepAnalysis: (payload) =>
-        analyzeLoveAttachmentWithAI(payload, { timeoutMs: 22000 }),
+        analyzeLoveAttachmentWithAI(payload, { timeoutMs: 30000 }),
       buildDeepUnifiedResult: buildLoveAttachmentDeepUnifiedResult,
       buildLocalUnifiedResult: buildLoveAttachmentLocalUnifiedResult,
       deepFailToast: "AI结果暂不可用，已切换本地基础结果",
@@ -1565,4 +1852,15 @@ export const DEFAULT_SURVEY_THEME =
 export function resolveSurveyThemeByPath(path) {
   const normalizedPath = normalizePath(path);
   return PATH_THEME_MAP.get(normalizedPath) ?? DEFAULT_SURVEY_THEME;
+}
+
+/**
+ * 判断路径是否是已注册主题路径。
+ * 复杂度评估：Map 查找为 O(1)。
+ * @param {string} path 浏览器路径。
+ * @returns {boolean} 是否命中主题路径。
+ */
+export function hasSurveyThemePath(path) {
+  const normalizedPath = normalizePath(path);
+  return PATH_THEME_MAP.has(normalizedPath);
 }
