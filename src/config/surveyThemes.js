@@ -2062,6 +2062,8 @@ export const SURVEY_THEME_CONFIGS = [
         enabled: true,
         gateQuestionNumber: ROMANCE_DESTINY_GATE_DEFAULTS.gateQuestionNumber,
         thresholdPercent: ROMANCE_DESTINY_GATE_DEFAULTS.thresholdPercent,
+        // 关键逻辑：遗憾结局遮罩停留时长（毫秒），适当延长情绪落点。
+        lockHoldDurationMs: 2100,
         unlockQuestionId: "romance-final-chance",
         processingLines: [
           "检测到过量的浪漫因子...",

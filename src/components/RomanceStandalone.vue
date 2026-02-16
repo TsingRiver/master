@@ -48,7 +48,32 @@
         </p>
       </header>
 
-      <section v-if="stage === 'survey' && currentQuestion" class="romancex-panel romancex-question-panel">
+      <section v-if="stage === 'cover'" class="romancex-panel romancex-cover-panel">
+        <p class="romancex-cover-kicker">测试简介</p>
+        <h2 class="romancex-cover-title">《你认为最浪漫的事》浪漫封顶值测试</h2>
+        <p class="romancex-cover-intro">
+          这不是普通问卷，而是一场带有“宿命分支”的心动实验。你将根据直觉完成选择，在第 13 题迎来关键判定，决定是否解锁最终隐藏关卡。
+        </p>
+
+        <ul class="romancex-cover-points">
+          <li>全程不显示具体题号，按直觉作答即可。</li>
+          <li>第 13 题会触发“守门员判定”。</li>
+          <li>完成后可生成专属浪漫海报并分享。</li>
+        </ul>
+
+        <div class="romancex-cover-actions">
+          <van-button
+            block
+            class="romancex-btn romancex-btn-primary romancex-cover-start-btn"
+            @click="startSurveyFromCover"
+          >
+            点亮心动旅程
+          </van-button>
+          <p class="romancex-cover-tip">预计耗时 2-3 分钟</p>
+        </div>
+      </section>
+
+      <section v-else-if="stage === 'survey' && currentQuestion" class="romancex-panel romancex-question-panel">
         <div class="romancex-progress-box" :class="`is-${romanceProgressPhase}`">
           <p class="romancex-progress-hint">{{ romanceProgressHint }}</p>
           <div
@@ -399,7 +424,7 @@ const props = defineProps({
 /**
  * 页面阶段状态。
  */
-const stage = ref("survey");
+const stage = ref("cover");
 
 /**
  * 作答主状态。
@@ -752,6 +777,10 @@ const destinyGatekeeperConfig = computed(() => {
           .map((lineItem) => String(lineItem ?? "").trim())
           .filter(Boolean)
       : [],
+    lockHoldDurationMs: Math.max(
+      900,
+      Number(rawConfig.lockHoldDurationMs) || 2100,
+    ),
   };
 });
 
@@ -938,9 +967,22 @@ function resetSurveyState() {
   currentQuestionIndex.value = 0;
   answers.value = Array.from({ length: questionBank.value.length }, () => null);
   unifiedResult.value = null;
-  stage.value = "survey";
+  stage.value = "cover";
   heartDisplayedFillPercent.value = progressPercent.value;
   heartWavePhase.value = 0;
+}
+
+/**
+ * 从封面页开始测试。
+ * 关键逻辑：仅切换阶段，不重建题库，避免用户封面停留期间状态被重复重置。
+ */
+function startSurveyFromCover() {
+  stopAutoAdvanceTimer();
+  stopEncouragementTimer();
+  isEncouragementVisible.value = false;
+  isDestinyOverlayVisible.value = false;
+  romanceProgressPhase.value = "normal";
+  stage.value = "survey";
 }
 
 /**
@@ -1203,7 +1245,10 @@ async function playDestinyGateOverlayScript(passed) {
   destinyOverlayPrimaryText.value = lockPrimary;
   destinyOverlaySecondaryText.value = `${lockSecondary} ${lockEnding}`.trim();
   romanceProgressPhase.value = "fail";
-  await waitFor(1680);
+  /**
+   * 关键逻辑：遗憾结局额外停留，给用户留出更充分的情绪沉浸时间。
+   */
+  await waitFor(gateConfig.lockHoldDurationMs);
   isDestinyOverlayVisible.value = false;
 }
 
@@ -2022,6 +2067,69 @@ onBeforeUnmount(() => {
   padding: 18px 16px;
 }
 
+.romancex-cover-panel {
+  animation: romancexCoverIn 460ms ease both;
+}
+
+.romancex-cover-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #8f6ab5;
+}
+
+.romancex-cover-title {
+  margin: 10px 0 10px;
+  font-size: clamp(22px, 6vw, 30px);
+  line-height: 1.35;
+  color: #3b2856;
+  font-family: "Noto Serif SC", serif;
+}
+
+.romancex-cover-intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.72;
+  color: #57476e;
+}
+
+.romancex-cover-points {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.romancex-cover-points li {
+  border-radius: 10px;
+  border: 1px solid rgba(221, 202, 242, 0.9);
+  background: linear-gradient(160deg, #fff, #fbf3ff);
+  font-size: 12px;
+  line-height: 1.6;
+  color: #5e4d78;
+  padding: 8px 10px;
+}
+
+.romancex-cover-actions {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.romancex-cover-start-btn {
+  min-height: 46px;
+}
+
+.romancex-cover-tip {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #7a6896;
+}
+
 .romancex-progress-box {
   margin-bottom: 12px;
 }
@@ -2417,8 +2525,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 12px 24px rgba(78, 56, 115, 0.3);
 }
 
-.romancex-encouragement-overlay,
-.romancex-destiny-overlay {
+.romancex-encouragement-overlay {
   position: absolute;
   inset: 0;
   z-index: 16;
@@ -2444,13 +2551,21 @@ onBeforeUnmount(() => {
 }
 
 .romancex-destiny-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
   display: grid;
   place-content: center;
   justify-items: center;
   text-align: center;
   align-content: center;
   gap: 10px;
-  padding: 24px 22px;
+  padding:
+    max(24px, env(safe-area-inset-top))
+    22px
+    max(24px, env(safe-area-inset-bottom));
+  overflow: hidden;
 }
 
 .romancex-destiny-overlay::before {
@@ -2458,12 +2573,13 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   z-index: -1;
-  border-radius: inherit;
+  border-radius: 0;
   backdrop-filter: blur(5px);
 }
 
 .romancex-destiny-title {
   margin: 0;
+  max-width: min(92vw, 560px);
   color: #fff;
   font-size: clamp(20px, 5.9vw, 30px);
   line-height: 1.3;
@@ -2472,6 +2588,7 @@ onBeforeUnmount(() => {
 
 .romancex-destiny-desc {
   margin: 0;
+  max-width: min(92vw, 560px);
   color: rgba(255, 245, 252, 0.94);
   line-height: 1.65;
   font-size: 14px;
@@ -2517,9 +2634,7 @@ onBeforeUnmount(() => {
 .romancex-loading-swap-enter-active,
 .romancex-loading-swap-leave-active,
 .romancex-hint-pop-enter-active,
-.romancex-hint-pop-leave-active,
-.romancex-destiny-pop-enter-active,
-.romancex-destiny-pop-leave-active {
+.romancex-hint-pop-leave-active {
   transition:
     opacity 250ms ease,
     transform 250ms ease,
@@ -2528,8 +2643,7 @@ onBeforeUnmount(() => {
 
 .romancex-question-swap-enter-from,
 .romancex-loading-swap-enter-from,
-.romancex-hint-pop-enter-from,
-.romancex-destiny-pop-enter-from {
+.romancex-hint-pop-enter-from {
   opacity: 0;
   transform: translateY(8px) scale(0.97);
   filter: blur(2px);
@@ -2537,10 +2651,20 @@ onBeforeUnmount(() => {
 
 .romancex-question-swap-leave-to,
 .romancex-loading-swap-leave-to,
-.romancex-hint-pop-leave-to,
-.romancex-destiny-pop-leave-to {
+.romancex-hint-pop-leave-to {
   opacity: 0;
   transform: translateY(-8px) scale(0.98);
+  filter: blur(2px);
+}
+
+.romancex-destiny-pop-enter-active,
+.romancex-destiny-pop-leave-active {
+  transition: opacity 250ms ease, filter 250ms ease;
+}
+
+.romancex-destiny-pop-enter-from,
+.romancex-destiny-pop-leave-to {
+  opacity: 0;
   filter: blur(2px);
 }
 
@@ -2550,6 +2674,17 @@ onBeforeUnmount(() => {
   }
   to {
     filter: hue-rotate(24deg) saturate(1.18);
+  }
+}
+
+@keyframes romancexCoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
