@@ -5,6 +5,33 @@
     <div class="survey-noise" aria-hidden="true"></div>
 
     <main class="survey-shell" aria-live="polite">
+      <transition name="survey-cheer-pop">
+        <div
+          v-if="isEncouragementVisible"
+          class="survey-cheer-overlay"
+          aria-hidden="true"
+        >
+          <p class="survey-cheer-message" role="status" aria-live="polite">
+            {{ encouragementMessage }}
+          </p>
+        </div>
+      </transition>
+
+      <transition name="survey-destiny-pop">
+        <div
+          v-if="isDestinyOverlayVisible"
+          class="survey-destiny-overlay"
+          :class="`survey-destiny-${destinyOverlayType}`"
+          role="status"
+          aria-live="polite"
+        >
+          <p class="survey-destiny-primary">{{ destinyOverlayPrimaryText }}</p>
+          <p v-if="destinyOverlaySecondaryText" class="survey-destiny-secondary">
+            {{ destinyOverlaySecondaryText }}
+          </p>
+        </div>
+      </transition>
+
       <header class="survey-header">
         <div v-if="portalMode" class="survey-hub-back-wrap">
           <a class="survey-hub-back-link" :href="portalHomeHref">返回主题中心</a>
@@ -12,20 +39,54 @@
         <p class="survey-badge">{{ themeConfig.theme.badge }}</p>
         <h1>{{ themeConfig.theme.title }}</h1>
         <p class="survey-desc">{{ themeConfig.theme.description }}</p>
+        <p
+          v-if="themeConfig.theme.participantCountLabel"
+          class="survey-participant-count"
+        >
+          {{ themeConfig.theme.participantCountLabel }}
+        </p>
       </header>
 
       <section v-if="stage === 'survey' && currentQuestion" class="survey-card card-in">
-        <div class="survey-progress-meta">
-          <span>{{ progressLabel }}</span>
-          <span>{{ progressPercent }}%</span>
-        </div>
-        <van-progress
-          :percentage="progressPercent"
-          :show-pivot="false"
-          :stroke-width="8"
-          :color="activeProgressColor"
-          :track-color="themeConfig.theme.progressTrackColor"
-        />
+        <template v-if="isRomanceTheme">
+          <div
+            class="survey-romance-progress-wrap"
+            :class="`is-${romanceProgressPhase}`"
+          >
+            <p class="survey-romance-progress-hint">{{ romanceProgressHint }}</p>
+            <div
+              class="survey-romance-wave-track"
+              role="progressbar"
+              aria-label="浪漫旅程进度"
+              :aria-valuemin="0"
+              :aria-valuemax="100"
+              :aria-valuenow="progressPercent"
+            >
+              <div
+                class="survey-romance-wave-fill"
+                :style="{ width: `${progressPercent}%` }"
+              ></div>
+              <span
+                class="survey-romance-wave-core"
+                :style="{ left: romanceProgressNodeLeftPercent }"
+                aria-hidden="true"
+              ></span>
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          <div class="survey-progress-meta">
+            <span>{{ progressLabel }}</span>
+            <span>{{ progressPercent }}%</span>
+          </div>
+          <van-progress
+            :percentage="progressPercent"
+            :show-pivot="false"
+            :stroke-width="8"
+            :color="activeProgressColor"
+            :track-color="themeConfig.theme.progressTrackColor"
+          />
+        </template>
 
         <transition name="survey-fade" mode="out-in">
           <div :key="currentQuestion.id" class="survey-question-wrap">
@@ -166,6 +227,71 @@
             </ul>
           </div>
 
+          <div
+            v-if="radarChartItems.length >= 3"
+            class="survey-radar-wrap"
+          >
+            <h3>{{ unifiedResult.radarChart.title }}</h3>
+            <div class="survey-radar-canvas">
+              <svg
+                :viewBox="radarChartViewBox"
+                role="img"
+                aria-label="浪漫维度雷达图"
+              >
+                <polygon
+                  v-for="(polygonPoints, levelIndex) in radarGridPolygons"
+                  :key="`radar-grid-${levelIndex}`"
+                  :points="polygonPoints"
+                  class="survey-radar-grid"
+                />
+                <line
+                  v-for="(axisPoint, axisIndex) in radarAxisPoints"
+                  :key="`radar-axis-${axisIndex}`"
+                  :x1="radarCenterPoint"
+                  :y1="radarCenterPoint"
+                  :x2="axisPoint.outerX"
+                  :y2="axisPoint.outerY"
+                  class="survey-radar-axis"
+                />
+                <polygon
+                  :points="radarDataPolygonPoints"
+                  class="survey-radar-data"
+                />
+                <circle
+                  v-for="(axisPoint, pointIndex) in radarAxisPoints"
+                  :key="`radar-point-${pointIndex}`"
+                  :cx="axisPoint.valueX"
+                  :cy="axisPoint.valueY"
+                  r="3.6"
+                  :style="{ fill: axisPoint.color || activeCheckedColor }"
+                />
+                <text
+                  v-for="(labelPoint, labelIndex) in radarLabelPoints"
+                  :key="`radar-label-${labelIndex}`"
+                  :x="labelPoint.x"
+                  :y="labelPoint.y"
+                  class="survey-radar-label"
+                >
+                  {{ labelPoint.label }}
+                </text>
+              </svg>
+            </div>
+            <ul class="survey-radar-legend">
+              <li
+                v-for="(item, itemIndex) in radarChartItems"
+                :key="`radar-legend-${itemIndex}`"
+                class="survey-radar-legend-item"
+              >
+                <span
+                  class="survey-radar-dot"
+                  :style="{ background: item.color || activeCheckedColor }"
+                ></span>
+                <span class="survey-radar-name">{{ item.label || item.name }}</span>
+                <span class="survey-radar-score">{{ item.score }}%</span>
+              </li>
+            </ul>
+          </div>
+
           <div class="survey-top-wrap">
             <h3>{{ unifiedResult.topThreeTitle }}</h3>
             <ul class="survey-top-list">
@@ -207,6 +333,47 @@
                 {{ line }}
               </li>
             </ul>
+          </div>
+
+          <p
+            v-if="unifiedResult.easterEggText"
+            class="survey-easter-egg"
+          >
+            {{ unifiedResult.easterEggText }}
+          </p>
+
+          <div v-if="shouldShowPosterSection" class="survey-poster-wrap">
+            <h3>分享海报</h3>
+            <p class="survey-poster-desc">
+              已自动生成浪漫海报，可长按预览图保存，或点击按钮下载。
+            </p>
+
+            <div v-if="posterPreviewUrl" class="survey-poster-preview">
+              <img :src="posterPreviewUrl" alt="浪漫指数海报预览图" loading="lazy" />
+            </div>
+            <div v-else class="survey-poster-loading">
+              <van-loading :color="activeCheckedColor" size="24px" />
+              <span>正在生成分享海报...</span>
+            </div>
+
+            <div class="survey-poster-actions">
+              <van-button
+                block
+                class="survey-btn survey-btn-secondary"
+                :loading="isGeneratingPoster"
+                @click="handleGeneratePoster"
+              >
+                重新生成海报
+              </van-button>
+              <van-button
+                block
+                class="survey-btn survey-btn-primary"
+                :disabled="!posterPreviewUrl"
+                @click="savePosterImage"
+              >
+                保存海报
+              </van-button>
+            </div>
           </div>
 
           <van-button
@@ -279,6 +446,56 @@ const selectedQuestionBank = ref([]);
  */
 const loadingMessageIndex = ref(0);
 let loadingMessageTimer = null;
+
+/**
+ * 自动下一题定时器：
+ * 仅在主题配置启用 autoAdvanceOnSelect 时生效。
+ */
+let autoAdvanceTimer = null;
+
+/**
+ * 海报状态。
+ */
+const posterPreviewUrl = ref("");
+const isGeneratingPoster = ref(false);
+let posterGenerationToken = 0;
+
+/**
+ * 中途激励文案状态：
+ * 用于“题目过半”的快速鼓励动效。
+ */
+const isEncouragementVisible = ref(false);
+const encouragementMessage = ref("");
+const hasShownMidwayEncouragement = ref(false);
+let encouragementTimer = null;
+
+/**
+ * 宿命解锁转场状态：
+ * 1. 用于 Q13 判定时的“过载/终结”脚本。
+ * 2. 通过 overlay + 进度轨道状态类共同驱动动画。
+ */
+const isDestinyOverlayVisible = ref(false);
+const destinyOverlayType = ref("processing");
+const destinyOverlayPrimaryText = ref("");
+const destinyOverlaySecondaryText = ref("");
+const romanceProgressPhase = ref("normal");
+
+/**
+ * 宿命守门员状态：
+ * 关键逻辑：每轮只判定一次，避免重复触发解锁流程。
+ */
+const romanceGateState = ref({
+  checked: false,
+  passed: false,
+  scorePercent: 0,
+  thresholdPercent: 80,
+});
+
+/**
+ * 下一步提交互斥锁：
+ * 关键逻辑：防止用户连点导致 goNext 并发执行，引发重复判定或重复提交。
+ */
+const isAdvancingToNext = ref(false);
 
 /**
  * 深度分析交互策略：
@@ -429,6 +646,9 @@ const questionSelection = computed(() => {
     maxCount: selectionConfig.maxCount ?? 15,
     ensureDimensionCoverage: Boolean(selectionConfig.ensureDimensionCoverage),
     dimensionKey: selectionConfig.dimensionKey ?? "",
+    useSequentialQuestionOrder: Boolean(
+      props.themeConfig.survey.useSequentialQuestionOrder,
+    ),
   };
 });
 
@@ -475,6 +695,151 @@ const activeLoadingMessage = computed(() => {
 const sourceTagStyle = computed(() => {
   const sourceType = unifiedResult.value?.source === "local" ? "local" : "deep";
   return props.themeConfig.theme.sourceTag[sourceType];
+});
+
+/**
+ * 是否为浪漫主题。
+ */
+const isRomanceTheme = computed(() => props.themeConfig.key === "romance");
+
+/**
+ * 是否启用“选择即下一题”交互。
+ */
+const shouldAutoAdvance = computed(() =>
+  Boolean(props.themeConfig.survey.autoAdvanceOnSelect),
+);
+
+/**
+ * 浪漫主题进度提示文案：
+ * 关键逻辑：不暴露具体题号，保持“神秘感”。
+ */
+const romanceProgressHint = computed(() => {
+  if (!isRomanceTheme.value) {
+    return "";
+  }
+
+  if (romanceProgressPhase.value === "processing") {
+    return "宿命判定中，请稍候...";
+  }
+
+  if (romanceProgressPhase.value === "success") {
+    return "信号过载，命运边界正在被突破";
+  }
+
+  if (romanceProgressPhase.value === "fail") {
+    return "电波归于平静，故事停在了第 13 章";
+  }
+
+  if (isLastQuestion.value) {
+    return "最后一段心动旅程，答案即将揭晓";
+  }
+
+  if (progressPercent.value >= 70) {
+    return "你的浪漫拼图正在逐渐完整";
+  }
+
+  if (progressPercent.value >= 35) {
+    return "心动线索持续累积中";
+  }
+
+  return "浪漫雷达已启动，请跟随直觉";
+});
+
+/**
+ * 浪漫进度节点位置：
+ * 关键逻辑：限制在 [6%, 97%]，防止首尾被容器裁切。
+ */
+const romanceProgressNodeLeftPercent = computed(() => {
+  const clampedPercent = Math.max(6, Math.min(97, progressPercent.value));
+  return `${clampedPercent}%`;
+});
+
+/**
+ * 雷达图常量：
+ * 关键逻辑：固定画布尺寸可降低布局抖动，保证移动端渲染稳定。
+ */
+const RADAR_VIEWBOX_SIZE = 260;
+const RADAR_CENTER_POINT = RADAR_VIEWBOX_SIZE / 2;
+const RADAR_RADIUS = 90;
+const RADAR_GRID_LEVELS = [0.25, 0.5, 0.75, 1];
+
+/**
+ * 雷达图数据源。
+ */
+const radarChartItems = computed(
+  () => unifiedResult.value?.radarChart?.items ?? [],
+);
+const radarChartViewBox = computed(
+  () => `0 0 ${RADAR_VIEWBOX_SIZE} ${RADAR_VIEWBOX_SIZE}`,
+);
+const radarCenterPoint = computed(() => RADAR_CENTER_POINT);
+
+/**
+ * 海报生成开关：
+ * 关键逻辑：仅当结果里包含 posterModel 时展示海报模块。
+ */
+const shouldShowPosterSection = computed(
+  () => stage.value === "result" && Boolean(unifiedResult.value?.posterModel),
+);
+
+/**
+ * 中途激励配置：
+ * 1. triggerQuestionNumber 按人类题号（从 1 开始）配置。
+ * 2. durationMs 控制激励文案停留时长。
+ */
+const midwayEncouragementConfig = computed(() => {
+  const rawConfig = props.themeConfig.survey.midwayEncouragement;
+  if (!rawConfig) {
+    return null;
+  }
+
+  const message = String(rawConfig.message ?? "").trim();
+  if (!message) {
+    return null;
+  }
+
+  return {
+    triggerQuestionNumber: Math.max(
+      1,
+      Math.floor(Number(rawConfig.triggerQuestionNumber) || 1),
+    ),
+    durationMs: Math.max(500, Number(rawConfig.durationMs) || 1200),
+    message,
+  };
+});
+
+/**
+ * 宿命守门员配置。
+ * 关键逻辑：仅在 romance 主题且显式启用时生效。
+ */
+const destinyGatekeeperConfig = computed(() => {
+  if (!isRomanceTheme.value) {
+    return null;
+  }
+
+  const rawConfig = props.themeConfig.survey.destinyGatekeeper;
+  if (!rawConfig?.enabled) {
+    return null;
+  }
+
+  return {
+    gateQuestionNumber: Math.max(
+      1,
+      Math.floor(Number(rawConfig.gateQuestionNumber) || 13),
+    ),
+    thresholdPercent: Math.max(
+      0,
+      Math.min(100, Number(rawConfig.thresholdPercent) || 80),
+    ),
+    unlockQuestionId: String(rawConfig.unlockQuestionId ?? "").trim(),
+    processingLines: Array.isArray(rawConfig.processingLines)
+      ? rawConfig.processingLines.map((lineItem) => String(lineItem ?? "").trim()).filter(Boolean)
+      : [],
+    unlockLine: String(rawConfig.unlockLine ?? "").trim(),
+    lockLines: Array.isArray(rawConfig.lockLines)
+      ? rawConfig.lockLines.map((lineItem) => String(lineItem ?? "").trim()).filter(Boolean)
+      : [],
+  };
 });
 
 /**
@@ -692,9 +1057,175 @@ const activeProgressColor = computed(() => {
 });
 
 /**
+ * 把百分比分值转换为 0~1 比例。
+ * @param {number} score 百分比分值。
+ * @returns {number} 比例值。
+ */
+function normalizeScoreRatio(score) {
+  const safeScore = Number(score ?? 0);
+  if (!Number.isFinite(safeScore)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(1, safeScore / 100));
+}
+
+/**
+ * 根据角度和比例计算雷达图坐标点。
+ * @param {number} angleRadians 极角（弧度）。
+ * @param {number} ratio 半径比例（0~1）。
+ * @returns {{ x: number, y: number }} 坐标点。
+ */
+function resolveRadarPoint(angleRadians, ratio) {
+  return {
+    x: RADAR_CENTER_POINT + Math.cos(angleRadians) * RADAR_RADIUS * ratio,
+    y: RADAR_CENTER_POINT + Math.sin(angleRadians) * RADAR_RADIUS * ratio,
+  };
+}
+
+/**
+ * 雷达图每个维度的轴点与数据点。
+ */
+const radarAxisPoints = computed(() => {
+  const items = radarChartItems.value;
+  if (items.length < 3) {
+    return [];
+  }
+
+  const axisCount = items.length;
+  return items.map((item, index) => {
+    const angleRadians = -Math.PI / 2 + (Math.PI * 2 * index) / axisCount;
+    const outerPoint = resolveRadarPoint(angleRadians, 1);
+    const dataPoint = resolveRadarPoint(
+      angleRadians,
+      normalizeScoreRatio(item.score),
+    );
+    const labelPoint = resolveRadarPoint(angleRadians, 1.2);
+
+    return {
+      ...item,
+      outerX: outerPoint.x,
+      outerY: outerPoint.y,
+      valueX: dataPoint.x,
+      valueY: dataPoint.y,
+      labelX: labelPoint.x,
+      labelY: labelPoint.y,
+      label: item.label || item.name || "",
+      score: Number(item.score ?? 0),
+    };
+  });
+});
+
+/**
+ * 雷达图网格多边形点集。
+ */
+const radarGridPolygons = computed(() => {
+  const axisPoints = radarAxisPoints.value;
+  if (axisPoints.length < 3) {
+    return [];
+  }
+
+  return RADAR_GRID_LEVELS.map((gridLevel) => {
+    const polygonPoints = axisPoints.map((_, axisIndex) => {
+      const angleRadians =
+        -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisPoints.length;
+      const point = resolveRadarPoint(angleRadians, gridLevel);
+      return `${point.x},${point.y}`;
+    });
+    return polygonPoints.join(" ");
+  });
+});
+
+/**
+ * 雷达图数据面点集。
+ */
+const radarDataPolygonPoints = computed(() => {
+  if (radarAxisPoints.value.length < 3) {
+    return "";
+  }
+
+  return radarAxisPoints.value
+    .map((axisPoint) => `${axisPoint.valueX},${axisPoint.valueY}`)
+    .join(" ");
+});
+
+/**
+ * 雷达图标签点位。
+ */
+const radarLabelPoints = computed(() => {
+  return radarAxisPoints.value.map((axisPoint) => ({
+    x: axisPoint.labelX,
+    y: axisPoint.labelY,
+    label: axisPoint.label,
+  }));
+});
+
+/**
+ * 海报视觉风格映射：
+ * 关键逻辑：通过视觉键切换主背景，保证不同结果海报有清晰差异。
+ */
+const ROMANCE_POSTER_VISUALS = {
+  starlight: {
+    gradientStart: "#241C4A",
+    gradientEnd: "#4B3B7A",
+    accent: "#FFD5E9",
+    accentSoft: "#9FA7FF",
+  },
+  candlelight: {
+    gradientStart: "#5A2A38",
+    gradientEnd: "#B66A6D",
+    accent: "#FFE0C7",
+    accentSoft: "#FFAF9F",
+  },
+  "sunset-park": {
+    gradientStart: "#5F3A5F",
+    gradientEnd: "#D1858F",
+    accent: "#FFD9B0",
+    accentSoft: "#9DC6FF",
+  },
+  "warm-home": {
+    gradientStart: "#5A426A",
+    gradientEnd: "#9B7FB4",
+    accent: "#FFD8EA",
+    accentSoft: "#D2C2FF",
+  },
+  "city-night": {
+    gradientStart: "#1E2937",
+    gradientEnd: "#445066",
+    accent: "#C9D9FF",
+    accentSoft: "#9DAECC",
+  },
+};
+
+/**
+ * 解析海报视觉风格。
+ * @param {string} visualKey 海报视觉键。
+ * @returns {{ gradientStart: string, gradientEnd: string, accent: string, accentSoft: string }} 视觉配置。
+ */
+function resolvePosterVisual(visualKey) {
+  return (
+    ROMANCE_POSTER_VISUALS[visualKey] ??
+    ROMANCE_POSTER_VISUALS["warm-home"]
+  );
+}
+
+/**
  * 生成本轮随机题集。
  */
 function rebuildQuestionBank() {
+  if (questionSelection.value.useSequentialQuestionOrder) {
+    /**
+     * 关键逻辑：按题库顺序截取前 N 题。
+     * 适用于带“守门员题”的剧情化测试，避免随机打乱关键题位次。
+     */
+    const sequentialCount = Math.max(
+      1,
+      Math.min(questionSelection.value.minCount, questionPool.value.length),
+    );
+    selectedQuestionBank.value = questionPool.value.slice(0, sequentialCount);
+    return;
+  }
+
   if (
     questionSelection.value.ensureDimensionCoverage &&
     questionSelection.value.dimensionKey
@@ -722,6 +1253,23 @@ function rebuildQuestionBank() {
 function resetSurveyState() {
   // 关键逻辑：重置时递增会话令牌，使历史深度请求全部失效。
   deepAnalysisSessionToken += 1;
+  isAdvancingToNext.value = false;
+  stopAutoAdvanceTimer();
+  stopEncouragementTimer();
+  isEncouragementVisible.value = false;
+  hasShownMidwayEncouragement.value = false;
+  isDestinyOverlayVisible.value = false;
+  destinyOverlayType.value = "processing";
+  destinyOverlayPrimaryText.value = "";
+  destinyOverlaySecondaryText.value = "";
+  romanceProgressPhase.value = "normal";
+  romanceGateState.value = {
+    checked: false,
+    passed: false,
+    scorePercent: 0,
+    thresholdPercent: destinyGatekeeperConfig.value?.thresholdPercent ?? 80,
+  };
+  resetPosterState();
   rebuildQuestionBank();
   currentQuestionIndex.value = 0;
   answers.value = Array.from({ length: questionBank.value.length }, () => null);
@@ -750,6 +1298,69 @@ function stopLoadingMessageTicker() {
     window.clearInterval(loadingMessageTimer);
     loadingMessageTimer = null;
   }
+}
+
+/**
+ * 清理自动下一题定时器。
+ */
+function stopAutoAdvanceTimer() {
+  if (autoAdvanceTimer) {
+    window.clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = null;
+  }
+}
+
+/**
+ * 清理中途激励定时器。
+ */
+function stopEncouragementTimer() {
+  if (encouragementTimer) {
+    window.clearTimeout(encouragementTimer);
+    encouragementTimer = null;
+  }
+}
+
+/**
+ * 判断当前步骤是否需要触发中途激励。
+ * @param {number} currentQuestionIdx 当前题目索引（从 0 开始）。
+ * @returns {boolean} 是否需要触发。
+ */
+function shouldTriggerMidwayEncouragement(currentQuestionIdx) {
+  const config = midwayEncouragementConfig.value;
+  if (!config || hasShownMidwayEncouragement.value) {
+    return false;
+  }
+
+  const currentQuestionNumber = currentQuestionIdx + 1;
+  return currentQuestionNumber === config.triggerQuestionNumber;
+}
+
+/**
+ * 展示中途激励文案。
+ * 关键逻辑：每轮答题最多触发一次，避免频繁打断。
+ */
+function showMidwayEncouragement() {
+  const config = midwayEncouragementConfig.value;
+  if (!config) {
+    return;
+  }
+
+  stopEncouragementTimer();
+  encouragementMessage.value = config.message;
+  isEncouragementVisible.value = true;
+  hasShownMidwayEncouragement.value = true;
+  encouragementTimer = window.setTimeout(() => {
+    isEncouragementVisible.value = false;
+  }, config.durationMs);
+}
+
+/**
+ * 重置海报状态。
+ */
+function resetPosterState() {
+  posterGenerationToken += 1;
+  posterPreviewUrl.value = "";
+  isGeneratingPoster.value = false;
 }
 
 /**
@@ -790,6 +1401,529 @@ function withHardTimeout(promise, timeoutMs, timeoutMessage) {
 }
 
 /**
+ * 解析守门员判定结果。
+ * @returns {{ passed: boolean, scorePercent: number, thresholdPercent: number }} 判定摘要。
+ */
+function resolveGatekeeperResult() {
+  const gateConfig = destinyGatekeeperConfig.value;
+  if (!gateConfig) {
+    return {
+      passed: false,
+      scorePercent: 0,
+      thresholdPercent: 80,
+    };
+  }
+
+  const evaluator = props.themeConfig.survey.evaluateGatekeeper;
+  if (typeof evaluator !== "function") {
+    return {
+      passed: false,
+      scorePercent: 0,
+      thresholdPercent: gateConfig.thresholdPercent,
+    };
+  }
+
+  const evaluatedResult = evaluator(
+    questionBank.value,
+    answers.value,
+    gateConfig,
+  );
+  return {
+    passed: Boolean(evaluatedResult?.passed),
+    scorePercent: Math.max(
+      0,
+      Math.min(100, Number(evaluatedResult?.scorePercent) || 0),
+    ),
+    thresholdPercent: Math.max(
+      0,
+      Math.min(100, Number(evaluatedResult?.thresholdPercent) || gateConfig.thresholdPercent),
+    ),
+  };
+}
+
+/**
+ * 在当前题集末尾追加“第 14 次机会”题目。
+ * @returns {boolean} 是否追加成功。
+ */
+function appendDestinyUnlockQuestion() {
+  const unlockQuestionId = destinyGatekeeperConfig.value?.unlockQuestionId;
+  if (!unlockQuestionId) {
+    return false;
+  }
+
+  const alreadyExists = selectedQuestionBank.value.some(
+    (questionItem) => questionItem.id === unlockQuestionId,
+  );
+  if (alreadyExists) {
+    return false;
+  }
+
+  const unlockQuestion = questionPool.value.find(
+    (questionItem) => questionItem.id === unlockQuestionId,
+  );
+  if (!unlockQuestion) {
+    return false;
+  }
+
+  selectedQuestionBank.value = [...selectedQuestionBank.value, unlockQuestion];
+  answers.value = [...answers.value, null];
+  return true;
+}
+
+/**
+ * 播放宿命判定转场脚本。
+ * @param {boolean} passed 是否通过守门员判定。
+ * @returns {Promise<void>} Promise。
+ */
+async function playDestinyGateOverlayScript(passed) {
+  const gateConfig = destinyGatekeeperConfig.value;
+  if (!gateConfig) {
+    return;
+  }
+
+  const [processingPrimary = "检测到过量的浪漫因子...", processingSecondary = "正在尝试突破宿命..."] =
+    gateConfig.processingLines;
+  isDestinyOverlayVisible.value = true;
+  destinyOverlayType.value = "processing";
+  destinyOverlayPrimaryText.value = processingPrimary;
+  destinyOverlaySecondaryText.value = processingSecondary;
+  romanceProgressPhase.value = "processing";
+  await waitFor(820);
+
+  if (passed) {
+    destinyOverlayType.value = "success";
+    destinyOverlayPrimaryText.value =
+      gateConfig.unlockLine || "你的坚定，为你赢得了第 14 次机会。";
+    destinyOverlaySecondaryText.value = "命运裂缝已开启，正在进入新篇章...";
+    romanceProgressPhase.value = "success";
+    await waitFor(1180);
+    isDestinyOverlayVisible.value = false;
+    romanceProgressPhase.value = "normal";
+    return;
+  }
+
+  const [lockPrimary = "有时候，遗憾也是一种美。", lockSecondary = "你的理性保护了你，也让你停在了第 13 章。", lockEnding = "—— 故事至此终结。"] =
+    gateConfig.lockLines;
+  destinyOverlayType.value = "fail";
+  destinyOverlayPrimaryText.value = lockPrimary;
+  destinyOverlaySecondaryText.value = `${lockSecondary} ${lockEnding}`.trim();
+  romanceProgressPhase.value = "fail";
+  await waitFor(1680);
+  isDestinyOverlayVisible.value = false;
+}
+
+/**
+ * 在“最后一题提交前”处理 romance 守门员逻辑。
+ * @returns {Promise<boolean>} 是否继续进入结果计算流程。
+ */
+async function handleDestinyGateBeforeSubmit() {
+  const gateConfig = destinyGatekeeperConfig.value;
+  if (!gateConfig) {
+    return true;
+  }
+
+  const currentQuestionNumber = currentQuestionIndex.value + 1;
+  if (
+    romanceGateState.value.checked ||
+    currentQuestionNumber !== gateConfig.gateQuestionNumber
+  ) {
+    return true;
+  }
+
+  const gateResult = resolveGatekeeperResult();
+  romanceGateState.value = {
+    checked: true,
+    passed: gateResult.passed,
+    scorePercent: gateResult.scorePercent,
+    thresholdPercent: gateResult.thresholdPercent,
+  };
+
+  await playDestinyGateOverlayScript(gateResult.passed);
+
+  if (gateResult.passed) {
+    const appendedSuccess = appendDestinyUnlockQuestion();
+    if (appendedSuccess) {
+      // 关键逻辑：解锁成功后进入第 14 题，不立即出结果。
+      currentQuestionIndex.value += 1;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * 在 Canvas 中绘制自动换行文本。
+ * 复杂度评估：O(W)
+ * W 为文本词块数量，单次海报绘制中 W 较小（常量级）。
+ * @param {CanvasRenderingContext2D} context Canvas 绘图上下文。
+ * @param {string} content 文本内容。
+ * @param {number} originX 起始 X 坐标。
+ * @param {number} originY 起始 Y 坐标。
+ * @param {number} maxWidth 最大文本宽度。
+ * @param {number} lineHeight 行高。
+ * @param {number} maxLines 最大行数。
+ * @returns {number} 绘制结束后的 Y 坐标。
+ */
+function drawWrappedText(
+  context,
+  content,
+  originX,
+  originY,
+  maxWidth,
+  lineHeight,
+  maxLines,
+) {
+  const normalizedText = String(content ?? "").trim();
+  if (!normalizedText) {
+    return originY;
+  }
+
+  const textChars = normalizedText.split("");
+  const lines = [];
+  let currentLine = "";
+
+  textChars.forEach((charItem) => {
+    const candidateLine = `${currentLine}${charItem}`;
+    const candidateWidth = context.measureText(candidateLine).width;
+    if (candidateWidth > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = charItem;
+      return;
+    }
+
+    currentLine = candidateLine;
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  const safeMaxLines = Math.max(1, Math.floor(maxLines || 1));
+  const visibleLines = lines.slice(0, safeMaxLines);
+
+  // 关键逻辑：超出最大行数时尾行追加省略号，避免海报文案越界。
+  if (lines.length > safeMaxLines) {
+    const lastLine = visibleLines[safeMaxLines - 1];
+    visibleLines[safeMaxLines - 1] = `${lastLine.replace(/.$/, "")}…`;
+  }
+
+  visibleLines.forEach((lineItem, lineIndex) => {
+    context.fillText(
+      lineItem,
+      originX,
+      originY + lineHeight * lineIndex,
+    );
+  });
+
+  return originY + lineHeight * visibleLines.length;
+}
+
+/**
+ * 绘制圆角矩形填充区域（兼容不支持 roundRect 的环境）。
+ * @param {CanvasRenderingContext2D} context Canvas 绘图上下文。
+ * @param {number} x 左上角 X 坐标。
+ * @param {number} y 左上角 Y 坐标。
+ * @param {number} width 矩形宽度。
+ * @param {number} height 矩形高度。
+ * @param {number} radius 圆角半径。
+ */
+function fillRoundedRect(context, x, y, width, height, radius) {
+  const safeRadius = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
+
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - safeRadius,
+    y + height,
+  );
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+  context.fill();
+}
+
+/**
+ * 绘制海报中的雷达图。
+ * @param {CanvasRenderingContext2D} context Canvas 绘图上下文。
+ * @param {Array<object>} radarItems 雷达维度数据。
+ * @param {number} centerX 圆心 X。
+ * @param {number} centerY 圆心 Y。
+ * @param {number} radius 雷达半径。
+ */
+function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
+  const items = Array.isArray(radarItems) ? radarItems : [];
+  if (items.length < 3) {
+    return;
+  }
+
+  const axisCount = items.length;
+  const gridLevels = [0.25, 0.5, 0.75, 1];
+
+  context.save();
+  context.strokeStyle = "rgba(255, 255, 255, 0.28)";
+  context.lineWidth = 2;
+
+  gridLevels.forEach((gridLevel) => {
+    context.beginPath();
+    items.forEach((_, axisIndex) => {
+      const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
+      const pointX = centerX + Math.cos(angleRadians) * radius * gridLevel;
+      const pointY = centerY + Math.sin(angleRadians) * radius * gridLevel;
+      if (axisIndex === 0) {
+        context.moveTo(pointX, pointY);
+      } else {
+        context.lineTo(pointX, pointY);
+      }
+    });
+    context.closePath();
+    context.stroke();
+  });
+
+  items.forEach((_, axisIndex) => {
+    const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
+    const pointX = centerX + Math.cos(angleRadians) * radius;
+    const pointY = centerY + Math.sin(angleRadians) * radius;
+    context.beginPath();
+    context.moveTo(centerX, centerY);
+    context.lineTo(pointX, pointY);
+    context.stroke();
+  });
+
+  context.beginPath();
+  items.forEach((item, axisIndex) => {
+    const ratio = normalizeScoreRatio(item.score);
+    const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
+    const pointX = centerX + Math.cos(angleRadians) * radius * ratio;
+    const pointY = centerY + Math.sin(angleRadians) * radius * ratio;
+    if (axisIndex === 0) {
+      context.moveTo(pointX, pointY);
+    } else {
+      context.lineTo(pointX, pointY);
+    }
+  });
+  context.closePath();
+  context.fillStyle = "rgba(255, 228, 242, 0.36)";
+  context.strokeStyle = "rgba(255, 246, 250, 0.95)";
+  context.lineWidth = 3;
+  context.fill();
+  context.stroke();
+
+  items.forEach((item, axisIndex) => {
+    const ratio = normalizeScoreRatio(item.score);
+    const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
+    const pointX = centerX + Math.cos(angleRadians) * radius * ratio;
+    const pointY = centerY + Math.sin(angleRadians) * radius * ratio;
+    context.beginPath();
+    context.arc(pointX, pointY, 6, 0, Math.PI * 2);
+    context.fillStyle = item.color || "#FFDCE9";
+    context.fill();
+  });
+
+  context.fillStyle = "rgba(255, 245, 250, 0.95)";
+  context.font = "600 26px 'Noto Sans SC'";
+  context.textAlign = "center";
+  items.forEach((item, axisIndex) => {
+    const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
+    const labelX = centerX + Math.cos(angleRadians) * radius * 1.28;
+    const labelY = centerY + Math.sin(angleRadians) * radius * 1.28;
+    context.fillText(String(item.label || item.name || ""), labelX, labelY);
+  });
+
+  context.restore();
+}
+
+/**
+ * 生成浪漫指数海报。
+ * 复杂度评估：O(D + W)
+ * D 为雷达维度数量（固定 4），W 为文案字符数，整体为常数级。
+ * @returns {Promise<void>} Promise。
+ */
+async function generateRomancePoster() {
+  const posterModel = unifiedResult.value?.posterModel;
+  if (!posterModel) {
+    return;
+  }
+
+  const currentToken = ++posterGenerationToken;
+  isGeneratingPoster.value = true;
+
+  try {
+    const posterWidth = 1080;
+    const posterHeight = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = posterWidth;
+    canvas.height = posterHeight;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("无法初始化画布");
+    }
+
+    const visualStyle = resolvePosterVisual(posterModel.visualKey);
+    const backgroundGradient = context.createLinearGradient(0, 0, 0, posterHeight);
+    backgroundGradient.addColorStop(0, visualStyle.gradientStart);
+    backgroundGradient.addColorStop(1, visualStyle.gradientEnd);
+    context.fillStyle = backgroundGradient;
+    context.fillRect(0, 0, posterWidth, posterHeight);
+
+    // 关键逻辑：叠加两层柔光径向渐变，模拟主视觉插画氛围，避免背景过于平面。
+    const glowLeft = context.createRadialGradient(
+      posterWidth * 0.22,
+      posterHeight * 0.16,
+      40,
+      posterWidth * 0.22,
+      posterHeight * 0.16,
+      420,
+    );
+    glowLeft.addColorStop(0, "rgba(255, 255, 255, 0.32)");
+    glowLeft.addColorStop(1, "rgba(255, 255, 255, 0)");
+    context.fillStyle = glowLeft;
+    context.fillRect(0, 0, posterWidth, posterHeight);
+
+    const glowRight = context.createRadialGradient(
+      posterWidth * 0.78,
+      posterHeight * 0.3,
+      50,
+      posterWidth * 0.78,
+      posterHeight * 0.3,
+      380,
+    );
+    glowRight.addColorStop(0, "rgba(255, 214, 235, 0.24)");
+    glowRight.addColorStop(1, "rgba(255, 214, 235, 0)");
+    context.fillStyle = glowRight;
+    context.fillRect(0, 0, posterWidth, posterHeight);
+
+    context.fillStyle = "rgba(255, 255, 255, 0.92)";
+    fillRoundedRect(context, 84, 88, posterWidth - 168, posterHeight - 176, 42);
+
+    context.fillStyle = visualStyle.accentSoft;
+    context.font = "600 34px 'Noto Sans SC'";
+    context.textAlign = "left";
+    context.fillText("ROMANCE DNA TEST", 136, 174);
+
+    context.fillStyle = "#3B2B54";
+    context.font = "700 58px 'Noto Serif SC'";
+    context.fillText("《你认为最浪漫的事》", 136, 258);
+
+    context.fillStyle = "#5C4B78";
+    context.font = "500 34px 'Noto Sans SC'";
+    context.fillText("你的浪漫指数", 136, 324);
+
+    context.fillStyle = visualStyle.accent;
+    context.font = "700 124px 'Noto Serif SC'";
+    context.fillText(`${posterModel.romanceIndex ?? 0}%`, 136, 448);
+
+    context.fillStyle = "#3F335E";
+    context.font = "700 50px 'Noto Serif SC'";
+    context.fillText(String(posterModel.title ?? ""), 136, 526);
+
+    drawRadarOnPoster(
+      context,
+      posterModel.radarItems ?? [],
+      posterWidth / 2,
+      900,
+      230,
+    );
+
+    context.fillStyle = "#574870";
+    context.font = "500 30px 'Noto Sans SC'";
+    const quoteBottomY = drawWrappedText(
+      context,
+      String(posterModel.quote ?? ""),
+      136,
+      1240,
+      posterWidth - 272,
+      48,
+      3,
+    );
+
+    const easterEggText = String(
+      unifiedResult.value?.easterEggText ?? posterModel.easterEggText ?? "",
+    ).trim();
+    const ctaBaseY = quoteBottomY + 86;
+
+    context.fillStyle = "#6B5A86";
+    context.font = "500 28px 'Noto Sans SC'";
+    context.fillText(
+      "长按保存图片，分享你的浪漫指数",
+      136,
+      ctaBaseY,
+    );
+
+    let easterEggBottomY = ctaBaseY;
+    if (easterEggText) {
+      context.fillStyle = "#7C6D9C";
+      context.font = "500 24px 'Noto Sans SC'";
+      // 关键逻辑：彩蛋文案长度可能变化，使用自动换行避免越界。
+      easterEggBottomY = drawWrappedText(
+        context,
+        easterEggText,
+        136,
+        ctaBaseY + 56,
+        posterWidth - 272,
+        36,
+        2,
+      );
+    }
+
+    const generatedTimeY = Math.max(posterHeight - 156, easterEggBottomY + 58);
+    context.fillStyle = "rgba(88, 71, 118, 0.74)";
+    context.font = "500 24px 'Noto Sans SC'";
+    context.fillText(
+      `生成时间 ${new Date().toLocaleString("zh-CN", { hour12: false })}`,
+      136,
+      generatedTimeY,
+    );
+
+    const generatedDataUrl = canvas.toDataURL("image/png");
+    if (currentToken !== posterGenerationToken) {
+      return;
+    }
+
+    posterPreviewUrl.value = generatedDataUrl;
+  } catch {
+    if (currentToken === posterGenerationToken) {
+      showToast("海报生成失败，请重试");
+    }
+  } finally {
+    if (currentToken === posterGenerationToken) {
+      isGeneratingPoster.value = false;
+    }
+  }
+}
+
+/**
+ * 手动触发海报生成。
+ * @returns {Promise<void>} Promise。
+ */
+async function handleGeneratePoster() {
+  await generateRomancePoster();
+}
+
+/**
+ * 保存海报到本地。
+ */
+function savePosterImage() {
+  if (!posterPreviewUrl.value) {
+    showToast("海报仍在生成，请稍候");
+    return;
+  }
+
+  const downloadLink = document.createElement("a");
+  downloadLink.href = posterPreviewUrl.value;
+  downloadLink.download = `romance-index-${Date.now()}.png`;
+  downloadLink.click();
+}
+
+/**
  * 监听主题切换：
  * 关键逻辑：同一套组件可切换多主题，必须在主题变更时重置状态。
  */
@@ -814,26 +1948,80 @@ watch(stage, (nextStage) => {
 });
 
 /**
+ * 结果变化时自动生成海报：
+ * 关键逻辑：仅在结果页且存在 posterModel 时触发，避免无效绘制。
+ */
+watch(
+  [
+    () => stage.value,
+    () => unifiedResult.value?.posterModel,
+    () => unifiedResult.value?.main?.score,
+  ],
+  ([nextStage, nextPosterModel]) => {
+    if (nextStage !== "result" || !nextPosterModel) {
+      return;
+    }
+
+    handleGeneratePoster();
+  },
+);
+
+/**
  * 组件卸载时清理资源。
  */
 onBeforeUnmount(() => {
   // 关键逻辑：组件销毁时令牌失效，避免卸载后异步写入。
   deepAnalysisSessionToken += 1;
   stopLoadingMessageTicker();
+  stopAutoAdvanceTimer();
+  stopEncouragementTimer();
+  isDestinyOverlayVisible.value = false;
+  resetPosterState();
 });
+
+/**
+ * 调度自动下一题。
+ * @param {number} expectedQuestionIndex 预期题目索引。
+ * @param {string} optionId 选项 ID。
+ */
+function scheduleAutoAdvance(expectedQuestionIndex, optionId) {
+  if (!shouldAutoAdvance.value || stage.value !== "survey") {
+    return;
+  }
+
+  stopAutoAdvanceTimer();
+  autoAdvanceTimer = window.setTimeout(() => {
+    if (stage.value !== "survey") {
+      return;
+    }
+
+    // 关键逻辑：必须校验题号和答案未变化，避免重复点击导致跨题跳转。
+    if (
+      currentQuestionIndex.value !== expectedQuestionIndex ||
+      answers.value[expectedQuestionIndex] !== optionId
+    ) {
+      return;
+    }
+
+    goNext();
+  }, 260);
+}
 
 /**
  * 选择选项。
  * @param {string} optionId 选项 ID。
  */
 function selectOption(optionId) {
-  answers.value[currentQuestionIndex.value] = optionId;
+  const questionIndex = currentQuestionIndex.value;
+  answers.value[questionIndex] = optionId;
+  scheduleAutoAdvance(questionIndex, optionId);
 }
 
 /**
  * 上一步。
  */
 function goPrev() {
+  stopAutoAdvanceTimer();
   if (currentQuestionIndex.value > 0) {
     currentQuestionIndex.value -= 1;
   }
@@ -846,99 +2034,128 @@ function goPrev() {
  * 3. 深度失败时回退本地结果，保证流程稳定可用。
  */
 async function goNext() {
+  stopAutoAdvanceTimer();
+  if (isAdvancingToNext.value) {
+    return;
+  }
+
   if (!canGoNext.value) {
     showToast("请先选择一个选项");
     return;
   }
 
-  if (!isLastQuestion.value) {
-    currentQuestionIndex.value += 1;
-    return;
-  }
-
-  stage.value = "analyzing";
-  const currentSessionToken = ++deepAnalysisSessionToken;
-
-  const localResult = props.themeConfig.survey.runLocalAnalysis(
-    questionBank.value,
-    answers.value,
-  );
-  const localUnifiedResult = props.themeConfig.survey.buildLocalUnifiedResult(
-    localResult,
-  );
-
-  /**
-   * 深度统一结果 Promise：
-   * 关键逻辑：包含硬超时限制，避免长时间挂起影响用户体验。
-   */
-  const deepUnifiedPromise = withHardTimeout(
-    (async () => {
-      const deepPayload = props.themeConfig.survey.buildDeepPayload(localResult);
-      const deepResult = await props.themeConfig.survey.runDeepAnalysis(deepPayload);
-      return props.themeConfig.survey.buildDeepUnifiedResult(
-        deepResult,
-        localResult,
-      );
-    })(),
-    DEEP_RESULT_HARD_TIMEOUT_MS,
-    "深度分析耗时较长，已切换基础结果",
-  );
+  isAdvancingToNext.value = true;
 
   try {
-    /**
-     * 首屏结果竞争：
-     * 1. 14 秒内拿到深度结果 -> 直接展示深度结果。
-     * 2. 14 秒仍未拿到 -> 先展示本地结果，深度结果后台继续。
-     */
-    const firstResult = await Promise.race([
-      deepUnifiedPromise.then((deepUnifiedResult) => ({
-        type: "deep",
-        result: deepUnifiedResult,
-      })),
-      waitFor(LOCAL_RESULT_FALLBACK_DELAY_MS).then(() => ({
-        type: "local_timeout",
-      })),
-    ]);
-
-    // 关键逻辑：若会话已失效（重测/切换主题），不写入任何过期结果。
-    if (currentSessionToken !== deepAnalysisSessionToken) {
+    if (!isLastQuestion.value) {
+      // 关键逻辑：在第 N 题完成后进入下一题时触发激励，减少“题目过长”体感。
+      const shouldShowCheer = shouldTriggerMidwayEncouragement(
+        currentQuestionIndex.value,
+      );
+      currentQuestionIndex.value += 1;
+      if (shouldShowCheer) {
+        showMidwayEncouragement();
+      }
       return;
     }
 
-    if (firstResult.type === "deep") {
-      unifiedResult.value = firstResult.result;
+    /**
+     * romance 宿命模式：
+     * 1. 在 Q13 触发守门员判定。
+     * 2. 通过时动态解锁 Q14 并中断本次提交。
+     * 3. 未通过时继续当前提交流程（13 题结局）。
+     */
+    const shouldContinueSubmit = await handleDestinyGateBeforeSubmit();
+    if (!shouldContinueSubmit) {
+      return;
+    }
+
+    stage.value = "analyzing";
+    const currentSessionToken = ++deepAnalysisSessionToken;
+
+    const localResult = props.themeConfig.survey.runLocalAnalysis(
+      questionBank.value,
+      answers.value,
+    );
+    const localUnifiedResult = props.themeConfig.survey.buildLocalUnifiedResult(
+      localResult,
+    );
+
+    /**
+     * 深度统一结果 Promise：
+     * 关键逻辑：包含硬超时限制，避免长时间挂起影响用户体验。
+     */
+    const deepUnifiedPromise = withHardTimeout(
+      (async () => {
+        const deepPayload = props.themeConfig.survey.buildDeepPayload(localResult);
+        const deepResult = await props.themeConfig.survey.runDeepAnalysis(deepPayload);
+        return props.themeConfig.survey.buildDeepUnifiedResult(
+          deepResult,
+          localResult,
+        );
+      })(),
+      DEEP_RESULT_HARD_TIMEOUT_MS,
+      "深度分析耗时较长，已切换基础结果",
+    );
+
+    try {
+      /**
+       * 首屏结果竞争：
+       * 1. 14 秒内拿到深度结果 -> 直接展示深度结果。
+       * 2. 14 秒仍未拿到 -> 先展示本地结果，深度结果后台继续。
+       */
+      const firstResult = await Promise.race([
+        deepUnifiedPromise.then((deepUnifiedResult) => ({
+          type: "deep",
+          result: deepUnifiedResult,
+        })),
+        waitFor(LOCAL_RESULT_FALLBACK_DELAY_MS).then(() => ({
+          type: "local_timeout",
+        })),
+      ]);
+
+      // 关键逻辑：若会话已失效（重测/切换主题），不写入任何过期结果。
+      if (currentSessionToken !== deepAnalysisSessionToken) {
+        return;
+      }
+
+      if (firstResult.type === "deep") {
+        unifiedResult.value = firstResult.result;
+        stage.value = "result";
+        return;
+      }
+
+      unifiedResult.value = localUnifiedResult;
       stage.value = "result";
+
+      /**
+       * 后台静默升级：
+       * 本地结果先回显后，深度结果返回时自动替换，不额外打断用户。
+       */
+      deepUnifiedPromise
+        .then((deepUnifiedResult) => {
+          if (currentSessionToken !== deepAnalysisSessionToken) {
+            return;
+          }
+
+          unifiedResult.value = deepUnifiedResult;
+        })
+        .catch(() => {
+          // 关键逻辑：后台升级失败不额外提示，避免阅读中断。
+        });
+    } catch {
+      if (currentSessionToken !== deepAnalysisSessionToken) {
+        return;
+      }
+
+      // 关键逻辑：深度调用失败时必须可用本地兜底，保证核心流程可用。
+      unifiedResult.value = localUnifiedResult;
+      stage.value = "result";
+      showToast(props.themeConfig.survey.deepFailToast);
       return;
     }
-
-    unifiedResult.value = localUnifiedResult;
-    stage.value = "result";
-
-    /**
-     * 后台静默升级：
-     * 本地结果先回显后，深度结果返回时自动替换，不额外打断用户。
-     */
-    deepUnifiedPromise
-      .then((deepUnifiedResult) => {
-        if (currentSessionToken !== deepAnalysisSessionToken) {
-          return;
-        }
-
-        unifiedResult.value = deepUnifiedResult;
-      })
-      .catch(() => {
-        // 关键逻辑：后台升级失败不额外提示，避免阅读中断。
-      });
-  } catch {
-    if (currentSessionToken !== deepAnalysisSessionToken) {
-      return;
-    }
-
-    // 关键逻辑：深度调用失败时必须可用本地兜底，保证核心流程可用。
-    unifiedResult.value = localUnifiedResult;
-    stage.value = "result";
-    showToast(props.themeConfig.survey.deepFailToast);
-    return;
+  } finally {
+    isAdvancingToNext.value = false;
   }
 }
 

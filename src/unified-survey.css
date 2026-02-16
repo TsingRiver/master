@@ -282,6 +282,34 @@ body {
   --title-font: "Noto Serif SC", serif;
 }
 
+.theme-romance {
+  --page-bg: linear-gradient(136deg, #fff3f7, #f6efff 50%, #eef4ff);
+  --text-main: #45315f;
+  --text-muted: #7c6b96;
+  --surface: rgba(255, 255, 255, 0.93);
+  --surface-border: rgba(230, 215, 248, 0.92);
+  --shadow: 0 24px 56px rgba(121, 91, 159, 0.15);
+  --primary: #d97899;
+  --primary-dark: #8b78d9;
+  --aura-left: radial-gradient(circle at 30% 30%, #f8bfd4, #eb8fb3);
+  --aura-right: radial-gradient(circle at 30% 30%, #c5c4ff, #9ea5f5);
+  --noise-dot: rgba(124, 101, 156, 0.38);
+  --option-border: #e6d8f3;
+  --option-selected-border: #c7a5df;
+  --option-selected-bg: linear-gradient(180deg, #fff, #f8f2ff);
+  --option-selected-shadow: rgba(143, 113, 184, 0.16);
+  --detail-border: #e7dbf3;
+  --detail-bg: linear-gradient(180deg, #fff, #f8f3ff);
+  --highlight-border: #ead6ee;
+  --highlight-bg: linear-gradient(180deg, #fff8fb, #f6f0ff);
+  --title-font: "Noto Serif SC", serif;
+}
+
+/* 关键逻辑：浪漫主题的卡片数据固定为 4 项，采用 2 列可提升移动端可读性。 */
+.theme-romance .survey-type-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .theme-mbti {
   --page-bg: linear-gradient(138deg, #141522, #1f2035 54%, #2e2143);
   --text-main: #f6f2ff;
@@ -356,6 +384,104 @@ body {
   margin: 0 auto;
 }
 
+.survey-cheer-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: grid;
+  place-content: center;
+  padding: 18px;
+  pointer-events: none;
+}
+
+.survey-cheer-message {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #fff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 88%, #ffffff 12%), var(--primary-dark));
+  box-shadow: 0 14px 30px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+.survey-destiny-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 16;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px 22px;
+  text-align: center;
+  pointer-events: none;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.survey-destiny-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.24), rgba(17, 12, 31, 0.72) 66%);
+  backdrop-filter: blur(6px);
+}
+
+.survey-destiny-primary {
+  margin: 0;
+  font-size: clamp(20px, 5.8vw, 30px);
+  line-height: 1.3;
+  font-weight: 700;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.survey-destiny-secondary {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: rgba(255, 245, 252, 0.92);
+  text-wrap: balance;
+}
+
+.survey-destiny-processing {
+  animation: surveyDestinyPulse 1.2s ease-in-out infinite;
+}
+
+.survey-destiny-processing::before {
+  background:
+    radial-gradient(circle at 50% 24%, rgba(255, 212, 235, 0.32), transparent 56%),
+    linear-gradient(145deg, rgba(41, 26, 66, 0.72), rgba(26, 18, 49, 0.9));
+}
+
+.survey-destiny-success {
+  animation: surveyDestinyBreakout 620ms cubic-bezier(0.2, 0.7, 0.2, 1) 1;
+}
+
+.survey-destiny-success::before {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255, 240, 193, 0.38), transparent 60%),
+    radial-gradient(circle at 50% 80%, rgba(206, 183, 255, 0.28), transparent 60%),
+    linear-gradient(145deg, rgba(70, 39, 98, 0.7), rgba(25, 18, 43, 0.92));
+}
+
+.survey-destiny-fail::before {
+  background:
+    radial-gradient(circle at 50% 16%, rgba(182, 191, 216, 0.18), transparent 56%),
+    linear-gradient(155deg, rgba(27, 29, 40, 0.88), rgba(13, 13, 18, 0.95));
+}
+
+.survey-destiny-fail .survey-destiny-primary {
+  color: rgba(239, 243, 255, 0.95);
+}
+
+.survey-destiny-fail .survey-destiny-secondary {
+  color: rgba(214, 222, 245, 0.88);
+}
+
 .survey-header {
   margin: 8px 4px 20px;
   animation: surveyFadeUp 550ms ease both;
@@ -399,6 +525,13 @@ body {
   font-size: 14px;
 }
 
+.survey-participant-count {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--text-muted) 90%, #ffffff 10%);
+}
+
 .survey-card {
   border-radius: 22px;
   padding: 18px 16px;
@@ -418,6 +551,97 @@ body {
   justify-content: space-between;
   color: var(--text-muted);
   font-size: 12px;
+}
+
+.survey-romance-progress-wrap {
+  margin-bottom: 10px;
+  transition: opacity 280ms ease;
+}
+
+.survey-romance-progress-hint {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  transition: color 260ms ease;
+}
+
+.survey-romance-wave-track {
+  position: relative;
+  border-radius: 999px;
+  height: 14px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--detail-border) 88%, #ffffff 12%);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #ffffff 74%, var(--option-border) 26%),
+    color-mix(in srgb, #ffffff 90%, var(--option-border) 10%)
+  );
+}
+
+.survey-romance-wave-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--primary) 90%, #ffffff 10%) 0 8px,
+      color-mix(in srgb, var(--primary-dark) 78%, #ffffff 22%) 8px 16px
+    );
+  transition: width 340ms ease;
+}
+
+.survey-romance-wave-core {
+  position: absolute;
+  top: 50%;
+  left: 6%;
+  width: 16px;
+  height: 16px;
+  border-radius: 99px;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary) 42%, transparent),
+    0 0 12px color-mix(in srgb, var(--primary-dark) 56%, transparent);
+  pointer-events: none;
+  animation: surveyWavePulse 1.3s ease-in-out infinite;
+}
+
+.survey-romance-progress-wrap.is-processing .survey-romance-wave-fill {
+  animation: surveyWaveScan 0.8s linear infinite;
+}
+
+.survey-romance-progress-wrap.is-fail .survey-romance-wave-fill {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, #8f96aa 84%, #ffffff 16%),
+    color-mix(in srgb, #c5cad6 78%, #ffffff 22%)
+  );
+  opacity: 0.5;
+}
+
+.survey-romance-progress-wrap.is-fail .survey-romance-wave-core {
+  box-shadow:
+    0 0 0 2px rgba(156, 162, 180, 0.4),
+    0 0 8px rgba(144, 150, 170, 0.34);
+  background: #eff1f6;
+  animation: none;
+}
+
+.survey-romance-progress-wrap.is-success .survey-romance-wave-fill {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      color-mix(in srgb, #ff9ec7 80%, #ffffff 20%) 0 8px,
+      color-mix(in srgb, #a38bff 80%, #ffffff 20%) 8px 16px
+    );
+  animation: surveyWaveBurst 0.6s ease-out 1;
+}
+
+.survey-romance-progress-wrap.is-success .survey-romance-wave-core {
+  animation: surveyWavePulseStrong 0.65s ease-out 2;
 }
 
 .survey-question-wrap {
@@ -540,6 +764,50 @@ body {
   opacity: 0;
   transform: translateY(-6px);
   filter: blur(2px);
+}
+
+.survey-cheer-pop-enter-active,
+.survey-cheer-pop-leave-active {
+  transition:
+    opacity 240ms ease,
+    transform 240ms ease,
+    filter 240ms ease;
+}
+
+.survey-cheer-pop-enter-from,
+.survey-cheer-pop-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  filter: blur(2px);
+}
+
+.survey-cheer-pop-enter-to,
+.survey-cheer-pop-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.survey-destiny-pop-enter-active,
+.survey-destiny-pop-leave-active {
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease,
+    filter 300ms ease;
+}
+
+.survey-destiny-pop-enter-from,
+.survey-destiny-pop-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+  filter: blur(6px);
+}
+
+.survey-destiny-pop-enter-to,
+.survey-destiny-pop-leave-from {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0);
 }
 
 .survey-result-state {
@@ -699,6 +967,91 @@ body {
   color: var(--text-main);
 }
 
+.survey-radar-wrap {
+  margin-top: 16px;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--detail-border);
+  background: var(--detail-bg);
+}
+
+.survey-radar-wrap h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.survey-radar-canvas {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.survey-radar-canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.survey-radar-grid {
+  fill: transparent;
+  stroke: color-mix(in srgb, var(--detail-border) 78%, #ffffff 22%);
+  stroke-width: 1;
+}
+
+.survey-radar-axis {
+  stroke: color-mix(in srgb, var(--detail-border) 82%, #ffffff 18%);
+  stroke-width: 1;
+}
+
+.survey-radar-data {
+  fill: color-mix(in srgb, var(--primary) 28%, transparent);
+  stroke: color-mix(in srgb, var(--primary-dark) 72%, #ffffff 28%);
+  stroke-width: 2;
+}
+
+.survey-radar-label {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.survey-radar-legend {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.survey-radar-legend-item {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--detail-border);
+  padding: 6px 8px;
+  background: #fff;
+}
+
+.survey-radar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+}
+
+.survey-radar-name {
+  font-size: 12px;
+  color: var(--text-main);
+}
+
+.survey-radar-score {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
 .theme-mbti .survey-type-card-item {
   background: #151724;
 }
@@ -765,6 +1118,66 @@ body {
   background: #fff;
 }
 
+.survey-easter-egg {
+  margin: 12px 2px 0;
+  font-size: 12px;
+  line-height: 1.68;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.survey-poster-wrap {
+  margin-top: 16px;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--detail-border);
+  background: var(--detail-bg);
+}
+
+.survey-poster-wrap h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.survey-poster-desc {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.survey-poster-preview {
+  margin-top: 10px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--detail-border);
+  background: #fff;
+}
+
+.survey-poster-preview img {
+  width: 100%;
+  display: block;
+}
+
+.survey-poster-loading {
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px dashed var(--detail-border);
+  min-height: 130px;
+  display: grid;
+  place-content: center;
+  gap: 9px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.survey-poster-actions {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .survey-restart-btn {
   margin-top: 16px;
 }
@@ -827,6 +1240,83 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes surveyWavePulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.14);
+  }
+}
+
+@keyframes surveyWaveScan {
+  from {
+    filter: hue-rotate(0deg) saturate(1);
+  }
+  to {
+    filter: hue-rotate(20deg) saturate(1.22);
+  }
+}
+
+@keyframes surveyWaveBurst {
+  0% {
+    opacity: 0.85;
+    filter: brightness(0.95) saturate(1);
+  }
+  100% {
+    opacity: 1;
+    filter: brightness(1.1) saturate(1.16);
+  }
+}
+
+@keyframes surveyWavePulseStrong {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  45% {
+    transform: translate(-50%, -50%) scale(1.24);
+  }
+}
+
+@keyframes surveyDestinyPulse {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.93;
+    filter: brightness(1.08);
+  }
+}
+
+@keyframes surveyDestinyBreakout {
+  0% {
+    transform: scale(0.94);
+    filter: brightness(1);
+  }
+  55% {
+    transform: scale(1.04);
+    filter: brightness(1.14);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes surveyHeartPulse {
+  0%,
+  100% {
+    transform: translate(-50%, -52%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -52%) scale(1.1);
   }
 }
 

@@ -11,6 +11,12 @@
     :portal-mode="portalSession"
     :portal-home-href="portalHubHref"
   />
+  <RomanceStandalone
+    v-else-if="isRomanceStandaloneTheme"
+    :theme-config="activeThemeConfig"
+    :portal-mode="portalSession"
+    :portal-home-href="portalHubHref"
+  />
   <SurveyEngine
     v-else
     :theme-config="activeThemeConfig"
@@ -25,6 +31,7 @@ import LinkErrorPage from "./components/LinkErrorPage.vue";
 import SurveyEngine from "./components/SurveyEngine.vue";
 import ThemeHub from "./components/ThemeHub.vue";
 import TypeologyLab from "./components/TypeologyLab.vue";
+import RomanceStandalone from "./components/RomanceStandalone.vue";
 import {
   DEFAULT_SURVEY_THEME,
   SURVEY_THEME_CONFIGS,
@@ -94,6 +101,14 @@ const showIncompleteLinkError = computed(
  */
 const isTypeologyLabTheme = computed(
   () => activeThemeConfig.value?.key === "mbti",
+);
+
+/**
+ * 是否走浪漫主题独立组件：
+ * 关键逻辑：`romance` 主题使用独立 UI，不复用通用 SurveyEngine。
+ */
+const isRomanceStandaloneTheme = computed(
+  () => activeThemeConfig.value?.key === "romance",
 );
 
 /**

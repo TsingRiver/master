@@ -6,6 +6,7 @@ import { HIDDEN_TALENT_QUESTION_BANK } from "../data/hiddenTalentQuestionBank";
 import { BENEFACTOR_2026_QUESTION_BANK } from "../data/benefactor2026QuestionBank";
 import { COLOR_2026_QUESTION_BANK } from "../data/color2026QuestionBank";
 import { LOVE_ATTACHMENT_QUESTION_BANK } from "../data/loveAttachmentQuestionBank";
+import { ROMANCE_QUESTION_BANK } from "../data/romanceQuestionBank";
 import { analyzeCitiesLocally } from "../services/localAnalyzer";
 import { analyzeCityWithAI } from "../services/aiAnalyzer";
 import { analyzeFortune2026Locally } from "../services/fortune2026Analyzer";
@@ -23,6 +24,12 @@ import {
   deriveAttachmentSubtypeProfile,
 } from "../services/loveAttachmentAnalyzer";
 import { analyzeLoveAttachmentWithAI } from "../services/loveAttachmentAiAnalyzer";
+import {
+  ROMANCE_DESTINY_GATE_DEFAULTS,
+  analyzeRomanceLocally,
+  evaluateRomanceDestinyGate,
+} from "../services/romanceAnalyzer";
+import { analyzeRomanceWithAI } from "../services/romanceInsightAnalyzer";
 
 /**
  * 统一结果结构说明：
@@ -36,6 +43,7 @@ export const UNIFIED_RESULT_TEMPLATE = {
   main: { name: "", score: 0 },
   highlightCard: { title: "", content: "" },
   insight: "",
+  easterEggText: "",
   tagChips: [],
   distributionChart: { title: "", items: [] },
   typeCard: { title: "", items: [] },
@@ -56,6 +64,7 @@ export const UNIFIED_RESULT_TEMPLATE = {
  * @param {{ name: string, score: number }} payload.main 主结果对象。
  * @param {{ title: string, content: string }} payload.highlightCard 高亮卡片。
  * @param {string} payload.insight 解释文案。
+ * @param {string} [payload.easterEggText] 彩蛋文案（可选）。
  * @param {{ title: string, items: Array<{ label: string, value: string }> }} [payload.typeCard] 类型学卡片。
  * @param {string} payload.topThreeTitle Top3 标题。
  * @param {Array<{ name: string, score: number }>} payload.topThree Top3 列表。
@@ -1125,6 +1134,298 @@ function buildColorThemeLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 浪漫主题：根据答题数生成彩蛋文案。
+ * @param {number} answerCount 实际答题数。
+ * @returns {string} 彩蛋文案。
+ */
+function buildRomanceEasterEggText(answerCount) {
+  const safeAnswerCount = Math.max(0, Math.floor(Number(answerCount) || 0));
+
+  if (safeAnswerCount === 13) {
+    return "历经 13 个爱的抉择，愿你不仅拥有前半生的浪漫……";
+  }
+
+  if (safeAnswerCount === 14) {
+    return "跨越 14 个心动瞬间，你已集齐了一生一世的浪漫拼图。";
+  }
+
+  return "";
+}
+
+/**
+ * 计算浪漫主题答题数量：
+ * 关键逻辑：优先使用已选答案统计，避免“题目存在但未作答”导致计数偏差。
+ * @param {object} localResult 本地分析结果。
+ * @returns {number} 实际答题数。
+ */
+function resolveRomanceAnswerCount(localResult) {
+  const answeredBySummary = Array.isArray(localResult.answerSummary)
+    ? localResult.answerSummary.filter((summaryItem) => Boolean(summaryItem.optionId))
+        .length
+    : 0;
+  if (answeredBySummary > 0) {
+    return answeredBySummary;
+  }
+
+  return Array.isArray(localResult.summaryLines) ? localResult.summaryLines.length : 0;
+}
+
+/**
+ * 浪漫主题：构建深度分析请求负载。
+ * @param {object} localResult 本地分析结果。
+ * @returns {{ romanceIndex: number, tierConfig: object, dimensionScores: Array<object>, topDimensions: Array<object>, weakestDimensions: Array<object>, tagChips: Array<string>, summaryLines: Array<string>, growthActions: Array<string>, destinyGate: object, destinyOutcome: object, answeredCount: number, posterModel: object }} 深度分析负载。
+ */
+function buildRomanceDeepPayload(localResult) {
+  return {
+    romanceIndex: localResult.romanceIndex,
+    tierConfig: localResult.tierConfig,
+    dimensionScores: localResult.dimensionScores,
+    topDimensions: localResult.topDimensions,
+    weakestDimensions: localResult.weakestDimensions,
+    tagChips: localResult.tagChips,
+    summaryLines: localResult.summaryLines,
+    growthActions: localResult.growthActions,
+    destinyGate: localResult.destinyGate,
+    destinyOutcome: localResult.destinyOutcome,
+    answeredCount: localResult.answeredCount,
+    posterModel: localResult.posterModel,
+  };
+}
+
+/**
+ * 浪漫主题：构建顶部简短结论文案。
+ * 关键逻辑：该文案用于结果页上半区“速览”，避免与“深度解析”长文重复。
+ * @param {object} params 参数对象。
+ * @param {object} params.destinyGate 宿命判定结果。
+ * @param {object} params.destinyOutcome 宿命结局结果。
+ * @param {Array<object>} params.topDimensions 维度 Top 列表。
+ * @returns {string} 简短结论。
+ */
+function buildRomanceBriefInsight({
+  destinyGate,
+  destinyOutcome,
+  topDimensions,
+}) {
+  const thresholdPercent = Number(destinyGate?.thresholdPercent ?? 80);
+  const scorePercent = Number(destinyGate?.scorePercent ?? 0);
+  const isUnlockedOutcome = destinyOutcome?.key === "unlocked";
+  const topLabelText = Array.isArray(topDimensions)
+    ? topDimensions
+        .slice(0, 2)
+        .map((dimensionItem) => String(dimensionItem?.label ?? "").trim())
+        .filter(Boolean)
+        .join("、")
+    : "";
+
+  if (isUnlockedOutcome) {
+    return `你已触发隐藏关卡（${scorePercent}%）。当前优势在${topLabelText || "共情与行动"}，把这份坚定持续落地，会更接近你理想中的“一生一世”。`;
+  }
+
+  const gapScore = Math.max(0, thresholdPercent - scorePercent);
+  return `你与隐藏关卡还差 ${gapScore}% 。你在${topLabelText || "关系感知"}上基础不错，下一步优先补强“主动表达与仪式行动”。`;
+}
+
+/**
+ * 浪漫主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度规则结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildRomanceDeepUnifiedResult(deepResult, localResult) {
+  const tierConfig = deepResult.tierConfig ?? localResult.tierConfig;
+  const destinyGate = deepResult.destinyGate ?? localResult.destinyGate ?? {};
+  const destinyOutcome = deepResult.destinyOutcome ?? localResult.destinyOutcome ?? {};
+  const isUnlockedOutcome = destinyOutcome.key === "unlocked";
+  const easterEggText = buildRomanceEasterEggText(
+    resolveRomanceAnswerCount(localResult),
+  );
+  const radarItems = deepResult.radarItems?.length
+    ? deepResult.radarItems
+    : localResult.dimensionScores;
+  const mainProfile = deepResult.mainProfile ?? {
+    name: tierConfig.title,
+    score: localResult.romanceIndex,
+  };
+  const briefInsightText = buildRomanceBriefInsight({
+    destinyGate,
+    destinyOutcome,
+    topDimensions: localResult.topDimensions,
+  });
+  const deepInsightPrimaryText =
+    deepResult.insight ?? tierConfig.insight ?? localResult.localNarrative;
+  const deepInsightSecondaryText = String(
+    deepResult.summaryParagraph ?? "",
+  ).trim();
+  /**
+   * 深度解析展示策略：
+   * 1. 第一条始终展示更完整的 AI 洞察正文。
+   * 2. 第二条可选展示摘要补充，且避免与第一条重复。
+   */
+  const deepInsightItems = [
+    deepInsightPrimaryText,
+    deepInsightSecondaryText &&
+    deepInsightSecondaryText !== deepInsightPrimaryText
+      ? deepInsightSecondaryText
+      : "",
+  ].filter(Boolean);
+
+  return createUnifiedResult({
+    source: "deep",
+    prefixLabel: "你的浪漫指数",
+    scoreLabel: "浪漫指数",
+    main: mainProfile,
+    highlightCard:
+      deepResult.highlightCard ??
+      {
+        title: "浪漫称号解析",
+        content: tierConfig.insight,
+      },
+    // 关键逻辑：顶部 insight 使用“短结论”，避免与“深度解析”模块内容重复。
+    insight: briefInsightText,
+    easterEggText,
+    tagChips: deepResult.tagChips ?? localResult.tagChips,
+    typeCard: {
+      title: "浪漫 DNA 卡片",
+      items: radarItems.map((item) => ({
+        label: item.label,
+        value: `${item.score}%`,
+      })),
+    },
+    distributionChart: {
+      title: "维度分布条形图",
+      items: radarItems,
+    },
+    radarChart: {
+      title: "浪漫维度雷达图",
+      items: radarItems,
+    },
+    topThreeTitle: isUnlockedOutcome
+      ? "突破后浪漫维度 Top 3"
+      : "遗憾结局下仍闪耀的维度 Top 3",
+    topThree: deepResult.topThree ?? localResult.topThree,
+    detailSections: [
+      {
+        title: "宿命判定",
+        items: [
+          `守门员阈值：${Number(destinyGate.thresholdPercent ?? 80)}%，你的信念值：${Number(destinyGate.scorePercent ?? 0)}%。`,
+          isUnlockedOutcome
+            ? "检测到过量的浪漫因子，系统判定为“突破宿命”并解锁第 14 次机会。"
+            : "你的理性在第 13 章形成了保护壳，故事停在“遗憾美”结局。",
+        ],
+      },
+      {
+        title: "深度解析",
+        items: deepInsightItems,
+      },
+      {
+        title: "关系升级动作",
+        items: deepResult.growthActions ?? localResult.growthActions,
+      },
+      {
+        title: "关系避坑提醒",
+        items: deepResult.avoidSignals ?? tierConfig.avoidSignals,
+      },
+    ],
+    summaryTitle: "答卷摘要",
+    summaryLines: localResult.summaryLines,
+    restartButtonText: "再测一次浪漫指数",
+    posterModel: {
+      ...deepResult.posterModel,
+      romanceIndex: mainProfile.score ?? localResult.romanceIndex,
+      title: mainProfile.name ?? tierConfig.title,
+      quote: deepResult.posterModel?.quote ?? tierConfig.posterQuote,
+      easterEggText,
+      radarItems,
+    },
+  });
+}
+
+/**
+ * 浪漫主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildRomanceLocalUnifiedResult(localResult) {
+  const destinyGate = localResult.destinyGate ?? {};
+  const destinyOutcome = localResult.destinyOutcome ?? {};
+  const isUnlockedOutcome = destinyOutcome.key === "unlocked";
+  const easterEggText = buildRomanceEasterEggText(
+    resolveRomanceAnswerCount(localResult),
+  );
+  const briefInsightText = buildRomanceBriefInsight({
+    destinyGate,
+    destinyOutcome,
+    topDimensions: localResult.topDimensions,
+  });
+
+  return createUnifiedResult({
+    source: "local",
+    prefixLabel: "你的浪漫指数",
+    scoreLabel: "浪漫指数",
+    main: {
+      name: localResult.tierConfig.title,
+      score: localResult.romanceIndex,
+    },
+    highlightCard: {
+      title: "浪漫称号解析",
+      content: localResult.tierConfig.insight,
+    },
+    insight: briefInsightText,
+    easterEggText,
+    tagChips: localResult.tagChips,
+    typeCard: {
+      title: "浪漫 DNA 卡片",
+      items: localResult.dimensionScores.map((item) => ({
+        label: item.label,
+        value: `${item.score}%`,
+      })),
+    },
+    distributionChart: {
+      title: "维度分布条形图",
+      items: localResult.dimensionScores,
+    },
+    radarChart: {
+      title: "浪漫维度雷达图",
+      items: localResult.dimensionScores,
+    },
+    topThreeTitle: isUnlockedOutcome
+      ? "突破后浪漫维度 Top 3"
+      : "遗憾结局下仍闪耀的维度 Top 3",
+    topThree: localResult.topThree,
+    detailSections: [
+      {
+        title: "宿命判定",
+        items: [
+          `守门员阈值：${Number(destinyGate.thresholdPercent ?? 80)}%，你的信念值：${Number(destinyGate.scorePercent ?? 0)}%。`,
+          isUnlockedOutcome
+            ? "你通过了第 13 题判定，成功解锁第 14 题。你是会为爱打破规则的人。"
+            : "你止步第 13 题，故事停在“理智保护你”的遗憾美结局。",
+        ],
+      },
+      {
+        title: "关系升级动作",
+        items: localResult.growthActions,
+      },
+      {
+        title: "关系避坑提醒",
+        items: localResult.tierConfig.avoidSignals,
+      },
+    ],
+    summaryTitle: "答卷摘要",
+    summaryLines: localResult.summaryLines,
+    restartButtonText: "再测一次浪漫指数",
+    posterModel: {
+      ...localResult.posterModel,
+      romanceIndex: localResult.romanceIndex,
+      title: localResult.tierConfig.title,
+      quote: localResult.posterModel.quote,
+      easterEggText,
+      radarItems: localResult.dimensionScores,
+    },
+  });
+}
+
+/**
  * 恋爱主题：清洗标签展示文本。
  * @param {unknown} tag 标签输入。
  * @returns {string} 去除 # 后的标签文本。
@@ -1380,8 +1681,9 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
  * 不再需要复制页面组件与入口文件。
  * survey 字段约定：
  * 1. questions：完整题库。
- * 2. questionSelection：抽题数量区间（每轮随机抽题）。
+ * 2. questionSelection：抽题数量区间（默认随机抽题）。
  *    可选字段：ensureDimensionCoverage + dimensionKey，用于按维度覆盖抽题。
+ *    可选字段：useSequentialQuestionOrder，用于按题库顺序截取固定题量（剧情模式）。
  * 3. runLocalAnalysis(selectedQuestions, answerIds)：本地分析方法。
  */
 export const SURVEY_THEME_CONFIGS = [
@@ -1704,6 +2006,94 @@ export const SURVEY_THEME_CONFIGS = [
       buildDeepUnifiedResult: buildColorThemeDeepUnifiedResult,
       buildLocalUnifiedResult: buildColorThemeLocalUnifiedResult,
       deepFailToast: "深度配色暂不可用，已切换基础配色结果",
+    },
+  },
+  {
+    key: "romance",
+    routePaths: ["/romance", "/romance-test", "/romantic", "/1314-love"],
+    pageMeta: {
+      title: "《你认为最浪漫的事》浪漫指数测试",
+      description:
+        "通过剧情化心动场景，触发第 13 章守门员判定，生成你的浪漫指数与分享海报。",
+    },
+    theme: {
+      className: "theme-romance",
+      badge: "ROMANCE DNA",
+      title: "测测你的「浪漫封顶值」",
+      description:
+        "警告：只有极少数人能触发最终隐藏关卡。",
+      participantCountLabel: "已有 12,764 人参与测试",
+      progressColor: "linear-gradient(90deg, #d97899, #8b78d9)",
+      progressTrackColor: "rgba(133, 101, 160, 0.2)",
+      checkedColor: "#d97899",
+      sourceTag: {
+        deep: {
+          label: "AI深度解读",
+          color: "#fff0f6",
+          textColor: "#954165",
+        },
+        local: {
+          label: "本地稳定结果",
+          color: "#f3eeff",
+          textColor: "#5e4c96",
+        },
+      },
+      loadingMessages: [
+        "正在提取你的浪漫表达线索...",
+        "正在计算 4 维浪漫 DNA 权重...",
+        "正在生成你的专属浪漫称号...",
+        "正在绘制可分享海报...",
+      ],
+      submitButtonText: "生成我的浪漫指数",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: ROMANCE_QUESTION_BANK,
+      // 关键逻辑：宿命模式固定先出 13 题，Q13 通过后才动态解锁 Q14。
+      questionSelection: { minCount: 13, maxCount: 13 },
+      useSequentialQuestionOrder: true,
+      autoAdvanceOnSelect: true,
+      midwayEncouragement: {
+        triggerQuestionNumber: 7,
+        message: "哇，你的浪漫直觉很敏锐哦~ 继续！",
+        durationMs: 1300,
+      },
+      destinyGatekeeper: {
+        enabled: true,
+        gateQuestionNumber: ROMANCE_DESTINY_GATE_DEFAULTS.gateQuestionNumber,
+        thresholdPercent: ROMANCE_DESTINY_GATE_DEFAULTS.thresholdPercent,
+        unlockQuestionId: "romance-final-chance",
+        processingLines: [
+          "检测到过量的浪漫因子...",
+          "正在尝试突破宿命...",
+        ],
+        unlockLine: "你的坚定，为你赢得了第 14 次机会。",
+        lockLines: [
+          "有时候，遗憾也是一种美。",
+          "你的理性保护了你，也让你停在了第 13 章。",
+          "—— 故事至此终结。",
+        ],
+      },
+      evaluateGatekeeper: (selectedQuestions, answerIds, gateConfig) =>
+        evaluateRomanceDestinyGate({
+          questions: selectedQuestions,
+          answerIds,
+          gateQuestionNumber: gateConfig.gateQuestionNumber,
+          thresholdPercent: gateConfig.thresholdPercent,
+        }),
+      runLocalAnalysis: (selectedQuestions, answerIds) =>
+        analyzeRomanceLocally({
+          questions: selectedQuestions,
+          answerIds,
+          gateQuestionNumber: ROMANCE_DESTINY_GATE_DEFAULTS.gateQuestionNumber,
+          gateThresholdPercent: ROMANCE_DESTINY_GATE_DEFAULTS.thresholdPercent,
+        }),
+      buildDeepPayload: buildRomanceDeepPayload,
+      runDeepAnalysis: (payload) =>
+        analyzeRomanceWithAI(payload, { timeoutMs: 28000 }),
+      buildDeepUnifiedResult: buildRomanceDeepUnifiedResult,
+      buildLocalUnifiedResult: buildRomanceLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
     },
   },
   {
