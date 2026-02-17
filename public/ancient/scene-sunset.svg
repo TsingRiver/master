@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="540" y1="40" x2="540" y2="1520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F1C9A2"/>
+      <stop offset="0.32" stop-color="#DF9D6E"/>
+      <stop offset="0.62" stop-color="#B16A46"/>
+      <stop offset="1" stop-color="#6A3E2D"/>
+    </linearGradient>
+    <radialGradient id="sunsetGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(838 356) rotate(19) scale(360 260)">
+      <stop offset="0" stop-color="#FFE3BC" stop-opacity="0.84"/>
+      <stop offset="0.6" stop-color="#FFCCA0" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#FFCCA0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ridge1" x1="540" y1="850" x2="540" y2="1400" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8D4D30" stop-opacity="0.62"/>
+      <stop offset="1" stop-color="#5F3524" stop-opacity="0.24"/>
+    </linearGradient>
+    <linearGradient id="ridge2" x1="540" y1="1010" x2="540" y2="1600" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6A3A28" stop-opacity="0.66"/>
+      <stop offset="1" stop-color="#3F261C" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="water" x1="540" y1="1180" x2="540" y2="1920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7A4C3B" stop-opacity="0.36"/>
+      <stop offset="0.46" stop-color="#5A372B" stop-opacity="0.48"/>
+      <stop offset="1" stop-color="#2E1B17" stop-opacity="0.78"/>
+    </linearGradient>
+    <linearGradient id="haze" x1="540" y1="940" x2="540" y2="1700" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE0C6" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#FFE0C6" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blurCloud" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="11"/>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.07"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1920" fill="url(#sky)"/>
+  <ellipse cx="848" cy="352" rx="162" ry="150" fill="#FFD39F" fill-opacity="0.7"/>
+  <ellipse cx="848" cy="352" rx="286" ry="216" fill="url(#sunsetGlow)"/>
+
+  <g filter="url(#blurCloud)" fill="#FFE5C8" fill-opacity="0.34">
+    <path d="M96 488C170 442 286 438 374 472C446 500 538 506 620 482C702 460 804 460 892 492C954 516 1018 526 1080 514V608H96V488Z"/>
+    <path d="M16 634C92 594 200 592 286 628C360 658 450 664 534 642C620 620 718 620 812 648C900 674 996 688 1080 674V754H16V634Z"/>
+  </g>
+
+  <path d="M0 936C126 868 248 846 370 876C464 900 554 906 646 886C742 862 840 864 942 896C1004 916 1048 938 1080 962V1920H0V936Z" fill="url(#ridge1)"/>
+  <path d="M0 1068C124 1014 246 998 372 1028C470 1052 560 1058 652 1040C752 1020 854 1022 960 1056C1012 1074 1052 1090 1080 1110V1920H0V1068Z" fill="url(#ridge2)"/>
+
+  <g opacity="0.95">
+    <path d="M296 1002L558 1002L532 958L326 958L296 1002Z" fill="#391F14"/>
+    <path d="M330 1042L522 1042L500 1008L354 1008L330 1042Z" fill="#2B170F"/>
+    <rect x="354" y="1042" width="144" height="324" fill="#2D1810"/>
+    <rect x="278" y="1366" width="292" height="34" fill="#3B2115"/>
+    <rect x="340" y="1108" width="18" height="258" fill="#5A3625"/>
+    <rect x="382" y="1108" width="18" height="258" fill="#5A3625"/>
+    <rect x="424" y="1108" width="18" height="258" fill="#5A3625"/>
+    <rect x="466" y="1108" width="18" height="258" fill="#5A3625"/>
+    <rect x="390" y="1144" width="70" height="92" fill="#FFB66D" fill-opacity="0.34"/>
+    <path d="M418 958H438V884L428 864L418 884V958Z" fill="#2B170F"/>
+  </g>
+
+  <g opacity="0.88">
+    <path d="M670 1140L918 1140L890 1098L704 1098L670 1140Z" fill="#321B12"/>
+    <rect x="706" y="1140" width="178" height="268" fill="#26160F"/>
+    <rect x="644" y="1408" width="304" height="32" fill="#371F15"/>
+    <rect x="698" y="1198" width="18" height="210" fill="#593726"/>
+    <rect x="744" y="1198" width="18" height="210" fill="#593726"/>
+    <rect x="790" y="1198" width="18" height="210" fill="#593726"/>
+    <rect x="836" y="1198" width="18" height="210" fill="#593726"/>
+    <rect x="758" y="1238" width="58" height="84" fill="#FFBA73" fill-opacity="0.26"/>
+  </g>
+
+  <path d="M0 1268C126 1232 258 1228 390 1254C488 1274 580 1282 676 1262C782 1240 886 1244 996 1278C1028 1288 1056 1302 1080 1320V1920H0V1268Z" fill="url(#water)"/>
+
+  <g opacity="0.5" stroke="#FFC07A" stroke-width="3.2">
+    <path d="M76 1412C208 1388 350 1390 490 1418C594 1438 694 1442 800 1424C900 1408 992 1410 1060 1426"/>
+    <path d="M48 1494C194 1470 338 1472 486 1498C590 1518 696 1526 808 1508C904 1492 992 1494 1064 1512"/>
+    <path d="M30 1576C184 1552 332 1556 484 1580C594 1600 704 1608 818 1592C916 1578 1000 1580 1070 1598"/>
+  </g>
+
+  <g opacity="0.66" fill="#2A1713">
+    <path d="M0 1728H1080V1920H0V1728Z"/>
+    <path d="M96 1732L260 1732L226 1706L126 1706L96 1732Z"/>
+    <path d="M468 1752L638 1752L608 1724L494 1724L468 1752Z"/>
+    <path d="M828 1738L1002 1738L972 1712L852 1712L828 1738Z"/>
+  </g>
+
+  <rect y="1020" width="1080" height="900" fill="url(#haze)"/>
+  <rect width="1080" height="1920" filter="url(#grain)" opacity="0.3"/>
+</svg>

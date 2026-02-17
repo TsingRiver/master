@@ -1,35 +1,11 @@
-import { QUESTION_BANK } from "../data/questionBank";
-import { CITY_PROFILES } from "../data/cityProfiles";
-import { FORTUNE_2026_QUESTION_BANK } from "../data/fortune2026QuestionBank";
-import { ANCIENT_IDENTITY_QUESTION_BANK } from "../data/ancientIdentityQuestionBank";
-import { HIDDEN_TALENT_QUESTION_BANK } from "../data/hiddenTalentQuestionBank";
-import { BENEFACTOR_2026_QUESTION_BANK } from "../data/benefactor2026QuestionBank";
-import { COLOR_2026_QUESTION_BANK } from "../data/color2026QuestionBank";
-import { LOVE_ATTACHMENT_QUESTION_BANK } from "../data/loveAttachmentQuestionBank";
-import { ROMANCE_QUESTION_BANK } from "../data/romanceQuestionBank";
-import { analyzeCitiesLocally } from "../services/localAnalyzer";
-import { analyzeCityWithAI } from "../services/aiAnalyzer";
-import { analyzeFortune2026Locally } from "../services/fortune2026Analyzer";
-import { analyzeFortune2026WithAI } from "../services/fortune2026AiAnalyzer";
-import { analyzeAncientIdentityLocally } from "../services/ancientIdentityAnalyzer";
-import { analyzeAncientIdentityWithDeepInsight } from "../services/ancientIdentityAiAnalyzer";
-import { analyzeHiddenTalentLocally } from "../services/hiddenTalentAnalyzer";
-import { analyzeHiddenTalentWithDeepInsight } from "../services/hiddenTalentAiAnalyzer";
-import { analyzeBenefactor2026Locally } from "../services/benefactor2026Analyzer";
-import { analyzeBenefactor2026WithAI } from "../services/benefactor2026AiAnalyzer";
-import { analyzeColor2026Locally } from "../services/color2026Analyzer";
-import { analyzeColor2026WithAI } from "../services/color2026AiAnalyzer";
-import {
-  analyzeLoveAttachmentLocally,
-  deriveAttachmentSubtypeProfile,
-} from "../services/loveAttachmentAnalyzer";
-import { analyzeLoveAttachmentWithAI } from "../services/loveAttachmentAiAnalyzer";
-import {
-  ROMANCE_DESTINY_GATE_DEFAULTS,
-  analyzeRomanceLocally,
-  evaluateRomanceDestinyGate,
-} from "../services/romanceAnalyzer";
-import { analyzeRomanceWithAI } from "../services/romanceInsightAnalyzer";
+/**
+ * 浪漫主题守门员默认配置：
+ * 关键逻辑：从 analyzer 中下沉到配置层常量，避免首屏静态引入 romance 分析模块。
+ */
+const ROMANCE_DESTINY_GATE_DEFAULTS = {
+  gateQuestionNumber: 13,
+  thresholdPercent: 80,
+};
 
 /**
  * 统一结果结构说明：
@@ -40,7 +16,9 @@ export const UNIFIED_RESULT_TEMPLATE = {
   source: "deep",
   prefixLabel: "",
   scoreLabel: "",
+  scoreSuffix: "%",
   main: { name: "", score: 0 },
+  heroArtwork: null,
   highlightCard: { title: "", content: "" },
   insight: "",
   easterEggText: "",
@@ -61,7 +39,9 @@ export const UNIFIED_RESULT_TEMPLATE = {
  * @param {"deep"|"local"} payload.source 结果来源。
  * @param {string} payload.prefixLabel 主结果前缀文案。
  * @param {string} payload.scoreLabel 分值文案。
+ * @param {string} [payload.scoreSuffix="%"] 主结果分值后缀。
  * @param {{ name: string, score: number }} payload.main 主结果对象。
+ * @param {{ url: string, alt: string, caption?: string } | null} [payload.heroArtwork] 主视觉插画（可选）。
  * @param {{ title: string, content: string }} payload.highlightCard 高亮卡片。
  * @param {string} payload.insight 解释文案。
  * @param {string} [payload.easterEggText] 彩蛋文案（可选）。
@@ -92,11 +72,7 @@ function buildCityDeepPayload(localResult) {
     summaryLines: localResult.summaryLines,
     preferenceVector: localResult.preferenceVector,
     // 关键逻辑：仅传必要字段，降低请求体体积和接口延迟。
-    candidateCities: CITY_PROFILES.map((item) => ({
-      name: item.name,
-      profile: item.profile,
-      traits: item.traits,
-    })),
+    candidateCities: localResult.candidateCities ?? [],
     localTopThree: localResult.topThree.map((item) => ({
       name: item.name,
       score: item.score,
@@ -267,22 +243,28 @@ function buildFortuneLocalUnifiedResult(localResult) {
 /**
  * 古代身份主题：构建深度分析请求负载。
  * @param {object} localResult 本地分析结果。
- * @returns {{ summaryLines: Array<string>, preferenceVector: object, identityCandidates: Array<object>, localTopThree: Array<object> }} 深度分析负载。
+ * @returns {{ summaryLines: Array<string>, categoryCounts: object, lineCounts: object, mainIdentity: object, topThree: Array<object>, growthActions: Array<string>, avoidSignals: Array<string>, dominantCategoryLabel: string, dominantLineLabel: string }} 深度分析负载。
  */
 function buildAncientDeepPayload(localResult) {
   return {
     summaryLines: localResult.summaryLines,
-    preferenceVector: localResult.preferenceVector,
-    identityCandidates: localResult.scoredIdentities.map((item) => ({
-      identity: item.identity,
-      archetype: item.archetype,
-      profile: item.profile,
-    })),
-    localTopThree: localResult.topThree.map((item) => ({
-      identity: item.identity,
+    categoryCounts: localResult.categoryCounts,
+    lineCounts: localResult.lineCounts,
+    mainIdentity: {
+      name: localResult.topIdentity.name,
+      score: localResult.topIdentity.score,
+      slogan: localResult.topIdentity.slogan,
+      coreTag: localResult.topIdentity.coreTag,
+      summary: localResult.topIdentity.summary,
+    },
+    topThree: localResult.topThree.map((item) => ({
+      name: item.name,
       score: item.score,
-      archetype: item.archetype,
     })),
+    growthActions: localResult.growthActions,
+    avoidSignals: localResult.avoidSignals,
+    dominantCategoryLabel: localResult.dominantCategoryLabel,
+    dominantLineLabel: localResult.dominantLineLabel,
   };
 }
 
@@ -293,23 +275,85 @@ function buildAncientDeepPayload(localResult) {
  * @returns {object} 统一结果对象。
  */
 function buildAncientDeepUnifiedResult(deepResult, localResult) {
+  const identityModules = localResult.identityModules ?? {};
+  const traitProfiles = Array.isArray(identityModules.traitProfiles)
+    ? identityModules.traitProfiles
+    : [];
+  const mergedTagChips = Array.from(
+    new Set([
+      ...traitProfiles.map((item) => item.keyword),
+      ...(deepResult.narrativeTags ?? []),
+    ]),
+  )
+    .map((item) => String(item ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
   return createUnifiedResult({
     source: "deep",
     prefixLabel: "你的古代身份",
     scoreLabel: "身份匹配度",
-    main: deepResult.mainIdentity,
-    highlightCard: {
-      title: "身份判词",
-      content: deepResult.identitySeal,
+    main: {
+      name: deepResult.mainIdentity.name,
+      score: deepResult.mainIdentity.score,
     },
-    insight: deepResult.insight,
+    heroArtwork: localResult.topIdentity.artwork,
+    highlightCard: {
+      title: "专属称号",
+      content: identityModules.honorTitle ?? localResult.topIdentity.slogan,
+    },
+    insight:
+      identityModules.personaLine ??
+      localResult.localNarrative ??
+      deepResult.insight,
+    tagChips: mergedTagChips,
+    typeCard: {
+      title: "性格画像",
+      items: traitProfiles.map((item) => ({
+        value: item.keyword,
+        label: item.note,
+      })),
+    },
     topThreeTitle: "身份 Top 3",
     topThree: deepResult.topThree,
     detailSections: [
-      { title: "成长建议", items: deepResult.growthActions },
-      { title: "避坑信号", items: deepResult.avoidSignals },
+      {
+        title: "专属金句 / 台词",
+        items: [
+          ...(identityModules.quoteLines ?? []),
+          deepResult.identitySeal,
+        ]
+          .map((item) => String(item ?? "").trim())
+          .filter(Boolean)
+          .slice(0, 3),
+      },
+      {
+        title: "适配的古代职业 / 场景",
+        items: [
+          `适配职业：${(identityModules.ancientJobs ?? []).join("、")}`,
+          `适配场景：${(identityModules.ancientScenes ?? []).join("、")}`,
+        ],
+      },
+      {
+        title: "匹配的现代职业 / 性格",
+        items: [
+          `现代职业：${(identityModules.modernJobs ?? []).join("、")}`,
+          `性格映射：${(identityModules.modernTraits ?? []).join("、")}`,
+        ],
+      },
+      {
+        title: "社交互动钩子",
+        items: identityModules.socialHookLines ?? [],
+      },
+      {
+        title: "AI 深层解读",
+        items: [deepResult.insight, ...(deepResult.growthActions ?? []), ...(deepResult.avoidSignals ?? [])]
+          .map((item) => String(item ?? "").trim())
+          .filter(Boolean)
+          .slice(0, 3),
+      },
     ],
-    summaryTitle: "答卷摘要",
+    summaryTitle: "答卷回放",
     summaryLines: localResult.summaryLines,
     restartButtonText: "重新测试",
   });
@@ -321,39 +365,63 @@ function buildAncientDeepUnifiedResult(deepResult, localResult) {
  * @returns {object} 统一结果对象。
  */
 function buildAncientLocalUnifiedResult(localResult) {
+  const identityModules = localResult.identityModules ?? {};
+  const traitProfiles = Array.isArray(identityModules.traitProfiles)
+    ? identityModules.traitProfiles
+    : [];
+
   return createUnifiedResult({
     source: "local",
     prefixLabel: "你的古代身份",
     scoreLabel: "身份匹配度",
     main: {
-      name: localResult.topIdentity.identity,
+      name: localResult.topIdentity.name,
       score: localResult.topIdentity.score,
     },
+    heroArtwork: localResult.topIdentity.artwork,
     highlightCard: {
-      title: "身份判词",
-      content: "心有定盘星，行事自成章。",
+      title: "专属称号",
+      content: identityModules.honorTitle ?? localResult.topIdentity.slogan,
     },
-    insight: localResult.localNarrative,
+    insight: identityModules.personaLine ?? localResult.localNarrative,
+    tagChips: traitProfiles
+      .map((item) => String(item.keyword ?? "").trim())
+      .filter(Boolean)
+      .slice(0, 5),
+    typeCard: {
+      title: "性格画像",
+      items: traitProfiles.map((item) => ({
+        value: item.keyword,
+        label: item.note,
+      })),
+    },
     topThreeTitle: "身份 Top 3",
-    topThree: localResult.topThree.map((item) => ({
-      name: item.identity,
-      score: item.score,
-    })),
+    topThree: localResult.topThree,
     detailSections: [
       {
-        title: "成长建议",
+        title: "专属金句 / 台词",
+        items: identityModules.quoteLines ?? [localResult.topIdentity.slogan],
+      },
+      {
+        title: "适配的古代职业 / 场景",
         items: [
-          "先稳定核心节奏，再扩展战线。",
-          "每周复盘一次关键决策，减少重复失误。",
-          "把一项优势能力打磨到可复制。",
+          `适配职业：${(identityModules.ancientJobs ?? []).join("、")}`,
+          `适配场景：${(identityModules.ancientScenes ?? []).join("、")}`,
         ],
       },
       {
-        title: "避坑信号",
-        items: ["临场决策反复", "关键任务推进中断"],
+        title: "匹配的现代职业 / 性格",
+        items: [
+          `现代职业：${(identityModules.modernJobs ?? []).join("、")}`,
+          `性格映射：${(identityModules.modernTraits ?? []).join("、")}`,
+        ],
+      },
+      {
+        title: "社交互动钩子",
+        items: identityModules.socialHookLines ?? [],
       },
     ],
-    summaryTitle: "答卷摘要",
+    summaryTitle: "答卷回放",
     summaryLines: localResult.summaryLines,
     restartButtonText: "重新测试",
   });
@@ -1450,6 +1518,40 @@ function normalizeLoveTagChips(tags) {
 }
 
 /**
+ * 恋爱心理主题：本地兜底细分亚型推导。
+ * 关键逻辑：当分析器未返回 subtypeProfile 时，保证结果页字段完整可渲染。
+ * @param {Array<object>} distribution 类型分布列表。
+ * @returns {{ signature: string, coreTypeName: string, subtypeName: string, subtypeBrief: string, subtypeTag: string, secondaryTypeName: string, intensityLabel: string, tendencyGap: number }} 兜底亚型。
+ */
+function buildFallbackAttachmentSubtypeProfile(distribution) {
+  const sortedDistribution = Array.isArray(distribution)
+    ? [...distribution].sort((leftItem, rightItem) => Number(rightItem?.score ?? 0) - Number(leftItem?.score ?? 0))
+    : [];
+
+  const mainType = sortedDistribution[0] ?? {};
+  const secondaryType = sortedDistribution[1] ?? {};
+  const tendencyGap = Math.max(
+    0,
+    Math.round(Number(mainType?.score ?? 0) - Number(secondaryType?.score ?? 0)),
+  );
+  const intensityLabel =
+    tendencyGap >= 30 ? "高确定性" : tendencyGap >= 15 ? "中等确定性" : "混合波动";
+
+  const mainTypeName = String(mainType?.name ?? "").trim() || "待判定";
+  const secondaryTypeName = String(secondaryType?.name ?? "").trim() || "暂无";
+  return {
+    signature: `${mainTypeName}倾向`,
+    coreTypeName: mainTypeName,
+    subtypeName: `${mainTypeName}稳定子型`,
+    subtypeBrief: "当前细分亚型由分布数据推导，建议结合完整题量再次验证。",
+    subtypeTag: `${mainTypeName}倾向`,
+    secondaryTypeName,
+    intensityLabel,
+    tendencyGap,
+  };
+}
+
+/**
  * 恋爱心理主题：构建深度分析请求负载。
  * @param {object} localResult 本地分析结果。
  * @returns {{ typeCandidates: Array<object>, localDistribution: Array<object>, localMainType: object, localSubtypeProfile: object, summaryLines: Array<string> }} 深度分析负载。
@@ -1492,9 +1594,12 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
 
   const fallbackMainType = sortedDistribution[0] ?? localResult.topType;
   const mainType = deepResult.mainType ?? fallbackMainType;
-  const subtypeProfile = deriveAttachmentSubtypeProfile(
-    sortedDistribution.length > 0 ? sortedDistribution : localResult.distribution,
-  );
+  const subtypeProfile =
+    deepResult.subtypeProfile ??
+    localResult.subtypeProfile ??
+    buildFallbackAttachmentSubtypeProfile(
+      sortedDistribution.length > 0 ? sortedDistribution : localResult.distribution,
+    );
 
   // 关键逻辑：优先使用 AI 返回的结构化要点，缺失时再回退到单段文本，保证展示密度与兼容性。
   const familyPortraitItems =
@@ -1590,7 +1695,7 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
   const secondaryType = localResult.distribution[1] ?? null;
   const subtypeProfile =
     localResult.subtypeProfile ??
-    deriveAttachmentSubtypeProfile(localResult.distribution);
+    buildFallbackAttachmentSubtypeProfile(localResult.distribution);
 
   // 关键逻辑：本地兜底也保持多条目展示，避免在 AI 不可用时信息密度明显下降。
   const familyPortraitItems =
@@ -1674,17 +1779,339 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 恋爱脑封面语录池：
+ * 1. sharp 为“毒舌向”语录，强调风险提醒。
+ * 2. healing 为“治愈向”语录，强调自我接住。
+ */
+const LOVE_BRAIN_COVER_QUOTES = {
+  sharp: [
+    "你把已读不回解读成欲擒故纵，他可能只是在省流。",
+    "你不是在谈恋爱，你是在给幻想打白工。",
+    "把他偶尔的温柔当承诺，是恋爱脑最贵的一笔分期。",
+    "你在等他回头，他在等你自己想通。",
+    "他画的是大饼，你交的是首付。",
+    "你反复复盘聊天记录，他可能连你置顶都没置顶。",
+    "你以为自己是例外，多半只是备选项里的高活跃用户。",
+    "心软不是错，把底线当门帘才是。",
+  ],
+  healing: [
+    "真正的爱会让你更像自己，而不是更不像自己。",
+    "先照顾好情绪，再决定要不要继续这段关系。",
+    "你值得被坚定选择，而不是被反复试探。",
+    "把期待收回来一点，自我价值就会回来很多。",
+    "关系可以慢慢来，但你不必委屈着等。",
+    "先把自己站稳，爱才不会变成求。",
+    "愿你被温柔对待，也能温柔地对待自己。",
+    "清醒不是无情，是把爱放在更安全的位置。",
+  ],
+};
+
+/**
+ * 从候选数组中随机抽取不重复条目。
+ * 复杂度评估：O(n)
+ * 采用 Fisher-Yates 洗牌后截断，空间复杂度 O(n)。
+ * @param {Array<string>} sourceItems 候选文案。
+ * @param {number} expectedCount 期望抽取数量。
+ * @returns {Array<string>} 随机不重复结果。
+ */
+function pickRandomUniqueItems(sourceItems, expectedCount) {
+  if (!Array.isArray(sourceItems) || sourceItems.length === 0) {
+    return [];
+  }
+
+  const normalizedCount = Math.max(
+    0,
+    Math.min(Math.floor(Number(expectedCount) || 0), sourceItems.length),
+  );
+  if (normalizedCount === 0) {
+    return [];
+  }
+
+  const shuffledItems = [...sourceItems];
+  for (let index = shuffledItems.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    const tempItem = shuffledItems[index];
+    shuffledItems[index] = shuffledItems[randomIndex];
+    shuffledItems[randomIndex] = tempItem;
+  }
+
+  return shuffledItems.slice(0, normalizedCount);
+}
+
+/**
+ * 生成恋爱脑封面语录（每轮 3 条）。
+ * 关键逻辑：保证“毒舌 + 治愈”都有露出，避免语气单一。
+ * @returns {Array<string>} 3 条封面语录。
+ */
+function buildLoveBrainCoverQuotes() {
+  const totalCount = 3;
+  // 关键逻辑：随机决定 1:2 或 2:1 配比，保证每次都有反差感。
+  const sharpCount = Math.random() < 0.5 ? 1 : 2;
+  const healingCount = totalCount - sharpCount;
+
+  const pickedSharpQuotes = pickRandomUniqueItems(
+    LOVE_BRAIN_COVER_QUOTES.sharp,
+    sharpCount,
+  );
+  const pickedHealingQuotes = pickRandomUniqueItems(
+    LOVE_BRAIN_COVER_QUOTES.healing,
+    healingCount,
+  );
+
+  return pickRandomUniqueItems(
+    [...pickedSharpQuotes, ...pickedHealingQuotes],
+    totalCount,
+  );
+}
+
+/**
+ * 古代身份主题描述文案池：
+ * 关键逻辑：主题页头部与主题中心卡片共用该文案池，保证品牌语气统一。
+ */
+const ANCIENT_THEME_DESCRIPTION_POOL = [
+  "是仗剑天涯的隐士，还是富甲一方的权臣？完成 30 道场景题，系统将锁定你的终极古代身份。",
+  "你会是镇守一方的将门英才，还是纵横商道的传奇掌柜？答完 30 道场景题，命格卷轴即刻揭晓。",
+  "若你一朝穿越，会在庙堂运筹帷幄，还是在江湖快意恩仇？完成 30 道沉浸式场景题，解锁你的古代真身。",
+  "刀光剑影与诗酒风月之间，你最终会站在哪一边？完成 30 道场景推演，系统将判定你的江湖归位。",
+  "你以为自己只是路人，其实可能天生带着主角命格。做完 30 道场景题，看看你在古代究竟是谁。",
+  "当命运把你丢进古代，你会选择守护天下，还是经营人间烟火？完成 30 道场景题，锁定你的专属身份。",
+];
+
+/**
+ * 从数组中随机抽取单条文案。
+ * 复杂度评估：O(1)
+ * 仅执行一次随机索引读取，空间复杂度 O(1)。
+ * @param {Array<string>} sourceItems 候选文案列表。
+ * @param {string} fallbackValue 兜底文案。
+ * @returns {string} 随机抽取结果。
+ */
+function pickRandomSingleItem(sourceItems, fallbackValue) {
+  if (!Array.isArray(sourceItems) || sourceItems.length === 0) {
+    return fallbackValue;
+  }
+
+  const randomIndex = Math.floor(Math.random() * sourceItems.length);
+  return String(sourceItems[randomIndex] ?? fallbackValue).trim() || fallbackValue;
+}
+
+/**
+ * 构建古代身份主题描述文案。
+ * 关键逻辑：每次进入主题时随机抽一条，增强重测新鲜感。
+ * @returns {string} 随机主题描述文案。
+ */
+function buildAncientThemeDescription() {
+  return pickRandomSingleItem(
+    ANCIENT_THEME_DESCRIPTION_POOL,
+    "完成 30 道古风场景题，系统将锁定你的终极古代身份。",
+  );
+}
+
+/**
+ * 恋爱脑主题：构建深度分析请求负载。
+ * 关键逻辑：将结构化答题摘要一起传给 AI，避免仅基于总分导致文案单薄。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildLoveBrainDeepPayload(localResult) {
+  return {
+    score: localResult.score,
+    answeredCount: localResult.answeredCount,
+    levelRule: localResult.levelRule,
+    stageDistribution: localResult.stageDistribution,
+    topRiskScenarios: localResult.topRiskScenarios,
+    answerSummary: localResult.answerSummary,
+    summaryLines: localResult.summaryLines,
+    localNarrative: localResult.localNarrative,
+    actionTips: localResult.actionTips,
+    posterModel: localResult.posterModel,
+  };
+}
+
+/**
+ * 恋爱脑主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildLoveBrainUnifiedResult(result, sourceType) {
+  const levelRule = result.levelRule ?? {};
+  const scoreValue = Number(result.score ?? 0);
+  const stageDistribution = Array.isArray(result.stageDistribution)
+    ? result.stageDistribution
+    : [];
+  const topRiskScenarios = Array.isArray(result.topRiskScenarios)
+    ? result.topRiskScenarios
+    : [];
+  const actionTips = Array.isArray(result.actionTips) ? result.actionTips : [];
+  const summaryLines = Array.isArray(result.summaryLines) ? result.summaryLines : [];
+  const insightText = String(result.localNarrative ?? result.insight ?? "").trim();
+
+  const normalizedHighlightCard =
+    result.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+
+  const fallbackTagChips = [
+    levelRule.title,
+    levelRule.coreTag,
+  ].filter(Boolean);
+  const normalizedTagChips =
+    Array.isArray(result.tagChips) && result.tagChips.length > 0
+      ? result.tagChips
+          .map((item) => String(item ?? "").trim())
+          .filter(Boolean)
+      : fallbackTagChips;
+
+  /**
+   * 判定卡片补充信息：
+   * 1. 不展示题量，改为“情绪主轴 + 高风险场景”。
+   * 2. 便于用户快速理解“为什么是这个等级”。
+   */
+  const dominantStageItem = [...stageDistribution]
+    .sort((leftItem, rightItem) => Number(rightItem.score ?? 0) - Number(leftItem.score ?? 0))[0];
+  const dominantStageText = dominantStageItem?.name
+    ? `${dominantStageItem.name}信号 ${Number(dominantStageItem.score ?? 0)}%`
+    : "信号采样中";
+  const topRiskScenarioName = String(topRiskScenarios[0]?.name ?? "").trim() || "关系边界波动";
+
+  const defaultDetailSections = [
+    {
+      title: "扎心分析",
+      items: [levelRule.piercingLine ?? "稳定观测中，建议稍后重试。"],
+    },
+    {
+      title: "重点场景复盘",
+      items:
+        topRiskScenarios.length > 0
+          ? topRiskScenarios.map((item) => `${item.name} -> ${item.optionLabel}`)
+          : ["你当前在关键触发场景更容易把短期情绪当作长期关系结论。"],
+    },
+    {
+      title: "降温建议",
+      items:
+        actionTips.length > 0
+          ? actionTips
+          : ["先暂停情绪化投入，把判断拉回可验证的事实反馈。"],
+    },
+  ];
+
+  const normalizedDetailSections = Array.isArray(result.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter((sectionItem) => sectionItem.title && sectionItem.items.length > 0)
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections;
+
+  return createUnifiedResult({
+    source: sourceType,
+    prefixLabel: "你的恋爱脑指数",
+    scoreLabel: "指数得分",
+    scoreSuffix: "/140",
+    main: {
+      name: levelRule.levelName ?? "恋爱脑待判定",
+      score: scoreValue,
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "核心标签",
+      content:
+        normalizedHighlightCard?.content ||
+        `${levelRule.title ?? "未命中"} · ${levelRule.coreTag ?? "稳定观测中"}`,
+    },
+    insight: insightText,
+    tagChips: normalizedTagChips,
+    distributionChart: {
+      title: "状态分布",
+      items: stageDistribution,
+    },
+    typeCard: {
+      title: "恋爱脑判定卡片",
+      items: [
+        { label: "等级名称", value: levelRule.levelName ?? "待判定" },
+        { label: "核心称号", value: levelRule.title ?? "待判定" },
+        { label: "情绪主轴", value: dominantStageText },
+        { label: "高风险场景", value: topRiskScenarioName },
+      ],
+    },
+    topThreeTitle: "最容易上头的场景 Top 3",
+    topThree: topRiskScenarios.map((item) => ({
+      name: item.name,
+      score: Number(item.score ?? 0),
+    })),
+    detailSections: resolvedDetailSections,
+    summaryTitle: String(result.summaryTitle ?? "答卷回放").trim() || "答卷回放",
+    summaryLines,
+    restartButtonText: "再测一次恋爱脑指数",
+    posterModel: {
+      ...(result.posterModel ?? {}),
+      indexScore: scoreValue,
+      levelName: levelRule.levelName ?? "恋爱脑待判定",
+      levelTitle: levelRule.title ?? "待判定",
+      coreTag: levelRule.coreTag ?? "稳定观测中",
+      piercingLine:
+        levelRule.piercingLine ?? "稳定观测中，建议稍后重试。",
+      narrative:
+        String(result.posterModel?.narrative ?? "").trim() ||
+        insightText ||
+        String(result.localNarrative ?? "").trim(),
+      stageDistribution,
+      topRiskScenarios,
+    },
+    commercialCta: {
+      enabled: true,
+      text: "",
+      href: "/mbti",
+    },
+  });
+}
+
+/**
+ * 恋爱脑主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果（兜底）。
+ * @returns {object} 统一结果对象。
+ */
+function buildLoveBrainDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...localResult,
+    ...deepResult,
+  };
+  return buildLoveBrainUnifiedResult(normalizedResult, "deep");
+}
+
+/**
+ * 恋爱脑主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildLoveBrainLocalUnifiedResult(localResult) {
+  return buildLoveBrainUnifiedResult(localResult, "local");
+}
+
+/**
  * 统一主题配置列表。
  * 新增测试时只需：
  * 1. 加题库和分析器
  * 2. 新增一个配置对象
  * 不再需要复制页面组件与入口文件。
  * survey 字段约定：
- * 1. questions：完整题库。
+ * 1. questions：完整题库数组，或返回题库数组的异步函数（用于按需加载）。
  * 2. questionSelection：抽题数量区间（默认随机抽题）。
  *    可选字段：ensureDimensionCoverage + dimensionKey，用于按维度覆盖抽题。
  *    可选字段：useSequentialQuestionOrder，用于按题库顺序截取固定题量（剧情模式）。
- * 3. runLocalAnalysis(selectedQuestions, answerIds)：本地分析方法。
+ * 3. runLocalAnalysis(selectedQuestions, answerIds)：本地分析方法，支持同步或异步返回。
  */
 export const SURVEY_THEME_CONFIGS = [
   {
@@ -1724,17 +2151,35 @@ export const SURVEY_THEME_CONFIGS = [
       nextButtonText: "下一步",
     },
     survey: {
-      questions: QUESTION_BANK,
+      questions: async () => {
+        const { QUESTION_BANK } = await import("../data/questionBank");
+        return QUESTION_BANK;
+      },
       questionSelection: { minCount: 10, maxCount: 15 },
-      runLocalAnalysis: (selectedQuestions, answerIds) =>
-        analyzeCitiesLocally({
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const [{ analyzeCitiesLocally }, { CITY_PROFILES }] = await Promise.all([
+          import("../services/localAnalyzer"),
+          import("../data/cityProfiles"),
+        ]);
+        const localResult = analyzeCitiesLocally({
           questions: selectedQuestions,
           answerIds,
           cities: CITY_PROFILES,
-        }),
+        });
+        return {
+          ...localResult,
+          candidateCities: CITY_PROFILES.map((item) => ({
+            name: item.name,
+            profile: item.profile,
+            traits: item.traits,
+          })),
+        };
+      },
       buildDeepPayload: buildCityDeepPayload,
-      runDeepAnalysis: (payload) =>
-        analyzeCityWithAI(payload, { timeoutMs: 26000 }),
+      runDeepAnalysis: async (payload) => {
+        const { analyzeCityWithAI } = await import("../services/aiAnalyzer");
+        return analyzeCityWithAI(payload, { timeoutMs: 26000 });
+      },
       buildDeepUnifiedResult: buildCityDeepUnifiedResult,
       buildLocalUnifiedResult: buildCityLocalUnifiedResult,
       deepFailToast: "深度匹配暂不可用，已切换本地规则结果",
@@ -1777,16 +2222,29 @@ export const SURVEY_THEME_CONFIGS = [
       nextButtonText: "下一题",
     },
     survey: {
-      questions: FORTUNE_2026_QUESTION_BANK,
+      questions: async () => {
+        const { FORTUNE_2026_QUESTION_BANK } = await import(
+          "../data/fortune2026QuestionBank"
+        );
+        return FORTUNE_2026_QUESTION_BANK;
+      },
       questionSelection: { minCount: 10, maxCount: 15 },
-      runLocalAnalysis: (selectedQuestions, answerIds) =>
-        analyzeFortune2026Locally({
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeFortune2026Locally } = await import(
+          "../services/fortune2026Analyzer"
+        );
+        return analyzeFortune2026Locally({
           questions: selectedQuestions,
           answerIds,
-        }),
+        });
+      },
       buildDeepPayload: buildFortuneDeepPayload,
-      runDeepAnalysis: (payload) =>
-        analyzeFortune2026WithAI(payload, { timeoutMs: 26000 }),
+      runDeepAnalysis: async (payload) => {
+        const { analyzeFortune2026WithAI } = await import(
+          "../services/fortune2026AiAnalyzer"
+        );
+        return analyzeFortune2026WithAI(payload, { timeoutMs: 26000 });
+      },
       buildDeepUnifiedResult: buildFortuneDeepUnifiedResult,
       buildLocalUnifiedResult: buildFortuneLocalUnifiedResult,
       deepFailToast: "深度解读暂不可用，已切换基础解析",
@@ -1796,49 +2254,83 @@ export const SURVEY_THEME_CONFIGS = [
     key: "ancient",
     routePaths: ["/ancient", "/ancient-identity", "/ancient-identity.html"],
     pageMeta: {
-      title: "测测你在古代会是什么身份",
-      description: "通过处事习惯与决策偏好，匹配你的古代身份原型。",
+      title: "入梦千年：测测你骨子里流着谁的血液？",
+      description: "30 道古风江湖题，锁定你的终极古代身份与爆款判词。",
     },
     theme: {
       className: "theme-ancient",
-      badge: "ANCIENT IDENTITY",
-      title: "测测你在古代会是什么身份",
-      description: "通过处事方式与决策习惯，匹配你的古代身份原型并生成判词。",
-      progressColor: "linear-gradient(90deg, #8f6138, #c8a071)",
-      progressTrackColor: "rgba(92, 66, 42, 0.16)",
-      checkedColor: "#8f6138",
+      badge: "Jianghu Archetype",
+      title: "入梦千年：测测你骨子里流着谁的血液？",
+      description: () => buildAncientThemeDescription(),
+      progressColor: "linear-gradient(90deg, #68412a, #a95f33 54%, #d9a15e)",
+      progressTrackColor: "rgba(83, 52, 29, 0.22)",
+      checkedColor: "#7d4a2c",
       sourceTag: {
         deep: {
-          label: "深度判定结果",
-          color: "#f4e8d8",
-          textColor: "#6d482a",
+          label: "AI 深度判词",
+          color: "#f3e4cf",
+          textColor: "#603b25",
         },
         local: {
-          label: "基础判定结果",
-          color: "#f7efdf",
-          textColor: "#7e5a3b",
+          label: "规则判定结果",
+          color: "#f8efe3",
+          textColor: "#7b5536",
         },
       },
       loadingMessages: [
         "正在翻阅命格卷轴...",
-        "正在推演你的朝代轨迹...",
-        "正在匹配你的仕途坐标...",
-        "正在落笔身份判词...",
+        "正在统计四象倾向...",
+        "正在锁定江湖身份坐标...",
+        "正在落笔你的爆款判词...",
       ],
-      submitButtonText: "开始身份判定",
+      submitButtonText: "解锁我的终极身份",
       nextButtonText: "下一题",
     },
     survey: {
-      questions: ANCIENT_IDENTITY_QUESTION_BANK,
-      questionSelection: { minCount: 10, maxCount: 15 },
-      runLocalAnalysis: (selectedQuestions, answerIds) =>
-        analyzeAncientIdentityLocally({
+      questions: async () => {
+        const { ANCIENT_IDENTITY_QUESTION_BANK } = await import(
+          "../data/ancientIdentityQuestionBank"
+        );
+        return ANCIENT_IDENTITY_QUESTION_BANK;
+      },
+      questionSelection: { minCount: 30, maxCount: 30 },
+      autoAdvanceOnSelect: true,
+      minimumAnalyzingDurationMs: 1300,
+      // 关键逻辑：古代身份测试强制封面页，先完成叙事入场再开始答题。
+      cover: {
+        enabled: true,
+        kicker: "全网首发 · 准到发毛",
+        titleEmphasis: "入梦千年",
+        titleMain: "测测你在古代到底是谁？",
+        promoTag: "高浓度 · 30题沉浸式推演",
+        intro:
+          "是仗剑天涯的隐士，还是富甲一方的权臣？完成 30 道场景题，系统将锁定你的终极古代身份。",
+        points: [
+          "你的每次选择，都会在命格卷轴里留下痕迹。",
+          "武力、才情、守护、烟火四象并行，拒绝模板化结论。",
+          "结果不仅有身份，还会给出古代与现代的双向人格映射。",
+        ],
+        hookLine: "你以为你是甄嬛，其实你可能是冷宫守门人？",
+        startButtonText: "立即开启我的古代人生",
+        socialProof: "已有 1w+ 人完成穿越",
+        tip: "预计耗时 3-4 分钟",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeAncientIdentityLocally } = await import(
+          "../services/ancientIdentityAnalyzer"
+        );
+        return analyzeAncientIdentityLocally({
           questions: selectedQuestions,
           answerIds,
-        }),
+        });
+      },
       buildDeepPayload: buildAncientDeepPayload,
-      runDeepAnalysis: (payload) =>
-        analyzeAncientIdentityWithDeepInsight(payload, { timeoutMs: 26000 }),
+      runDeepAnalysis: async (payload) => {
+        const { analyzeAncientIdentityWithDeepInsight } = await import(
+          "../services/ancientIdentityAiAnalyzer"
+        );
+        return analyzeAncientIdentityWithDeepInsight(payload, { timeoutMs: 26000 });
+      },
       buildDeepUnifiedResult: buildAncientDeepUnifiedResult,
       buildLocalUnifiedResult: buildAncientLocalUnifiedResult,
       deepFailToast: "深度判定暂不可用，已切换基础判定",
@@ -1881,16 +2373,29 @@ export const SURVEY_THEME_CONFIGS = [
       nextButtonText: "下一题",
     },
     survey: {
-      questions: HIDDEN_TALENT_QUESTION_BANK,
+      questions: async () => {
+        const { HIDDEN_TALENT_QUESTION_BANK } = await import(
+          "../data/hiddenTalentQuestionBank"
+        );
+        return HIDDEN_TALENT_QUESTION_BANK;
+      },
       questionSelection: { minCount: 10, maxCount: 15 },
-      runLocalAnalysis: (selectedQuestions, answerIds) =>
-        analyzeHiddenTalentLocally({
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeHiddenTalentLocally } = await import(
+          "../services/hiddenTalentAnalyzer"
+        );
+        return analyzeHiddenTalentLocally({
           questions: selectedQuestions,
           answerIds,
-        }),
+        });
+      },
       buildDeepPayload: buildTalentDeepPayload,
-      runDeepAnalysis: (payload) =>
-        analyzeHiddenTalentWithDeepInsight(payload, { timeoutMs: 26000 }),
+      runDeepAnalysis: async (payload) => {
+        const { analyzeHiddenTalentWithDeepInsight } = await import(
+          "../services/hiddenTalentAiAnalyzer"
+        );
+        return analyzeHiddenTalentWithDeepInsight(payload, { timeoutMs: 26000 });
+      },
       buildDeepUnifiedResult: buildTalentDeepUnifiedResult,
       buildLocalUnifiedResult: buildTalentLocalUnifiedResult,
       deepFailToast: "深度生成暂不可用，已切换基础生成",
@@ -1938,16 +2443,29 @@ export const SURVEY_THEME_CONFIGS = [
       nextButtonText: "下一题",
     },
     survey: {
-      questions: BENEFACTOR_2026_QUESTION_BANK,
+      questions: async () => {
+        const { BENEFACTOR_2026_QUESTION_BANK } = await import(
+          "../data/benefactor2026QuestionBank"
+        );
+        return BENEFACTOR_2026_QUESTION_BANK;
+      },
       questionSelection: { minCount: 10, maxCount: 15 },
-      runLocalAnalysis: (selectedQuestions, answerIds) =>
-        analyzeBenefactor2026Locally({
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeBenefactor2026Locally } = await import(
+          "../services/benefactor2026Analyzer"
+        );
+        return analyzeBenefactor2026Locally({
           questions: selectedQuestions,
           answerIds,
-        }),
+        });
+      },
       buildDeepPayload: buildBenefactorDeepPayload,
-      runDeepAnalysis: (payload) =>
-        analyzeBenefactor2026WithAI(payload, { timeoutMs: 26000 }),
+      runDeepAnalysis: async (payload) => {
+        const { analyzeBenefactor2026WithAI } = await import(
+          "../services/benefactor2026AiAnalyzer"
+        );
+        return analyzeBenefactor2026WithAI(payload, { timeoutMs: 26000 });
+      },
       buildDeepUnifiedResult: buildBenefactorDeepUnifiedResult,
       buildLocalUnifiedResult: buildBenefactorLocalUnifiedResult,
       deepFailToast: "深度匹配暂不可用，已切换基础匹配",
@@ -1993,16 +2511,29 @@ export const SURVEY_THEME_CONFIGS = [
       runtimePalette: COLOR_2026_RUNTIME_PALETTE,
     },
     survey: {
-      questions: COLOR_2026_QUESTION_BANK,
+      questions: async () => {
+        const { COLOR_2026_QUESTION_BANK } = await import(
+          "../data/color2026QuestionBank"
+        );
+        return COLOR_2026_QUESTION_BANK;
+      },
       questionSelection: { minCount: 10, maxCount: 15 },
-      runLocalAnalysis: (selectedQuestions, answerIds) =>
-        analyzeColor2026Locally({
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeColor2026Locally } = await import(
+          "../services/color2026Analyzer"
+        );
+        return analyzeColor2026Locally({
           questions: selectedQuestions,
           answerIds,
-        }),
+        });
+      },
       buildDeepPayload: buildColorThemeDeepPayload,
-      runDeepAnalysis: (payload) =>
-        analyzeColor2026WithAI(payload, { timeoutMs: 26000 }),
+      runDeepAnalysis: async (payload) => {
+        const { analyzeColor2026WithAI } = await import(
+          "../services/color2026AiAnalyzer"
+        );
+        return analyzeColor2026WithAI(payload, { timeoutMs: 26000 });
+      },
       buildDeepUnifiedResult: buildColorThemeDeepUnifiedResult,
       buildLocalUnifiedResult: buildColorThemeLocalUnifiedResult,
       deepFailToast: "深度配色暂不可用，已切换基础配色结果",
@@ -2048,7 +2579,12 @@ export const SURVEY_THEME_CONFIGS = [
       nextButtonText: "下一题",
     },
     survey: {
-      questions: ROMANCE_QUESTION_BANK,
+      questions: async () => {
+        const { ROMANCE_QUESTION_BANK } = await import(
+          "../data/romanceQuestionBank"
+        );
+        return ROMANCE_QUESTION_BANK;
+      },
       // 关键逻辑：宿命模式固定先出 13 题，Q13 通过后才动态解锁 Q14。
       questionSelection: { minCount: 13, maxCount: 13 },
       useSequentialQuestionOrder: true,
@@ -2076,26 +2612,125 @@ export const SURVEY_THEME_CONFIGS = [
           "—— 故事至此终结。",
         ],
       },
-      evaluateGatekeeper: (selectedQuestions, answerIds, gateConfig) =>
-        evaluateRomanceDestinyGate({
+      evaluateGatekeeper: async (selectedQuestions, answerIds, gateConfig) => {
+        const { evaluateRomanceDestinyGate } = await import(
+          "../services/romanceAnalyzer"
+        );
+        return evaluateRomanceDestinyGate({
           questions: selectedQuestions,
           answerIds,
           gateQuestionNumber: gateConfig.gateQuestionNumber,
           thresholdPercent: gateConfig.thresholdPercent,
-        }),
-      runLocalAnalysis: (selectedQuestions, answerIds) =>
-        analyzeRomanceLocally({
+        });
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeRomanceLocally } = await import(
+          "../services/romanceAnalyzer"
+        );
+        return analyzeRomanceLocally({
           questions: selectedQuestions,
           answerIds,
           gateQuestionNumber: ROMANCE_DESTINY_GATE_DEFAULTS.gateQuestionNumber,
           gateThresholdPercent: ROMANCE_DESTINY_GATE_DEFAULTS.thresholdPercent,
-        }),
+        });
+      },
       buildDeepPayload: buildRomanceDeepPayload,
-      runDeepAnalysis: (payload) =>
-        analyzeRomanceWithAI(payload, { timeoutMs: 28000 }),
+      runDeepAnalysis: async (payload) => {
+        const { analyzeRomanceWithAI } = await import(
+          "../services/romanceInsightAnalyzer"
+        );
+        return analyzeRomanceWithAI(payload, { timeoutMs: 28000 });
+      },
       buildDeepUnifiedResult: buildRomanceDeepUnifiedResult,
       buildLocalUnifiedResult: buildRomanceLocalUnifiedResult,
       deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "love-brain",
+    routePaths: [
+      "/love-brain",
+      "/love-brain.html",
+      "/lovebrain",
+      "/love-brain-index",
+    ],
+    pageMeta: {
+      title: "恋爱脑指数测试",
+      description:
+        "心理学内核 + 互联网梗文化，13-14 题随机判定你的恋爱脑指数。",
+    },
+    theme: {
+      className: "theme-love-brain",
+      badge: "LOVE BRAIN · 1314",
+      title: "你的脑子里全是水还是野菜？",
+      description:
+        "13-14 题随机抽取，点击选项即自动下一题，生成你的恋爱脑指数与可保存长图。",
+      progressColor: "linear-gradient(90deg, #00b6ff, #ff5e8d)",
+      progressTrackColor: "rgba(66, 85, 140, 0.2)",
+      checkedColor: "#00a0d9",
+      sourceTag: {
+        deep: {
+          label: "AI深度结果",
+          color: "#e7f4ff",
+          textColor: "#245a8d",
+        },
+        local: {
+          label: "本地兜底结果",
+          color: "#fff1f6",
+          textColor: "#9a3f64",
+        },
+      },
+      loadingMessages: [
+        "正在启动脑部扫描协议...",
+        "正在提取恋爱行为信号...",
+        "正在计算恋爱脑指数...",
+        "正在合成你的扎心报告...",
+      ],
+      submitButtonText: "生成我的恋爱脑指数",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { LOVE_BRAIN_QUESTION_BANK } = await import(
+          "../data/loveBrainQuestionBank"
+        );
+        return LOVE_BRAIN_QUESTION_BANK;
+      },
+      // 关键逻辑：保持“1314”暗示语义，每轮在 13~14 题间随机抽取。
+      questionSelection: { minCount: 13, maxCount: 14 },
+      autoAdvanceOnSelect: true,
+      // 关键逻辑：保证“脑部扫描”仪式感，分析页最短展示 1.5 秒。
+      minimumAnalyzingDurationMs: 1500,
+      cover: {
+        enabled: true,
+        kicker: "恋爱脑指数测试",
+        title: "你的脑子里全是水还是野菜？",
+        intro:
+          "这是一套“心理学内核 + 互联网梗文化”的情感测评。系统将随机抽取 13-14 题，根据你在真实场景中的选择计算恋爱脑指数。",
+        // 关键逻辑：封面每轮随机生成 3 条语录，增强重测新鲜感。
+        points: () => buildLoveBrainCoverQuotes(),
+        startButtonText: "开始扫描我的恋爱脑",
+        tip: "预计耗时 2-3 分钟",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeLoveBrainLocally } = await import(
+          "../services/loveBrainAnalyzer"
+        );
+        return analyzeLoveBrainLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildLoveBrainDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        const { analyzeLoveBrainWithAI } = await import(
+          "../services/loveBrainAiAnalyzer"
+        );
+        return analyzeLoveBrainWithAI(payload, { timeoutMs: 28000 });
+      },
+      buildDeepUnifiedResult: buildLoveBrainDeepUnifiedResult,
+      buildLocalUnifiedResult: buildLoveBrainLocalUnifiedResult,
+      deepFailToast: "AI深度解读暂不可用，已切换稳定结果",
     },
   },
   {
@@ -2137,16 +2772,44 @@ export const SURVEY_THEME_CONFIGS = [
       nextButtonText: "下一题",
     },
     survey: {
-      questions: LOVE_ATTACHMENT_QUESTION_BANK,
+      questions: async () => {
+        const { LOVE_ATTACHMENT_QUESTION_BANK } = await import(
+          "../data/loveAttachmentQuestionBank"
+        );
+        return LOVE_ATTACHMENT_QUESTION_BANK;
+      },
       questionSelection: { minCount: 15, maxCount: 15 },
-      runLocalAnalysis: (selectedQuestions, answerIds) =>
-        analyzeLoveAttachmentLocally({
+      // 关键逻辑：恋爱心理测试启用封面页，进入题目前先建立测试预期，降低“开局即答题”的压迫感。
+      cover: {
+        enabled: true,
+        kicker: "测试简介",
+        title: "恋爱心理测试",
+        intro:
+          "这是一场关于亲密关系与安全感的探索。你将通过 15 道场景题，识别自己的依恋模式，并获得关系建议与行动方向。",
+        points: [
+          "本轮固定 15 题，点击选项即可作答。",
+          "结果包含类型分布、关系画像与改进建议。",
+          "完成后可查看摘要，支持再次重测。",
+        ],
+        startButtonText: "开始恋爱心理测试",
+        tip: "预计耗时 3-4 分钟",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeLoveAttachmentLocally } = await import(
+          "../services/loveAttachmentAnalyzer"
+        );
+        return analyzeLoveAttachmentLocally({
           questions: selectedQuestions,
           answerIds,
-        }),
+        });
+      },
       buildDeepPayload: buildLoveAttachmentDeepPayload,
-      runDeepAnalysis: (payload) =>
-        analyzeLoveAttachmentWithAI(payload, { timeoutMs: 30000 }),
+      runDeepAnalysis: async (payload) => {
+        const { analyzeLoveAttachmentWithAI } = await import(
+          "../services/loveAttachmentAiAnalyzer"
+        );
+        return analyzeLoveAttachmentWithAI(payload, { timeoutMs: 30000 });
+      },
       buildDeepUnifiedResult: buildLoveAttachmentDeepUnifiedResult,
       buildLocalUnifiedResult: buildLoveAttachmentLocalUnifiedResult,
       deepFailToast: "AI结果暂不可用，已切换本地基础结果",

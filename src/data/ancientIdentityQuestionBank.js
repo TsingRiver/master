@@ -1,477 +1,605 @@
 /**
- * 古代身份测试题库（50题）：
- * 1. 使用更轻松、直觉化的生活化题干。
- * 2. 题目标题按用户提供文本保留，不保留 Markdown 星号。
- * 3. 选项向量通过关键词 + 默认位次规则映射，保证分析器可计算。
+ * 古代身份题库（50 题）：
+ * 1. 每题固定 4 选项，对应 A/B/C/D 四类人格倾向。
+ * 2. 选项额外携带身份提示与线别标签，用于 36 身份算法判定。
+ * 3. 题目文本按产品文案要求落地，避免运行时再做语义转换。
  */
 
 /**
- * 身份向量预设库：
- * 每个预设覆盖古代身份分析器的全部维度（0~10）。
+ * 线别关键词规则：
+ * 关键逻辑：先按身份提示词匹配宫廷/江湖/文人/市井，若未命中再回落到选项类别默认线别。
  */
-const VECTOR_PRESETS = {
-  regent: {
-    wisdom: 7,
-    leadership: 10,
-    courage: 8,
-    scholarship: 5,
-    diplomacy: 6,
-    craftsmanship: 4,
-    healing: 3,
-    tradeSense: 4,
-    mobility: 6,
-    discipline: 8,
-  },
-  scholar: {
-    wisdom: 9,
-    leadership: 6,
-    courage: 4,
-    scholarship: 10,
-    diplomacy: 8,
-    craftsmanship: 4,
-    healing: 6,
-    tradeSense: 5,
-    mobility: 5,
-    discipline: 7,
-  },
-  merchant: {
-    wisdom: 6,
-    leadership: 5,
-    courage: 5,
-    scholarship: 4,
-    diplomacy: 7,
-    craftsmanship: 8,
-    healing: 4,
-    tradeSense: 10,
-    mobility: 7,
-    discipline: 6,
-  },
-  rogue: {
-    wisdom: 7,
-    leadership: 4,
-    courage: 8,
-    scholarship: 3,
-    diplomacy: 5,
-    craftsmanship: 6,
-    healing: 3,
-    tradeSense: 5,
-    mobility: 10,
-    discipline: 4,
-  },
-  rebel: {
-    wisdom: 6,
-    leadership: 7,
-    courage: 10,
-    scholarship: 3,
-    diplomacy: 4,
-    craftsmanship: 6,
-    healing: 2,
-    tradeSense: 4,
-    mobility: 8,
-    discipline: 3,
-  },
-  recluse: {
-    wisdom: 6,
-    leadership: 2,
-    courage: 3,
-    scholarship: 6,
-    diplomacy: 3,
-    craftsmanship: 4,
-    healing: 5,
-    tradeSense: 3,
-    mobility: 4,
-    discipline: 5,
-  },
-  mystic: {
-    wisdom: 8,
-    leadership: 4,
-    courage: 5,
-    scholarship: 8,
-    diplomacy: 5,
-    craftsmanship: 4,
-    healing: 8,
-    tradeSense: 3,
-    mobility: 6,
-    discipline: 6,
-  },
-  hero: {
-    wisdom: 7,
-    leadership: 8,
-    courage: 9,
-    scholarship: 4,
-    diplomacy: 6,
-    craftsmanship: 5,
-    healing: 6,
-    tradeSense: 4,
-    mobility: 7,
-    discipline: 7,
-  },
-};
-
-/**
- * 默认位次向量映射：
- * A/B/C/D 在无关键词命中时分别映射到固定风格，保证结果稳定。
- */
-const DEFAULT_VECTOR_TYPES = ["regent", "scholar", "merchant", "rogue"];
-
-/**
- * 关键词到向量类型映射规则：
- * 关键逻辑：先命中更强语义（如“砍/杀/造反”），再回退默认位次。
- */
-const TYPE_RULES = [
+const OPTION_LINE_KEYWORD_RULES = [
   {
-    type: "hero",
-    pattern: /救|医术|开仓放粮|英雄/,
+    lineTag: "palace",
+    pattern:
+      /禁军|镇国|太子|内务府|御膳|宫廷|侍卫|掌事|王府|近侍|进士|太傅|统领|官府|钦差|内廷/u,
   },
   {
-    type: "mystic",
-    pattern: /成仙|飞升|炼丹|夜观天象|读心术|隐身术|长生不老|桃花源|古墓|山洞/,
+    lineTag: "jianghu",
+    pattern:
+      /江湖|侠|镖|猎户|战士|猛将|将军|暗卫|影卫|笛客|教头|沙场|戍边|护卫|仵作|刀客/u,
   },
   {
-    type: "merchant",
-    pattern: /钱|账|生意|财神|点石成金|囤积|学费|算账|算了，当施舍|藏宝图/,
+    lineTag: "literati",
+    pattern:
+      /书院|先生|文|诗|词|琴|书画|大儒|名士|公子|才子|谪仙|清谈|伴读|师者|塾/u,
   },
   {
-    type: "scholar",
-    pattern: /诗|书|画|琴|棋|天象|毛笔|成语|李白|杜甫|工整|狂草|扇子|晒书/,
-  },
-  {
-    type: "rebel",
-    pattern: /砍|杀|刺|造反|反杀|战死|抢|祸乱|刺客|有种别跑|人头|杀气|抢劫/,
-  },
-  {
-    type: "regent",
-    pattern: /皇帝|皇宫|免死金牌|明黄|一人之下|当皇帝|普天同庆|尚方宝剑|八抬|来人|天下第一/,
-  },
-  {
-    type: "recluse",
-    pattern: /不想|无动于衷|绕道走|走开|不去约会|不过|无所谓|沉默是金|睡回笼觉|什么都不想说|不想动/,
+    lineTag: "market",
+    pattern:
+      /掌柜|铺|商|货郎|小贩|厨|茶馆|钱庄|东家|小二|艺人|摊贩|探店|财主|顽童|吃货|乐工|戏班|杂耍/u,
   },
 ];
 
 /**
- * 复制向量预设，避免引用复用导致潜在串改。
- * @param {string} type 向量类型。
- * @returns {object} 向量对象副本。
+ * 选项类别到默认线别的回退映射。
  */
-function cloneVector(type) {
-  return { ...VECTOR_PRESETS[type] };
-}
+const CATEGORY_DEFAULT_LINE_MAP = {
+  A: "jianghu",
+  B: "literati",
+  C: "palace",
+  D: "market",
+};
 
 /**
- * 根据选项文案解析向量类型。
- * @param {string} label 选项文案。
- * @param {number} optionIndex 选项序号（0~3）。
- * @returns {string} 向量类型。
+ * 解析选项线别标签。
+ * @param {string} identityHint 选项身份提示。
+ * @param {"A"|"B"|"C"|"D"} category 选项类别。
+ * @returns {"palace"|"jianghu"|"literati"|"market"} 线别标签。
  */
-function resolveVectorType(label, optionIndex) {
-  const normalizedLabel = String(label ?? "");
+function resolveLineTag(identityHint, category) {
+  const normalizedHint = String(identityHint ?? "").trim();
 
-  for (const rule of TYPE_RULES) {
-    if (rule.pattern.test(normalizedLabel)) {
-      return rule.type;
+  for (const rule of OPTION_LINE_KEYWORD_RULES) {
+    if (rule.pattern.test(normalizedHint)) {
+      return rule.lineTag;
     }
   }
 
-  return DEFAULT_VECTOR_TYPES[optionIndex] ?? "recluse";
+  return CATEGORY_DEFAULT_LINE_MAP[category] ?? "market";
 }
 
 /**
- * 构建单题对象。
+ * 构建标准题目对象。
  * @param {object} params 题目参数。
  * @param {string} params.id 题目 ID。
  * @param {string} params.title 题目标题。
- * @param {number} [params.weight=1.1] 题目权重。
- * @param {Array<string>} params.options 选项文案数组（固定 4 项）。
- * @returns {{ id: string, title: string, description: string, weight: number, options: Array<object> }} 题目对象。
+ * @param {Array<{ code: "A"|"B"|"C"|"D", text: string, identityHint: string }>} params.options 选项数组。
+ * @returns {{ id: string, title: string, description: string, weight: number, options: Array<object> }} 统一题目结构。
  */
-function buildQuestion({ id, title, weight = 1.1, options }) {
+function buildQuestion({ id, title, options }) {
   return {
     id,
     title,
-    description: "按第一直觉选最像你的一项。",
-    weight,
-    options: options.map((label, optionIndex) => {
-      const optionChar = String.fromCharCode(97 + optionIndex);
-      const vectorType = resolveVectorType(label, optionIndex);
+    description: "按第一直觉选择最像你的一项。",
+    weight: 1,
+    options: options.map((optionItem) => {
+      const optionCode = String(optionItem.code ?? "").toUpperCase();
+      const safeCode = ["A", "B", "C", "D"].includes(optionCode)
+        ? optionCode
+        : "A";
+
       return {
-        id: `${id}-option-${optionChar}`,
-        label,
-        vector: cloneVector(vectorType),
+        id: `${id}-option-${safeCode.toLowerCase()}`,
+        // 关键逻辑：选项展示保持“纯题面”文本，身份提示仅用于内部算法，不对用户透出。
+        label: String(optionItem.text ?? "").trim(),
+        category: safeCode,
+        identityHint: String(optionItem.identityHint ?? "").trim(),
+        lineTag: resolveLineTag(optionItem.identityHint, safeCode),
       };
     }),
   };
 }
 
 /**
- * 原始题库数据：
- * 仅维护标题与选项文本，向量由上方规则自动映射。
+ * 原始题库（50 题）。
  */
 const RAW_QUESTION_BANK = [
   {
-    id: "ancient-01-first-look",
-    title: "穿越第一件事，先看？",
-    options: ["镜子（长啥样）", "钱袋（有多少钱）", "窗外（这是哪）", "枕边人（谁睡我旁边）"],
+    id: "ancient-01-first-focus",
+    title: "穿越古代，你第一眼先关注？",
+    options: [
+      { code: "A", text: "安全与局势", identityHint: "镇边守卫" },
+      { code: "B", text: "自身形象气质", identityHint: "清雅公子" },
+      { code: "C", text: "环境细节线索", identityHint: "暗卫探子" },
+      { code: "D", text: "食物与生存", identityHint: "市井厨子" },
+    ],
   },
   {
-    id: "ancient-02-name-style",
-    title: "你的古代名字，偏好？",
-    options: ["霸气复姓（如皇甫）", "文雅单字（如雪、风）", "接地气（如二狗）", "不想要名字"],
+    id: "ancient-02-superpower",
+    title: "你最想拥有的能力？",
+    options: [
+      { code: "A", text: "武力高强", identityHint: "江湖侠客" },
+      { code: "B", text: "才情绝世", identityHint: "文坛墨客" },
+      { code: "C", text: "心思缜密", identityHint: "谋臣幕僚" },
+      { code: "D", text: "财运亨通", identityHint: "商行掌柜" },
+    ],
   },
   {
-    id: "ancient-03-call-someone",
-    title: "早上醒来，怎么叫人？",
-    options: ["“来人！”（威严）", "“小二！”（随意）", "自己默默起床", "踹醒旁边的人"],
+    id: "ancient-03-kindness-reaction",
+    title: "别人对你好，你会？",
+    options: [
+      { code: "A", text: "涌泉相报", identityHint: "忠义之士" },
+      { code: "B", text: "以礼相待", identityHint: "世家子弟" },
+      { code: "C", text: "默默记恩", identityHint: "贴身近侍" },
+      { code: "D", text: "坦然接受", identityHint: "富贵闲人" },
+    ],
   },
   {
-    id: "ancient-04-vehicle",
-    title: "出门代步工具？",
-    options: ["豪华八抬大轿", "汗血宝马", "想骑驴", "轻功飞过去"],
+    id: "ancient-04-trouble-attitude",
+    title: "遇到麻烦，你的态度？",
+    options: [
+      { code: "A", text: "直面解决", identityHint: "铁血武将" },
+      { code: "B", text: "理性分析", identityHint: "文官谋士" },
+      { code: "C", text: "静观其变", identityHint: "隐世高人" },
+      { code: "D", text: "随缘化解", identityHint: "逍遥散人" },
+    ],
   },
   {
-    id: "ancient-05-bully-scene",
-    title: "遇到恶霸欺负人？",
-    weight: 1.25,
-    options: ["亮出身份吓死他", "拔刀就砍", "讲道理/用计谋", "躲远点看戏"],
+    id: "ancient-05-color-preference",
+    title: "你偏爱的古风颜色？",
+    options: [
+      { code: "A", text: "玄黑肃色", identityHint: "刑律执事" },
+      { code: "B", text: "正红亮色", identityHint: "宫廷乐师" },
+      { code: "C", text: "月白浅青", identityHint: "书院先生" },
+      { code: "D", text: "暖黄柔色", identityHint: "绣坊匠人" },
+    ],
   },
   {
-    id: "ancient-06-weapon",
-    title: "你的兵器是？",
-    options: ["尚方宝剑", "折扇/毛笔", "算盘", "暗器/毒药"],
+    id: "ancient-06-live-place",
+    title: "你更想住在哪里？",
+    options: [
+      { code: "A", text: "边关要塞", identityHint: "戍边将军" },
+      { code: "B", text: "江南水乡", identityHint: "画舫主人" },
+      { code: "C", text: "深山竹林", identityHint: "采药隐士" },
+      { code: "D", text: "繁华闹市", identityHint: "杂货铺主" },
+    ],
   },
   {
-    id: "ancient-07-emperor-summon",
-    title: "皇帝突然召见你？",
-    weight: 1.25,
-    options: ["终于轮到我了！", "烦死了，不想去", "吓得腿软", "想想怎么刺杀他"],
+    id: "ancient-07-hate-behavior",
+    title: "你最讨厌的行为？",
+    options: [
+      { code: "A", text: "背叛失信", identityHint: "侠义刀客" },
+      { code: "B", text: "虚伪做作", identityHint: "清高文人" },
+      { code: "C", text: "多管闲事", identityHint: "独行医者" },
+      { code: "D", text: "贪小便宜", identityHint: "公正商贾" },
+    ],
   },
   {
-    id: "ancient-08-clothing",
-    title: "你的衣服材质？",
-    options: ["金丝锦缎", "飘逸白纱", "粗布麻衣", "兽皮/盔甲"],
+    id: "ancient-08-treasure-choice",
+    title: "赐你一件宝物，你选？",
+    options: [
+      { code: "A", text: "神兵利器", identityHint: "护国侍卫" },
+      { code: "B", text: "名家墨宝", identityHint: "藏书大家" },
+      { code: "C", text: "济世医书", identityHint: "游方郎中" },
+      { code: "D", text: "万贯银票", identityHint: "钱庄东家" },
+    ],
   },
   {
-    id: "ancient-09-pet",
-    title: "想养的宠物？",
-    options: ["鹤/孔雀（祥瑞）", "老虎/鹰（猛兽）", "养条龙", "土狗/大橘"],
+    id: "ancient-09-friend-crisis",
+    title: "朋友有难，你会？",
+    options: [
+      { code: "A", text: "拼命相助", identityHint: "热血义士" },
+      { code: "B", text: "出谋划策", identityHint: "智囊谋士" },
+      { code: "C", text: "默默陪伴", identityHint: "忠心事仆" },
+      { code: "D", text: "出钱解决", identityHint: "仗义富商" },
+    ],
   },
   {
-    id: "ancient-10-night-time",
-    title: "晚上怎么打发时间？",
-    options: ["逛青楼/听曲", "夜观天象", "练剑/打坐", "数钱"],
+    id: "ancient-10-core-personality",
+    title: "你的性格底色？",
+    options: [
+      { code: "A", text: "刚烈果决", identityHint: "先锋猛将" },
+      { code: "B", text: "温柔内敛", identityHint: "闺塾师者" },
+      { code: "C", text: "沉静低调", identityHint: "隐秘影卫" },
+      { code: "D", text: "乐观随性", identityHint: "杂耍艺人" },
+    ],
   },
   {
-    id: "ancient-11-learn-skill",
-    title: "如果要学一门手艺？",
-    options: ["治国之道", "琴棋书画", "医术/炼丹", "想学偷东西"],
+    id: "ancient-11-street-priority",
+    title: "古代逛街，你优先逛？",
+    options: [
+      { code: "A", text: "兵器武备", identityHint: "锻铁铁匠" },
+      { code: "B", text: "书肆文房", identityHint: "诗词才子" },
+      { code: "C", text: "脂粉妆饰", identityHint: "宫廷妆师" },
+      { code: "D", text: "吃食点心", identityHint: "街头厨娘" },
+    ],
   },
   {
-    id: "ancient-12-beggar",
-    title: "看到路边乞丐？",
-    options: ["扔一锭金子", "叹口气走开", "买个包子给他", "想加入他"],
+    id: "ancient-12-season-preference",
+    title: "你更喜欢的季节？",
+    options: [
+      { code: "A", text: "凛冽寒冬", identityHint: "边关战士" },
+      { code: "B", text: "烟雨春日", identityHint: "江南词人" },
+      { code: "C", text: "清爽秋日", identityHint: "山间居士" },
+      { code: "D", text: "温暖长夏", identityHint: "茶馆掌柜" },
+    ],
   },
   {
-    id: "ancient-13-power-view",
-    title: "对于“权位”？",
-    weight: 1.25,
-    options: ["我要一人之下", "想当皇帝", "看着累，不要", "只要自由"],
+    id: "ancient-13-misunderstood-response",
+    title: "被人误解，你会？",
+    options: [
+      { code: "A", text: "当场辩解", identityHint: "公正讼师" },
+      { code: "B", text: "不屑多言", identityHint: "世外散仙" },
+      { code: "C", text: "暗自委屈", identityHint: "温柔侍女" },
+      { code: "D", text: "转头就忘", identityHint: "乐天小二" },
+    ],
   },
   {
-    id: "ancient-14-alcohol",
-    title: "你的酒量？",
-    options: ["千杯不醉", "一杯就倒", "只喝茶，不喝酒", "喝白水"],
+    id: "ancient-14-animal-like",
+    title: "你更喜欢的动物？",
+    options: [
+      { code: "A", text: "猛虎猎豹", identityHint: "山林猎户" },
+      { code: "B", text: "仙鹤灵鹿", identityHint: "修道真人" },
+      { code: "C", text: "灵猫巧兽", identityHint: "王府近侍" },
+      { code: "D", text: "锦鲤游鱼", identityHint: "福气财主" },
+    ],
   },
   {
-    id: "ancient-15-martial-marriage",
-    title: "遇到比武招亲？",
-    options: ["上去打赢带走", "在台下起哄", "想去摆擂台", "绕道走"],
+    id: "ancient-15-free-time",
+    title: "空闲时间你更愿意？",
+    options: [
+      { code: "A", text: "习武强身", identityHint: "官府捕快" },
+      { code: "B", text: "挥毫泼墨", identityHint: "书画名家" },
+      { code: "C", text: "静坐观心", identityHint: "园林守者" },
+      { code: "D", text: "钻研美味", identityHint: "宫廷私厨" },
+    ],
   },
   {
-    id: "ancient-16-catchphrase",
-    title: "你的口头禅风格？",
-    options: ["全是成语", "脏话连篇", "阴阳怪气", "沉默是金"],
+    id: "ancient-16-value-priority",
+    title: "你最看重的东西？",
+    options: [
+      { code: "A", text: "尊严气节", identityHint: "傲骨将军" },
+      { code: "B", text: "才华名声", identityHint: "状元之才" },
+      { code: "C", text: "安稳生活", identityHint: "府邸管家" },
+      { code: "D", text: "实惠自在", identityHint: "游走货郎" },
+    ],
   },
   {
-    id: "ancient-17-exile",
-    title: "被流放到边疆？",
-    weight: 1.25,
-    options: ["想造反", "写诗发牢骚", "做生意东山再起", "种田过日子"],
+    id: "ancient-17-speaking-style",
+    title: "你的说话风格？",
+    options: [
+      { code: "A", text: "直来直去", identityHint: "镖局镖头" },
+      { code: "B", text: "温文尔雅", identityHint: "教书先生" },
+      { code: "C", text: "少言寡语", identityHint: "隐秘暗卫" },
+      { code: "D", text: "俏皮风趣", identityHint: "说书先生" },
+    ],
   },
   {
-    id: "ancient-18-study-room",
-    title: "你的书房里放着？",
-    options: ["兵书/地图", "全是小黄书", "账本", "武功秘籍"],
+    id: "ancient-18-become-who",
+    title: "你更想成为哪类人？",
+    options: [
+      { code: "A", text: "手握权柄", identityHint: "禁军统领" },
+      { code: "B", text: "名满天下", identityHint: "风流名士" },
+      { code: "C", text: "安稳度日", identityHint: "内廷掌事" },
+      { code: "D", text: "吃喝不愁", identityHint: "食肆老板" },
+    ],
   },
   {
-    id: "ancient-19-debt-friend",
-    title: "朋友借钱不还？",
-    options: ["派杀手去要", "算了，当施舍", "写文章骂他", "把他家搬空"],
+    id: "ancient-19-work-style",
+    title: "你的做事风格？",
+    options: [
+      { code: "A", text: "雷厉风行", identityHint: "钦差侍卫" },
+      { code: "B", text: "慢条斯理", identityHint: "书法大家" },
+      { code: "C", text: "细致周全", identityHint: "奶嬷嬷" },
+      { code: "D", text: "灵活变通", identityHint: "市井商人" },
+    ],
   },
   {
-    id: "ancient-20-death-ideal",
-    title: "你的理想死法？",
-    weight: 1.25,
-    options: ["战死沙场", "牡丹花下死", "老死/睡死", "成仙飞升"],
+    id: "ancient-20-food-taste",
+    title: "你更喜欢的食物？",
+    options: [
+      { code: "A", text: "大块酒肉", identityHint: "军营伙夫" },
+      { code: "B", text: "精致糕点", identityHint: "御膳点心师" },
+      { code: "C", text: "清淡素食", identityHint: "禅房居士" },
+      { code: "D", text: "街头小吃", identityHint: "游食小贩" },
+    ],
   },
   {
-    id: "ancient-21-live-where",
-    title: "想住在？",
-    options: ["皇宫深处", "桃花源", "闹市豪宅", "山洞/古墓"],
+    id: "ancient-21-attract-type",
+    title: "你更吸引哪类人？",
+    options: [
+      { code: "A", text: "强势守护者", identityHint: "将门虎女" },
+      { code: "B", text: "灵魂知己者", identityHint: "诗酒文友" },
+      { code: "C", text: "温柔治愈者", identityHint: "书香伴读" },
+      { code: "D", text: "欢喜冤家者", identityHint: "市井顽童" },
+    ],
   },
   {
-    id: "ancient-22-beauty",
-    title: "看到绝世美人？",
-    options: ["想抢回家", "想画下来", "想比比谁美", "无动于衷"],
+    id: "ancient-22-cannot-miss",
+    title: "你最不能缺少？",
+    options: [
+      { code: "A", text: "安全底气", identityHint: "近身护卫" },
+      { code: "B", text: "成就认可", identityHint: "科举进士" },
+      { code: "C", text: "归属温暖", identityHint: "家仆主管" },
+      { code: "D", text: "银钱富足", identityHint: "行商小贩" },
+    ],
   },
   {
-    id: "ancient-23-weakness",
-    title: "你的致命弱点？",
-    options: ["太贪财", "太心软", "太好色", "太聪明"],
+    id: "ancient-23-dislike-person",
+    title: "遇到不喜欢的人？",
+    options: [
+      { code: "A", text: "正面硬刚", identityHint: "江湖侠女" },
+      { code: "B", text: "冷淡疏远", identityHint: "清冷公子" },
+      { code: "C", text: "表面客气", identityHint: "圆滑管事" },
+      { code: "D", text: "绕道而行", identityHint: "佛系摊贩" },
+    ],
   },
   {
-    id: "ancient-24-if-eunuch",
-    title: "如果你是太监？",
-    weight: 1.25,
-    options: ["也要做最有权的太监", "想自尽", "想祸乱朝纲", "想找对食"],
+    id: "ancient-24-instrument",
+    title: "你更喜欢的乐器？",
+    options: [
+      { code: "A", text: "战鼓号角", identityHint: "随军乐师" },
+      { code: "B", text: "古琴雅乐", identityHint: "宫廷琴师" },
+      { code: "C", text: "玉笛清声", identityHint: "江湖笛客" },
+      { code: "D", text: "笙箫婉转", identityHint: "宴饮乐工" },
+    ],
   },
   {
-    id: "ancient-25-eye-style",
-    title: "你的眼神通常是？",
-    options: ["犀利/杀气", "迷离/多情", "呆滞/空洞", "精明/算计"],
+    id: "ancient-25-evaluation",
+    title: "你最希望被评价为？",
+    options: [
+      { code: "A", text: "英勇无畏", identityHint: "沙场猛将" },
+      { code: "B", text: "才高八斗", identityHint: "文坛领袖" },
+      { code: "C", text: "可靠贴心", identityHint: "忠仆义士" },
+      { code: "D", text: "有趣鲜活", identityHint: "民间艺人" },
+    ],
   },
   {
-    id: "ancient-26-color",
-    title: "喜欢什么颜色？",
-    options: ["明黄（帝王色）", "纯白/水墨", "大红大紫", "全黑"],
+    id: "ancient-26-party-role",
+    title: "聚会中你通常是？",
+    options: [
+      { code: "A", text: "镇场核心", identityHint: "一方头领" },
+      { code: "B", text: "谈吐担当", identityHint: "清谈名士" },
+      { code: "C", text: "照顾众人", identityHint: "贴身丫鬟" },
+      { code: "D", text: "搞笑气氛", identityHint: "戏班丑角" },
+    ],
   },
   {
-    id: "ancient-27-evaluation",
-    title: "别人怎么评价你？",
-    options: ["疯子", "英雄", "奸商", "高人"],
+    id: "ancient-27-life-vision",
+    title: "你最向往的生活？",
+    options: [
+      { code: "A", text: "征战四方", identityHint: "兵马大元帅" },
+      { code: "B", text: "流芳百世", identityHint: "一代大儒" },
+      { code: "C", text: "岁月静好", identityHint: "田园庄主" },
+      { code: "D", text: "吃喝玩乐", identityHint: "逍遥财主" },
+    ],
   },
   {
-    id: "ancient-28-famine",
-    title: "遇到饥荒年份？",
-    weight: 1.25,
-    options: ["开仓放粮", "囤积居奇", "带头抢劫", "自己种地"],
+    id: "ancient-28-best-at",
+    title: "你更擅长？",
+    options: [
+      { code: "A", text: "武力破局", identityHint: "江湖教头" },
+      { code: "B", text: "智力布局", identityHint: "幕后谋士" },
+      { code: "C", text: "细节洞察", identityHint: "官府仵作" },
+      { code: "D", text: "生活打理", identityHint: "内宅总管" },
+    ],
   },
   {
-    id: "ancient-29-waist-item",
-    title: "你的腰间挂着？",
-    options: ["玉佩", "酒壶", "人头（）", "钥匙串"],
+    id: "ancient-29-fear-most",
+    title: "你最害怕？",
+    options: [
+      { code: "A", text: "受辱失节", identityHint: "侠义之士" },
+      { code: "B", text: "平庸无为", identityHint: "追梦书生" },
+      { code: "C", text: "漂泊无依", identityHint: "守家之人" },
+      { code: "D", text: "饥寒交迫", identityHint: "吃货散仙" },
+    ],
   },
   {
-    id: "ancient-30-best-skill",
-    title: "最擅长的事？",
-    options: ["忽悠人", "砍人", "救人", "气人"],
+    id: "ancient-30-moments-post",
+    title: "古代有朋友圈，你会发？",
+    options: [
+      { code: "A", text: "战绩狩猎", identityHint: "铁血武将" },
+      { code: "B", text: "诗词风景", identityHint: "风雅文人" },
+      { code: "C", text: "日常花草", identityHint: "温婉侍女" },
+      { code: "D", text: "美食小摊", identityHint: "市井博主" },
+    ],
   },
   {
-    id: "ancient-31-date-place",
-    title: "想在哪里约会？",
-    options: ["御花园", "房顶上", "赌场里", "不去约会"],
+    id: "ancient-31-night-conflict",
+    title: "夜里听到巷口打斗声，你会？",
+    options: [
+      { code: "A", text: "抄家伙去制止", identityHint: "巡街武卫" },
+      { code: "B", text: "先判断谁在撒谎", identityHint: "书院辩士" },
+      { code: "C", text: "藏在暗处观察", identityHint: "夜行暗探" },
+      { code: "D", text: "先护好家人再报官", identityHint: "巷陌掌柜" },
+    ],
   },
   {
-    id: "ancient-32-loyalty",
-    title: "对“忠诚”的看法？",
-    weight: 1.25,
-    options: ["愚蠢", "必须的", "看给多少钱", "只忠于自己"],
+    id: "ancient-32-windfall-plan",
+    title: "手里突然有一笔横财，你第一反应？",
+    options: [
+      { code: "A", text: "购置兵甲和马匹", identityHint: "边军统筹" },
+      { code: "B", text: "置办书画与琴器", identityHint: "雅集主人" },
+      { code: "C", text: "存入库房留后路", identityHint: "府库管事" },
+      { code: "D", text: "投进生意滚雪球", identityHint: "行旅商贾" },
+    ],
   },
   {
-    id: "ancient-33-handwriting",
-    title: "你的字迹？",
-    options: ["看不懂（狂草）", "工整娟秀", "不会写字", "像鬼画符"],
+    id: "ancient-33-long-trip",
+    title: "赶远路时你更看重？",
+    options: [
+      { code: "A", text: "路线安全与效率", identityHint: "押镖头领" },
+      { code: "B", text: "沿途风景与故事", identityHint: "山水词客" },
+      { code: "C", text: "行囊细节与备份", identityHint: "随行近侍" },
+      { code: "D", text: "吃住舒适与性价比", identityHint: "客栈东家" },
+    ],
   },
   {
-    id: "ancient-34-superpower",
-    title: "想拥有的超能力？",
-    options: ["长生不老", "读心术", "隐身术", "点石成金"],
+    id: "ancient-34-hate-boss",
+    title: "你最受不了哪种上司？",
+    options: [
+      { code: "A", text: "临阵退缩", identityHint: "前线将官" },
+      { code: "B", text: "粗鄙无礼", identityHint: "清谈名士" },
+      { code: "C", text: "朝令夕改", identityHint: "内府司官" },
+      { code: "D", text: "拖欠工钱", identityHint: "市井掌柜" },
+    ],
   },
   {
-    id: "ancient-35-hairstyle",
-    title: "你的日常发型？",
-    options: ["一丝不苟", "披头散发", "插满金钗", "是个光头"],
+    id: "ancient-35-exam-night",
+    title: "古代考试前一晚，你会？",
+    options: [
+      { code: "A", text: "练刀练枪稳心气", identityHint: "武备都尉" },
+      { code: "B", text: "背诵到天亮", identityHint: "科举才子" },
+      { code: "C", text: "检查文具和路线", identityHint: "内廷执事" },
+      { code: "D", text: "先睡饱明天再说", identityHint: "茶肆老板" },
+    ],
   },
   {
-    id: "ancient-36-brotherhood",
-    title: "想和谁结拜？",
-    options: ["不想结拜", "关羽/张飞", "李白/杜甫", "财神爷"],
+    id: "ancient-36-secret-attitude",
+    title: "面对朋友的秘密，你会？",
+    options: [
+      { code: "A", text: "替他扛事不外传", identityHint: "义胆侠士" },
+      { code: "B", text: "规劝他做更好选择", identityHint: "温雅师者" },
+      { code: "C", text: "烂在肚子里不多话", identityHint: "贴身暗卫" },
+      { code: "D", text: "帮他把损失降到最低", identityHint: "通达商人" },
+    ],
   },
   {
-    id: "ancient-37-sitting-posture",
-    title: "你的坐姿？",
-    options: ["正襟危坐", "葛优躺（古代版）", "蹲在椅子上", "翘二郎腿"],
+    id: "ancient-37-team-role",
+    title: "在团队里你常担任？",
+    options: [
+      { code: "A", text: "冲锋定调的人", identityHint: "先锋统领" },
+      { code: "B", text: "组织表达的人", identityHint: "文案主笔" },
+      { code: "C", text: "把关细节的人", identityHint: "账房管家" },
+      { code: "D", text: "协调资源的人", identityHint: "市集行头" },
+    ],
   },
   {
-    id: "ancient-38-assassin",
-    title: "遇到刺客？",
-    weight: 1.25,
-    options: ["“有种别跑！”", "“壮士饶命！”", "“多少钱？我出双倍”", "反杀"],
+    id: "ancient-38-collection-choice",
+    title: "你更想收藏什么？",
+    options: [
+      { code: "A", text: "传世兵器", identityHint: "镇馆武者" },
+      { code: "B", text: "孤本典籍", identityHint: "藏经大家" },
+      { code: "C", text: "密函档案", identityHint: "机要司吏" },
+      { code: "D", text: "稀有食谱", identityHint: "名厨掌勺" },
+    ],
   },
   {
-    id: "ancient-39-heirloom",
-    title: "你的传家宝？",
-    options: ["是一把菜刀", "免死金牌", "藏宝图", "一本破书"],
+    id: "ancient-39-stand-up",
+    title: "被突然放鸽子，你会？",
+    options: [
+      { code: "A", text: "当面问清楚", identityHint: "镖局镖头" },
+      { code: "B", text: "写封信讲感受", identityHint: "词章名士" },
+      { code: "C", text: "记下这次教训", identityHint: "内宅管事" },
+      { code: "D", text: "转头约别人去玩", identityHint: "酒楼少东" },
+    ],
   },
   {
-    id: "ancient-40-travel",
-    title: "想去哪里旅游？",
-    options: ["想下西洋", "西域/沙漠", "江南水乡", "不想动"],
+    id: "ancient-40-ideal-morning",
+    title: "你理想的清晨是？",
+    options: [
+      { code: "A", text: "闻鸡起舞", identityHint: "戍城武官" },
+      { code: "B", text: "临窗读诗", identityHint: "书院学正" },
+      { code: "C", text: "整理房间与清单", identityHint: "府邸主事" },
+      { code: "D", text: "逛早市吃热汤", identityHint: "街巷食客" },
+    ],
   },
   {
-    id: "ancient-41-bath-water",
-    title: "你的洗澡水？",
-    options: ["要撒花瓣", "要加牛奶", "洗冷水澡", "去河里洗"],
+    id: "ancient-41-complex-rule",
+    title: "遇到复杂规则时，你会？",
+    options: [
+      { code: "A", text: "先试再改", identityHint: "军令执行官" },
+      { code: "B", text: "先读懂底层逻辑", identityHint: "典章学士" },
+      { code: "C", text: "按流程逐步推进", identityHint: "内务总管" },
+      { code: "D", text: "找最省力解法", identityHint: "机灵摊主" },
+    ],
   },
   {
-    id: "ancient-42-gossip",
-    title: "听到八卦？",
-    options: ["拿小本记下来", "不屑一顾", "去添油加醋", "这就是我传的"],
+    id: "ancient-42-skill-upgrade",
+    title: "你最想点亮哪项天赋？",
+    options: [
+      { code: "A", text: "以一敌十的压场力", identityHint: "沙场战将" },
+      { code: "B", text: "一语惊人的表达力", identityHint: "文坛客卿" },
+      { code: "C", text: "洞察人心的敏锐度", identityHint: "宫闱近侍" },
+      { code: "D", text: "把日子过香的能力", identityHint: "市井生活家" },
+    ],
   },
   {
-    id: "ancient-43-fan-text",
-    title: "你的扇子上写着？",
-    options: ["“难得糊涂”", "“天下第一”", "“全是美女图”", "空白"],
+    id: "ancient-43-marriage-pressure",
+    title: "被长辈催婚时，你会？",
+    options: [
+      { code: "A", text: "先把事业立住", identityHint: "将门后生" },
+      { code: "B", text: "讲缘分与精神共鸣", identityHint: "清雅公子" },
+      { code: "C", text: "微笑听完按自己节奏", identityHint: "内府女官" },
+      { code: "D", text: "先见一面也无妨", identityHint: "会来事掌柜" },
+    ],
   },
   {
-    id: "ancient-44-hate-food",
-    title: "讨厌的食物？",
-    options: ["粗茶淡饭", "山珍海味（吃腻了）", "不挑食", "讨厌吃肉"],
+    id: "ancient-44-open-shop",
+    title: "如果要开一家店，你选？",
+    options: [
+      { code: "A", text: "武馆镖局", identityHint: "镖局总镖头" },
+      { code: "B", text: "书肆茶社", identityHint: "书画老板" },
+      { code: "C", text: "药铺诊舍", identityHint: "医馆管事" },
+      { code: "D", text: "小吃食肆", identityHint: "美食探店官" },
+    ],
   },
   {
-    id: "ancient-45-wakeup-mood",
-    title: "你的起床气？",
-    options: ["想杀人", "会哭", "没有", "还要睡回笼觉"],
+    id: "ancient-45-face-definition",
+    title: "你对“体面”的理解是？",
+    options: [
+      { code: "A", text: "关键时刻扛得住", identityHint: "铁血都督" },
+      { code: "B", text: "说话做事有分寸", identityHint: "翰林修撰" },
+      { code: "C", text: "让身边人都安心", identityHint: "内堂掌事" },
+      { code: "D", text: "赚钱养家不狼狈", identityHint: "市井实干家" },
+    ],
   },
   {
-    id: "ancient-46-disciple",
-    title: "想收的徒弟？",
-    options: ["天赋极高的", "只要长得好看", "要有钱交学费", "不想教"],
+    id: "ancient-46-old-things",
+    title: "对待旧物你通常？",
+    options: [
+      { code: "A", text: "能用就修继续上", identityHint: "边城军匠" },
+      { code: "B", text: "写下故事好好存", identityHint: "文墨收藏家" },
+      { code: "C", text: "分类归档整齐放", identityHint: "内务管库" },
+      { code: "D", text: "二手转卖变现", identityHint: "行商牙人" },
+    ],
   },
   {
-    id: "ancient-47-last-words",
-    title: "你的遗言风格？",
-    options: ["“还没活够”", "“把钱都烧给我”", "“什么都不想说”", "“想再笑五百年”"],
+    id: "ancient-47-bad-mood",
+    title: "当你状态很差时，你会？",
+    options: [
+      { code: "A", text: "去练武出汗", identityHint: "江湖刀客" },
+      { code: "B", text: "去写字抄经", identityHint: "书院先生" },
+      { code: "C", text: "独处整理情绪", identityHint: "影卫执事" },
+      { code: "D", text: "吃顿好的回血", identityHint: "夜市掌勺" },
+    ],
   },
   {
-    id: "ancient-48-favorite-weather",
-    title: "喜欢的天气？",
-    options: ["大雪纷飞（有意境）", "狂风暴雨（有杀气）", "晴空万里（好晒书）", "阴天（好睡觉）"],
+    id: "ancient-48-success-belief",
+    title: "你更相信哪种成功？",
+    options: [
+      { code: "A", text: "拼硬实力赢下场面", identityHint: "军中主将" },
+      { code: "B", text: "靠才华长期发光", identityHint: "才名学士" },
+      { code: "C", text: "稳扎稳打慢慢积累", identityHint: "内廷管事" },
+      { code: "D", text: "现金流稳定最重要", identityHint: "钱庄东家" },
+    ],
   },
   {
-    id: "ancient-49-birthday",
-    title: "想怎么过生日？",
-    options: ["普天同庆", "不过", "只想吃碗面", "大摆流水席"],
+    id: "ancient-49-time-travel-item",
+    title: "如果穿越后只能带一件现代物品？",
+    options: [
+      { code: "A", text: "多功能刀具", identityHint: "荒野武者" },
+      { code: "B", text: "电子书阅读器", identityHint: "风雅书生" },
+      { code: "C", text: "急救包", identityHint: "贴身医侍" },
+      { code: "D", text: "调味料套装", identityHint: "江湖厨客" },
+    ],
   },
   {
-    id: "ancient-50-life-feeling",
-    title: "这一生，你觉得？",
-    weight: 1.25,
-    options: ["像一场梦", "很爽", "很累", "是个笑话"],
+    id: "ancient-50-memory-point",
+    title: "你希望别人记住你的哪一点？",
+    options: [
+      { code: "A", text: "说到做到有担当", identityHint: "护城将领" },
+      { code: "B", text: "风骨与才情兼具", identityHint: "文坛宗师" },
+      { code: "C", text: "可靠温厚不失分寸", identityHint: "王府掌事" },
+      { code: "D", text: "让日子有烟火气", identityHint: "市井福星" },
+    ],
   },
 ];
 
 /**
- * 最终古代身份题库。
+ * 导出古代身份题库。
  */
 export const ANCIENT_IDENTITY_QUESTION_BANK = RAW_QUESTION_BANK.map((item) =>
   buildQuestion(item),

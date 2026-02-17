@@ -19,7 +19,7 @@
         >
           <p class="hub-card-badge">{{ theme.theme.badge }}</p>
           <h2>{{ theme.theme.title }}</h2>
-          <p class="hub-card-desc">{{ theme.theme.description }}</p>
+          <p class="hub-card-desc">{{ resolvedThemeDescriptionMap[theme.key] }}</p>
           <a class="hub-open-link" :href="buildThemeHref(theme)">进入测试</a>
         </article>
       </section>
@@ -28,6 +28,8 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
+
 /**
  * 组件参数：
  * 1. themeConfigs：所有主题配置列表。
@@ -42,6 +44,40 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+});
+
+/**
+ * 解析主题卡片描述文案：
+ * 1. 兼容字符串与函数工厂两种配置形态。
+ * 2. 函数执行失败时回退空串，保证主题中心稳定渲染。
+ * @param {string | (() => string) | unknown} rawDescription 原始描述配置。
+ * @returns {string} 可展示的描述文本。
+ */
+function resolveThemeDescription(rawDescription) {
+  if (typeof rawDescription === "function") {
+    try {
+      return String(rawDescription() ?? "").trim();
+    } catch {
+      // 关键逻辑：单卡文案生成失败不影响其他主题入口渲染。
+      return "";
+    }
+  }
+
+  return String(rawDescription ?? "").trim();
+}
+
+/**
+ * 主题卡片描述快照映射：
+ * 关键逻辑：每个主题仅解析一次函数型文案，避免重渲染期间随机抖动。
+ */
+const resolvedThemeDescriptionMap = computed(() => {
+  return props.themeConfigs.reduce((descriptionMap, themeConfig, themeIndex) => {
+    const themeKey = String(themeConfig?.key ?? themeIndex);
+    descriptionMap[themeKey] = resolveThemeDescription(
+      themeConfig?.theme?.description,
+    );
+    return descriptionMap;
+  }, {});
 });
 </script>
 

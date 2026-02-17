@@ -402,7 +402,7 @@ const RAW_QUESTION_BANK = [
   },
   {
     id: "benefactor-2026-40-last-color",
-    title: "最后一题，凭感觉选个颜色？",
+    title: "凭感觉选个颜色？",
     weight: 1.25,
     options: ["热烈红", "沉稳棕", "灵动蓝", "治愈绿"],
   },

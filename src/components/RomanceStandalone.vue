@@ -48,7 +48,23 @@
         </p>
       </header>
 
-      <section v-if="stage === 'cover'" class="romancex-panel romancex-cover-panel">
+      <section v-if="stage === 'loading'" class="romancex-panel romancex-loading-panel">
+        <van-loading color="#ff6f9f" size="30px" />
+        <p v-if="questionPoolLoadError">{{ questionPoolLoadError }}</p>
+        <transition v-else name="romancex-loading-swap" mode="out-in">
+          <p :key="activeLoadingMessage">{{ activeLoadingMessage || "正在加载题库..." }}</p>
+        </transition>
+        <van-button
+          v-if="questionPoolLoadError"
+          block
+          class="romancex-btn romancex-btn-primary"
+          @click="restart"
+        >
+          重试加载
+        </van-button>
+      </section>
+
+      <section v-else-if="stage === 'cover'" class="romancex-panel romancex-cover-panel">
         <p class="romancex-cover-kicker">测试简介</p>
         <h2 class="romancex-cover-title">《你认为最浪漫的事》浪漫封顶值测试</h2>
         <p class="romancex-cover-intro">
@@ -424,7 +440,7 @@ const props = defineProps({
 /**
  * 页面阶段状态。
  */
-const stage = ref("cover");
+const stage = ref("loading");
 
 /**
  * 作答主状态。
@@ -432,8 +448,16 @@ const stage = ref("cover");
 const currentQuestionIndex = ref(0);
 const answers = ref([]);
 const selectedQuestionBank = ref([]);
+const loadedQuestionPool = ref([]);
+const questionPoolLoadError = ref("");
 const unifiedResult = ref(null);
 const showAllSummary = ref(false);
+
+/**
+ * 题库加载会话令牌：
+ * 关键逻辑：主题切换或重复重置时，丢弃过期异步加载结果。
+ */
+let questionPoolLoadSessionToken = 0;
 
 /**
  * 爱心进度波浪状态：
@@ -504,7 +528,7 @@ let deepAnalysisSessionToken = 0;
 /**
  * 题库与抽题配置。
  */
-const questionPool = computed(() => props.themeConfig.survey.questions);
+const questionPool = computed(() => loadedQuestionPool.value);
 const questionSelection = computed(() => {
   const selectionConfig = props.themeConfig.survey.questionSelection ?? {};
   return {
@@ -890,6 +914,46 @@ const radarLabelPoints = computed(() => {
 });
 
 /**
+ * 加载当前主题题库。
+ * 兼容两种配置：
+ * 1. survey.questions 为静态数组。
+ * 2. survey.questions 为异步函数（按需加载题库模块）。
+ * @param {number} sessionToken 当前加载会话令牌。
+ * @returns {Promise<boolean>} 是否加载成功。
+ */
+async function loadQuestionPoolForCurrentTheme(sessionToken) {
+  const questionSource = props.themeConfig.survey.questions;
+  try {
+    const resolvedQuestions =
+      typeof questionSource === "function"
+        ? await questionSource()
+        : questionSource;
+
+    if (sessionToken !== questionPoolLoadSessionToken) {
+      return false;
+    }
+
+    loadedQuestionPool.value = Array.isArray(resolvedQuestions)
+      ? resolvedQuestions
+      : [];
+
+    if (loadedQuestionPool.value.length === 0) {
+      questionPoolLoadError.value = "题库为空，请稍后重试";
+      return false;
+    }
+
+    return true;
+  } catch {
+    if (sessionToken !== questionPoolLoadSessionToken) {
+      return false;
+    }
+
+    questionPoolLoadError.value = "题库加载失败，请稍后重试";
+    return false;
+  }
+}
+
+/**
  * 生成本轮题集。
  */
 function rebuildQuestionBank() {
@@ -937,8 +1001,10 @@ function resetPosterState() {
 /**
  * 重置问卷状态。
  */
-function resetSurveyState() {
+async function resetSurveyState() {
   deepAnalysisSessionToken += 1;
+  questionPoolLoadSessionToken += 1;
+  const currentQuestionPoolSessionToken = questionPoolLoadSessionToken;
   isAdvancingToNext.value = false;
   showAllSummary.value = false;
   stopLoadingMessageTicker();
@@ -963,8 +1029,34 @@ function resetSurveyState() {
   };
 
   resetPosterState();
-  rebuildQuestionBank();
+  loadedQuestionPool.value = [];
+  selectedQuestionBank.value = [];
+  questionPoolLoadError.value = "";
   currentQuestionIndex.value = 0;
+  answers.value = [];
+  unifiedResult.value = null;
+  // 关键逻辑：先进入 loading 阶段，避免题库未就绪时触发后续流程报错。
+  stage.value = "loading";
+  startLoadingMessageTicker();
+
+  const loadedSuccess = await loadQuestionPoolForCurrentTheme(
+    currentQuestionPoolSessionToken,
+  );
+  if (!loadedSuccess) {
+    if (
+      currentQuestionPoolSessionToken === questionPoolLoadSessionToken &&
+      questionPoolLoadError.value
+    ) {
+      showToast(questionPoolLoadError.value);
+    }
+    return;
+  }
+
+  if (currentQuestionPoolSessionToken !== questionPoolLoadSessionToken) {
+    return;
+  }
+
+  rebuildQuestionBank();
   answers.value = Array.from({ length: questionBank.value.length }, () => null);
   unifiedResult.value = null;
   stage.value = "cover";
@@ -1139,9 +1231,9 @@ function showMidwayEncouragement() {
 
 /**
  * 解析守门员判定结果。
- * @returns {{ passed: boolean, scorePercent: number, thresholdPercent: number }} 判定结果。
+ * @returns {Promise<{ passed: boolean, scorePercent: number, thresholdPercent: number }>} 判定结果。
  */
-function resolveGatekeeperResult() {
+async function resolveGatekeeperResult() {
   const gateConfig = destinyGatekeeperConfig.value;
   if (!gateConfig) {
     return {
@@ -1160,11 +1252,22 @@ function resolveGatekeeperResult() {
     };
   }
 
-  const evaluatedResult = evaluator(
-    questionBank.value,
-    answers.value,
-    gateConfig,
-  );
+  let evaluatedResult = null;
+  try {
+    evaluatedResult = await evaluator(
+      questionBank.value,
+      answers.value,
+      gateConfig,
+    );
+  } catch {
+    // 关键逻辑：守门员判定异常时回退未通过，保证主流程可继续。
+    evaluatedResult = {
+      passed: false,
+      scorePercent: 0,
+      thresholdPercent: gateConfig.thresholdPercent,
+    };
+  }
+
   return {
     passed: Boolean(evaluatedResult?.passed),
     scorePercent: Math.max(
@@ -1270,7 +1373,7 @@ async function handleDestinyGateBeforeSubmit() {
     return true;
   }
 
-  const gateResult = resolveGatekeeperResult();
+  const gateResult = await resolveGatekeeperResult();
   romanceGateState.value = {
     checked: true,
     passed: gateResult.passed,
@@ -1375,7 +1478,7 @@ async function goNext() {
     stage.value = "analyzing";
     const currentSessionToken = ++deepAnalysisSessionToken;
 
-    const localResult = props.themeConfig.survey.runLocalAnalysis(
+    const localResult = await props.themeConfig.survey.runLocalAnalysis(
       questionBank.value,
       answers.value,
     );
@@ -1884,7 +1987,8 @@ function toggleSummary() {
  * 重新测试。
  */
 function restart() {
-  resetSurveyState();
+  // 关键逻辑：重置流程包含异步题库加载，显式忽略 Promise 即可。
+  void resetSurveyState();
 }
 
 /**
@@ -1893,7 +1997,8 @@ function restart() {
 watch(
   () => props.themeConfig.key,
   () => {
-    resetSurveyState();
+    // 关键逻辑：主题切换触发异步重置，显式丢弃 Promise 避免未处理告警。
+    void resetSurveyState();
   },
   { immediate: true },
 );
@@ -1902,7 +2007,7 @@ watch(
  * 监听阶段切换并管理加载文案轮播。
  */
 watch(stage, (nextStage) => {
-  if (nextStage === "analyzing") {
+  if (nextStage === "analyzing" || nextStage === "loading") {
     startLoadingMessageTicker();
     return;
   }

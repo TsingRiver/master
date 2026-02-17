@@ -26,12 +26,10 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from "vue";
 import LinkErrorPage from "./components/LinkErrorPage.vue";
 import SurveyEngine from "./components/SurveyEngine.vue";
 import ThemeHub from "./components/ThemeHub.vue";
-import TypeologyLab from "./components/TypeologyLab.vue";
-import RomanceStandalone from "./components/RomanceStandalone.vue";
 import {
   DEFAULT_SURVEY_THEME,
   SURVEY_THEME_CONFIGS,
@@ -45,6 +43,17 @@ import {
   isPortalSession,
   shouldShowPortalHub,
 } from "./config/appPortal";
+
+/**
+ * 按需加载重组件：
+ * 关键逻辑：仅在命中对应主题时加载独立页面代码，减少首屏下载体积。
+ */
+const TypeologyLab = defineAsyncComponent(
+  () => import("./components/TypeologyLab.vue"),
+);
+const RomanceStandalone = defineAsyncComponent(
+  () => import("./components/RomanceStandalone.vue"),
+);
 
 /**
  * 当前浏览器路径与查询参数：

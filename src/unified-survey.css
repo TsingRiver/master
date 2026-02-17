@@ -23,6 +23,8 @@ body {
  * 每个主题通过 class 覆盖变量，避免复制结构样式。 */
 .survey-page {
   --page-bg: linear-gradient(135deg, #f4f8f6, #e9f0ec);
+  --page-overlay-one: radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.85), transparent 34%);
+  --page-overlay-two: radial-gradient(circle at 88% 84%, rgba(255, 255, 255, 0.34), transparent 42%);
   --text-main: #1f2a26;
   --text-muted: #5f6f68;
   --surface: rgba(255, 255, 255, 0.88);
@@ -33,6 +35,25 @@ body {
   --aura-left: radial-gradient(circle at 35% 35%, #f7d8a4, #efc177);
   --aura-right: radial-gradient(circle at 35% 35%, #9adcbf, #5cb38f);
   --noise-dot: rgba(35, 81, 84, 0.4);
+  --noise-opacity: 0.12;
+  --noise-layer-one: radial-gradient(var(--noise-dot) 0.4px, transparent 0.4px);
+  --noise-layer-two: radial-gradient(var(--noise-dot) 0.28px, transparent 0.28px);
+  --noise-size-one: 16px 16px;
+  --noise-size-two: 20px 20px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 9px 11px;
+  --aura-opacity: 0.48;
+  --aura-blur: 3px;
+  --aura-left-size: 220px;
+  --aura-right-size: 240px;
+  --aura-left-top: -72px;
+  --aura-left-left: -72px;
+  --aura-right-bottom: 9%;
+  --aura-right-right: -88px;
+  --aura-left-radius: 999px;
+  --aura-right-radius: 999px;
+  --aura-float-duration: 8.5s;
+  --aura-right-delay: 1.2s;
   --option-border: #dce7e2;
   --option-selected-border: #66b89a;
   --option-selected-bg: linear-gradient(180deg, #f6fffb, #ecf8f3);
@@ -48,7 +69,8 @@ body {
   padding: 22px 14px 34px;
   color: var(--text-main);
   background:
-    radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.85), transparent 34%),
+    var(--page-overlay-one),
+    var(--page-overlay-two),
     var(--page-bg);
 }
 
@@ -99,25 +121,78 @@ body {
 }
 
 .theme-ancient {
-  --page-bg: linear-gradient(140deg, #f5eddc, #e7d8bd);
-  --text-main: #3f2d1f;
-  --text-muted: #78614d;
-  --surface: rgba(255, 252, 245, 0.9);
-  --surface-border: rgba(244, 232, 205, 0.9);
-  --shadow: 0 24px 54px rgba(86, 58, 34, 0.18);
-  --primary: #8f6138;
-  --primary-dark: #694428;
-  --aura-left: radial-gradient(circle at 30% 30%, #dac19d, #b79a73);
-  --aura-right: radial-gradient(circle at 30% 30%, #c5a67e, #9b7852);
-  --noise-dot: rgba(122, 95, 70, 0.45);
-  --option-border: #e1d0b4;
-  --option-selected-border: #b38961;
-  --option-selected-bg: linear-gradient(180deg, #fff9ef, #f5e8d4);
-  --option-selected-shadow: rgba(121, 88, 56, 0.14);
-  --detail-border: #e7d7c0;
-  --detail-bg: linear-gradient(180deg, #fff, #faf3e8);
-  --highlight-border: #dec7a8;
-  --highlight-bg: linear-gradient(180deg, #fdf7ec, #f4e6cf);
+  --ancient-page-bg:
+    radial-gradient(circle at 12% 10%, rgba(255, 245, 224, 0.54), transparent 42%),
+    radial-gradient(circle at 86% 82%, rgba(167, 105, 56, 0.2), transparent 48%),
+    linear-gradient(136deg, #e8cfaa 0%, #cfa176 56%, #946245 100%);
+  --ancient-scene-image: url("/ancient/scene-dawn.svg");
+  --ancient-scene-opacity: 0.78;
+  --ancient-scene-filter: saturate(1.08) brightness(1.02);
+  --ancient-scene-scale: 1.04;
+  --ancient-scene-position-mobile: center top;
+  --ancient-scene-position-desktop: center 24%;
+  --ancient-scene-veil-top: rgba(255, 239, 211, 0.16);
+  --ancient-scene-veil-bottom: rgba(93, 61, 42, 0.52);
+  --ancient-scene-veil-opacity: 0.92;
+  --ancient-text-main: #352314;
+  --page-bg: var(--ancient-page-bg);
+  --text-main: var(--ancient-text-main);
+  --text-muted: var(--ancient-text-muted, #6e5138);
+  --surface: var(--ancient-surface, rgba(255, 250, 240, 0.88));
+  --surface-border: var(--ancient-surface-border, rgba(188, 146, 101, 0.42));
+  --shadow: 0 24px 56px rgba(78, 48, 26, 0.22);
+  --primary: var(--ancient-primary, #7f4828);
+  --primary-dark: var(--ancient-primary-dark, #be7d45);
+  --aura-left: var(
+    --ancient-aura-left,
+    linear-gradient(
+      160deg,
+      rgba(124, 73, 44, 0.34) 0%,
+      rgba(182, 112, 61, 0.2) 56%,
+      rgba(229, 180, 123, 0.14) 100%
+    )
+  );
+  --aura-right: var(
+    --ancient-aura-right,
+    linear-gradient(
+      26deg,
+      rgba(56, 34, 26, 0.3) 0%,
+      rgba(138, 88, 52, 0.18) 58%,
+      rgba(224, 172, 115, 0.1) 100%
+    )
+  );
+  --noise-dot: rgba(107, 72, 41, 0.5);
+  --option-border: var(--ancient-option-border, rgba(165, 118, 74, 0.38));
+  --ancient-option-bg: rgba(255, 254, 250, 0.92);
+  --option-selected-border: var(--ancient-option-selected-border, #a9663a);
+  --option-selected-bg:
+    linear-gradient(
+      180deg,
+      var(--ancient-option-selected-bg-start, rgba(255, 252, 247, 0.94)) 0%,
+      var(--ancient-option-selected-bg-end, rgba(245, 227, 197, 0.92)) 100%
+    );
+  --option-selected-shadow: var(--ancient-option-selected-shadow, rgba(134, 80, 40, 0.2));
+  --detail-border: var(--ancient-detail-border, rgba(166, 118, 76, 0.34));
+  --detail-bg:
+    linear-gradient(
+      180deg,
+      var(--ancient-detail-bg-start, rgba(255, 253, 249, 0.94)) 0%,
+      var(--ancient-detail-bg-end, rgba(249, 236, 214, 0.9)) 100%
+    );
+  --highlight-border: var(--ancient-highlight-border, rgba(157, 105, 62, 0.4));
+  --highlight-bg:
+    linear-gradient(
+      180deg,
+      var(--ancient-highlight-bg-start, rgba(253, 246, 232, 0.96)) 0%,
+      var(--ancient-highlight-bg-end, rgba(244, 225, 194, 0.92)) 100%
+    );
+  --ancient-card-bg-start: rgba(255, 253, 247, 0.93);
+  --ancient-card-bg-end: rgba(250, 237, 213, 0.88);
+  --ancient-card-shadow:
+    0 26px 48px rgba(86, 53, 29, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+  --ancient-header-bg-start: rgba(255, 250, 239, 0.86);
+  --ancient-header-bg-end: rgba(247, 229, 200, 0.54);
   --title-font: "Noto Serif SC", serif;
 }
 
@@ -282,6 +357,29 @@ body {
   --title-font: "Noto Serif SC", serif;
 }
 
+.theme-love-brain {
+  --page-bg: linear-gradient(138deg, #e9f3ff, #e7eeff 44%, #ffeaf2 100%);
+  --text-main: #1c2e54;
+  --text-muted: #54688f;
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface-border: rgba(210, 228, 255, 0.92);
+  --shadow: 0 24px 58px rgba(55, 86, 153, 0.2);
+  --primary: #00a6df;
+  --primary-dark: #ff5b89;
+  --aura-left: radial-gradient(circle at 30% 30%, #9ce2ff, #58b8ff);
+  --aura-right: radial-gradient(circle at 30% 30%, #ffc2da, #ff82a8);
+  --noise-dot: rgba(41, 81, 149, 0.36);
+  --option-border: #d3e2fb;
+  --option-selected-border: #89bbf9;
+  --option-selected-bg: linear-gradient(180deg, #ffffff, #eef6ff);
+  --option-selected-shadow: rgba(68, 138, 229, 0.18);
+  --detail-border: #d9e6fb;
+  --detail-bg: linear-gradient(180deg, #ffffff, #f3f7ff);
+  --highlight-border: #d7e0ff;
+  --highlight-bg: linear-gradient(180deg, #f2f8ff, #fff0f6);
+  --title-font: "Noto Serif SC", serif;
+}
+
 .theme-romance {
   --page-bg: linear-gradient(136deg, #fff3f7, #f6efff 50%, #eef4ff);
   --text-main: #45315f;
@@ -303,6 +401,21 @@ body {
   --highlight-border: #ead6ee;
   --highlight-bg: linear-gradient(180deg, #fff8fb, #f6f0ff);
   --title-font: "Noto Serif SC", serif;
+}
+
+/* 关键逻辑：恋爱脑判定卡片文案长度波动较大，固定单列可避免 3 列拥挤导致换行错位。 */
+.theme-love-brain .survey-type-card-grid {
+  grid-template-columns: 1fr;
+}
+
+.theme-love-brain .survey-type-card-item {
+  min-height: 0;
+  padding: 12px 14px;
+}
+
+.theme-love-brain .survey-type-card-value {
+  font-size: clamp(17px, 4.8vw, 24px);
+  line-height: 1.42;
 }
 
 /* 关键逻辑：浪漫主题的卡片数据固定为 4 项，采用 2 列可提升移动端可读性。 */
@@ -333,48 +446,595 @@ body {
   --title-font: "Noto Serif SC", serif;
 }
 
+/* 主题背景差异化：
+ * 关键逻辑：在不改页面结构的前提下，通过“背景叠层 + 氛围体形态 + 纹理粒度”区分视觉语言，
+ * 避免所有主题都变成“同一颗球只换色”的观感。 */
+.theme-city {
+  --page-overlay-one:
+    radial-gradient(circle at 10% 16%, rgba(255, 255, 255, 0.9), transparent 40%),
+    linear-gradient(118deg, rgba(16, 108, 88, 0.1), transparent 46%);
+  --page-overlay-two: radial-gradient(circle at 88% 82%, rgba(186, 232, 212, 0.45), transparent 44%);
+  --aura-left-radius: 42% 58% 64% 36% / 38% 44% 56% 62%;
+  --aura-right-radius: 58% 42% 35% 65% / 44% 55% 45% 56%;
+  --noise-layer-one: linear-gradient(rgba(28, 85, 72, 0.13) 1px, transparent 1px);
+  --noise-layer-two: linear-gradient(90deg, rgba(28, 85, 72, 0.1) 1px, transparent 1px);
+  --noise-size-one: 30px 30px;
+  --noise-size-two: 30px 30px;
+  --noise-position-one: -2px -2px;
+  --noise-position-two: -2px -2px;
+  --noise-opacity: 0.16;
+}
+
+.theme-fortune {
+  --page-overlay-one:
+    radial-gradient(circle at 12% 16%, rgba(255, 248, 230, 0.92), transparent 42%),
+    conic-gradient(from 210deg at 86% 18%, rgba(255, 174, 92, 0.28), transparent 58%);
+  --page-overlay-two: radial-gradient(circle at 90% 84%, rgba(255, 203, 146, 0.34), transparent 46%);
+  --aura-left-size: 252px;
+  --aura-right-size: 258px;
+  --aura-left-radius: 56% 44% 40% 60% / 48% 38% 62% 52%;
+  --aura-right-radius: 65% 35% 58% 42% / 52% 63% 37% 48%;
+  --aura-float-duration: 9.8s;
+  --noise-layer-one: repeating-linear-gradient(45deg, rgba(152, 97, 43, 0.12) 0 2px, transparent 2px 16px);
+  --noise-layer-two: radial-gradient(rgba(168, 110, 57, 0.25) 0.55px, transparent 0.55px);
+  --noise-size-one: 26px 26px;
+  --noise-size-two: 18px 18px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 6px 10px;
+  --noise-opacity: 0.14;
+}
+
+.theme-ancient {
+  --page-overlay-one:
+    radial-gradient(circle at 10% 12%, rgba(255, 248, 231, 0.72), transparent 40%),
+    conic-gradient(
+      from 244deg at 82% 18%,
+      color-mix(in srgb, var(--primary) 22%, transparent),
+      transparent 64%
+    );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 86% 80%,
+      color-mix(in srgb, var(--primary-dark) 26%, transparent),
+      transparent 48%
+    );
+  --aura-left-size: 350px;
+  --aura-right-size: 330px;
+  --aura-left-top: -130px;
+  --aura-left-left: -142px;
+  --aura-right-bottom: 2%;
+  --aura-right-right: -118px;
+  --aura-left-radius: 14% 58% 22% 64% / 58% 34% 66% 42%;
+  --aura-right-radius: 62% 24% 58% 34% / 32% 62% 34% 60%;
+  --aura-blur: 0.8px;
+  --aura-opacity: 0.28;
+  --aura-float-duration: 13.4s;
+  --noise-layer-one:
+    repeating-linear-gradient(
+      -14deg,
+      rgba(115, 71, 40, 0.12) 0 2px,
+      transparent 2px 18px
+    );
+  --noise-layer-two:
+    radial-gradient(rgba(115, 71, 40, 0.21) 0.65px, transparent 0.65px);
+  --noise-size-one: 34px 34px;
+  --noise-size-two: 22px 22px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 9px 12px;
+  --noise-opacity: 0.11;
+}
+
+.theme-talent {
+  --page-overlay-one:
+    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.9), transparent 38%),
+    linear-gradient(130deg, rgba(12, 151, 148, 0.1), transparent 44%);
+  --page-overlay-two: radial-gradient(circle at 86% 82%, rgba(255, 211, 155, 0.38), transparent 44%);
+  --aura-left-radius: 37% 63% 49% 51% / 44% 48% 52% 56%;
+  --aura-right-radius: 54% 46% 63% 37% / 58% 43% 57% 42%;
+  --noise-layer-one: repeating-linear-gradient(-30deg, rgba(26, 112, 116, 0.12) 0 2px, transparent 2px 18px);
+  --noise-layer-two: radial-gradient(rgba(26, 112, 116, 0.22) 0.6px, transparent 0.6px);
+  --noise-size-one: 32px 32px;
+  --noise-size-two: 20px 20px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 11px 9px;
+  --noise-opacity: 0.13;
+}
+
+.theme-benefactor {
+  --page-overlay-one:
+    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, 0.9), transparent 38%),
+    radial-gradient(circle at 86% 14%, rgba(152, 170, 255, 0.22), transparent 44%);
+  --page-overlay-two: radial-gradient(circle at 84% 84%, rgba(255, 181, 206, 0.3), transparent 46%);
+  --aura-left-size: 262px;
+  --aura-right-size: 252px;
+  --aura-left-radius: 50% 50% 62% 38% / 40% 60% 40% 60%;
+  --aura-right-radius: 62% 38% 55% 45% / 56% 44% 56% 44%;
+  --noise-layer-one: radial-gradient(ellipse at center, rgba(93, 111, 201, 0.18) 0 38%, transparent 39% 100%);
+  --noise-layer-two: radial-gradient(ellipse at center, rgba(255, 131, 170, 0.14) 0 28%, transparent 29% 100%);
+  --noise-size-one: 170px 170px;
+  --noise-size-two: 110px 110px;
+  --noise-position-one: -42px -24px;
+  --noise-position-two: 38px 52px;
+  --noise-opacity: 0.12;
+}
+
+.theme-color-2026 {
+  --page-overlay-one:
+    radial-gradient(
+      circle at 12% 16%,
+      color-mix(in srgb, var(--runtime-primary, #6c79c6) 18%, #ffffff 82%),
+      transparent 40%
+    );
+  --page-overlay-two:
+    conic-gradient(
+      from 210deg at 82% 18%,
+      color-mix(in srgb, var(--runtime-primary, #6c79c6) 22%, transparent) 0 24%,
+      transparent 24% 76%,
+      color-mix(in srgb, var(--runtime-primary-dark, #a9b4e6) 24%, transparent) 76% 100%
+    );
+  --aura-left-radius: 44% 56% 68% 32% / 38% 44% 56% 62%;
+  --aura-right-radius: 64% 36% 44% 56% / 60% 42% 58% 40%;
+  --noise-layer-one: repeating-linear-gradient(60deg, color-mix(in srgb, var(--runtime-primary, #6c79c6) 22%, transparent) 0 2px, transparent 2px 20px);
+  --noise-layer-two: repeating-linear-gradient(-60deg, color-mix(in srgb, var(--runtime-primary-dark, #a9b4e6) 22%, transparent) 0 2px, transparent 2px 20px);
+  --noise-size-one: 34px 34px;
+  --noise-size-two: 34px 34px;
+  --noise-opacity: 0.11;
+}
+
+.theme-love-attachment {
+  --page-overlay-one:
+    radial-gradient(circle at 14% 14%, rgba(255, 255, 255, 0.92), transparent 40%),
+    radial-gradient(circle at 78% 22%, rgba(250, 204, 225, 0.33), transparent 44%);
+  --page-overlay-two: radial-gradient(circle at 88% 86%, rgba(186, 201, 255, 0.3), transparent 46%);
+  --aura-left-size: 242px;
+  --aura-right-size: 242px;
+  --aura-left-radius: 60% 40% 52% 48% / 48% 60% 40% 52%;
+  --aura-right-radius: 46% 54% 42% 58% / 58% 45% 55% 42%;
+  --noise-layer-one: radial-gradient(rgba(126, 101, 160, 0.2) 0.55px, transparent 0.55px);
+  --noise-layer-two: linear-gradient(120deg, rgba(126, 101, 160, 0.08) 1px, transparent 1px);
+  --noise-size-one: 18px 18px;
+  --noise-size-two: 42px 42px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 7px 13px;
+  --noise-opacity: 0.1;
+}
+
+.theme-love-brain {
+  --page-overlay-one:
+    radial-gradient(circle at 10% 14%, rgba(246, 252, 255, 0.9), transparent 40%),
+    linear-gradient(120deg, rgba(0, 166, 223, 0.12), transparent 42%);
+  --page-overlay-two: radial-gradient(circle at 88% 84%, rgba(255, 134, 172, 0.24), transparent 44%);
+  --aura-left-size: 238px;
+  --aura-right-size: 244px;
+  --aura-left-radius: 30% 70% 62% 38% / 46% 34% 66% 54%;
+  --aura-right-radius: 66% 34% 44% 56% / 36% 62% 38% 64%;
+  --aura-float-duration: 7.4s;
+  --noise-layer-one: repeating-linear-gradient(0deg, rgba(34, 86, 172, 0.16) 0 1px, transparent 1px 7px);
+  --noise-layer-two: repeating-linear-gradient(90deg, rgba(34, 86, 172, 0.08) 0 1px, transparent 1px 18px);
+  --noise-size-one: 100% 100%;
+  --noise-size-two: 100% 100%;
+  --noise-opacity: 0.14;
+}
+
+.theme-romance {
+  --page-overlay-one:
+    radial-gradient(circle at 16% 16%, rgba(255, 255, 255, 0.9), transparent 38%),
+    radial-gradient(circle at 82% 20%, rgba(252, 192, 219, 0.3), transparent 46%);
+  --page-overlay-two: radial-gradient(circle at 86% 84%, rgba(197, 196, 255, 0.32), transparent 46%);
+  --aura-left-size: 248px;
+  --aura-right-size: 238px;
+  --aura-left-radius: 58% 42% 60% 40% / 44% 58% 42% 56%;
+  --aura-right-radius: 48% 52% 40% 60% / 60% 40% 60% 40%;
+  --noise-layer-one: radial-gradient(rgba(168, 132, 197, 0.18) 0.65px, transparent 0.65px);
+  --noise-layer-two: radial-gradient(rgba(232, 150, 187, 0.12) 1px, transparent 1px);
+  --noise-size-one: 22px 22px;
+  --noise-size-two: 38px 38px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 8px 12px;
+  --noise-opacity: 0.1;
+}
+
+.theme-mbti {
+  --page-overlay-one:
+    radial-gradient(circle at 12% 15%, rgba(151, 140, 255, 0.16), transparent 42%),
+    radial-gradient(circle at 84% 18%, rgba(255, 128, 165, 0.14), transparent 46%);
+  --page-overlay-two: radial-gradient(circle at 82% 86%, rgba(122, 103, 186, 0.16), transparent 48%);
+  --aura-left-size: 268px;
+  --aura-right-size: 258px;
+  --aura-opacity: 0.34;
+  --aura-blur: 8px;
+  --aura-left-radius: 50% 50% 65% 35% / 35% 65% 35% 65%;
+  --aura-right-radius: 65% 35% 50% 50% / 60% 40% 60% 40%;
+  --noise-layer-one: radial-gradient(rgba(224, 214, 255, 0.45) 0.65px, transparent 0.65px);
+  --noise-layer-two: radial-gradient(rgba(143, 141, 245, 0.42) 0.45px, transparent 0.45px);
+  --noise-size-one: 28px 28px;
+  --noise-size-two: 16px 16px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 8px 9px;
+  --noise-opacity: 0.18;
+}
+
 /* 背景氛围层：
  * 动画只做 transform/opacity，保证移动端性能稳定。 */
 .survey-aura {
   position: fixed;
-  border-radius: 999px;
+  border-radius: var(--aura-left-radius);
   pointer-events: none;
-  opacity: 0.48;
-  filter: blur(3px);
-  animation: surveyFloat 8.5s ease-in-out infinite alternate;
+  opacity: var(--aura-opacity);
+  filter: blur(var(--aura-blur));
+  animation: surveyFloat var(--aura-float-duration) ease-in-out infinite alternate;
 }
 
 .aura-left {
-  width: 220px;
-  height: 220px;
-  left: -72px;
-  top: -72px;
+  width: var(--aura-left-size);
+  height: var(--aura-left-size);
+  left: var(--aura-left-left);
+  top: var(--aura-left-top);
+  border-radius: var(--aura-left-radius);
   background: var(--aura-left);
 }
 
 .aura-right {
-  width: 240px;
-  height: 240px;
-  right: -88px;
-  bottom: 9%;
+  width: var(--aura-right-size);
+  height: var(--aura-right-size);
+  right: var(--aura-right-right);
+  bottom: var(--aura-right-bottom);
+  border-radius: var(--aura-right-radius);
   background: var(--aura-right);
-  animation-delay: 1.2s;
+  animation-delay: var(--aura-right-delay);
 }
 
 .survey-noise {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.12;
-  background-image:
-    radial-gradient(var(--noise-dot) 0.4px, transparent 0.4px),
-    radial-gradient(var(--noise-dot) 0.28px, transparent 0.28px);
+  opacity: var(--noise-opacity);
+  background-image: var(--noise-layer-one), var(--noise-layer-two);
   background-size:
-    16px 16px,
-    20px 20px;
+    var(--noise-size-one),
+    var(--noise-size-two);
   background-position:
-    0 0,
-    9px 11px;
+    var(--noise-position-one),
+    var(--noise-position-two);
+}
+
+/* 关键逻辑：古风主题增加“楼阁场景图 + 雾幕”双层背景，随答题进度切换变量实现晨昏夜变化。 */
+.theme-ancient::before,
+.theme-ancient::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  transition:
+    opacity 520ms ease,
+    filter 520ms ease,
+    transform 620ms ease,
+    background 520ms ease;
+}
+
+.theme-ancient::before {
+  z-index: 0;
+  opacity: var(--ancient-scene-opacity);
+  background-image: var(--ancient-scene-image);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: var(--ancient-scene-position-mobile);
+  transform: scale(var(--ancient-scene-scale));
+  filter: var(--ancient-scene-filter);
+}
+
+.theme-ancient::after {
+  z-index: 0;
+  opacity: var(--ancient-scene-veil-opacity);
+  background: linear-gradient(
+    180deg,
+    var(--ancient-scene-veil-top) 0%,
+    var(--ancient-scene-veil-bottom) 100%
+  );
+}
+
+.theme-ancient .survey-aura {
+  z-index: 1;
+  mix-blend-mode: multiply;
+}
+
+.theme-ancient .survey-noise {
+  z-index: 1;
+}
+
+.theme-ancient .survey-shell {
+  z-index: 2;
+}
+
+.theme-ancient .aura-left {
+  clip-path: polygon(6% 6%, 90% 0%, 100% 88%, 14% 100%);
+  transform-origin: center;
+}
+
+.theme-ancient .aura-right {
+  clip-path: polygon(0% 12%, 88% 0%, 100% 94%, 12% 100%);
+  transform-origin: center;
+  animation: ancientAuraDrift 12.8s ease-in-out infinite alternate;
+}
+
+.theme-ancient .survey-shell::before {
+  content: "";
+  position: absolute;
+  inset: -14px -12px auto;
+  height: 2px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--primary) 56%, transparent) 22%,
+      color-mix(in srgb, var(--primary-dark) 82%, transparent) 50%,
+      color-mix(in srgb, var(--primary) 56%, transparent) 78%,
+      transparent 100%
+    );
+  pointer-events: none;
+}
+
+.theme-ancient .survey-card {
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--surface-border) 88%, #ffffff 12%);
+  background:
+    linear-gradient(
+      180deg,
+      var(--ancient-card-bg-start, rgba(255, 253, 247, 0.93)) 0%,
+      var(--ancient-card-bg-end, rgba(250, 237, 213, 0.88)) 100%
+    );
+  box-shadow: var(
+    --ancient-card-shadow,
+    0 26px 48px rgba(86, 53, 29, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74)
+  );
+}
+
+.theme-ancient .survey-header {
+  position: relative;
+  margin: 8px 2px 18px;
+  padding: 10px 12px 14px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--surface-border) 86%, #ffffff 14%);
+  background:
+    linear-gradient(
+      180deg,
+      var(--ancient-header-bg-start, rgba(255, 250, 239, 0.86)) 0%,
+      var(--ancient-header-bg-end, rgba(247, 229, 200, 0.54)) 100%
+    );
+  backdrop-filter: blur(2px);
+}
+
+.theme-ancient .survey-header::after {
+  content: "";
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 0;
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--primary) 46%, transparent) 20%,
+      color-mix(in srgb, var(--primary-dark) 66%, transparent) 50%,
+      color-mix(in srgb, var(--primary) 46%, transparent) 80%,
+      transparent 100%
+    );
+}
+
+.theme-ancient .survey-cover-kicker {
+  letter-spacing: 0.16em;
+}
+
+.theme-ancient .survey-cover-promo-tag {
+  border-color: color-mix(in srgb, var(--primary) 44%, #ffffff 56%);
+  background:
+    linear-gradient(
+      130deg,
+      color-mix(in srgb, var(--primary) 22%, #ffffff 78%),
+      color-mix(in srgb, var(--primary-dark) 20%, #ffffff 80%)
+    );
+  color: color-mix(in srgb, #3b2618 84%, #ffffff 16%);
+}
+
+.theme-ancient .survey-cover-title {
+  letter-spacing: 0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.theme-ancient .survey-cover-title-emphasis {
+  font-family: "Ma Shan Zheng", "ZCOOL XiaoWei", "Noto Serif SC", serif;
+  font-size: clamp(34px, 10.6vw, 48px);
+  line-height: 1.06;
+  color: color-mix(in srgb, var(--text-main) 92%, #000000 8%);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.52),
+    0 8px 24px rgba(74, 38, 17, 0.18);
+}
+
+.theme-ancient .survey-cover-title-main {
+  font-size: clamp(27px, 7.8vw, 38px);
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--text-main) 94%, #000000 6%);
+  font-weight: 900;
+  text-wrap: balance;
+}
+
+.theme-ancient .survey-cover-card {
+  isolation: isolate;
+}
+
+.theme-ancient .survey-cover-symbol-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.theme-ancient .survey-cover-symbol {
+  position: absolute;
+  display: block;
+  width: 118px;
+  height: 118px;
+  opacity: 0.24;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  filter: saturate(0.9);
+}
+
+.theme-ancient .survey-cover-symbol.symbol-fan {
+  top: 14px;
+  right: 8px;
+  transform: rotate(-8deg);
+  background-image: url("/ancient/symbol-fan.svg");
+}
+
+.theme-ancient .survey-cover-symbol.symbol-gourd {
+  top: 134px;
+  right: -8px;
+  width: 108px;
+  height: 108px;
+  transform: rotate(8deg);
+  background-image: url("/ancient/symbol-gourd.svg");
+}
+
+.theme-ancient .survey-cover-symbol.symbol-hairpin {
+  left: -14px;
+  bottom: 46px;
+  width: 124px;
+  height: 124px;
+  transform: rotate(-24deg);
+  background-image: url("/ancient/symbol-hairpin.svg");
+}
+
+.theme-ancient .survey-cover-intro,
+.theme-ancient .survey-cover-points,
+.theme-ancient .survey-cover-actions,
+.theme-ancient .survey-cover-kicker,
+.theme-ancient .survey-cover-promo-tag {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-ancient .survey-cover-start-btn {
+  min-height: 50px;
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, #153f4a 78%, #ffffff 22%),
+      color-mix(in srgb, #1f5d6f 78%, #ffffff 22%)
+    ) !important;
+  box-shadow:
+    0 12px 24px rgba(24, 72, 84, 0.34),
+    0 0 0 1px rgba(168, 214, 225, 0.42);
+  animation: ancientCoverCtaGlow 2.2s ease-in-out infinite;
+}
+
+.theme-ancient .survey-cover-hook-line {
+  border-color: rgba(54, 90, 98, 0.34);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(241, 248, 249, 0.88),
+      rgba(225, 242, 246, 0.88)
+    );
+  color: #27444c;
+}
+
+.theme-ancient .survey-cover-social-proof {
+  color: color-mix(in srgb, #23454f 74%, #ffffff 26%);
+}
+
+.theme-ancient .survey-cover-tip {
+  color: color-mix(in srgb, #26454d 76%, #ffffff 24%);
+}
+
+.theme-ancient .survey-card,
+.theme-ancient .survey-header,
+.theme-ancient .survey-option,
+.theme-ancient .survey-detail-wrap,
+.theme-ancient .survey-top-wrap,
+.theme-ancient .survey-summary-wrap,
+.theme-ancient .survey-highlight-box,
+.theme-ancient .survey-type-card-item,
+.theme-ancient .survey-tag-item,
+.theme-ancient .survey-main-score,
+.theme-ancient .survey-desc,
+.theme-ancient .survey-summary-toggle-btn,
+.theme-ancient .survey-cover-hook-line,
+.theme-ancient .survey-cover-points li {
+  /* 关键逻辑：古风主题在晨/暮/夜切换时统一平滑过渡，避免“背景已变、内容区突兀不变”。 */
+  transition:
+    background 520ms ease,
+    border-color 420ms ease,
+    box-shadow 520ms ease,
+    color 360ms ease;
+}
+
+.theme-ancient .survey-option {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--ancient-option-bg, rgba(255, 254, 250, 0.92));
+}
+
+.theme-ancient .survey-option::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--primary) 14%, transparent) 48%,
+      transparent 100%
+    );
+  transform: translateX(-100%);
+  transition: transform 360ms ease;
+}
+
+.theme-ancient .survey-option-selected::after {
+  transform: translateX(0%);
+}
+
+.theme-ancient .survey-type-card-grid {
+  grid-template-columns: 1fr;
+}
+
+.theme-ancient .survey-type-card-item {
+  min-height: 0;
+  padding: 10px 12px;
+}
+
+.theme-ancient .survey-type-card-value {
+  font-size: clamp(17px, 4.8vw, 24px);
+  line-height: 1.3;
+}
+
+.theme-ancient .survey-desc {
+  /* 关键逻辑：夜景阶段提升描述文案对比度，避免浅黄低可读。 */
+  color: color-mix(in srgb, var(--text-main) 88%, #0f0a08 12%);
+}
+
+.theme-ancient .survey-main-score {
+  /* 关键逻辑：身份匹配度行固定为深色文本，避免跟随 primary-dark 变浅。 */
+  color: color-mix(in srgb, var(--text-main) 86%, #120b08 14%);
+}
+
+.theme-ancient .survey-tag-item {
+  /* 关键逻辑：类型标签文字改深色，兼顾晨/暮/夜三阶段可读性。 */
+  color: color-mix(in srgb, var(--text-main) 84%, #120b08 16%);
+  border-color: color-mix(in srgb, var(--detail-border) 82%, #463123 18%);
+  background: color-mix(in srgb, var(--highlight-bg) 92%, #ffffff 8%);
+}
+
+.theme-ancient .survey-hero-artwork-image {
+  border-radius: 12px;
+  border: 1px solid rgba(154, 106, 64, 0.5);
 }
 
 .survey-shell {
@@ -545,6 +1205,124 @@ body {
   animation: surveyCardIn 520ms ease both;
 }
 
+.survey-cover-card {
+  display: grid;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.survey-cover-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--primary-dark) 86%, #ffffff 14%);
+}
+
+.survey-cover-promo-tag {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 42%, #ffffff 58%);
+  background: color-mix(in srgb, var(--primary) 12%, #ffffff 88%);
+  color: color-mix(in srgb, var(--primary-dark) 78%, #ffffff 22%);
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.survey-cover-title {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+  font-size: clamp(22px, 6.8vw, 34px);
+  line-height: 1.28;
+  font-family: var(--title-font);
+}
+
+.survey-cover-title-emphasis,
+.survey-cover-title-main {
+  display: block;
+}
+
+.survey-cover-title-main {
+  font-weight: 800;
+}
+
+.survey-cover-intro {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.survey-cover-points {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.survey-cover-points li {
+  border-radius: 10px;
+  border: 1px solid var(--detail-border);
+  background: var(--detail-bg);
+  color: var(--text-main);
+  font-size: 12px;
+  line-height: 1.62;
+  padding: 8px 10px;
+}
+
+.survey-cover-actions {
+  margin-top: 4px;
+  display: grid;
+  gap: 8px;
+}
+
+.survey-cover-hook-line {
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--option-border) 86%, #ffffff 14%);
+  background:
+    linear-gradient(
+      130deg,
+      color-mix(in srgb, var(--primary) 10%, #ffffff 90%),
+      color-mix(in srgb, var(--primary-dark) 10%, #ffffff 90%)
+    );
+  color: color-mix(in srgb, var(--text-main) 86%, #ffffff 14%);
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 8px 10px;
+  font-weight: 600;
+}
+
+.survey-cover-start-btn {
+  min-height: 46px;
+}
+
+.survey-cover-tip {
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.survey-cover-social-proof {
+  margin: -2px 0 0;
+  text-align: center;
+  color: color-mix(in srgb, var(--text-muted) 84%, #ffffff 16%);
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .survey-progress-meta {
   margin-bottom: 8px;
   display: flex;
@@ -711,6 +1489,11 @@ body {
   gap: 10px;
 }
 
+.survey-actions-single {
+  /* 关键逻辑：启用“点击选项自动下一题”时仅保留“上一步”，按钮区切为单列布局。 */
+  grid-template-columns: 1fr;
+}
+
 .survey-btn {
   border-radius: 12px !important;
   min-height: 42px;
@@ -743,6 +1526,80 @@ body {
 
 .survey-loading-wrap p {
   margin: 0;
+  color: var(--text-muted);
+}
+
+.survey-brain-loader {
+  width: 178px;
+  height: 112px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.survey-brain-shell {
+  width: 168px;
+  height: 92px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--primary) 64%, #ffffff 36%);
+  background:
+    radial-gradient(circle at 24% 35%, rgba(255, 255, 255, 0.52), transparent 44%),
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--primary) 28%, #ffffff 72%),
+      color-mix(in srgb, var(--primary-dark) 26%, #ffffff 74%)
+    );
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent),
+    0 14px 30px color-mix(in srgb, var(--primary-dark) 26%, transparent);
+  animation: surveyBrainFloat 1.55s ease-in-out infinite;
+}
+
+.survey-brain-core {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 35%, #fff, color-mix(in srgb, var(--primary) 88%, #ffffff 12%));
+  box-shadow:
+    0 0 0 5px color-mix(in srgb, var(--primary) 24%, transparent),
+    0 0 16px color-mix(in srgb, var(--primary-dark) 44%, transparent);
+  animation: surveyBrainPulse 1.05s ease-in-out infinite;
+}
+
+.survey-brain-scanline {
+  position: absolute;
+  inset: 14px 18px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.survey-brain-scanline::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--primary) 32%, #ffffff 68%) 45%,
+      color-mix(in srgb, var(--primary-dark) 26%, #ffffff 74%) 55%,
+      transparent 100%
+    );
+  animation: surveyBrainScan 1.28s linear infinite;
+}
+
+.survey-brain-loading-title {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--text-main) 82%, #ffffff 18%);
+}
+
+.survey-brain-loading-text {
+  font-size: 13px;
+  line-height: 1.65;
   color: var(--text-muted);
 }
 
@@ -836,6 +1693,26 @@ body {
   margin: 0 0 12px;
   color: var(--primary-dark);
   font-weight: 700;
+}
+
+.survey-hero-artwork-wrap {
+  margin-bottom: 12px;
+}
+
+.survey-hero-artwork-image {
+  width: 100%;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid var(--detail-border);
+  background: #fff;
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--primary) 24%, transparent);
+}
+
+.survey-hero-artwork-caption {
+  margin: 8px 2px 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
 }
 
 .survey-highlight-box {
@@ -1118,6 +1995,22 @@ body {
   background: #fff;
 }
 
+.survey-summary-toggle-btn {
+  margin-top: 10px;
+  width: 100%;
+  border: 1px solid var(--detail-border);
+  background: #fff;
+  border-radius: 10px;
+  min-height: 36px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.survey-summary-toggle-btn:active {
+  transform: scale(0.99);
+}
+
 .survey-easter-egg {
   margin: 12px 2px 0;
   font-size: 12px;
@@ -1182,6 +2075,36 @@ body {
   margin-top: 16px;
 }
 
+.survey-commercial-fixed {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 19;
+  width: min(calc(100% - 20px), 560px);
+}
+
+.survey-commercial-link {
+  display: block;
+  text-decoration: none;
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, #ffffff 72%);
+  background:
+    linear-gradient(
+      130deg,
+      color-mix(in srgb, var(--primary) 16%, #ffffff 84%),
+      color-mix(in srgb, var(--primary-dark) 14%, #ffffff 86%)
+    );
+  color: color-mix(in srgb, var(--text-main) 84%, #ffffff 16%);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.55;
+  text-align: center;
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--primary) 24%, transparent);
+  backdrop-filter: blur(6px);
+}
+
 .survey-floating-home {
   position: fixed;
   right: 14px;
@@ -1218,6 +2141,33 @@ body {
   }
   to {
     transform: translateY(-18px);
+  }
+}
+
+@keyframes ancientAuraDrift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.8deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(1.2deg);
+  }
+}
+
+@keyframes ancientCoverCtaGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 12px 24px rgba(24, 72, 84, 0.28),
+      0 0 0 1px rgba(168, 214, 225, 0.34);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow:
+      0 16px 30px rgba(24, 72, 84, 0.42),
+      0 0 0 2px rgba(174, 228, 237, 0.48),
+      0 0 18px rgba(132, 196, 212, 0.46);
+    transform: translateY(-1px);
   }
 }
 
@@ -1310,6 +2260,35 @@ body {
   }
 }
 
+@keyframes surveyBrainFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes surveyBrainPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@keyframes surveyBrainScan {
+  0% {
+    transform: translateY(-108%);
+  }
+  100% {
+    transform: translateY(108%);
+  }
+}
+
 @keyframes surveyHeartPulse {
   0%,
   100% {
@@ -1324,6 +2303,25 @@ body {
   .survey-question-wrap {
     min-height: 380px;
   }
+
+  .theme-ancient .survey-cover-symbol.symbol-fan {
+    right: -6px;
+    width: 96px;
+    height: 96px;
+  }
+
+  .theme-ancient .survey-cover-symbol.symbol-gourd {
+    top: 126px;
+    right: -14px;
+    width: 92px;
+    height: 92px;
+  }
+
+  .theme-ancient .survey-cover-symbol.symbol-hairpin {
+    left: -22px;
+    width: 104px;
+    height: 104px;
+  }
 }
 
 @media (min-width: 760px) {
@@ -1337,5 +2335,9 @@ body {
 
   .survey-question-wrap {
     min-height: 332px;
+  }
+
+  .theme-ancient::before {
+    background-position: var(--ancient-scene-position-desktop);
   }
 }

@@ -518,7 +518,7 @@ const RAW_QUESTION_ITEMS = [
     ],
   },
   {
-    title: "最后一题：你理想中的亲密关系更像？",
+    title: "你理想中的亲密关系更像？",
     weight: 1.28,
     options: [
       { label: "彼此稳定、坦诚、可修复", type: "secure" },
