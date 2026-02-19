@@ -11,6 +11,7 @@
 - `/#/romance`：《你认为最浪漫的事》浪漫指数测试（14题+雷达图+海报）
 - `/#/love-brain`：恋爱脑指数测试（心理学内核 + 梗文化，13-14题随机 + 长图）
 - `/#/love`：恋爱心理测试（依恋类型 + AI报告主题）
+- `/#/soul-age`：灵魂年龄测试（20题题库随机抽12题 + 雷达图 + AI深度解读 + 分享海报）
 - `/#/mbti`：类型学卡片中心（12 类类型学测试）
   支持：MBTI（72/32）、九型人格（120/36）、社会人格（64）、理想型（64）、经典荣格（60）、DISC（60）、态度心理（64）、体液气质（60）、大五人格（60）、DnD 阵营（60）、依恋类型（24）、霍兰德（60），每轮题量按模式基础值上下浮动 10 题。
 
@@ -25,6 +26,7 @@
 - `/romance`：《你认为最浪漫的事》浪漫指数测试（14题+雷达图+海报）
 - `/love-brain`：恋爱脑指数测试（13-14题随机 + 长图）
 - `/love`：恋爱心理测试（依恋类型 + AI报告主题）
+- `/soul-age`：灵魂年龄测试（20题题库随机抽12题 + 结果图表 + AI深度解读 + 分享海报）
 - `/mbti`：类型学卡片中心（12 类类型学测试，动态题量）
 
 ## 隐藏主题中心（特定方式访问）
@@ -44,6 +46,7 @@
 - 浪漫指数：`/romance-test`、`/romantic`、`/1314-love`
 - 恋爱脑指数：`/love-brain.html`、`/lovebrain`、`/love-brain-index`
 - 恋爱心理：`/love-attachment`、`/love-psych`、`/love-test`
+- 灵魂年龄：`/soul-age.html`、`/soul-age-test`、`/soul`、`/soul-test`
 - 十六型人格：`/mbti16`、`/mbti.html`
 
 ## 新增主题标准流程
@@ -60,6 +63,7 @@
 ## 架构说明
 
 - 城市/转运/古代/天赋/贵人/主题色/浪漫指数/恋爱脑指数/恋爱心理主题由 `src/components/SurveyEngine.vue` 渲染。
+- 灵魂年龄主题由 `src/components/SoulAgeStandalone.vue` 渲染。
 - 类型学卡片中心由 `src/components/TypeologyLab.vue` 渲染。
 - 主题中心页面由 `src/components/ThemeHub.vue` 渲染。
 - 主题差异（文案、题库、颜色、分析器、结果区字段）全部由 `src/config/surveyThemes.js` 配置驱动。

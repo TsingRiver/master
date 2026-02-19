@@ -17,6 +17,12 @@
     :portal-mode="portalSession"
     :portal-home-href="portalHubHref"
   />
+  <SoulAgeStandalone
+    v-else-if="isSoulAgeStandaloneTheme"
+    :theme-config="activeThemeConfig"
+    :portal-mode="portalSession"
+    :portal-home-href="portalHubHref"
+  />
   <SurveyEngine
     v-else
     :theme-config="activeThemeConfig"
@@ -53,6 +59,9 @@ const TypeologyLab = defineAsyncComponent(
 );
 const RomanceStandalone = defineAsyncComponent(
   () => import("./components/RomanceStandalone.vue"),
+);
+const SoulAgeStandalone = defineAsyncComponent(
+  () => import("./components/SoulAgeStandalone.vue"),
 );
 
 /**
@@ -118,6 +127,14 @@ const isTypeologyLabTheme = computed(
  */
 const isRomanceStandaloneTheme = computed(
   () => activeThemeConfig.value?.key === "romance",
+);
+
+/**
+ * 是否走灵魂年龄独立组件：
+ * 关键逻辑：`soul-age` 主题采用独立视觉与交互，不复用通用 SurveyEngine。
+ */
+const isSoulAgeStandaloneTheme = computed(
+  () => activeThemeConfig.value?.key === "soul-age",
 );
 
 /**

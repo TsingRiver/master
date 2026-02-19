@@ -2816,6 +2816,55 @@ export const SURVEY_THEME_CONFIGS = [
     },
   },
   {
+    key: "soul-age",
+    routePaths: [
+      "/soul-age",
+      "/soul-age.html",
+      "/soul-age-test",
+      "/soul",
+      "/soul-test",
+    ],
+    pageMeta: {
+      title: "你的灵魂，藏着几岁的自己？",
+      description:
+        "20 题题库每次随机抽取 12 题，生成灵魂年龄结果并附带 AI 深度解读。",
+    },
+    theme: {
+      className: "theme-soul-age",
+      badge: "SOUL AGE TEST",
+      title: "你的灵魂，藏着几岁的自己？",
+      description:
+        "20 题题库每次随机抽取 12 题，生成灵魂年龄、6 维雷达画像、AI 深度解读和可保存分享卡片。",
+      progressColor: "linear-gradient(90deg, #d4b996, #c19a6b)",
+      progressTrackColor: "rgba(193, 154, 107, 0.22)",
+      checkedColor: "#c19a6b",
+      sourceTag: {
+        deep: {
+          label: "灵魂画像结果",
+          color: "#f5eee7",
+          textColor: "#6f5846",
+        },
+        local: {
+          label: "灵魂画像结果",
+          color: "#f5eee7",
+          textColor: "#6f5846",
+        },
+      },
+      loadingMessages: [
+        "正在梳理你的灵魂线索...",
+        "正在拟合你的成长曲线...",
+        "正在生成你的灵魂年龄报告...",
+      ],
+      submitButtonText: "提交测试",
+      nextButtonText: "下一题",
+    },
+    /**
+     * 关键逻辑：
+     * `soul-age` 主题由独立组件 `SoulAgeStandalone.vue` 渲染，
+     * 不走通用 SurveyEngine 的 survey 配置流程。
+     */
+  },
+  {
     key: "mbti",
     routePaths: ["/mbti", "/mbti16", "/mbti.html"],
     pageMeta: {
