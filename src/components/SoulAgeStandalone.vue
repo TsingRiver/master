@@ -95,8 +95,11 @@
           <p class="soul-result-summary">{{ analysisResult.summaryLine }}</p>
         </header>
 
-        <article class="soul-result-module">
-          <h3 class="soul-result-module-title">灵魂年龄核心特质</h3>
+        <article class="soul-result-module soul-result-module-key soul-result-module-core">
+          <h3 class="soul-result-module-title">
+            <span>灵魂年龄核心特质</span>
+            <span class="soul-module-pill">核心</span>
+          </h3>
 
           <div class="soul-radar-wrap">
             <svg class="soul-radar-svg" :viewBox="radarViewBox" role="img" aria-label="灵魂特质雷达图">
@@ -181,8 +184,11 @@
           </div>
         </article>
 
-        <article class="soul-result-module soul-fit-module">
-          <h3 class="soul-result-module-title">灵魂与实际年龄的契合度</h3>
+        <article class="soul-result-module soul-fit-module soul-result-module-key soul-result-module-fit">
+          <h3 class="soul-result-module-title">
+            <span>灵魂与实际年龄的契合度</span>
+            <span class="soul-module-pill">重点</span>
+          </h3>
           <div class="soul-fit-layout">
             <div class="soul-fit-copy">
               <p class="soul-fit-line">{{ analysisResult.compatibility.line }}</p>
@@ -208,8 +214,11 @@
           </div>
         </article>
 
-        <article class="soul-result-module">
-          <h3 class="soul-result-module-title">给你的灵魂小建议</h3>
+        <article class="soul-result-module soul-result-module-key soul-result-module-advice">
+          <h3 class="soul-result-module-title">
+            <span>给你的灵魂小建议</span>
+            <span class="soul-module-pill">行动</span>
+          </h3>
           <div class="soul-advice-list">
             <div
               v-for="(adviceItem, adviceIndex) in analysisResult.adviceCards"
@@ -227,8 +236,11 @@
           <p class="soul-resonance-line">{{ resonanceLineForView }}</p>
         </article>
 
-        <article class="soul-result-module">
-          <h3 class="soul-result-module-title">AI 深度解读</h3>
+        <article class="soul-result-module soul-result-module-key soul-result-module-ai">
+          <h3 class="soul-result-module-title">
+            <span>AI 深度解读</span>
+            <span class="soul-module-pill">AI</span>
+          </h3>
           <p v-if="aiInsightStatus === 'loading'" class="soul-ai-status">
             AI 正在结合你的答卷生成更细致的解读...
           </p>
@@ -852,7 +864,7 @@ function drawPosterRadar(context, centerX, centerY, radius, items) {
   context.stroke();
 
   context.fillStyle = "#5A4B3E";
-  context.font = "bold 28px 'PingFang SC', sans-serif";
+  context.font = "bold 24px 'PingFang SC', sans-serif";
   context.textAlign = "center";
   items.forEach((item, index) => {
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * index) / axisCount;
@@ -953,7 +965,20 @@ async function generatePosterDataUrl() {
   context.font = "700 46px 'PingFang SC', sans-serif";
   context.fillText(resultData.ageTagText, 120, 486);
 
-  drawPosterRadar(context, posterWidth / 2, 760, 220, resultData.radarItems);
+  /**
+   * 关键逻辑：海报雷达图下移并轻微缩小，
+   * 避免顶部维度标签与年龄标题区域发生重叠。
+   */
+  const posterRadarCenterX = posterWidth / 2;
+  const posterRadarCenterY = 828;
+  const posterRadarRadius = 198;
+  drawPosterRadar(
+    context,
+    posterRadarCenterX,
+    posterRadarCenterY,
+    posterRadarRadius,
+    resultData.radarItems,
+  );
 
   context.fillStyle = "#5A4B3E";
   context.font = "700 44px 'Noto Serif SC', serif";
@@ -1377,9 +1402,11 @@ function restartSurvey() {
 
 .soul-result-hero {
   border-radius: 16px;
-  border: 1px solid rgba(232, 213, 196, 0.92);
-  background: rgba(248, 245, 242, 0.95);
-  box-shadow: 0 20px 44px rgba(90, 75, 62, 0.1);
+  border: 1.5px solid rgba(193, 154, 107, 0.35);
+  background:
+    radial-gradient(circle at 88% 14%, rgba(212, 185, 150, 0.18), transparent 34%),
+    linear-gradient(145deg, rgba(248, 245, 242, 0.98), rgba(255, 255, 255, 0.94));
+  box-shadow: 0 20px 44px rgba(90, 75, 62, 0.12);
   padding: 24px 18px;
   text-align: center;
 }
@@ -1413,6 +1440,9 @@ function restartSurvey() {
 }
 
 .soul-result-module {
+  --module-accent: rgba(193, 154, 107, 0.28);
+  position: relative;
+  overflow: hidden;
   border-radius: 14px;
   border: 1px solid rgba(232, 213, 196, 0.85);
   background: rgba(248, 245, 242, 0.95);
@@ -1420,11 +1450,79 @@ function restartSurvey() {
   padding: 18px 16px;
 }
 
+.soul-result-module::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--module-accent);
+}
+
 .soul-result-module-title {
   margin: 0;
   font-size: 18px;
   color: var(--soul-text-main);
   font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.soul-module-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 24px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+  color: #5a4b3e;
+  background: rgba(212, 185, 150, 0.4);
+  border: 1px solid rgba(193, 154, 107, 0.45);
+}
+
+.soul-result-module-key {
+  border-width: 1.5px;
+  box-shadow: 0 14px 30px rgba(90, 75, 62, 0.12);
+}
+
+.soul-result-module-core {
+  --module-accent: linear-gradient(90deg, rgba(193, 154, 107, 0.65), rgba(212, 185, 150, 0.25));
+  background:
+    linear-gradient(160deg, rgba(255, 250, 245, 0.96), rgba(248, 245, 242, 0.96)),
+    rgba(248, 245, 242, 0.95);
+}
+
+.soul-result-module-fit {
+  --module-accent: linear-gradient(90deg, rgba(152, 187, 204, 0.8), rgba(193, 154, 107, 0.38));
+  background:
+    linear-gradient(150deg, rgba(238, 247, 250, 0.94), rgba(248, 245, 242, 0.96) 62%),
+    rgba(248, 245, 242, 0.95);
+}
+
+.soul-result-module-advice {
+  --module-accent: linear-gradient(90deg, rgba(232, 213, 196, 0.9), rgba(212, 185, 150, 0.4));
+  background:
+    linear-gradient(155deg, rgba(255, 248, 241, 0.96), rgba(248, 245, 242, 0.95)),
+    rgba(248, 245, 242, 0.95);
+}
+
+.soul-result-module-ai {
+  --module-accent: linear-gradient(90deg, rgba(212, 185, 150, 0.9), rgba(184, 212, 227, 0.46));
+  background:
+    radial-gradient(circle at 94% 16%, rgba(212, 185, 150, 0.16), transparent 28%),
+    linear-gradient(150deg, rgba(255, 251, 245, 0.96), rgba(248, 245, 242, 0.95)),
+    rgba(248, 245, 242, 0.95);
+}
+
+.soul-result-module-fit .soul-fit-progress-fill {
+  background: linear-gradient(90deg, #8fb8cc, #d4b996);
 }
 
 .soul-radar-wrap {
@@ -1466,7 +1564,7 @@ function restartSurvey() {
 }
 
 .soul-radar-label {
-  font-size: 18px;
+  font-size: 14px;
   fill: #5a4b3e;
   text-anchor: middle;
 }
