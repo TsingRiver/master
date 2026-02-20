@@ -8,12 +8,28 @@
       name="description"
       content="多主题移动端问卷：根据不同测试主题生成匹配结果与建议。"
     />
+    <style>
+      /* 首屏关键样式：
+       * 关键逻辑：给未挂载阶段提供轻量占位，避免白屏并缩短 FCP 体感。
+       */
+      #app {
+        min-height: 100vh;
+      }
+    </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&family=ZCOOL+XiaoWei&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@600;700&family=ZCOOL+XiaoWei&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
   </head>
   <body>
     <div id="app"></div>

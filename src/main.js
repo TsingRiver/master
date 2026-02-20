@@ -1,9 +1,27 @@
 import { createApp } from "vue";
-import Vant from "vant";
-import "vant/lib/index.css";
+import {
+  Button,
+  Cell,
+  CellGroup,
+  Loading,
+  Progress,
+  Radio,
+  RadioGroup,
+  Tag,
+} from "vant";
 import { injectSpeedInsights } from "@vercel/speed-insights";
 import App from "./App.vue";
 import "./unified-survey.css";
+import "vant/es/button/style";
+import "vant/es/cell/style";
+import "vant/es/cell-group/style";
+import "vant/es/loading/style";
+import "vant/es/progress/style";
+import "vant/es/radio/style";
+import "vant/es/radio-group/style";
+import "vant/es/tag/style";
+import "vant/es/toast/style";
+import "vant/es/dialog/style";
 
 const TRUTHY_FLAG_VALUES = Object.freeze(["true", "1", "on", "yes"]);
 const FALSY_FLAG_VALUES = Object.freeze(["false", "0", "off", "no"]);
@@ -90,13 +108,19 @@ async function detectSpeedInsightsSupport() {
 /**
  * 解析是否启用 Speed Insights。
  * 关键逻辑：
- * 1. 环境变量可强制开/关。
- * 2. 未强制时自动检测部署支持能力。
- * 3. 自定义 endpoint 存在时，默认视为启用意图。
+ * 1. 本地开发环境（npm run dev）强制关闭。
+ * 2. 环境变量可强制开/关（仅生产构建生效）。
+ * 3. 未强制时自动检测部署支持能力。
+ * 4. 自定义 endpoint 存在时，默认视为启用意图。
  * @param {string} endpoint Speed Insights 自定义上报端点。
  * @returns {Promise<boolean>} 是否启用。
  */
 async function shouldEnableSpeedInsights(endpoint) {
+  if (import.meta.env.DEV) {
+    // 关键逻辑：开发模式（vite dev）统一禁用，避免本地调试产生噪音上报。
+    return false;
+  }
+
   const explicitEnableMode = resolveSpeedInsightsEnableMode(
     import.meta.env.VITE_ENABLE_SPEED_INSIGHTS,
   );
@@ -164,6 +188,23 @@ async function setupSpeedInsights() {
  * 1. 注册 Vant 组件库，统一移动端组件行为。
  * 2. 挂载单一宿主应用，通过路径解析不同测试主题。
  */
-createApp(App).use(Vant).mount("#app");
+const app = createApp(App);
+/**
+ * 按需注册 Vant 组件：
+ * 关键逻辑：仅注册业务实际使用的组件，避免全量引入影响首屏加载体积。
+ */
+[
+  Button,
+  Cell,
+  CellGroup,
+  Loading,
+  Progress,
+  Radio,
+  RadioGroup,
+  Tag,
+].forEach((vantComponent) => {
+  app.use(vantComponent);
+});
+app.mount("#app");
 // 关键逻辑：Speed Insights 为可选增强能力，不阻塞主应用挂载。
 void setupSpeedInsights();
