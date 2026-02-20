@@ -1,5 +1,11 @@
 <template>
-  <div class="mbti-standalone-page" :class="themeConfig.theme.className">
+  <div
+    class="mbti-standalone-page"
+    :class="[
+      themeConfig.theme.className,
+      { 'mbti-page-perf-ready': isVisualEffectsReady },
+    ]"
+  >
     <div class="mbti-aura aura-left" aria-hidden="true"></div>
     <div class="mbti-aura aura-right" aria-hidden="true"></div>
 
@@ -233,7 +239,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { showToast } from "vant";
 import {
   MBTI_PRO_120_QUESTION_BANK,
@@ -284,6 +290,12 @@ const props = defineProps({
  * result -> 结果展示
  */
 const stage = ref("version");
+
+/**
+ * 首屏视觉增强开关：
+ * 关键逻辑：首帧先渲染文本与交互按钮，再启用背景氛围层与滤镜，优化首屏体验。
+ */
+const isVisualEffectsReady = ref(false);
 
 /**
  * MBTI 作答状态。
@@ -625,6 +637,19 @@ function stopLoadingMessageTicker() {
 }
 
 /**
+ * 首帧后启用视觉增强层。
+ * 关键逻辑：双 requestAnimationFrame 可避免重视觉样式抢占首次绘制。
+ * 复杂度评估：O(1)，仅固定次数回调调度。
+ */
+function enableVisualEffectsAfterFirstPaint() {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      isVisualEffectsReady.value = true;
+    });
+  });
+}
+
+/**
  * 监听阶段变化，控制加载轮播定时器。
  */
 watch(stage, (nextStage) => {
@@ -634,6 +659,13 @@ watch(stage, (nextStage) => {
   }
 
   stopLoadingMessageTicker();
+});
+
+/**
+ * 组件挂载后延迟启用重视觉效果。
+ */
+onMounted(() => {
+  enableVisualEffectsAfterFirstPaint();
 });
 
 /**
@@ -672,6 +704,21 @@ onBeforeUnmount(() => {
   filter: blur(5px);
   opacity: 0.45;
   animation: mbtiFloat 8s ease-in-out infinite alternate;
+}
+
+/* 首屏性能策略：
+ * 关键逻辑：首帧优先渲染标题与版本选择按钮，再启用装饰背景与入场动画。 */
+.mbti-standalone-page:not(.mbti-page-perf-ready) .mbti-aura {
+  display: none;
+}
+
+.mbti-standalone-page:not(.mbti-page-perf-ready) .mbti-header,
+.mbti-standalone-page:not(.mbti-page-perf-ready) .mbti-panel {
+  animation: none;
+}
+
+.mbti-standalone-page:not(.mbti-page-perf-ready) .mbti-panel {
+  backdrop-filter: none;
 }
 
 .aura-left {
@@ -1062,7 +1109,10 @@ onBeforeUnmount(() => {
 
 .mbti-fade-enter-active,
 .mbti-fade-leave-active {
-  transition: all 260ms ease;
+  /* 关键逻辑：避免 `all` 触发无关属性过渡，减少主线程样式计算压力。 */
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
 }
 
 .mbti-fade-enter-from {
@@ -1115,6 +1165,13 @@ onBeforeUnmount(() => {
 @media (max-width: 360px) {
   .mbti-question-wrap {
     min-height: 390px;
+  }
+}
+
+@media (max-width: 759px) {
+  .mbti-panel {
+    /* 关键逻辑：移动端关闭毛玻璃，降低合成层压力与交互延迟。 */
+    backdrop-filter: none;
   }
 }
 

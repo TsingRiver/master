@@ -1320,6 +1320,8 @@ body {
   margin-top: 2px;
   display: grid;
   gap: 6px;
+  /* 关键逻辑：预留城市展示区高度，避免轮播内容异步出现时挤压下方内容。 */
+  min-height: 58px;
 }
 
 .survey-cover-city-showcase-label {
@@ -1347,6 +1349,12 @@ body {
   );
   color: color-mix(in srgb, var(--text-main) 88%, #ffffff 12%);
   box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.survey-cover-city-pill-placeholder {
+  /* 关键逻辑：使用不可见占位而非直接隐藏，稳定封面布局高度，降低 CLS。 */
+  visibility: hidden;
+  box-shadow: none;
 }
 
 .survey-cover-city-pill.is-domestic {
@@ -2686,10 +2694,13 @@ body {
   overflow: hidden;
   border: 1px solid var(--detail-border);
   background: #fff;
+  width: 100%;
 }
 
 .survey-poster-preview img {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
@@ -2697,7 +2708,8 @@ body {
   margin-top: 10px;
   border-radius: 12px;
   border: 1px dashed var(--detail-border);
-  min-height: 130px;
+  width: 100%;
+  min-height: 0;
   display: grid;
   place-content: center;
   gap: 9px;

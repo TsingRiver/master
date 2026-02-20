@@ -1,5 +1,11 @@
 <template>
-  <div class="romancex-page" :class="themeConfig.theme.className">
+  <div
+    class="romancex-page"
+    :class="[
+      themeConfig.theme.className,
+      { 'romancex-page-perf-ready': isVisualEffectsReady },
+    ]"
+  >
     <div class="romancex-background-glow romancex-glow-left" aria-hidden="true"></div>
     <div class="romancex-background-glow romancex-glow-right" aria-hidden="true"></div>
     <div class="romancex-grid-noise" aria-hidden="true"></div>
@@ -281,10 +287,18 @@
           <h3>分享海报</h3>
           <p class="romancex-poster-desc">已自动生成专属海报，可直接保存分享。</p>
 
-          <div v-if="posterPreviewUrl" class="romancex-poster-preview">
+          <div
+            v-if="posterPreviewUrl"
+            class="romancex-poster-preview"
+            :style="posterContainerStyle"
+          >
             <img :src="posterPreviewUrl" alt="浪漫封顶值海报预览" loading="lazy" />
           </div>
-          <div v-else class="romancex-poster-loading">
+          <div
+            v-else
+            class="romancex-poster-loading"
+            :style="posterContainerStyle"
+          >
             <van-loading color="#ff6f9f" size="24px" />
             <span>正在生成海报...</span>
           </div>
@@ -441,6 +455,12 @@ const props = defineProps({
  * 页面阶段状态。
  */
 const stage = ref("loading");
+
+/**
+ * 首屏视觉增强开关：
+ * 关键逻辑：首帧先渲染核心文本与卡片，再启用氛围层与滤镜，降低首屏渲染压力。
+ */
+const isVisualEffectsReady = ref(false);
 
 /**
  * 作答主状态。
@@ -732,6 +752,23 @@ const radarCenterPoint = computed(() => RADAR_CENTER_POINT);
 const shouldShowPosterSection = computed(
   () => stage.value === "result" && Boolean(unifiedResult.value?.posterModel),
 );
+
+/**
+ * 海报容器宽高比：
+ * 关键逻辑：预览图与加载态共用固定比例，避免海报异步生成时发生布局跳动。
+ * 复杂度评估：O(1)，仅常量条件分支。
+ */
+const posterAspectRatio = computed(() => {
+  const renderMode = String(unifiedResult.value?.posterModel?.renderMode ?? "");
+  return renderMode === "html-love-brain" ? "1 / 2" : "9 / 16";
+});
+
+/**
+ * 海报容器样式。
+ */
+const posterContainerStyle = computed(() => ({
+  aspectRatio: posterAspectRatio.value,
+}));
 
 /**
  * 答卷摘要展示列表：
@@ -1127,6 +1164,19 @@ function stopHeartWaveAnimation() {
     window.cancelAnimationFrame(heartWaveAnimationFrameId);
     heartWaveAnimationFrameId = 0;
   }
+}
+
+/**
+ * 首帧后启用视觉增强层。
+ * 关键逻辑：双 requestAnimationFrame 确保浏览器先完成关键内容绘制，再开启重视觉样式。
+ * 复杂度评估：O(1)，仅固定次数回调调度。
+ */
+function enableVisualEffectsAfterFirstPaint() {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      isVisualEffectsReady.value = true;
+    });
+  });
 }
 
 /**
@@ -2039,6 +2089,7 @@ watch(
 onMounted(() => {
   heartDisplayedFillPercent.value = progressPercent.value;
   startHeartWaveAnimation();
+  enableVisualEffectsAfterFirstPaint();
 });
 
 /**
@@ -2078,6 +2129,23 @@ onBeforeUnmount(() => {
     linear-gradient(to right, rgba(157, 123, 195, 0.22) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(157, 123, 195, 0.2) 1px, transparent 1px);
   background-size: 26px 26px;
+}
+
+/* 首屏性能策略：
+ * 关键逻辑：首帧优先渲染核心文本与交互区，视觉增强层延后启用以缩短 LCP。 */
+.romancex-page:not(.romancex-page-perf-ready) .romancex-background-glow,
+.romancex-page:not(.romancex-page-perf-ready) .romancex-grid-noise {
+  display: none;
+}
+
+.romancex-page:not(.romancex-page-perf-ready) .romancex-header,
+.romancex-page:not(.romancex-page-perf-ready) .romancex-cover-panel,
+.romancex-page:not(.romancex-page-perf-ready) .romancex-panel {
+  animation: none;
+}
+
+.romancex-page:not(.romancex-page-perf-ready) .romancex-panel {
+  backdrop-filter: none;
 }
 
 .romancex-background-glow {
@@ -2585,16 +2653,20 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(214, 194, 237, 0.88);
+  width: 100%;
 }
 
 .romancex-poster-preview img {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
 .romancex-poster-loading {
   margin-top: 10px;
-  min-height: 130px;
+  min-height: 0;
+  width: 100%;
   border: 1px dashed rgba(206, 186, 232, 0.9);
   border-radius: 12px;
   display: grid;
@@ -2742,8 +2814,7 @@ onBeforeUnmount(() => {
 .romancex-hint-pop-leave-active {
   transition:
     opacity 250ms ease,
-    transform 250ms ease,
-    filter 250ms ease;
+    transform 250ms ease;
 }
 
 .romancex-question-swap-enter-from,
@@ -2751,7 +2822,6 @@ onBeforeUnmount(() => {
 .romancex-hint-pop-enter-from {
   opacity: 0;
   transform: translateY(8px) scale(0.97);
-  filter: blur(2px);
 }
 
 .romancex-question-swap-leave-to,
@@ -2759,18 +2829,16 @@ onBeforeUnmount(() => {
 .romancex-hint-pop-leave-to {
   opacity: 0;
   transform: translateY(-8px) scale(0.98);
-  filter: blur(2px);
 }
 
 .romancex-destiny-pop-enter-active,
 .romancex-destiny-pop-leave-active {
-  transition: opacity 250ms ease, filter 250ms ease;
+  transition: opacity 250ms ease;
 }
 
 .romancex-destiny-pop-enter-from,
 .romancex-destiny-pop-leave-to {
   opacity: 0;
-  filter: blur(2px);
 }
 
 @keyframes romancexWaveScan {
@@ -2836,6 +2904,17 @@ onBeforeUnmount(() => {
 
   .romancex-poster-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 759px) {
+  .romancex-panel {
+    /* 关键逻辑：移动端禁用毛玻璃，降低合成层压力并改善触控响应。 */
+    backdrop-filter: none;
+  }
+
+  .romancex-destiny-overlay::before {
+    backdrop-filter: none;
   }
 }
 

@@ -1,5 +1,11 @@
 <template>
-  <div class="typeology-page" :class="[activeTestConfig.effectClass]">
+  <div
+    class="typeology-page"
+    :class="[
+      activeTestConfig.effectClass,
+      { 'typeology-page-perf-ready': isVisualEffectsReady },
+    ]"
+  >
     <div class="typeology-aura aura-left" aria-hidden="true"></div>
     <div class="typeology-aura aura-right" aria-hidden="true"></div>
     <div class="typeology-noise" aria-hidden="true"></div>
@@ -446,7 +452,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { showConfirmDialog, showToast } from "vant";
 import {
   DEFAULT_TYPEOLOGY_TEST_KEY,
@@ -1141,6 +1147,12 @@ const props = defineProps({
  * 当前测试状态。
  */
 const stage = ref(STAGE_HOME);
+
+/**
+ * 首屏视觉增强开关：
+ * 关键逻辑：首帧先渲染关键文本与测试入口，再启用光效与滤镜，降低首屏合成压力。
+ */
+const isVisualEffectsReady = ref(false);
 const activeTestKey = ref(DEFAULT_TYPEOLOGY_TEST_KEY);
 const selectedModeKey = ref("");
 const runningModeConfig = ref(null);
@@ -1782,6 +1794,19 @@ function stopLoadingTicker() {
 }
 
 /**
+ * 首帧后启用视觉增强层。
+ * 关键逻辑：双 requestAnimationFrame 用于确保关键内容先完成绘制。
+ * 复杂度评估：O(1)，仅固定次数回调调度。
+ */
+function enableVisualEffectsAfterFirstPaint() {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      isVisualEffectsReady.value = true;
+    });
+  });
+}
+
+/**
  * 监听测试类型变化，重置默认模式。
  */
 watch(
@@ -1802,6 +1827,13 @@ watch(stage, (nextStage) => {
   }
 
   stopLoadingTicker();
+});
+
+/**
+ * 组件挂载后延迟启用重视觉效果。
+ */
+onMounted(() => {
+  enableVisualEffectsAfterFirstPaint();
 });
 
 /**
@@ -1880,6 +1912,23 @@ onBeforeUnmount(() => {
   background-position:
     0 0,
     10px 9px;
+}
+
+/* 首屏性能策略：
+ * 关键逻辑：首帧优先显示可交互内容，再启用氛围背景与入场动画。 */
+.typeology-page:not(.typeology-page-perf-ready) .typeology-aura,
+.typeology-page:not(.typeology-page-perf-ready) .typeology-noise {
+  display: none;
+}
+
+.typeology-page:not(.typeology-page-perf-ready) .typeology-header,
+.typeology-page:not(.typeology-page-perf-ready) .typeology-hero-media,
+.typeology-page:not(.typeology-page-perf-ready) .typeology-panel {
+  animation: none;
+}
+
+.typeology-page:not(.typeology-page-perf-ready) .typeology-panel {
+  backdrop-filter: none;
 }
 
 .typeology-shell {
@@ -2886,6 +2935,13 @@ onBeforeUnmount(() => {
 
   .typeology-deep-guide-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 759px) {
+  .typeology-panel {
+    /* 关键逻辑：移动端关闭毛玻璃，减少触控场景下的重绘开销。 */
+    backdrop-filter: none;
   }
 }
 </style>

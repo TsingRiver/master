@@ -104,13 +104,14 @@
         </h2>
         <p class="survey-cover-intro">{{ coverConfig.intro }}</p>
         <div
-          v-if="coverConfig.cityShowcase.enabled && coverShowcaseCity"
+          v-if="coverConfig.cityShowcase.enabled"
           class="survey-cover-city-showcase"
           aria-live="polite"
         >
           <p class="survey-cover-city-showcase-label">城市灵感闪现</p>
           <transition name="survey-cover-city-fade" mode="out-in">
             <div
+              v-if="coverShowcaseCity"
               :key="`cover-city-${coverShowcaseRenderKey}`"
               class="survey-cover-city-pill"
               :class="`is-${coverShowcaseCity.type}`"
@@ -118,6 +119,16 @@
               <span class="survey-cover-city-type">{{ coverShowcaseCity.typeLabel }}</span>
               <span class="survey-cover-city-divider">·</span>
               <span class="survey-cover-city-name">{{ coverShowcaseCity.name }}</span>
+            </div>
+            <div
+              v-else
+              key="cover-city-placeholder"
+              class="survey-cover-city-pill survey-cover-city-pill-placeholder"
+              aria-hidden="true"
+            >
+              <span class="survey-cover-city-type">国内城市</span>
+              <span class="survey-cover-city-divider">·</span>
+              <span class="survey-cover-city-name">加载中</span>
             </div>
           </transition>
         </div>
@@ -551,10 +562,18 @@
               已自动生成分享长图，可长按预览图保存，或点击按钮下载。
             </p>
 
-            <div v-if="posterPreviewUrl" class="survey-poster-preview">
+            <div
+              v-if="posterPreviewUrl"
+              class="survey-poster-preview"
+              :style="posterContainerStyle"
+            >
               <img :src="posterPreviewUrl" :alt="posterImageAltText" loading="lazy" />
             </div>
-            <div v-else class="survey-poster-loading">
+            <div
+              v-else
+              class="survey-poster-loading"
+              :style="posterContainerStyle"
+            >
               <van-loading :color="activeCheckedColor" size="24px" />
               <span>正在生成分享长图...</span>
             </div>
@@ -1599,6 +1618,24 @@ const isLoveBrainTheme = computed(
 const posterImageAltText = computed(() =>
   isLoveBrainTheme.value ? "恋爱脑指数长图预览" : "浪漫指数海报预览图",
 );
+
+/**
+ * 海报容器宽高比：
+ * 关键逻辑：在图片生成前先预留固定比例空间，避免“加载中占位 -> 图片出现”造成 CLS。
+ * 复杂度评估：O(1)，仅常量条件判断。
+ */
+const posterAspectRatio = computed(() => {
+  const renderMode = String(unifiedResult.value?.posterModel?.renderMode ?? "");
+  return renderMode === "html-love-brain" ? "1 / 2" : "9 / 16";
+});
+
+/**
+ * 海报容器样式：
+ * 关键逻辑：统一把预览态和加载态绑定同一尺寸策略，确保切换时布局稳定。
+ */
+const posterContainerStyle = computed(() => ({
+  aspectRatio: posterAspectRatio.value,
+}));
 
 /**
  * 商业引导位是否展示。

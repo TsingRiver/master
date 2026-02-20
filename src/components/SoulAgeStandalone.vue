@@ -1,5 +1,11 @@
 <template>
-  <div class="soul-page" :class="themeConfig.theme.className">
+  <div
+    class="soul-page"
+    :class="[
+      themeConfig.theme.className,
+      { 'soul-page-perf-ready': isVisualEffectsReady },
+    ]"
+  >
     <div class="soul-paper-texture" aria-hidden="true"></div>
     <div class="soul-tree-rings" aria-hidden="true"></div>
 
@@ -294,9 +300,22 @@
           <p v-if="interactionFeedback" class="soul-interaction-feedback">{{ interactionFeedback }}</p>
         </footer>
 
-        <section v-if="posterPreviewUrl" class="soul-poster-preview-block">
+        <section class="soul-poster-preview-block">
           <p class="soul-poster-preview-title">9:16 分享卡片预览</p>
-          <img :src="posterPreviewUrl" alt="灵魂年龄结果海报" class="soul-poster-preview-image" loading="lazy" />
+          <div class="soul-poster-preview-media" :style="posterContainerStyle">
+            <img
+              v-if="posterPreviewUrl"
+              :src="posterPreviewUrl"
+              alt="灵魂年龄结果海报"
+              class="soul-poster-preview-image"
+              loading="lazy"
+            />
+            <div v-else class="soul-poster-preview-loading">
+              <span>
+                {{ isGeneratingPoster ? "正在生成分享卡片..." : "点击“保存结果卡片”生成预览" }}
+              </span>
+            </div>
+          </div>
         </section>
       </section>
     </main>
@@ -304,7 +323,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { SOUL_AGE_QUESTION_BANK } from "../data/soulAgeQuestionBank";
 import { analyzeSoulAgeLocally } from "../services/soulAgeAnalyzer";
 import { analyzeSoulAgeWithAI } from "../services/soulAgeAiAnalyzer";
@@ -336,6 +355,12 @@ const props = defineProps({
  * 4. result：结果页。
  */
 const stage = ref("cover");
+
+/**
+ * 首屏视觉增强开关：
+ * 关键逻辑：首帧先渲染核心内容，再启用纹理与装饰层，降低初始绘制压力。
+ */
+const isVisualEffectsReady = ref(false);
 
 /**
  * 作答状态。
@@ -387,6 +412,14 @@ const isLastQuestion = computed(
 const currentSelectedOptionId = computed(
   () => answers.value[currentQuestionIndex.value],
 );
+
+/**
+ * 海报预览容器宽高比。
+ * 关键逻辑：始终预留 9:16 空间，避免海报异步生成时导致结果页 CLS。
+ */
+const posterContainerStyle = computed(() => ({
+  aspectRatio: "9 / 16",
+}));
 
 /**
  * 进度百分比：
@@ -697,6 +730,19 @@ function clearAutoAdvanceTimer() {
     window.clearTimeout(autoAdvanceTimer);
     autoAdvanceTimer = 0;
   }
+}
+
+/**
+ * 首帧后启用视觉增强层。
+ * 关键逻辑：双 requestAnimationFrame 确保关键内容先绘制，再打开纹理层。
+ * 复杂度评估：O(1)，仅固定次数回调调度。
+ */
+function enableVisualEffectsAfterFirstPaint() {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      isVisualEffectsReady.value = true;
+    });
+  });
 }
 
 /**
@@ -1085,6 +1131,20 @@ function restartSurvey() {
   interactionFeedback.value = "";
   activeRadarDimensionKey.value = "rationality";
 }
+
+/**
+ * 组件挂载后延迟启用纹理层。
+ */
+onMounted(() => {
+  enableVisualEffectsAfterFirstPaint();
+});
+
+/**
+ * 组件卸载时清理自动跳题定时器，避免悬挂回调。
+ */
+onBeforeUnmount(() => {
+  clearAutoAdvanceTimer();
+});
 </script>
 
 <style scoped>
@@ -1122,6 +1182,13 @@ function restartSurvey() {
       transparent 6px
     );
   z-index: 0;
+}
+
+/* 首屏性能策略：
+ * 关键逻辑：首帧先输出结构与文本，纹理装饰层延后启用，减少首屏合成负担。 */
+.soul-page:not(.soul-page-perf-ready) .soul-paper-texture,
+.soul-page:not(.soul-page-perf-ready) .soul-tree-rings {
+  display: none;
 }
 
 .soul-tree-rings {
@@ -1844,16 +1911,39 @@ function restartSurvey() {
 }
 
 .soul-poster-preview-image {
-  width: min(100%, 300px);
-  border-radius: 12px;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
   border: 1px solid var(--soul-border);
   display: block;
+  object-fit: cover;
+}
+
+.soul-poster-preview-media {
+  width: min(100%, 300px);
   margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.soul-poster-preview-loading {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  border: 1px dashed var(--soul-border);
+  background: rgba(255, 255, 255, 0.72);
+  display: grid;
+  place-items: center;
+  color: var(--soul-text-sub);
+  font-size: 13px;
 }
 
 .soul-card-swap-enter-active,
 .soul-card-swap-leave-active {
-  transition: all 300ms ease;
+  /* 关键逻辑：仅过渡 transform/opacity，避免 `all` 引发多余重排。 */
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
 }
 
 .soul-card-swap-enter-from,
@@ -1917,6 +2007,10 @@ function restartSurvey() {
     opacity: 0.2;
   }
 
+  .soul-tree-rings {
+    filter: none;
+  }
+
   .soul-cover {
     padding-top: 52px;
     padding-bottom: 52px;
@@ -1932,6 +2026,10 @@ function restartSurvey() {
 
   .soul-option-item {
     font-size: 15px;
+  }
+
+  .soul-option-item.is-pulsing {
+    animation: none;
   }
 
   .soul-radar-svg {
