@@ -97,6 +97,28 @@ body {
   --title-font: "Noto Serif SC", serif;
 }
 
+.theme-city.theme-city-international {
+  --page-bg: linear-gradient(140deg, #f6f2ff, #efe8ff);
+  --text-main: #332852;
+  --text-muted: #6e6390;
+  --surface: rgba(255, 255, 255, 0.9);
+  --surface-border: rgba(237, 229, 255, 0.92);
+  --shadow: 0 24px 48px rgba(91, 68, 148, 0.16);
+  --primary: #8d6be6;
+  --primary-dark: #c6a9ff;
+  --aura-left: radial-gradient(circle at 35% 35%, #f2c3ff, #d19cf4);
+  --aura-right: radial-gradient(circle at 35% 35%, #c4bbff, #9d8ef2);
+  --noise-dot: rgba(90, 70, 138, 0.4);
+  --option-border: #e8ddfb;
+  --option-selected-border: #b99ae9;
+  --option-selected-bg: linear-gradient(180deg, #ffffff, #f5efff);
+  --option-selected-shadow: rgba(114, 84, 188, 0.14);
+  --detail-border: #eadff8;
+  --detail-bg: linear-gradient(180deg, #ffffff, #f7f1ff);
+  --highlight-border: #e5d8f8;
+  --highlight-bg: #f5efff;
+}
+
 .theme-fortune {
   --page-bg: linear-gradient(130deg, #fff1e6, #ffe6bf 56%, #f7e4ca);
   --text-main: #342619;
@@ -463,6 +485,15 @@ body {
   --noise-position-one: -2px -2px;
   --noise-position-two: -2px -2px;
   --noise-opacity: 0.16;
+}
+
+.theme-city.theme-city-international {
+  --page-overlay-one:
+    radial-gradient(circle at 10% 16%, rgba(255, 255, 255, 0.92), transparent 40%),
+    linear-gradient(118deg, rgba(141, 107, 230, 0.14), transparent 48%);
+  --page-overlay-two: radial-gradient(circle at 88% 82%, rgba(211, 191, 255, 0.42), transparent 44%);
+  --noise-layer-one: linear-gradient(rgba(105, 79, 168, 0.13) 1px, transparent 1px);
+  --noise-layer-two: linear-gradient(90deg, rgba(105, 79, 168, 0.1) 1px, transparent 1px);
 }
 
 .theme-fortune {
@@ -1263,6 +1294,79 @@ body {
   line-height: 1.7;
 }
 
+.survey-cover-city-showcase {
+  margin-top: 2px;
+  display: grid;
+  gap: 6px;
+}
+
+.survey-cover-city-showcase-label {
+  margin: 0;
+  color: color-mix(in srgb, var(--text-muted) 86%, #ffffff 14%);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.survey-cover-city-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px dashed color-mix(in srgb, var(--primary) 42%, #ffffff 58%);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--primary) 12%, #ffffff 88%),
+    color-mix(in srgb, var(--primary-dark) 12%, #ffffff 88%)
+  );
+  color: color-mix(in srgb, var(--text-main) 88%, #ffffff 12%);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.survey-cover-city-pill.is-domestic {
+  border-color: color-mix(in srgb, #2d8f67 42%, #ffffff 58%);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #2d8f67 14%, #ffffff 86%),
+    color-mix(in srgb, #63c39b 16%, #ffffff 84%)
+  );
+}
+
+.survey-cover-city-pill.is-international {
+  border-color: color-mix(in srgb, #8d6be6 44%, #ffffff 56%);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #8d6be6 14%, #ffffff 86%),
+    color-mix(in srgb, #c6a9ff 18%, #ffffff 82%)
+  );
+}
+
+.survey-cover-city-type {
+  color: color-mix(in srgb, var(--text-muted) 88%, #ffffff 12%);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.survey-cover-city-divider {
+  color: color-mix(in srgb, var(--text-muted) 68%, #ffffff 32%);
+  font-weight: 600;
+}
+
+.survey-cover-city-name {
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .survey-cover-points {
   list-style: none;
   margin: 2px 0 0;
@@ -1285,6 +1389,34 @@ body {
   margin-top: 4px;
   display: grid;
   gap: 8px;
+}
+
+.survey-cover-mode-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.survey-cover-mode-item {
+  display: grid;
+  gap: 4px;
+}
+
+.survey-cover-mode-desc {
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.survey-cover-mode-btn-international.survey-btn-secondary {
+  border-color: color-mix(in srgb, #8d6be6 38%, #ffffff 62%) !important;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, #8d6be6 10%, #ffffff 90%),
+    color-mix(in srgb, #c6a9ff 16%, #ffffff 84%)
+  ) !important;
+  color: #5e43a2 !important;
 }
 
 .survey-cover-hook-line {
@@ -1494,6 +1626,16 @@ body {
   grid-template-columns: 1fr;
 }
 
+.survey-home-action-wrap {
+  margin-top: 16px;
+}
+
+.survey-home-action-btn {
+  min-height: 38px;
+  font-size: 13px !important;
+  border-style: dashed !important;
+}
+
 .survey-btn {
   border-radius: 12px !important;
   min-height: 42px;
@@ -1623,6 +1765,28 @@ body {
   filter: blur(2px);
 }
 
+.survey-cover-city-fade-enter-active,
+.survey-cover-city-fade-leave-active {
+  transition:
+    opacity 340ms ease,
+    transform 340ms ease,
+    filter 340ms ease;
+}
+
+.survey-cover-city-fade-enter-from,
+.survey-cover-city-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px) scale(0.985);
+  filter: blur(1.8px);
+}
+
+.survey-cover-city-fade-enter-to,
+.survey-cover-city-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
 .survey-cheer-pop-enter-active,
 .survey-cheer-pop-leave-active {
   transition:
@@ -1693,6 +1857,24 @@ body {
   margin: 0 0 12px;
   color: var(--primary-dark);
   font-weight: 700;
+}
+
+.survey-main-tag-grid {
+  margin: -2px 0 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.survey-main-tag-item {
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--primary-dark) 90%, #2f271f 10%);
+  background: color-mix(in srgb, var(--highlight-bg) 84%, #fff 16%);
+  border: 1px solid color-mix(in srgb, var(--detail-border) 78%, #fff 22%);
 }
 
 .survey-hero-artwork-wrap {
@@ -1977,12 +2159,52 @@ body {
 .survey-top-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 10px;
   padding: 8px 10px;
   border-radius: 10px;
   font-size: 13px;
   background: #fff;
   border: 1px solid var(--detail-border);
+}
+
+.survey-top-item-left {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 6px;
+}
+
+.survey-top-item-title {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.survey-top-tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.survey-top-tag-item {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-muted);
+  border: 1px solid color-mix(in srgb, var(--detail-border) 75%, #fff 25%);
+  background: color-mix(in srgb, var(--highlight-bg) 72%, #fff 28%);
+}
+
+.survey-top-item-score {
+  flex-shrink: 0;
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.65;
 }
 
 .survey-bullet-list li,
@@ -2017,6 +2239,403 @@ body {
   line-height: 1.68;
   color: var(--text-muted);
   text-align: center;
+}
+
+/* 城市结果页重点增强：
+ * 关键逻辑：只增强城市主题的结果模块，保证其他主题视觉保持稳定。 */
+.theme-city .survey-source-wrap {
+  display: inline-flex;
+  margin: 0 0 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(15, 138, 99, 0.18), rgba(113, 169, 232, 0.14));
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, #ffffff 76%);
+}
+
+.theme-city .survey-result-prefix {
+  color: color-mix(in srgb, var(--primary-dark) 72%, #4f8fb6 28%);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.theme-city .survey-main-title {
+  /* 关键逻辑：先提供纯色兜底，再在支持环境中升级为渐变文字。 */
+  color: #0a7357;
+  margin-bottom: 8px;
+  text-shadow: 0 10px 24px rgba(15, 138, 99, 0.2);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .theme-city .survey-main-title {
+    background:
+      linear-gradient(
+        122deg,
+        #0b7f61 0%,
+        #16a57f 34%,
+        #2f89b8 72%,
+        #cd9953 100%
+      );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.theme-city .survey-main-score {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, #ffffff 72%);
+  background: linear-gradient(130deg, rgba(15, 138, 99, 0.14), rgba(113, 169, 232, 0.16));
+  color: #1f5f80;
+  box-shadow: 0 8px 22px rgba(15, 138, 99, 0.13);
+}
+
+.theme-city .survey-main-tag-item:nth-child(3n + 1) {
+  border-color: color-mix(in srgb, #f0bf74 46%, #ffffff 54%);
+  background: linear-gradient(135deg, rgba(255, 248, 229, 0.96), rgba(255, 243, 220, 0.92));
+  color: #8f6b31;
+}
+
+.theme-city .survey-main-tag-item:nth-child(3n + 2) {
+  border-color: color-mix(in srgb, #5cc3a0 48%, #ffffff 52%);
+  background: linear-gradient(135deg, rgba(230, 250, 242, 0.96), rgba(219, 245, 236, 0.92));
+  color: #0b6c52;
+}
+
+.theme-city .survey-main-tag-item:nth-child(3n) {
+  border-color: color-mix(in srgb, #7daee8 46%, #ffffff 54%);
+  background: linear-gradient(135deg, rgba(233, 245, 255, 0.96), rgba(220, 238, 255, 0.92));
+  color: #2d6da3;
+}
+
+.theme-city .survey-highlight-box {
+  border-width: 1.5px;
+  border-color: color-mix(in srgb, #5ec9a7 44%, #ffffff 56%);
+  background:
+    linear-gradient(
+      128deg,
+      rgba(255, 250, 238, 0.94),
+      rgba(237, 252, 245, 0.92) 58%,
+      rgba(236, 246, 255, 0.91)
+    );
+  box-shadow: 0 12px 24px rgba(39, 122, 105, 0.12);
+}
+
+.theme-city .survey-highlight-box h3 {
+  color: #0f765a;
+}
+
+.theme-city .survey-top-wrap {
+  border-color: color-mix(in srgb, var(--primary) 34%, #ffffff 66%);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 254, 248, 0.95),
+      rgba(241, 252, 247, 0.92) 52%,
+      rgba(238, 248, 255, 0.9)
+    );
+  box-shadow: 0 14px 26px rgba(20, 118, 102, 0.1);
+}
+
+.theme-city .survey-top-wrap h3 {
+  color: #0f7257;
+}
+
+.theme-city .survey-top-list .survey-top-item {
+  border-color: color-mix(in srgb, #68bfa5 30%, #ffffff 70%);
+  background: linear-gradient(130deg, #ffffff, rgba(240, 250, 246, 0.9));
+}
+
+.theme-city .survey-top-list .survey-top-item:nth-child(1) {
+  /* 关键逻辑：第一推荐位单独提亮，强化“首选城市”视觉权重。 */
+  border-color: color-mix(in srgb, #e3b25f 52%, #ffffff 48%);
+  background:
+    linear-gradient(
+      128deg,
+      rgba(255, 251, 239, 0.98),
+      rgba(244, 252, 246, 0.95) 58%,
+      rgba(238, 248, 255, 0.93)
+    );
+  box-shadow: 0 10px 20px rgba(191, 141, 66, 0.14);
+}
+
+.theme-city .survey-top-tag-item {
+  border-color: color-mix(in srgb, #7bb6de 26%, #ffffff 74%);
+  background: linear-gradient(130deg, rgba(243, 249, 255, 0.95), rgba(233, 245, 255, 0.88));
+}
+
+.theme-city .survey-top-item-score {
+  color: #0f7b5d;
+}
+
+.theme-city .survey-top-list .survey-top-item:nth-child(1) .survey-top-item-score {
+  color: #b0823f;
+}
+
+.theme-city .survey-detail-wrap:first-of-type {
+  border-color: color-mix(in srgb, #5ec9a7 42%, #ffffff 58%);
+  background:
+    linear-gradient(
+      132deg,
+      rgba(235, 252, 245, 0.95),
+      rgba(242, 251, 255, 0.93) 55%,
+      rgba(255, 250, 240, 0.91)
+    );
+}
+
+.theme-city .survey-detail-wrap:first-of-type h3 {
+  color: #0f7158;
+}
+
+.theme-city .survey-detail-wrap:first-of-type .survey-bullet-list li {
+  border-color: color-mix(in srgb, #66c4a4 30%, #ffffff 70%);
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.94), rgba(239, 250, 246, 0.92));
+}
+
+.theme-city.theme-city-international .survey-source-wrap {
+  background: linear-gradient(135deg, rgba(126, 96, 214, 0.2), rgba(123, 177, 245, 0.18));
+  border-color: color-mix(in srgb, #8d6be6 32%, #ffffff 68%);
+}
+
+.theme-city.theme-city-international .survey-result-prefix {
+  color: color-mix(in srgb, #5d42a2 72%, #3f7ec8 28%);
+}
+
+.theme-city.theme-city-international .survey-main-title {
+  color: #6a4fc0;
+  text-shadow: 0 10px 24px rgba(121, 96, 200, 0.2);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .theme-city.theme-city-international .survey-main-title {
+    background:
+      linear-gradient(
+        122deg,
+        #6f58cb 0%,
+        #8d6be6 32%,
+        #5f9de6 68%,
+        #d38acb 100%
+      );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.theme-city.theme-city-international .survey-main-score {
+  border-color: color-mix(in srgb, #9c84e8 38%, #ffffff 62%);
+  background: linear-gradient(130deg, rgba(247, 241, 255, 0.9), rgba(236, 244, 255, 0.88));
+  color: #5f47a6;
+  box-shadow: 0 8px 22px rgba(111, 88, 188, 0.18);
+}
+
+/* 关键逻辑：国际版结果标签采用 4 色轮替，避免“整屏同色”导致信息层级不清。 */
+.theme-city.theme-city-international .survey-main-tag-item:nth-child(4n + 1) {
+  border-color: color-mix(in srgb, #c9a1ef 46%, #ffffff 54%);
+  background: linear-gradient(135deg, rgba(249, 242, 255, 0.96), rgba(241, 232, 255, 0.92));
+  color: #6f4cb2;
+}
+
+.theme-city.theme-city-international .survey-main-tag-item:nth-child(4n + 2) {
+  border-color: color-mix(in srgb, #7dbde9 46%, #ffffff 54%);
+  background: linear-gradient(135deg, rgba(235, 247, 255, 0.96), rgba(224, 241, 255, 0.92));
+  color: #2c6ea6;
+}
+
+.theme-city.theme-city-international .survey-main-tag-item:nth-child(4n + 3) {
+  border-color: color-mix(in srgb, #d79ed9 48%, #ffffff 52%);
+  background: linear-gradient(135deg, rgba(253, 241, 253, 0.96), rgba(247, 230, 247, 0.92));
+  color: #8a4f8a;
+}
+
+.theme-city.theme-city-international .survey-main-tag-item:nth-child(4n) {
+  border-color: color-mix(in srgb, #a5b7f1 46%, #ffffff 54%);
+  background: linear-gradient(135deg, rgba(241, 245, 255, 0.96), rgba(231, 238, 255, 0.92));
+  color: #4e63ad;
+}
+
+.theme-city.theme-city-international .survey-highlight-box {
+  border-width: 1.5px;
+  border-color: color-mix(in srgb, #c6a0ed 42%, #ffffff 58%);
+  background:
+    linear-gradient(
+      128deg,
+      rgba(250, 243, 255, 0.95),
+      rgba(243, 235, 255, 0.93) 56%,
+      rgba(240, 244, 255, 0.92)
+    );
+  box-shadow: 0 12px 24px rgba(116, 89, 194, 0.14);
+}
+
+.theme-city.theme-city-international .survey-highlight-box h3 {
+  color: #6a4bb0;
+}
+
+.theme-city.theme-city-international .survey-highlight-box p {
+  color: color-mix(in srgb, #5d3f85 70%, #4f7ec0 30%);
+}
+
+.theme-city.theme-city-international .survey-top-wrap {
+  border-color: color-mix(in srgb, #6aa9e6 34%, #ffffff 66%);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(247, 251, 255, 0.96),
+      rgba(235, 246, 255, 0.93) 52%,
+      rgba(232, 239, 255, 0.91)
+    );
+  box-shadow: 0 14px 26px rgba(83, 134, 195, 0.12);
+}
+
+.theme-city.theme-city-international .survey-top-wrap h3 {
+  color: #2f73af;
+}
+
+.theme-city.theme-city-international .survey-top-list .survey-top-item {
+  border-color: color-mix(in srgb, #8caee3 32%, #ffffff 68%);
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.98), rgba(241, 248, 255, 0.92));
+}
+
+.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(1) {
+  border-color: color-mix(in srgb, #c99ced 50%, #ffffff 50%);
+  background:
+    linear-gradient(
+      128deg,
+      rgba(252, 247, 255, 0.98),
+      rgba(244, 236, 255, 0.95) 58%,
+      rgba(236, 228, 255, 0.93)
+    );
+  box-shadow: 0 10px 20px rgba(134, 96, 198, 0.18);
+}
+
+.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(2) {
+  border-color: color-mix(in srgb, #79bbe7 46%, #ffffff 54%);
+  background:
+    linear-gradient(
+      128deg,
+      rgba(242, 250, 255, 0.98),
+      rgba(231, 246, 255, 0.95) 58%,
+      rgba(222, 239, 255, 0.93)
+    );
+}
+
+.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(3) {
+  border-color: color-mix(in srgb, #d39be3 46%, #ffffff 54%);
+  background:
+    linear-gradient(
+      128deg,
+      rgba(252, 243, 255, 0.98),
+      rgba(245, 234, 252, 0.95) 58%,
+      rgba(236, 225, 246, 0.93)
+    );
+}
+
+.theme-city.theme-city-international .survey-top-tag-item {
+  border-color: color-mix(in srgb, #bca0f7 26%, #ffffff 74%);
+  background: linear-gradient(130deg, rgba(249, 244, 255, 0.95), rgba(241, 232, 255, 0.9));
+}
+
+.theme-city.theme-city-international .survey-top-tag-item:nth-child(4n + 1) {
+  border-color: color-mix(in srgb, #caa2ee 36%, #ffffff 64%);
+  background: linear-gradient(130deg, rgba(250, 243, 255, 0.96), rgba(241, 233, 255, 0.92));
+  color: #6f4cb1;
+}
+
+.theme-city.theme-city-international .survey-top-tag-item:nth-child(4n + 2) {
+  border-color: color-mix(in srgb, #80bce9 36%, #ffffff 64%);
+  background: linear-gradient(130deg, rgba(238, 248, 255, 0.96), rgba(226, 241, 255, 0.92));
+  color: #2e6ea5;
+}
+
+.theme-city.theme-city-international .survey-top-tag-item:nth-child(4n + 3) {
+  border-color: color-mix(in srgb, #d59ee2 36%, #ffffff 64%);
+  background: linear-gradient(130deg, rgba(252, 243, 255, 0.96), rgba(245, 232, 250, 0.92));
+  color: #8a4f8a;
+}
+
+.theme-city.theme-city-international .survey-top-tag-item:nth-child(4n) {
+  border-color: color-mix(in srgb, #c3a0ec 36%, #ffffff 64%);
+  background: linear-gradient(130deg, rgba(248, 241, 255, 0.96), rgba(239, 230, 255, 0.92));
+  color: #6c4cad;
+}
+
+.theme-city.theme-city-international .survey-top-item-score {
+  color: #516fb9;
+}
+
+.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(1) .survey-top-item-score {
+  color: #6f4eb6;
+}
+
+.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(2) .survey-top-item-score {
+  color: #2f76ae;
+}
+
+.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(3) .survey-top-item-score {
+  color: #8a4f8a;
+}
+
+.theme-city.theme-city-international .survey-detail-wrap {
+  border-color: color-mix(in srgb, #b7a2eb 32%, #ffffff 68%);
+  background: linear-gradient(135deg, rgba(250, 246, 255, 0.95), rgba(243, 237, 255, 0.92));
+}
+
+.theme-city.theme-city-international .survey-detail-wrap:first-of-type {
+  border-color: color-mix(in srgb, #9cb3ef 44%, #ffffff 56%);
+  background:
+    linear-gradient(
+      132deg,
+      rgba(239, 246, 255, 0.95),
+      rgba(230, 240, 255, 0.93) 55%,
+      rgba(237, 246, 255, 0.91)
+    );
+}
+
+.theme-city.theme-city-international .survey-detail-wrap:first-of-type h3 {
+  color: #4e69ae;
+}
+
+.theme-city.theme-city-international .survey-detail-wrap:first-of-type .survey-bullet-list li {
+  border-color: color-mix(in srgb, #a8bdf0 32%, #ffffff 68%);
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.95), rgba(237, 244, 255, 0.92));
+}
+
+.theme-city.theme-city-international .survey-detail-wrap:first-of-type .survey-bullet-list li:nth-child(even) {
+  border-color: color-mix(in srgb, #c4a0ee 30%, #ffffff 70%);
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.95), rgba(245, 236, 255, 0.92));
+}
+
+.theme-city.theme-city-international .survey-type-card-wrap {
+  border-color: color-mix(in srgb, #aeb6f0 34%, #ffffff 66%);
+  background: linear-gradient(132deg, rgba(244, 247, 255, 0.95), rgba(239, 233, 255, 0.92));
+}
+
+.theme-city.theme-city-international .survey-type-card-item:nth-child(3n + 1) {
+  border-color: color-mix(in srgb, #cba4ef 40%, #ffffff 60%);
+  background: linear-gradient(130deg, rgba(250, 243, 255, 0.96), rgba(241, 233, 255, 0.92));
+}
+
+.theme-city.theme-city-international .survey-type-card-item:nth-child(3n + 2) {
+  border-color: color-mix(in srgb, #8abeee 40%, #ffffff 60%);
+  background: linear-gradient(130deg, rgba(239, 248, 255, 0.96), rgba(228, 241, 255, 0.92));
+}
+
+.theme-city.theme-city-international .survey-type-card-item:nth-child(3n) {
+  border-color: color-mix(in srgb, #d5a3e5 40%, #ffffff 60%);
+  background: linear-gradient(130deg, rgba(252, 243, 255, 0.96), rgba(244, 232, 250, 0.92));
+}
+
+.theme-city.theme-city-international .survey-distribution-wrap {
+  border-color: color-mix(in srgb, #86b9ea 36%, #ffffff 64%);
+  background: linear-gradient(132deg, rgba(242, 249, 255, 0.95), rgba(235, 244, 255, 0.92));
+}
+
+.theme-city.theme-city-international .survey-radar-wrap {
+  border-color: color-mix(in srgb, #ad95ea 36%, #ffffff 64%);
+  background: linear-gradient(132deg, rgba(248, 243, 255, 0.95), rgba(240, 233, 255, 0.92));
 }
 
 .survey-poster-wrap {
@@ -2321,6 +2940,21 @@ body {
     left: -22px;
     width: 104px;
     height: 104px;
+  }
+
+  .survey-cover-city-pill {
+    max-width: 100%;
+  }
+
+  .survey-cover-city-name {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .survey-cover-city-fade-enter-active,
+  .survey-cover-city-fade-leave-active {
+    transition: none;
   }
 }
 

@@ -1,5 +1,9 @@
 <template>
-  <div class="survey-page" :class="themeConfig.theme.className" :style="runtimeThemeStyle">
+  <div
+    class="survey-page"
+    :class="[themeConfig.theme.className, cityThemeVariantClass]"
+    :style="runtimeThemeStyle"
+  >
     <div class="survey-aura aura-left" aria-hidden="true"></div>
     <div class="survey-aura aura-right" aria-hidden="true"></div>
     <div class="survey-noise" aria-hidden="true"></div>
@@ -95,6 +99,24 @@
           <span class="survey-cover-title-main">{{ coverConfig.titleMain }}</span>
         </h2>
         <p class="survey-cover-intro">{{ coverConfig.intro }}</p>
+        <div
+          v-if="coverConfig.cityShowcase.enabled && coverShowcaseCity"
+          class="survey-cover-city-showcase"
+          aria-live="polite"
+        >
+          <p class="survey-cover-city-showcase-label">城市灵感闪现</p>
+          <transition name="survey-cover-city-fade" mode="out-in">
+            <div
+              :key="`cover-city-${coverShowcaseRenderKey}`"
+              class="survey-cover-city-pill"
+              :class="`is-${coverShowcaseCity.type}`"
+            >
+              <span class="survey-cover-city-type">{{ coverShowcaseCity.typeLabel }}</span>
+              <span class="survey-cover-city-divider">·</span>
+              <span class="survey-cover-city-name">{{ coverShowcaseCity.name }}</span>
+            </div>
+          </transition>
+        </div>
 
         <ul v-if="coverConfig.points.length" class="survey-cover-points">
           <li
@@ -112,9 +134,48 @@
           >
             {{ coverConfig.hookLine }}
           </p>
+          <div
+            v-if="coverConfig.modeButtons.length"
+            class="survey-cover-mode-grid"
+          >
+            <article
+              v-for="(modeButton, modeIndex) in coverConfig.modeButtons"
+              :key="`${modeButton.actionKey}-${modeIndex}`"
+              class="survey-cover-mode-item"
+            >
+              <van-button
+                block
+                :class="[
+                  'survey-btn',
+                  modeButton.buttonType === 'secondary'
+                    ? 'survey-btn-secondary'
+                    : 'survey-btn-primary',
+                  'survey-cover-start-btn',
+                  'survey-cover-mode-btn',
+                  modeButton.actionKey === 'international'
+                    ? 'survey-cover-mode-btn-international'
+                    : '',
+                ]"
+                :loading="
+                  isCoverActionSubmitting &&
+                  activeCoverActionKey === modeButton.actionKey
+                "
+                :disabled="isCoverActionSubmitting"
+                @click="startSurveyFromCover(modeButton)"
+              >
+                {{ modeButton.buttonText }}
+              </van-button>
+              <p v-if="modeButton.description" class="survey-cover-mode-desc">
+                {{ modeButton.description }}
+              </p>
+            </article>
+          </div>
           <van-button
+            v-else
             block
             class="survey-btn survey-btn-primary survey-cover-start-btn"
+            :loading="isCoverActionSubmitting"
+            :disabled="isCoverActionSubmitting"
             @click="startSurveyFromCover"
           >
             {{ coverConfig.startButtonText }}
@@ -163,7 +224,7 @@
             :show-pivot="false"
             :stroke-width="8"
             :color="activeProgressColor"
-            :track-color="themeConfig.theme.progressTrackColor"
+            :track-color="activeProgressTrackColor"
           />
         </template>
 
@@ -218,6 +279,15 @@
             {{ isLastQuestion ? themeConfig.theme.submitButtonText : themeConfig.theme.nextButtonText }}
           </van-button>
         </div>
+        <div class="survey-home-action-wrap">
+          <van-button
+            block
+            class="survey-btn survey-btn-secondary survey-home-action-btn"
+            @click="goHomeFromSurvey"
+          >
+            返回首页
+          </van-button>
+        </div>
       </section>
 
       <section
@@ -258,6 +328,18 @@
           <p class="survey-main-score">
             {{ unifiedResult.scoreLabel }}：{{ unifiedResult.main.score }}{{ resolvedMainScoreSuffix }}
           </p>
+          <div
+            v-if="unifiedResult.main?.tags?.length"
+            class="survey-main-tag-grid"
+          >
+            <span
+              v-for="(tagItem, tagIndex) in unifiedResult.main.tags"
+              :key="`main-tag-${tagItem}-${tagIndex}`"
+              class="survey-main-tag-item"
+            >
+              {{ tagItem }}
+            </span>
+          </div>
 
           <div
             v-if="unifiedResult.heroArtwork?.url"
@@ -413,11 +495,25 @@
             <ul class="survey-top-list">
               <li
                 v-for="(item, index) in unifiedResult.topThree"
-                :key="item.name"
+                :key="`${item.name}-${index}`"
                 class="survey-top-item"
               >
-                <span>{{ index + 1 }}. {{ item.name }}</span>
-                <span>{{ item.score }}%</span>
+                <div class="survey-top-item-left">
+                  <p class="survey-top-item-title">{{ index + 1 }}. {{ item.name }}</p>
+                  <div
+                    v-if="item.tags?.length"
+                    class="survey-top-tag-grid"
+                  >
+                    <span
+                      v-for="(tagItem, tagIndex) in item.tags"
+                      :key="`top-city-tag-${item.name}-${tagItem}-${tagIndex}`"
+                      class="survey-top-tag-item"
+                    >
+                      {{ tagItem }}
+                    </span>
+                  </div>
+                </div>
+                <span class="survey-top-item-score">{{ item.score }}%</span>
               </li>
             </ul>
           </div>
@@ -580,6 +676,19 @@ const questionPoolLoadError = ref("");
 const coverPointsSnapshot = ref([]);
 const themeDescriptionSnapshot = ref("");
 const isSummaryExpanded = ref(false);
+/**
+ * 封面动作状态：
+ * 关键逻辑：多按钮封面场景下需要区分“当前触发按钮”，避免重复点击触发并发加载。
+ */
+const isCoverActionSubmitting = ref(false);
+const activeCoverActionKey = ref("");
+/**
+ * 封面城市轮播状态：
+ * 关键逻辑：封面展示城市名时，通过独立 key 驱动淡入淡出切换动画。
+ */
+const coverShowcaseCity = ref(null);
+const coverShowcaseRenderKey = ref(0);
+let coverShowcaseTimer = null;
 
 /**
  * 题库加载会话令牌：
@@ -930,6 +1039,82 @@ const questionSelection = computed(() => {
 });
 
 /**
+ * 封面城市轮播默认池：
+ * 关键逻辑：默认池同时包含国内与国际城市，保证“随机展示”具备跨版本对比感。
+ */
+const DEFAULT_COVER_SHOWCASE_CITY_POOL = Object.freeze([
+  { name: "上海", type: "domestic" },
+  { name: "杭州", type: "domestic" },
+  { name: "成都", type: "domestic" },
+  { name: "广州", type: "domestic" },
+  { name: "深圳", type: "domestic" },
+  { name: "厦门", type: "domestic" },
+  { name: "青岛", type: "domestic" },
+  { name: "南京", type: "domestic" },
+  { name: "东京", type: "international" },
+  { name: "新加坡", type: "international" },
+  { name: "伦敦", type: "international" },
+  { name: "纽约", type: "international" },
+  { name: "悉尼", type: "international" },
+  { name: "温哥华", type: "international" },
+  { name: "巴黎", type: "international" },
+  { name: "阿姆斯特丹", type: "international" },
+]);
+
+/**
+ * 封面城市类型映射。
+ */
+const COVER_SHOWCASE_CITY_TYPE_LABEL_MAP = {
+  domestic: "国内城市",
+  international: "国际城市",
+};
+
+/**
+ * 规范化封面城市轮播配置。
+ * 复杂度评估：O(M)
+ * M 为配置城市数量，当前仅用于封面渲染（小规模常量级）。
+ * @param {Array<object | string> | unknown} rawCityItems 原始城市配置。
+ * @returns {Array<{ name: string, type: string, typeLabel: string }>} 标准化城市列表。
+ */
+function normalizeCoverShowcaseCities(rawCityItems) {
+  const sourceItems =
+    Array.isArray(rawCityItems) && rawCityItems.length > 0
+      ? rawCityItems
+      : DEFAULT_COVER_SHOWCASE_CITY_POOL;
+
+  const normalizedItems = sourceItems
+    .map((cityItem) => {
+      const cityName =
+        typeof cityItem === "string"
+          ? String(cityItem).trim()
+          : String(cityItem?.name ?? "").trim();
+      const rawType =
+        typeof cityItem === "string"
+          ? "domestic"
+          : String(cityItem?.type ?? "domestic").trim().toLowerCase();
+      const cityType = rawType === "international" ? "international" : "domestic";
+
+      return {
+        name: cityName,
+        type: cityType,
+        typeLabel:
+          COVER_SHOWCASE_CITY_TYPE_LABEL_MAP[cityType] ??
+          COVER_SHOWCASE_CITY_TYPE_LABEL_MAP.domestic,
+      };
+    })
+    .filter((cityItem) => Boolean(cityItem.name));
+
+  return normalizedItems.length > 0
+    ? normalizedItems
+    : DEFAULT_COVER_SHOWCASE_CITY_POOL.map((cityItem) => ({
+        ...cityItem,
+        typeLabel:
+          COVER_SHOWCASE_CITY_TYPE_LABEL_MAP[cityItem.type] ??
+          COVER_SHOWCASE_CITY_TYPE_LABEL_MAP.domestic,
+      }));
+}
+
+/**
  * 解析封面语录配置：
  * 1. 兼容静态数组与函数工厂两种配置形态。
  * 2. 统一做字符串清洗，避免空白项进入 UI。
@@ -1059,6 +1244,44 @@ const coverConfig = computed(() => {
     rawCoverConfig,
     fallbackTitle,
   );
+  // 关键逻辑：封面支持多入口动作按钮，用于“同主题下切换不同题库版本”。
+  const modeButtons = Array.isArray(rawCoverConfig.modeButtons)
+    ? rawCoverConfig.modeButtons
+        .map((buttonItem, buttonIndex) => {
+          const actionKey =
+            String(buttonItem?.key ?? "").trim() || `cover-mode-${buttonIndex + 1}`;
+          const buttonText =
+            String(buttonItem?.text ?? buttonItem?.label ?? "").trim();
+          const buttonType =
+            String(buttonItem?.type ?? "").trim().toLowerCase() === "secondary"
+              ? "secondary"
+              : "primary";
+
+          return {
+            actionKey,
+            buttonText,
+            buttonType,
+            description: String(buttonItem?.description ?? "").trim(),
+            loadQuestions:
+              typeof buttonItem?.loadQuestions === "function"
+                ? buttonItem.loadQuestions
+                : null,
+          };
+        })
+        .filter((buttonItem) => Boolean(buttonItem.buttonText))
+    : [];
+  const rawCityShowcaseConfig = rawCoverConfig.cityShowcase ?? {};
+  const cityShowcaseCities = normalizeCoverShowcaseCities(
+    rawCityShowcaseConfig.cities,
+  );
+  const cityShowcaseSwitchIntervalMs = Math.max(
+    1200,
+    Number(rawCityShowcaseConfig.switchIntervalMs) || 1900,
+  );
+  // 关键逻辑：轮播开关由封面配置控制，且必须有可用城市列表才启用。
+  const cityShowcaseEnabled =
+    Boolean(rawCityShowcaseConfig.enabled) && cityShowcaseCities.length > 0;
+
   return {
     kicker: String(rawCoverConfig.kicker ?? "").trim(),
     promoTag: String(rawCoverConfig.promoTag ?? "").trim(),
@@ -1069,10 +1292,111 @@ const coverConfig = computed(() => {
     hookLine: String(rawCoverConfig.hookLine ?? "").trim(),
     startButtonText:
       String(rawCoverConfig.startButtonText ?? "").trim() || "开始测试",
+    modeButtons,
+    cityShowcase: {
+      enabled: cityShowcaseEnabled,
+      switchIntervalMs: cityShowcaseSwitchIntervalMs,
+      cities: cityShowcaseCities,
+    },
     tip: String(rawCoverConfig.tip ?? "").trim(),
     socialProof: String(rawCoverConfig.socialProof ?? "").trim(),
   };
 });
+
+/**
+ * 随机选择封面展示城市（尽量避免连续重复）。
+ * 复杂度评估：O(1)
+ * N 为城市池大小，仅执行常量次随机与索引运算。
+ * @param {Array<{ name: string, type: string, typeLabel: string }>} cityItems 城市池。
+ * @param {{ name?: string, type?: string } | null} previousCity 上一个展示城市。
+ * @returns {{ name: string, type: string, typeLabel: string } | null} 下一个展示城市。
+ */
+function pickRandomCoverShowcaseCity(cityItems, previousCity) {
+  if (!Array.isArray(cityItems) || cityItems.length === 0) {
+    return null;
+  }
+
+  if (cityItems.length === 1) {
+    return cityItems[0];
+  }
+
+  const previousName = String(previousCity?.name ?? "").trim();
+  const previousType = String(previousCity?.type ?? "").trim();
+  let nextIndex = Math.floor(Math.random() * cityItems.length);
+  const candidate = cityItems[nextIndex];
+  if (
+    candidate &&
+    candidate.name === previousName &&
+    candidate.type === previousType
+  ) {
+    // 关键逻辑：命中与上一条相同城市时，强制偏移到其他索引，避免“看起来没变化”。
+    const shiftOffset = 1 + Math.floor(Math.random() * (cityItems.length - 1));
+    nextIndex = (nextIndex + shiftOffset) % cityItems.length;
+  }
+
+  return cityItems[nextIndex] ?? cityItems[0];
+}
+
+/**
+ * 刷新封面城市展示内容。
+ */
+function refreshCoverShowcaseCity() {
+  const showcaseConfig = coverConfig.value?.cityShowcase;
+  if (!showcaseConfig?.enabled) {
+    coverShowcaseCity.value = null;
+    coverShowcaseRenderKey.value = 0;
+    return;
+  }
+
+  const nextCity = pickRandomCoverShowcaseCity(
+    showcaseConfig.cities,
+    coverShowcaseCity.value,
+  );
+  if (!nextCity) {
+    coverShowcaseCity.value = null;
+    coverShowcaseRenderKey.value = 0;
+    return;
+  }
+
+  coverShowcaseCity.value = nextCity;
+  coverShowcaseRenderKey.value += 1;
+}
+
+/**
+ * 启动封面城市轮播定时器。
+ * @param {number} switchIntervalMs 切换间隔（毫秒）。
+ */
+function startCoverShowcaseTicker(switchIntervalMs) {
+  stopCoverShowcaseTicker();
+  refreshCoverShowcaseCity();
+
+  const showcaseConfig = coverConfig.value?.cityShowcase;
+  const cityCount = Array.isArray(showcaseConfig?.cities)
+    ? showcaseConfig.cities.length
+    : 0;
+  if (!showcaseConfig?.enabled || cityCount <= 1) {
+    return;
+  }
+
+  const safeIntervalMs = Math.max(1200, Number(switchIntervalMs) || 1900);
+  coverShowcaseTimer = window.setInterval(() => {
+    if (stage.value !== "cover") {
+      return;
+    }
+
+    refreshCoverShowcaseCity();
+  }, safeIntervalMs);
+}
+
+/**
+ * 停止封面城市轮播定时器。
+ */
+function stopCoverShowcaseTicker() {
+  if (coverShowcaseTimer) {
+    window.clearInterval(coverShowcaseTimer);
+    coverShowcaseTimer = null;
+  }
+}
 
 /**
  * 是否启用封面阶段。
@@ -1139,6 +1463,10 @@ const activeLoadingMessage = computed(() => {
 });
 const sourceTagStyle = computed(() => {
   const sourceType = unifiedResult.value?.source === "local" ? "local" : "deep";
+  if (isCityInternationalMode.value) {
+    return CITY_INTERNATIONAL_THEME_TOKENS.sourceTag[sourceType];
+  }
+
   return props.themeConfig.theme.sourceTag[sourceType];
 });
 
@@ -1183,6 +1511,51 @@ const visibleSummaryLines = computed(() => {
  */
 const shouldShowSummaryToggle = computed(
   () => resolvedSummaryLines.value.length > SUMMARY_PREVIEW_LIMIT,
+);
+
+/**
+ * 是否为城市主题。
+ */
+const isCityTheme = computed(() => props.themeConfig.key === "city");
+
+/**
+ * 判断题目 ID 是否属于国际版题库。
+ * @param {unknown} questionId 题目 ID。
+ * @returns {boolean} 是否为国际版题目。
+ */
+function isInternationalQuestionId(questionId) {
+  return String(questionId ?? "").startsWith("global-");
+}
+
+/**
+ * 是否处于城市测试国际版模式。
+ * 复杂度评估：O(Q)
+ * Q 为当前题集数量，实际规模 <= 15，计算开销可忽略。
+ */
+const isCityInternationalMode = computed(() => {
+  if (!isCityTheme.value) {
+    return false;
+  }
+
+  const activeQuestions =
+    selectedQuestionBank.value.length > 0
+      ? selectedQuestionBank.value
+      : loadedQuestionPool.value;
+
+  if (!Array.isArray(activeQuestions) || activeQuestions.length === 0) {
+    return false;
+  }
+
+  return activeQuestions.every((questionItem) =>
+    isInternationalQuestionId(questionItem?.id),
+  );
+});
+
+/**
+ * 城市主题运行时视觉变体类名。
+ */
+const cityThemeVariantClass = computed(() =>
+  isCityInternationalMode.value ? "theme-city-international" : "",
 );
 
 /**
@@ -1665,10 +2038,36 @@ const runtimeThemeStyle = computed(() => {
 });
 
 /**
+ * 城市主题国际版配色令牌：
+ * 关键逻辑：仅在国际版题库生效，保证同页面结构下快速切换紫色视觉语言。
+ */
+const CITY_INTERNATIONAL_THEME_TOKENS = Object.freeze({
+  checkedColor: "#8d6be6",
+  progressColor: "linear-gradient(90deg, #8d6be6, #c6a9ff)",
+  progressTrackColor: "rgba(109, 86, 178, 0.16)",
+  sourceTag: {
+    deep: {
+      label: "深度匹配结果",
+      color: "#f1ebff",
+      textColor: "#5d42a2",
+    },
+    local: {
+      label: "本地规则兜底结果",
+      color: "#f7f1ff",
+      textColor: "#7257b3",
+    },
+  },
+});
+
+/**
  * 当前激活的选中颜色：
  * 关键逻辑：主题色页面使用运行时主色，其他主题沿用静态配置色。
  */
 const activeCheckedColor = computed(() => {
+  if (isCityInternationalMode.value) {
+    return CITY_INTERNATIONAL_THEME_TOKENS.checkedColor;
+  }
+
   if (!isColorTheme2026.value) {
     return props.themeConfig.theme.checkedColor;
   }
@@ -1683,6 +2082,10 @@ const activeCheckedColor = computed(() => {
  * 当前进度条颜色。
  */
 const activeProgressColor = computed(() => {
+  if (isCityInternationalMode.value) {
+    return CITY_INTERNATIONAL_THEME_TOKENS.progressColor;
+  }
+
   if (!isColorTheme2026.value) {
     return props.themeConfig.theme.progressColor;
   }
@@ -1694,6 +2097,17 @@ const activeProgressColor = computed(() => {
     props.themeConfig.theme.checkedColor;
 
   return `linear-gradient(90deg, ${primaryColor}, ${secondaryColor})`;
+});
+
+/**
+ * 当前进度条轨道色。
+ */
+const activeProgressTrackColor = computed(() => {
+  if (isCityInternationalMode.value) {
+    return CITY_INTERNATIONAL_THEME_TOKENS.progressTrackColor;
+  }
+
+  return props.themeConfig.theme.progressTrackColor;
 });
 
 /**
@@ -1938,6 +2352,7 @@ async function resetSurveyState() {
   isAdvancingToNext.value = false;
   stopAutoAdvanceTimer();
   stopEncouragementTimer();
+  stopCoverShowcaseTicker();
   isEncouragementVisible.value = false;
   hasShownMidwayEncouragement.value = false;
   isDestinyOverlayVisible.value = false;
@@ -1957,6 +2372,10 @@ async function resetSurveyState() {
   coverPointsSnapshot.value = [];
   themeDescriptionSnapshot.value = "";
   isSummaryExpanded.value = false;
+  isCoverActionSubmitting.value = false;
+  activeCoverActionKey.value = "";
+  coverShowcaseCity.value = null;
+  coverShowcaseRenderKey.value = 0;
   questionPoolLoadError.value = "";
   loadingMessageIndex.value = 0;
   currentQuestionIndex.value = 0;
@@ -3017,12 +3436,20 @@ watch(
 );
 
 /**
- * 监听阶段切换，管理加载文案定时器。
+ * 监听阶段切换，管理加载文案与封面城市轮播。
  */
 watch(stage, (nextStage, previousStage) => {
   if (nextStage === "result" && previousStage !== "result") {
     // 关键逻辑：每次进入结果页都恢复为预览态，默认仅展示 3 条答卷回放。
     isSummaryExpanded.value = false;
+  }
+
+  if (nextStage === "cover" && coverConfig.value?.cityShowcase.enabled) {
+    startCoverShowcaseTicker(coverConfig.value.cityShowcase.switchIntervalMs);
+  } else {
+    stopCoverShowcaseTicker();
+    coverShowcaseCity.value = null;
+    coverShowcaseRenderKey.value = 0;
   }
 
   if (nextStage === "analyzing") {
@@ -3061,6 +3488,7 @@ onBeforeUnmount(() => {
   stopLoadingMessageTicker();
   stopAutoAdvanceTimer();
   stopEncouragementTimer();
+  stopCoverShowcaseTicker();
   isDestinyOverlayVisible.value = false;
   resetPosterState();
 });
@@ -3270,14 +3698,91 @@ function restart() {
 }
 
 /**
+ * 答题阶段返回首页。
+ * 关键逻辑：
+ * 1. 当前主题存在封面时，优先重置并返回封面，避免国际/国内题库状态残留。
+ * 2. 无封面时优先跳转主题中心链接，再回退到主题首个路由。
+ */
+function goHomeFromSurvey() {
+  stopAutoAdvanceTimer();
+
+  if (shouldUseCoverStage.value) {
+    // 关键逻辑：通过完整重置回到首页初始态，确保题库与答案全部归零。
+    void resetSurveyState();
+    return;
+  }
+
+  if (props.portalMode && props.portalHomeHref) {
+    window.location.assign(props.portalHomeHref);
+    return;
+  }
+
+  const themeHomePath = Array.isArray(props.themeConfig.routePaths)
+    ? String(props.themeConfig.routePaths[0] ?? "").trim()
+    : "";
+  window.location.assign(themeHomePath || "/");
+}
+
+/**
+ * 执行封面动作并按需切换题库。
+ * @param {{ actionKey: string, loadQuestions: (() => Promise<Array<object>>|Array<object>|null)|null } | null} coverAction 封面动作配置。
+ * @returns {Promise<boolean>} 是否执行成功。
+ */
+async function executeCoverAction(coverAction) {
+  if (!coverAction?.loadQuestions) {
+    return true;
+  }
+
+  let resolvedQuestions = null;
+  try {
+    // 关键逻辑：支持动作按钮按需加载题库，实现“封面选择版本 -> 切换题库”。
+    resolvedQuestions = await coverAction.loadQuestions();
+  } catch {
+    showToast("测试版本加载失败，请重试");
+    return false;
+  }
+
+  const normalizedQuestionPool = Array.isArray(resolvedQuestions)
+    ? resolvedQuestions
+    : [];
+  if (normalizedQuestionPool.length === 0) {
+    showToast("测试版本暂无可用题目，请稍后重试");
+    return false;
+  }
+
+  loadedQuestionPool.value = normalizedQuestionPool;
+  rebuildQuestionBank();
+  answers.value = Array.from({ length: questionBank.value.length }, () => null);
+  currentQuestionIndex.value = 0;
+  return true;
+}
+
+/**
  * 从封面进入问卷。
  * 关键逻辑：仅允许在 cover 阶段触发，避免误改分析/结果阶段状态。
+ * @param {{ actionKey?: string, loadQuestions?: (() => Promise<Array<object>>|Array<object>|null)|null } | null} [coverAction=null] 封面动作配置（可选）。
  */
-function startSurveyFromCover() {
+async function startSurveyFromCover(coverAction = null) {
   if (!shouldUseCoverStage.value || stage.value !== "cover") {
     return;
   }
 
-  stage.value = "survey";
+  if (isCoverActionSubmitting.value) {
+    return;
+  }
+
+  isCoverActionSubmitting.value = true;
+  activeCoverActionKey.value = String(coverAction?.actionKey ?? "cover-default").trim();
+  try {
+    const actionSuccess = await executeCoverAction(coverAction);
+    if (!actionSuccess) {
+      return;
+    }
+
+    stage.value = "survey";
+  } finally {
+    isCoverActionSubmitting.value = false;
+    activeCoverActionKey.value = "";
+  }
 }
 </script>

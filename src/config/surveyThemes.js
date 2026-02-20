@@ -34,20 +34,75 @@ export const UNIFIED_RESULT_TEMPLATE = {
 };
 
 /**
+ * 城市深度分析候选数量：
+ * 关键逻辑：仅把本地规则排序后的 TopK 候选发给 AI，控制 token 与响应时延。
+ */
+const CITY_DEEP_CANDIDATE_TOP_K = 10;
+
+/**
+ * 城市匹配解读文案字典：
+ * 关键逻辑：把模型维度映射成用户可直接理解的“生活语言”，避免术语化表达。
+ */
+const CITY_DIMENSION_REASON_COPY = {
+  climateWarm: {
+    label: "气候体感",
+    description: "四季体感更贴近你的舒适区，日常状态更容易稳定。",
+  },
+  paceFast: {
+    label: "生活节奏",
+    description: "节奏匹配你的做事习惯，不会太赶也不容易无聊。",
+  },
+  budgetHigh: {
+    label: "居住成本",
+    description: "消费与居住压力落在可承受区间，长期更能稳住生活质量。",
+  },
+  careerTech: {
+    label: "职业机会",
+    description: "岗位与成长通道更同频，职业规划更容易持续推进。",
+  },
+  naturePreference: {
+    label: "自然环境",
+    description: "环境氛围更符合你的恢复方式，情绪续航会更好。",
+  },
+  transitPublic: {
+    label: "通勤出行",
+    description: "通勤与跨区移动更省心，日常时间利用率更高。",
+  },
+  foodDiversity: {
+    label: "饮食休闲",
+    description: "吃喝与生活方式选择更丰富，幸福感更容易被满足。",
+  },
+  familyFriendly: {
+    label: "长期安居",
+    description: "长期居住与家庭安排更稳妥，生活节奏更有安全感。",
+  },
+};
+
+/**
+ * 城市匹配解读兜底文案：
+ * 关键逻辑：当数据缺失时仍输出可读结论，保证结果稳定展示。
+ */
+const CITY_MATCH_REASON_FALLBACK_LINES = [
+  "生活节奏与日常偏好更同频，长期居住不容易内耗。",
+  "通勤便利度与生活配套更贴合你的常用场景。",
+  "在机会密度与恢复空间之间更平衡，适合持续生活。",
+];
+
+/**
  * 创建标准化结果对象。
  * @param {object} payload 渲染数据。
  * @param {"deep"|"local"} payload.source 结果来源。
  * @param {string} payload.prefixLabel 主结果前缀文案。
  * @param {string} payload.scoreLabel 分值文案。
  * @param {string} [payload.scoreSuffix="%"] 主结果分值后缀。
- * @param {{ name: string, score: number }} payload.main 主结果对象。
+ * @param {{ name: string, score: number, tags?: Array<string> }} payload.main 主结果对象。
  * @param {{ url: string, alt: string, caption?: string } | null} [payload.heroArtwork] 主视觉插画（可选）。
  * @param {{ title: string, content: string }} payload.highlightCard 高亮卡片。
  * @param {string} payload.insight 解释文案。
  * @param {string} [payload.easterEggText] 彩蛋文案（可选）。
  * @param {{ title: string, items: Array<{ label: string, value: string }> }} [payload.typeCard] 类型学卡片。
  * @param {string} payload.topThreeTitle Top3 标题。
- * @param {Array<{ name: string, score: number }>} payload.topThree Top3 列表。
+ * @param {Array<{ name: string, score: number, tags?: Array<string> }>} payload.topThree Top3 列表。
  * @param {Array<{ title: string, items: Array<string> }>} payload.detailSections 详情分组。
  * @param {string} payload.summaryTitle 摘要标题。
  * @param {Array<string>} payload.summaryLines 摘要内容。
@@ -62,21 +117,174 @@ function createUnifiedResult(payload) {
 }
 
 /**
+ * 归一化城市标签数组。
+ * @param {unknown} tagInput 标签输入。
+ * @returns {Array<string>} 清洗后的标签列表（最多 3 个）。
+ */
+function normalizeCityTagList(tagInput) {
+  if (!Array.isArray(tagInput)) {
+    return [];
+  }
+
+  const normalizedTags = tagInput
+    .map((tagItem) => String(tagItem ?? "").trim())
+    .filter(Boolean);
+  return [...new Set(normalizedTags)].slice(0, 3);
+}
+
+/**
+ * 构建城市查询映射表。
+ * 复杂度评估：O(C)
+ * C 为候选城市数量（当前 297），用于后续 O(1) 查询标签与画像。
+ * @param {object} localResult 本地分析结果。
+ * @returns {Map<string, object>} 城市名到城市对象的映射。
+ */
+function buildCityLookupMap(localResult) {
+  const cityList = Array.isArray(localResult?.scoredCities)
+    ? localResult.scoredCities
+    : [];
+  return new Map(cityList.map((cityItem) => [cityItem.name, cityItem]));
+}
+
+/**
+ * 组装单个城市展示对象。
+ * @param {object} cityItem 城市结果对象。
+ * @param {Map<string, object>} cityLookupMap 城市查询映射。
+ * @returns {{ name: string, score: number, tags: Array<string> }} 展示对象。
+ */
+function resolveCityDisplayItem(cityItem, cityLookupMap) {
+  const cityName = String(cityItem?.name ?? "").trim();
+  const lookupCity = cityLookupMap.get(cityName);
+  const scoreValue = Number(cityItem?.score ?? lookupCity?.score ?? 0);
+
+  return {
+    name: cityName || "未匹配城市",
+    score: Number.isFinite(scoreValue) ? Math.max(0, Math.round(scoreValue)) : 0,
+    tags: normalizeCityTagList(cityItem?.tags ?? lookupCity?.tags),
+  };
+}
+
+/**
+ * 组装 Top3 城市展示列表（含标签）。
+ * @param {Array<object>} topThreeList 目标 Top3 列表。
+ * @param {Map<string, object>} cityLookupMap 城市查询映射。
+ * @param {Array<object>} fallbackTopThree 兜底 Top3 列表。
+ * @returns {Array<{ name: string, score: number, tags: Array<string> }>} 展示 Top3。
+ */
+function resolveCityTopThreeDisplay(topThreeList, cityLookupMap, fallbackTopThree) {
+  const primaryList =
+    Array.isArray(topThreeList) && topThreeList.length > 0
+      ? topThreeList
+      : Array.isArray(fallbackTopThree)
+        ? fallbackTopThree
+        : [];
+  const resolvedTopThree = [];
+  const usedCityNames = new Set();
+
+  const appendCityItem = (cityItem) => {
+    const resolvedItem = resolveCityDisplayItem(cityItem, cityLookupMap);
+    // 关键逻辑：去重后再入列，避免模型返回重复城市导致 Top3 可读性下降。
+    if (!resolvedItem.name || usedCityNames.has(resolvedItem.name)) {
+      return;
+    }
+    usedCityNames.add(resolvedItem.name);
+    resolvedTopThree.push(resolvedItem);
+  };
+
+  primaryList.forEach((cityItem) => {
+    if (resolvedTopThree.length >= 3) {
+      return;
+    }
+    appendCityItem(cityItem);
+  });
+
+  (Array.isArray(fallbackTopThree) ? fallbackTopThree : []).forEach((cityItem) => {
+    if (resolvedTopThree.length >= 3) {
+      return;
+    }
+    appendCityItem(cityItem);
+  });
+
+  return resolvedTopThree.slice(0, 3);
+}
+
+/**
+ * 生成城市匹配可读解读。
+ * 复杂度评估：O(D log D)
+ * D 为维度数量（固定 8），用于按“偏差 + 权重”排序输出前三条解释。
+ * @param {object} localResult 本地分析结果。
+ * @param {Map<string, object>} cityLookupMap 城市查询映射。
+ * @param {string} cityName 城市名。
+ * @returns {Array<string>} 面向用户的匹配解读列表。
+ */
+function buildCityReadableMatchLines(localResult, cityLookupMap, cityName) {
+  const fallbackCityName = String(localResult?.topCity?.name ?? "").trim();
+  const targetCityName = String(cityName ?? "").trim() || fallbackCityName;
+  const targetCity = cityLookupMap.get(targetCityName) ?? localResult?.topCity;
+  const preferenceVector = localResult?.preferenceVector;
+  const dimensionWeights = localResult?.dimensionWeights ?? {};
+
+  if (!targetCity?.profile || !preferenceVector) {
+    return CITY_MATCH_REASON_FALLBACK_LINES;
+  }
+
+  const rankedReasonItems = Object.entries(CITY_DIMENSION_REASON_COPY).map(
+    ([dimensionKey, reasonItem]) => {
+      const cityScore = Number(targetCity.profile[dimensionKey] ?? 5);
+      const userScore = Number(preferenceVector[dimensionKey] ?? 5);
+      const gap = Math.abs(cityScore - userScore);
+      const dimensionWeight = Number(dimensionWeights[dimensionKey] ?? 0);
+
+      return {
+        text: `${reasonItem.label}：${reasonItem.description}`,
+        // 关键逻辑：偏差越小、权重越高，越应该优先向用户解释。
+        sortScore: gap - dimensionWeight * 0.12,
+      };
+    },
+  );
+
+  return rankedReasonItems
+    .sort((leftItem, rightItem) => leftItem.sortScore - rightItem.sortScore)
+    .slice(0, 3)
+    .map((reasonItem) => reasonItem.text);
+}
+
+/**
  * 城市主题：构建深度分析请求负载。
  * @param {object} localResult 本地分析结果。
  * @returns {{ answerSummary: Array<object>, summaryLines: Array<string>, preferenceVector: object, candidateCities: Array<object>, localTopThree: Array<object> }} 深度分析负载。
  */
 function buildCityDeepPayload(localResult) {
+  const rankedCandidates = Array.isArray(localResult.scoredCities)
+    ? localResult.scoredCities
+    : [];
+  const fallbackCandidates = Array.isArray(localResult.candidateCities)
+    ? localResult.candidateCities
+    : [];
+  // 关键逻辑：优先使用本地模型排序结果并裁剪 TopK，保证精度与性能平衡。
+  const selectedCandidates = (rankedCandidates.length
+    ? rankedCandidates
+    : fallbackCandidates
+  )
+    .slice(0, CITY_DEEP_CANDIDATE_TOP_K)
+    .map((item) => ({
+      name: item.name,
+      profile: item.profile,
+      traits: item.traits,
+      tags: item.tags,
+    }));
+
   return {
     answerSummary: localResult.answerSummary,
     summaryLines: localResult.summaryLines,
     preferenceVector: localResult.preferenceVector,
-    // 关键逻辑：仅传必要字段，降低请求体体积和接口延迟。
-    candidateCities: localResult.candidateCities ?? [],
+    // 关键逻辑：仅传 TopK 候选，降低请求体体积和接口延迟。
+    candidateCities: selectedCandidates,
     localTopThree: localResult.topThree.map((item) => ({
       name: item.name,
       score: item.score,
       traits: item.traits,
+      tags: item.tags,
     })),
   };
 }
@@ -88,22 +296,35 @@ function buildCityDeepPayload(localResult) {
  * @returns {object} 统一结果对象。
  */
 function buildCityDeepUnifiedResult(deepResult, localResult) {
+  const cityLookupMap = buildCityLookupMap(localResult);
+  const resolvedMainCity = resolveCityDisplayItem(deepResult.topCity, cityLookupMap);
+  const resolvedTopThree = resolveCityTopThreeDisplay(
+    deepResult.topThree,
+    cityLookupMap,
+    localResult.topThree,
+  );
+  const readableMatchLines = buildCityReadableMatchLines(
+    localResult,
+    cityLookupMap,
+    resolvedMainCity.name,
+  );
+
   return createUnifiedResult({
     source: "deep",
     prefixLabel: "最终推荐城市",
     scoreLabel: "综合匹配度",
-    main: deepResult.topCity,
+    main: resolvedMainCity,
     highlightCard: {
       title: "城市生活建议",
       content: deepResult.cityLifeAdvice,
     },
     insight: deepResult.insight,
     topThreeTitle: "Top 3 匹配城市",
-    topThree: deepResult.topThree,
+    topThree: resolvedTopThree,
     detailSections: [
       {
-        title: "匹配标签",
-        items: ["生活习惯映射", "结构化偏好拟合", "语义化结论生成"],
+        title: "为什么推荐这座城市",
+        items: readableMatchLines,
       },
     ],
     summaryTitle: "答卷摘要",
@@ -118,25 +339,35 @@ function buildCityDeepUnifiedResult(deepResult, localResult) {
  * @returns {object} 统一结果对象。
  */
 function buildCityLocalUnifiedResult(localResult) {
+  const cityLookupMap = buildCityLookupMap(localResult);
+  const resolvedMainCity = resolveCityDisplayItem(localResult.topCity, cityLookupMap);
+  const resolvedTopThree = resolveCityTopThreeDisplay(
+    localResult.topThree,
+    cityLookupMap,
+    localResult.topThree,
+  );
+  const readableMatchLines = buildCityReadableMatchLines(
+    localResult,
+    cityLookupMap,
+    resolvedMainCity.name,
+  );
+
   return createUnifiedResult({
     source: "local",
     prefixLabel: "最终推荐城市",
     scoreLabel: "综合匹配度",
-    main: { name: localResult.topCity.name, score: localResult.topCity.score },
+    main: resolvedMainCity,
     highlightCard: {
       title: "城市生活建议",
       content: "建议先在通勤半径内试住 1-3 个月，再决定长期定居。",
     },
     insight: localResult.localInsight,
     topThreeTitle: "Top 3 匹配城市",
-    topThree: localResult.topThree.map((item) => ({
-      name: item.name,
-      score: item.score,
-    })),
+    topThree: resolvedTopThree,
     detailSections: [
       {
-        title: "匹配标签",
-        items: ["生活习惯映射", "结构化偏好拟合", "规则模型兜底"],
+        title: "为什么推荐这座城市",
+        items: readableMatchLines,
       },
     ],
     summaryTitle: "答卷摘要",
@@ -2118,15 +2349,16 @@ export const SURVEY_THEME_CONFIGS = [
     key: "city",
     routePaths: ["/", "/index.html", "/city", "/city.html"],
     pageMeta: {
-      title: "城市匹配问卷",
-      description: "通过生活习惯答卷，匹配最适合长期居住的城市。",
+      title: "最适合居住城市测试（国内版/国际版）",
+      description:
+        "先选择国内版或国际版题库，再基于生活偏好匹配最适合长期居住的城市。",
     },
     theme: {
       className: "theme-city",
       badge: "CITY MATCH",
-      title: "通过生活习惯，推断最适合你的居住城市",
+      title: "最适合居住城市测试",
       description:
-        "回答日常问题，先做结构化匹配，再生成更完整的城市建议。",
+        "先选择国内版或国际版测试，再根据生活偏好输出城市匹配结果与建议。",
       progressColor: "linear-gradient(90deg, #0f8a63, #43b78b)",
       progressTrackColor: "rgba(40, 95, 75, 0.13)",
       checkedColor: "#0f8a63",
@@ -2155,25 +2387,83 @@ export const SURVEY_THEME_CONFIGS = [
         const { QUESTION_BANK } = await import("../data/questionBank");
         return QUESTION_BANK;
       },
+      cover: {
+        enabled: true,
+        kicker: "城市版本选择",
+        titleEmphasis: "居住城市测试",
+        titleMain: "先选版本，再开始答题",
+        promoTag: "双版本独立题库",
+        intro:
+          "你可以先选择「国内版」或「国际版」再开始测试。系统会基于对应题库与城市池做匹配，结果更聚焦、更好理解。",
+        points: [
+          "国内版：覆盖中国大陆地级市（不含县级市/港澳台）。",
+          "国际版：覆盖热门国际城市，适合有跨国居住计划的用户。",
+        ],
+        cityShowcase: {
+          enabled: true,
+          switchIntervalMs: 2000,
+          cities: [
+            { name: "上海", type: "domestic" },
+            { name: "深圳", type: "domestic" },
+            { name: "杭州", type: "domestic" },
+            { name: "成都", type: "domestic" },
+            { name: "泉州", type: "domestic" },
+            { name: "武汉", type: "domestic" },
+            { name: "东京", type: "international" },
+            { name: "新加坡", type: "international" },
+            { name: "纽约", type: "international" },
+            { name: "伦敦", type: "international" },
+            { name: "巴黎", type: "international" },
+            { name: "悉尼", type: "international" },
+          ],
+        },
+        hookLine: "同一份偏好，在不同城市池里可能得到完全不同答案。",
+        tip: "可随时重测并切换版本",
+        modeButtons: [
+          {
+            key: "domestic",
+            text: "国内版测试",
+            type: "primary",
+            description: "全国地级市覆盖，适合国内长期居住决策。",
+          },
+          {
+            key: "international",
+            text: "国际版测试",
+            type: "secondary",
+            description: "热门国际城市覆盖，适合跨国定居方向筛选。",
+            loadQuestions: async () => {
+              const { GLOBAL_CITY_QUESTION_BANK } = await import(
+                "../data/globalCityQuestionBank"
+              );
+              return GLOBAL_CITY_QUESTION_BANK;
+            },
+          },
+        ],
+      },
       questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const [{ analyzeCitiesLocally }, { CITY_PROFILES }] = await Promise.all([
+        const [{ analyzeCitiesLocally }, { CITY_PROFILES }, { GLOBAL_CITY_PROFILES }] =
+          await Promise.all([
           import("../services/localAnalyzer"),
           import("../data/cityProfiles"),
+          import("../data/globalCityProfiles"),
         ]);
-        const localResult = analyzeCitiesLocally({
+        const isInternationalVersion =
+          Array.isArray(selectedQuestions) &&
+          selectedQuestions.length > 0 &&
+          selectedQuestions.every((questionItem) =>
+            String(questionItem?.id ?? "").startsWith("global-"),
+          );
+        // 关键逻辑：根据题目前缀识别测试版本，确保国际版只在国际城市池内匹配。
+        const activeCityPool = isInternationalVersion
+          ? GLOBAL_CITY_PROFILES
+          : CITY_PROFILES;
+
+        return analyzeCitiesLocally({
           questions: selectedQuestions,
           answerIds,
-          cities: CITY_PROFILES,
+          cities: activeCityPool,
         });
-        return {
-          ...localResult,
-          candidateCities: CITY_PROFILES.map((item) => ({
-            name: item.name,
-            profile: item.profile,
-            traits: item.traits,
-          })),
-        };
       },
       buildDeepPayload: buildCityDeepPayload,
       runDeepAnalysis: async (payload) => {

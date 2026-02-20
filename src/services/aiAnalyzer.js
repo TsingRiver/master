@@ -78,7 +78,8 @@ function normalizeAiResult(aiData, candidateCities, localTopThree) {
       return cityName;
     }
 
-    return localTopThree[0]?.name ?? candidateCities[0]?.name ?? "杭州";
+    // 关键逻辑：优先回退到当前候选池首位，避免国际版场景回退到固定国内城市名。
+    return localTopThree[0]?.name ?? candidateCities[0]?.name ?? "城市待定";
   };
 
   const fallbackTopThree = localTopThree.slice(0, 3).map((item) => ({
@@ -87,7 +88,7 @@ function normalizeAiResult(aiData, candidateCities, localTopThree) {
   }));
 
   const fallbackResult = {
-    topCity: fallbackTopThree[0] ?? { name: "杭州", score: 0 },
+    topCity: fallbackTopThree[0] ?? { name: "城市待定", score: 0 },
     topThree: fallbackTopThree,
     insight: "基于当前答卷，你更适合在效率与生活质量之间平衡更好的城市。",
     cityLifeAdvice: "建议先在通勤半径内试住 1-3 个月，再决定长期定居。",

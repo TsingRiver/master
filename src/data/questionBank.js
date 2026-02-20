@@ -56,7 +56,7 @@ export const QUESTION_BANK = [
       },
       {
         id: "takeout-free",
-        label: "不穿内衣",
+        label: "怎么舒服怎么来",
         vector: { paceFast: 2, climateWarm: 8, naturePreference: 6, familyFriendly: 4 },
       },
     ],
