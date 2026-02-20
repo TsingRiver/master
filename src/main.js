@@ -184,6 +184,25 @@ async function setupSpeedInsights() {
 }
 
 /**
+ * 延迟调度 Speed Insights 初始化：
+ * 关键逻辑：把可选埋点初始化放到浏览器空闲阶段，降低首屏主线程竞争。
+ * 复杂度评估：O(1)，仅一次调度，不引入额外循环。
+ */
+function scheduleSpeedInsightsSetup() {
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => {
+      // 关键逻辑：埋点为增强能力，失败不应影响主流程。
+      void setupSpeedInsights();
+    });
+    return;
+  }
+
+  window.setTimeout(() => {
+    void setupSpeedInsights();
+  }, 0);
+}
+
+/**
  * 通用问卷入口：
  * 1. 注册 Vant 组件库，统一移动端组件行为。
  * 2. 挂载单一宿主应用，通过路径解析不同测试主题。
@@ -206,5 +225,5 @@ const app = createApp(App);
   app.use(vantComponent);
 });
 app.mount("#app");
-// 关键逻辑：Speed Insights 为可选增强能力，不阻塞主应用挂载。
-void setupSpeedInsights();
+// 关键逻辑：Speed Insights 为可选增强能力，采用空闲调度避免阻塞首屏渲染。
+scheduleSpeedInsightsSetup();

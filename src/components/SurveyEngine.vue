@@ -1,7 +1,11 @@
 <template>
   <div
     class="survey-page"
-    :class="[themeConfig.theme.className, cityThemeVariantClass]"
+    :class="[
+      themeConfig.theme.className,
+      cityThemeVariantClass,
+      { 'survey-page-perf-ready': isVisualEffectsReady },
+    ]"
     :style="runtimeThemeStyle"
   >
     <div class="survey-aura aura-left" aria-hidden="true"></div>
@@ -628,7 +632,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { showToast } from "vant";
 import {
   selectRandomQuestionsWithoutRepeat,
@@ -709,6 +713,12 @@ let loadingMessageTimer = null;
 let autoAdvanceTimer = null;
 
 /**
+ * 首屏视觉增强开关：
+ * 关键逻辑：首帧先渲染核心文本与卡片，再启用装饰层/滤镜/入场动画，减少 LCP 等待时间。
+ */
+const isVisualEffectsReady = ref(false);
+
+/**
  * 海报状态。
  */
 const posterPreviewUrl = ref("");
@@ -766,6 +776,19 @@ const DEEP_RESULT_HARD_TIMEOUT_MS = 45000;
  * 用于防止旧请求在重测/切换主题后覆盖新状态。
  */
 let deepAnalysisSessionToken = 0;
+
+/**
+ * 启用视觉增强层：
+ * 关键逻辑：使用双 requestAnimationFrame，确保浏览器先完成首屏关键内容绘制。
+ * 复杂度评估：O(1)，仅常量级回调调度，不引入额外循环开销。
+ */
+function enableVisualEffectsAfterFirstPaint() {
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      isVisualEffectsReady.value = true;
+    });
+  });
+}
 
 /**
  * 2026 主题色页基础色板（中性态）：
@@ -3491,6 +3514,13 @@ onBeforeUnmount(() => {
   stopCoverShowcaseTicker();
   isDestinyOverlayVisible.value = false;
   resetPosterState();
+});
+
+/**
+ * 组件挂载后延迟启用视觉增强效果。
+ */
+onMounted(() => {
+  enableVisualEffectsAfterFirstPaint();
 });
 
 /**

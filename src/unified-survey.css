@@ -729,6 +729,28 @@ body {
     var(--noise-position-two);
 }
 
+/* 首屏性能策略：
+ * 关键逻辑：首帧优先渲染可读内容，视觉增强在 `survey-page-perf-ready` 后再启用。 */
+.survey-page:not(.survey-page-perf-ready) .survey-aura,
+.survey-page:not(.survey-page-perf-ready) .survey-noise,
+.survey-page:not(.survey-page-perf-ready) .survey-cover-symbol-layer {
+  display: none;
+}
+
+.survey-page:not(.survey-page-perf-ready) .survey-header,
+.survey-page:not(.survey-page-perf-ready) .card-in {
+  animation: none;
+}
+
+.survey-page:not(.survey-page-perf-ready) .survey-card {
+  backdrop-filter: none;
+}
+
+.theme-ancient:not(.survey-page-perf-ready)::before,
+.theme-ancient:not(.survey-page-perf-ready)::after {
+  content: none;
+}
+
 /* 关键逻辑：古风主题增加“楼阁场景图 + 雾幕”双层背景，随答题进度切换变量实现晨昏夜变化。 */
 .theme-ancient::before,
 .theme-ancient::after {
@@ -2741,7 +2763,10 @@ body {
 
 .survey-fade-enter-active,
 .survey-fade-leave-active {
-  transition: all 260ms ease;
+  /* 关键逻辑：仅过渡 transform/opacity，避免 `all` 触发不必要的样式计算。 */
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
 }
 
 .survey-fade-enter-from {
@@ -2948,6 +2973,21 @@ body {
 
   .survey-cover-city-name {
     font-size: 13px;
+  }
+}
+
+@media (max-width: 759px) {
+  .survey-card {
+    /* 关键逻辑：移动端禁用卡片毛玻璃可显著降低首屏合成与重绘成本。 */
+    backdrop-filter: none;
+  }
+
+  .survey-commercial-link {
+    backdrop-filter: none;
+  }
+
+  .survey-option {
+    animation: none;
   }
 }
 
