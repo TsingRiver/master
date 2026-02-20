@@ -32,7 +32,8 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from "vue";
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { injectSpeedInsights } from "@vercel/speed-insights";
 import LinkErrorPage from "./components/LinkErrorPage.vue";
 import SurveyEngine from "./components/SurveyEngine.vue";
 import ThemeHub from "./components/ThemeHub.vue";
@@ -252,6 +253,14 @@ function syncLocationFromBrowser() {
  * 首次同步地址状态。
  */
 syncLocationFromBrowser();
+
+/**
+ * 注入 Vercel Speed Insights 跟踪脚本。
+ * 关键逻辑：仅在客户端首次挂载时调用一次。
+ */
+onMounted(() => {
+  injectSpeedInsights();
+});
 
 /**
  * 监听地址变化：
