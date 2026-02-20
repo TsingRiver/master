@@ -2441,6 +2441,8 @@ export const SURVEY_THEME_CONFIGS = [
         ],
       },
       questionSelection: { minCount: 10, maxCount: 15 },
+      // 关键逻辑：启用“选择即下一题”，并在 UI 侧隐藏“下一步”按钮。
+      autoAdvanceOnSelect: true,
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
         const [{ analyzeCitiesLocally }, { CITY_PROFILES }, { GLOBAL_CITY_PROFILES }] =
           await Promise.all([
