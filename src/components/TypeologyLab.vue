@@ -175,7 +175,15 @@
 
         <div class="typeology-highlight-box">
           <h3>结果摘要</h3>
-          <p>
+          <div
+            v-if="isAiInsightStreaming && !insightForView"
+            class="typeology-highlight-skeleton"
+          >
+            <span class="typeology-skeleton-line is-wide"></span>
+            <span class="typeology-skeleton-line"></span>
+            <span class="typeology-skeleton-line is-short"></span>
+          </div>
+          <p v-else>
             {{ insightForView }}
             <span
               v-if="isAiInsightStreaming && aiStreamingNarrativeText"
@@ -1606,11 +1614,18 @@ const aiStreamingActionPreview = computed(() =>
 
 /**
  * 结果摘要视图文案：
- * 关键逻辑：流式期间优先显示 AI 叙事预览，完成后显示已落盘结果。
+ * 关键逻辑：
+ * 1. 流式期间仅显示 AI 叙事预览；若尚无片段则返回空字符串，交给占位骨架屏。
+ * 2. 流式结束后优先显示 AI 正式叙事；AI 失败则回退本地结果。
  */
 const insightForView = computed(() => {
-  if (isAiInsightStreaming.value && aiStreamingNarrativeText.value) {
+  if (isAiInsightStreaming.value) {
     return aiStreamingNarrativeText.value;
+  }
+
+  const aiNarrative = String(currentResult.value?.aiInsight?.narrative ?? "").trim();
+  if (aiNarrative) {
+    return aiNarrative;
   }
 
   return currentResult.value?.insight ?? "";
@@ -1618,10 +1633,12 @@ const insightForView = computed(() => {
 
 /**
  * 核心标签视图数据：
- * 关键逻辑：流式期间优先显示 AI 预览，完成后优先显示 AI strengths。
+ * 关键逻辑：
+ * 1. 流式期间只显示 AI 片段；无片段则返回空数组触发占位。
+ * 2. 流式结束后优先显示 AI strengths；失败时回退本地标签。
  */
 const detailTagsForView = computed(() => {
-  if (isAiInsightStreaming.value && aiStreamingTagPreview.value.length > 0) {
+  if (isAiInsightStreaming.value) {
     return aiStreamingTagPreview.value;
   }
 
@@ -1635,10 +1652,12 @@ const detailTagsForView = computed(() => {
 
 /**
  * 建议动作视图数据：
- * 关键逻辑：流式期间优先显示 AI 预览，完成后优先显示 AI suggestions。
+ * 关键逻辑：
+ * 1. 流式期间只显示 AI 片段；无片段则返回空数组触发占位。
+ * 2. 流式结束后优先显示 AI suggestions；失败时回退本地建议。
  */
 const detailActionsForView = computed(() => {
-  if (isAiInsightStreaming.value && aiStreamingActionPreview.value.length > 0) {
+  if (isAiInsightStreaming.value) {
     return aiStreamingActionPreview.value;
   }
 
@@ -1961,6 +1980,22 @@ function cancelActiveAiInsightRequest() {
   }
   resetAiInsightStreamingUiState();
   isGeneratingAiInsight.value = false;
+}
+
+/**
+ * 安全调用可选回调。
+ * @param {Function|undefined} callback 可选回调。
+ */
+function invokeOptionalCallback(callback) {
+  if (typeof callback !== "function") {
+    return;
+  }
+
+  try {
+    callback();
+  } catch {
+    // 关键逻辑：外部回调异常不应影响主流程。
+  }
 }
 
 /**
@@ -2553,6 +2588,8 @@ async function runAiInsightGeneration({
   timeoutMs,
   showSuccessToast,
   showErrorToast,
+  onFirstRenderable,
+  onSettled,
 }) {
   if (!baseResult) {
     return;
@@ -2571,6 +2608,31 @@ async function runAiInsightGeneration({
   aiInsightRequestController = new AbortController();
   isGeneratingAiInsight.value = true;
   isAiInsightStreaming.value = true;
+  let hasEmittedFirstRenderable = false;
+
+  /**
+   * 标记“已出现首条可渲染 AI 内容”：
+   * 1. narrative / insight 任一有内容；
+   * 2. strengths / suggestions 任一有至少 1 条。
+   * 复杂度评估：O(L)，L 为当前累计流式文本长度。
+   * @param {string} streamRawText 当前累计文本。
+   */
+  const emitFirstRenderableIfNeeded = (streamRawText) => {
+    if (hasEmittedFirstRenderable) {
+      return;
+    }
+
+    const hasNarrative = Boolean(resolveAiNarrativePreviewText(streamRawText));
+    const hasTag = extractStringArrayPreviewFromJsonStream(streamRawText, "strengths", 1).length > 0;
+    const hasAction =
+      extractStringArrayPreviewFromJsonStream(streamRawText, "suggestions", 1).length > 0;
+    if (!hasNarrative && !hasTag && !hasAction) {
+      return;
+    }
+
+    hasEmittedFirstRenderable = true;
+    invokeOptionalCallback(onFirstRenderable);
+  };
 
   try {
     const aiInsightResult = await analyzeTypeologyWithAi({
@@ -2583,6 +2645,7 @@ async function runAiInsightGeneration({
           return;
         }
         scheduleAiInsightPreviewText(fullText);
+        emitFirstRenderableIfNeeded(fullText);
       },
     });
 
@@ -2591,6 +2654,10 @@ async function runAiInsightGeneration({
     }
 
     flushAiInsightPreviewText();
+    if (!hasEmittedFirstRenderable) {
+      hasEmittedFirstRenderable = true;
+      invokeOptionalCallback(onFirstRenderable);
+    }
 
     const mergedResult = {
       ...baseResult,
@@ -2627,6 +2694,7 @@ async function runAiInsightGeneration({
       showToast(error?.message ?? "进阶解读暂不可用，请稍后重试");
     }
   } finally {
+    invokeOptionalCallback(onSettled);
     if (requestSessionToken === aiInsightRequestSessionToken) {
       aiInsightRequestController = null;
       isGeneratingAiInsight.value = false;
@@ -2665,16 +2733,40 @@ async function submitCurrentTest() {
   clearTypeologyProgressByTestKey(activeTestConfig.value.key);
 
   currentResult.value = localPersistedResult;
-  stage.value = STAGE_DETAIL;
-  showAllSummary.value = false;
 
-  // 关键逻辑：结果页先展示本地结果，再流式填充 AI 文案，缩短用户“首屏等待”时间。
+  /**
+   * 结果页切换闸门：
+   * 关键逻辑：至少等待 AI 产出一条可展示内容（摘要/标签/建议）或请求结束（含失败）后再进入结果页。
+   */
+  let hasOpenedDetailStage = false;
+  let resolveStageOpenGate = null;
+  const stageOpenGatePromise = new Promise((resolve) => {
+    resolveStageOpenGate = resolve;
+  });
+  const tryOpenDetailStage = () => {
+    if (hasOpenedDetailStage) {
+      return;
+    }
+    hasOpenedDetailStage = true;
+    if (typeof resolveStageOpenGate === "function") {
+      resolveStageOpenGate();
+    }
+  };
+
   void runAiInsightGeneration({
     baseResult: localPersistedResult,
     timeoutMs: 16000,
     showSuccessToast: false,
     showErrorToast: false,
+    onFirstRenderable: tryOpenDetailStage,
+    onSettled: tryOpenDetailStage,
   });
+
+  await stageOpenGatePromise;
+  if (stage.value === STAGE_ANALYZING) {
+    stage.value = STAGE_DETAIL;
+    showAllSummary.value = false;
+  }
 }
 
 /**
@@ -3289,6 +3381,11 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
+.typeology-highlight-skeleton {
+  display: grid;
+  gap: 7px;
+}
+
 .typeology-score-wrap,
 .typeology-detail-section,
 .typeology-ai-section {
@@ -3338,6 +3435,10 @@ onBeforeUnmount(() => {
 .typeology-bullet-list-skeleton {
   list-style: none;
   padding-left: 0;
+}
+
+.typeology-bullet-list-skeleton .typeology-skeleton-line {
+  width: 88%;
 }
 
 .typeology-summary-toggle {
@@ -3465,12 +3566,15 @@ onBeforeUnmount(() => {
   border-radius: 999px;
   background:
     linear-gradient(
-      100deg,
-      color-mix(in srgb, var(--type-card-border) 82%, transparent) 20%,
-      color-mix(in srgb, var(--type-card-border) 52%, #ffffff 48%) 50%,
-      color-mix(in srgb, var(--type-card-border) 82%, transparent) 80%
+      106deg,
+      color-mix(in srgb, var(--type-accent) 34%, #ffffff 66%) 6%,
+      color-mix(in srgb, #5fd7ff 54%, #ffffff 46%) 34%,
+      color-mix(in srgb, #8f62e8 58%, #ffffff 42%) 56%,
+      color-mix(in srgb, #ff7db9 48%, #ffffff 52%) 78%,
+      color-mix(in srgb, var(--type-accent-soft) 44%, #ffffff 56%) 96%
     );
-  background-size: 220% 100%;
+  background-size: 260% 100%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--type-accent) 22%, transparent) inset;
   animation: typeologySkeletonShimmer 1.15s linear infinite;
 }
 
