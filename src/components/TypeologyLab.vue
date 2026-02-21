@@ -175,7 +175,14 @@
 
         <div class="typeology-highlight-box">
           <h3>结果摘要</h3>
-          <p>{{ currentResult.insight }}</p>
+          <p>
+            {{ insightForView }}
+            <span
+              v-if="isAiInsightStreaming && aiStreamingNarrativeText"
+              class="typeology-ai-cursor"
+              aria-hidden="true"
+            ></span>
+          </p>
         </div>
 
         <div class="typeology-score-wrap">
@@ -193,24 +200,58 @@
 
         <div class="typeology-detail-section">
           <h3>核心标签</h3>
-          <ul class="typeology-bullet-list">
+          <ul
+            v-if="isAiInsightStreaming && detailTagsForView.length === 0"
+            class="typeology-bullet-list typeology-bullet-list-skeleton"
+          >
+            <li v-for="lineIndex in 3" :key="`tag-skeleton-${lineIndex}`">
+              <span class="typeology-skeleton-line"></span>
+            </li>
+          </ul>
+          <ul v-else class="typeology-bullet-list">
             <li
-              v-for="(tagItem, tagIndex) in currentResult.detailTags"
+              v-for="(tagItem, tagIndex) in detailTagsForView"
               :key="`${tagItem}-${tagIndex}`"
             >
               {{ tagItem }}
+              <span
+                v-if="
+                  isAiInsightStreaming &&
+                  detailTagsForView.length > 0 &&
+                  tagIndex === detailTagsForView.length - 1
+                "
+                class="typeology-ai-cursor"
+                aria-hidden="true"
+              ></span>
             </li>
           </ul>
         </div>
 
         <div class="typeology-detail-section">
           <h3>建议动作</h3>
-          <ul class="typeology-bullet-list">
+          <ul
+            v-if="isAiInsightStreaming && detailActionsForView.length === 0"
+            class="typeology-bullet-list typeology-bullet-list-skeleton"
+          >
+            <li v-for="lineIndex in 3" :key="`action-skeleton-${lineIndex}`">
+              <span class="typeology-skeleton-line"></span>
+            </li>
+          </ul>
+          <ul v-else class="typeology-bullet-list">
             <li
-              v-for="(actionItem, actionIndex) in currentResult.detailActions"
+              v-for="(actionItem, actionIndex) in detailActionsForView"
               :key="`${actionItem}-${actionIndex}`"
             >
               {{ actionItem }}
+              <span
+                v-if="
+                  isAiInsightStreaming &&
+                  detailActionsForView.length > 0 &&
+                  actionIndex === detailActionsForView.length - 1
+                "
+                class="typeology-ai-cursor"
+                aria-hidden="true"
+              ></span>
             </li>
           </ul>
         </div>
@@ -240,16 +281,52 @@
         <div class="typeology-ai-section">
           <div class="typeology-ai-title-wrap">
             <h3>进阶解读</h3>
-            <span v-if="currentResult.aiInsight?.generatedAt">
+            <span v-if="currentResult.aiInsight?.generatedAt && !isAiInsightStreaming">
               {{
                 formatTimestamp(currentResult.aiInsight.generatedAt)
               }}
             </span>
+            <span v-else-if="isAiInsightStreaming" class="typeology-ai-stream-status">
+              <van-loading :color="accentColor" size="14px" />
+              AI 生成中
+            </span>
           </div>
 
-          <p v-if="!currentResult.aiInsight" class="typeology-ai-empty">
+          <p v-if="!currentResult.aiInsight && !isAiInsightStreaming" class="typeology-ai-empty">
             可继续生成进阶解读，获得更细的优势、提醒和行动建议。
           </p>
+
+          <template v-else-if="isAiInsightStreaming">
+            <p class="typeology-ai-title">
+              {{ currentResult.aiInsight?.title || "AI 正在生成你的专属解读" }}
+              <span class="typeology-ai-cursor" aria-hidden="true"></span>
+            </p>
+
+            <p
+              v-if="aiStreamingNarrativeText"
+              class="typeology-ai-narrative"
+            >
+              {{ aiStreamingNarrativeText }}
+              <span class="typeology-ai-cursor" aria-hidden="true"></span>
+            </p>
+
+            <div v-else class="typeology-ai-narrative-skeleton">
+              <span class="typeology-skeleton-line is-wide"></span>
+              <span class="typeology-skeleton-line"></span>
+              <span class="typeology-skeleton-line is-short"></span>
+            </div>
+
+            <div class="typeology-ai-grid typeology-ai-grid-skeleton">
+              <article v-for="sectionName in ['优势信号', '提醒信号', '行动建议']" :key="sectionName">
+                <h4>{{ sectionName }}</h4>
+                <ul class="typeology-skeleton-list">
+                  <li v-for="lineIndex in 3" :key="`${sectionName}-${lineIndex}`">
+                    <span class="typeology-skeleton-line"></span>
+                  </li>
+                </ul>
+              </article>
+            </div>
+          </template>
 
           <template v-else>
             <p class="typeology-ai-title">{{ currentResult.aiInsight.title }}</p>
@@ -1186,6 +1263,8 @@ const currentResult = ref(null);
 const resultCache = ref(loadTypeologyResultCache());
 const showAllSummary = ref(false);
 const isGeneratingAiInsight = ref(false);
+const isAiInsightStreaming = ref(false);
+const aiInsightStreamRawText = ref("");
 /**
  * 答题跳转锁：
  * 关键逻辑：避免用户连续点击导致同一道题触发多次跳转或重复提交。
@@ -1504,6 +1583,74 @@ const summaryLinesForView = computed(() => {
 });
 
 /**
+ * AI 流式预览文本：
+ * 关键逻辑：优先提取 narrative / insight 字段，避免把半截 JSON 直接展示给用户。
+ */
+const aiStreamingNarrativeText = computed(() =>
+  resolveAiNarrativePreviewText(aiInsightStreamRawText.value),
+);
+
+/**
+ * AI 流式核心标签预览。
+ */
+const aiStreamingTagPreview = computed(() =>
+  extractStringArrayPreviewFromJsonStream(aiInsightStreamRawText.value, "strengths", 3),
+);
+
+/**
+ * AI 流式建议动作预览。
+ */
+const aiStreamingActionPreview = computed(() =>
+  extractStringArrayPreviewFromJsonStream(aiInsightStreamRawText.value, "suggestions", 3),
+);
+
+/**
+ * 结果摘要视图文案：
+ * 关键逻辑：流式期间优先显示 AI 叙事预览，完成后显示已落盘结果。
+ */
+const insightForView = computed(() => {
+  if (isAiInsightStreaming.value && aiStreamingNarrativeText.value) {
+    return aiStreamingNarrativeText.value;
+  }
+
+  return currentResult.value?.insight ?? "";
+});
+
+/**
+ * 核心标签视图数据：
+ * 关键逻辑：流式期间优先显示 AI 预览，完成后优先显示 AI strengths。
+ */
+const detailTagsForView = computed(() => {
+  if (isAiInsightStreaming.value && aiStreamingTagPreview.value.length > 0) {
+    return aiStreamingTagPreview.value;
+  }
+
+  const aiTagList = currentResult.value?.aiInsight?.strengths;
+  if (Array.isArray(aiTagList) && aiTagList.length > 0) {
+    return aiTagList;
+  }
+
+  return currentResult.value?.detailTags ?? [];
+});
+
+/**
+ * 建议动作视图数据：
+ * 关键逻辑：流式期间优先显示 AI 预览，完成后优先显示 AI suggestions。
+ */
+const detailActionsForView = computed(() => {
+  if (isAiInsightStreaming.value && aiStreamingActionPreview.value.length > 0) {
+    return aiStreamingActionPreview.value;
+  }
+
+  const aiSuggestionList = currentResult.value?.aiInsight?.suggestions;
+  if (Array.isArray(aiSuggestionList) && aiSuggestionList.length > 0) {
+    return aiSuggestionList;
+  }
+
+  return currentResult.value?.detailActions ?? [];
+});
+
+/**
  * 当前类型的简介与历史文案：
  * 关键逻辑：优先使用增强文案，缺失时回退配置原文案，保证所有类型都有内容。
  */
@@ -1566,6 +1713,254 @@ function sleep(milliseconds) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, milliseconds);
   });
+}
+
+/**
+ * AI 流式预览刷新间隔（毫秒）。
+ * 关键逻辑：对流式回调做节流，避免高频 DOM 更新影响交互流畅度。
+ */
+const AI_STREAM_PREVIEW_FLUSH_INTERVAL_MS = 80;
+
+/**
+ * 当前 AI 请求会话令牌。
+ * 关键逻辑：新请求会递增令牌，旧请求回调自动失效，避免串流写入错位。
+ */
+let aiInsightRequestSessionToken = 0;
+
+/**
+ * 当前 AI 请求取消控制器。
+ */
+let aiInsightRequestController = null;
+
+/**
+ * AI 预览节流定时器。
+ */
+let aiInsightPreviewFlushTimer = null;
+
+/**
+ * AI 预览待刷新的原始文本。
+ */
+let aiInsightPendingPreviewText = "";
+
+/**
+ * 清理 AI 预览节流定时器。
+ */
+function clearAiInsightPreviewFlushTimer() {
+  if (aiInsightPreviewFlushTimer) {
+    window.clearTimeout(aiInsightPreviewFlushTimer);
+    aiInsightPreviewFlushTimer = null;
+  }
+}
+
+/**
+ * 立即刷新 AI 预览文本到响应式状态。
+ */
+function flushAiInsightPreviewText() {
+  clearAiInsightPreviewFlushTimer();
+  aiInsightStreamRawText.value = aiInsightPendingPreviewText;
+}
+
+/**
+ * 节流写入 AI 预览文本。
+ * 复杂度评估：O(1)，仅覆盖缓存并等待下一次定时刷新。
+ * @param {string} nextRawText 最新累计文本。
+ */
+function scheduleAiInsightPreviewText(nextRawText) {
+  aiInsightPendingPreviewText = String(nextRawText ?? "");
+  if (aiInsightPreviewFlushTimer) {
+    return;
+  }
+
+  aiInsightPreviewFlushTimer = window.setTimeout(() => {
+    aiInsightPreviewFlushTimer = null;
+    aiInsightStreamRawText.value = aiInsightPendingPreviewText;
+  }, AI_STREAM_PREVIEW_FLUSH_INTERVAL_MS);
+}
+
+/**
+ * 解码 JSON 字符串片段（允许缺失末尾引号的流式中间态）。
+ * 复杂度评估：O(L)，L 为片段长度。
+ * @param {string} rawSegment JSON 字符串片段。
+ * @returns {string} 解码后的文本。
+ */
+function decodePartialJsonStringSegment(rawSegment) {
+  const normalizedSegment = String(rawSegment ?? "");
+  if (!normalizedSegment) {
+    return "";
+  }
+
+  const safeSegment = normalizedSegment
+    .replace(/\\u[0-9a-fA-F]{0,3}$/g, "")
+    .replace(/\\$/g, "");
+
+  try {
+    return JSON.parse(`"${safeSegment}"`);
+  } catch {
+    return safeSegment
+      .replace(/\\n/g, "\n")
+      .replace(/\\t/g, "\t")
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, "\\");
+  }
+}
+
+/**
+ * 从流式 JSON 文本中提取字段值预览。
+ * 关键逻辑：字段可能尚未闭合，提取时只做“前缀可读”展示。
+ * 复杂度评估：O(L)，L 为当前累计文本长度。
+ * @param {string} streamRawText 流式累计文本。
+ * @param {string} fieldName 目标字段名。
+ * @returns {string} 字段预览文本。
+ */
+function extractFieldPreviewFromJsonStream(streamRawText, fieldName) {
+  const normalizedText = String(streamRawText ?? "");
+  if (!normalizedText) {
+    return "";
+  }
+
+  const fieldPattern = new RegExp(`"${fieldName}"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)`, "i");
+  const matchedResult = normalizedText.match(fieldPattern);
+  if (!matchedResult?.[1]) {
+    return "";
+  }
+
+  return decodePartialJsonStringSegment(matchedResult[1]);
+}
+
+/**
+ * 生成 AI 流式叙事预览文本。
+ * 关键逻辑：
+ * 1. 通用类型优先读取 narrative；
+ * 2. MBTI 深度结果优先读取 insight；
+ * 3. 若字段尚未产出则返回空字符串，由骨架屏占位。
+ * @param {string} streamRawText 流式累计文本。
+ * @returns {string} 可展示叙事文本。
+ */
+function resolveAiNarrativePreviewText(streamRawText) {
+  const narrativePreview = extractFieldPreviewFromJsonStream(streamRawText, "narrative");
+  if (narrativePreview) {
+    return narrativePreview;
+  }
+
+  return extractFieldPreviewFromJsonStream(streamRawText, "insight");
+}
+
+/**
+ * 从流式 JSON 文本中提取字符串数组字段预览。
+ * 关键逻辑：允许数组尚未闭合时提取已返回项，提升“边生成边可读”的即时感。
+ * 复杂度评估：O(L)，L 为当前累计文本长度。
+ * @param {string} streamRawText 流式累计文本。
+ * @param {string} fieldName 字段名。
+ * @param {number} limit 最大返回条数。
+ * @returns {Array<string>} 可展示字符串数组。
+ */
+function extractStringArrayPreviewFromJsonStream(streamRawText, fieldName, limit) {
+  const normalizedText = String(streamRawText ?? "");
+  if (!normalizedText) {
+    return [];
+  }
+
+  const fieldAnchor = `"${fieldName}"`;
+  const fieldStartIndex = normalizedText.indexOf(fieldAnchor);
+  if (fieldStartIndex < 0) {
+    return [];
+  }
+
+  const bracketStartIndex = normalizedText.indexOf("[", fieldStartIndex + fieldAnchor.length);
+  if (bracketStartIndex < 0) {
+    return [];
+  }
+
+  const parsedItemList = [];
+  let isInString = false;
+  let isEscaped = false;
+  let currentItemRaw = "";
+
+  for (let index = bracketStartIndex + 1; index < normalizedText.length; index += 1) {
+    const currentChar = normalizedText[index];
+
+    if (isInString) {
+      if (isEscaped) {
+        currentItemRaw += currentChar;
+        isEscaped = false;
+        continue;
+      }
+
+      if (currentChar === "\\") {
+        currentItemRaw += currentChar;
+        isEscaped = true;
+        continue;
+      }
+
+      if (currentChar === '"') {
+        const decodedItem = decodePartialJsonStringSegment(currentItemRaw).trim();
+        if (decodedItem) {
+          parsedItemList.push(decodedItem);
+          if (parsedItemList.length >= limit) {
+            break;
+          }
+        }
+        currentItemRaw = "";
+        isInString = false;
+        continue;
+      }
+
+      currentItemRaw += currentChar;
+      continue;
+    }
+
+    if (currentChar === "]") {
+      break;
+    }
+
+    if (currentChar === '"') {
+      isInString = true;
+      currentItemRaw = "";
+    }
+  }
+
+  if (parsedItemList.length < limit && isInString && currentItemRaw.trim()) {
+    const partialItem = decodePartialJsonStringSegment(currentItemRaw).trim();
+    if (partialItem) {
+      parsedItemList.push(partialItem);
+    }
+  }
+
+  const dedupedItemSet = new Set();
+  const dedupedItemList = [];
+  parsedItemList.forEach((itemText) => {
+    if (dedupedItemSet.has(itemText)) {
+      return;
+    }
+    dedupedItemSet.add(itemText);
+    dedupedItemList.push(itemText);
+  });
+
+  return dedupedItemList.slice(0, limit);
+}
+
+/**
+ * 清理 AI 串流 UI 状态。
+ */
+function resetAiInsightStreamingUiState() {
+  clearAiInsightPreviewFlushTimer();
+  aiInsightPendingPreviewText = "";
+  aiInsightStreamRawText.value = "";
+  isAiInsightStreaming.value = false;
+}
+
+/**
+ * 取消当前 AI 解读请求。
+ * 关键逻辑：用于切换测试、返回首页、重开测试等场景，避免旧请求回写新页面状态。
+ */
+function cancelActiveAiInsightRequest() {
+  aiInsightRequestSessionToken += 1;
+  if (aiInsightRequestController) {
+    aiInsightRequestController.abort();
+    aiInsightRequestController = null;
+  }
+  resetAiInsightStreamingUiState();
+  isGeneratingAiInsight.value = false;
 }
 
 /**
@@ -1635,6 +2030,7 @@ async function handleTestChipClick(testKey) {
     return;
   }
 
+  cancelActiveAiInsightRequest();
   activeTestKey.value = testKey;
 
   // 关键逻辑：详情页下切换测试，优先展示该测试缓存结果，否则回到首页。
@@ -1662,6 +2058,7 @@ async function handleCardClick(testKey) {
     return;
   }
 
+  cancelActiveAiInsightRequest();
   const cachedResult = resultCache.value[testKey];
   activeTestKey.value = testKey;
 
@@ -1688,6 +2085,7 @@ function activateTestingSession({
   answerIds,
   questionIndex,
 }) {
+  cancelActiveAiInsightRequest();
   const normalizedQuestionBank = Array.isArray(questions) ? questions : [];
   const normalizedAnswers = Array.isArray(answerIds)
     ? answerIds.slice(0, normalizedQuestionBank.length)
@@ -2138,11 +2536,111 @@ function goPrevQuestion() {
 }
 
 /**
+ * 执行 AI 解读请求并合并结果。
+ * 关键逻辑：
+ * 1. 支持流式预览；
+ * 2. 支持会话令牌防串写；
+ * 3. 支持外部中断，避免切换页面后的脏写入。
+ * @param {object} params 参数对象。
+ * @param {object} params.baseResult 本地结果基线。
+ * @param {number} params.timeoutMs 请求超时（毫秒）。
+ * @param {boolean} params.showSuccessToast 是否显示成功提示。
+ * @param {boolean} params.showErrorToast 是否显示失败提示。
+ * @returns {Promise<void>} Promise。
+ */
+async function runAiInsightGeneration({
+  baseResult,
+  timeoutMs,
+  showSuccessToast,
+  showErrorToast,
+}) {
+  if (!baseResult) {
+    return;
+  }
+
+  const testConfigSnapshot = activeTestConfig.value;
+  const testKeySnapshot = String(testConfigSnapshot?.key ?? "").trim();
+  if (!testKeySnapshot) {
+    return;
+  }
+
+  // 关键逻辑：每轮先中断旧请求，确保只有最新一轮可以写回状态。
+  cancelActiveAiInsightRequest();
+  const requestSessionToken = aiInsightRequestSessionToken + 1;
+  aiInsightRequestSessionToken = requestSessionToken;
+  aiInsightRequestController = new AbortController();
+  isGeneratingAiInsight.value = true;
+  isAiInsightStreaming.value = true;
+
+  try {
+    const aiInsightResult = await analyzeTypeologyWithAi({
+      testConfig: testConfigSnapshot,
+      localResult: baseResult,
+      timeoutMs,
+      abortSignal: aiInsightRequestController.signal,
+      onStreamText: (fullText) => {
+        if (requestSessionToken !== aiInsightRequestSessionToken) {
+          return;
+        }
+        scheduleAiInsightPreviewText(fullText);
+      },
+    });
+
+    if (requestSessionToken !== aiInsightRequestSessionToken) {
+      return;
+    }
+
+    flushAiInsightPreviewText();
+
+    const mergedResult = {
+      ...baseResult,
+      aiInsight: aiInsightResult,
+      insight: aiInsightResult?.narrative ?? baseResult.insight,
+      // 关键逻辑：主结果卡中的“核心标签/建议动作”与 AI 解读保持一致，避免两套文案割裂。
+      detailTags:
+        Array.isArray(aiInsightResult?.strengths) && aiInsightResult.strengths.length > 0
+          ? aiInsightResult.strengths
+          : baseResult.detailTags,
+      detailActions:
+        Array.isArray(aiInsightResult?.suggestions) && aiInsightResult.suggestions.length > 0
+          ? aiInsightResult.suggestions
+          : baseResult.detailActions,
+    };
+
+    resultCache.value = upsertTypeologyCachedResult(testKeySnapshot, mergedResult);
+    if (String(activeTestConfig.value?.key ?? "").trim() === testKeySnapshot) {
+      currentResult.value = mergedResult;
+    }
+
+    if (showSuccessToast) {
+      showToast("进阶解读已更新");
+    }
+  } catch (error) {
+    const isCancelledByContext =
+      requestSessionToken !== aiInsightRequestSessionToken ||
+      String(error?.message ?? "").includes("请求已取消");
+    if (isCancelledByContext) {
+      return;
+    }
+
+    if (showErrorToast) {
+      showToast(error?.message ?? "进阶解读暂不可用，请稍后重试");
+    }
+  } finally {
+    if (requestSessionToken === aiInsightRequestSessionToken) {
+      aiInsightRequestController = null;
+      isGeneratingAiInsight.value = false;
+      resetAiInsightStreamingUiState();
+    }
+  }
+}
+
+/**
  * 提交当前测试并生成本地结果。
  */
 async function submitCurrentTest() {
   stage.value = STAGE_ANALYZING;
-  await sleep(850);
+  await sleep(500);
 
   const modeConfig =
     runningModeConfig.value ??
@@ -2160,41 +2658,30 @@ async function submitCurrentTest() {
     aiInsight: null,
   };
 
-  let nextPersistedResult = localPersistedResult;
-
-  try {
-    const aiInsightResult = await analyzeTypeologyWithAi({
-      testConfig: activeTestConfig.value,
-      localResult: localPersistedResult,
-      timeoutMs: 16000,
-    });
-
-    nextPersistedResult = {
-      ...localPersistedResult,
-      aiInsight: aiInsightResult,
-      // 关键逻辑：结果摘要优先展示 AI 叙事，避免本地模板文案过于固定。
-      insight: aiInsightResult?.narrative ?? localPersistedResult.insight,
-    };
-  } catch {
-    // 关键逻辑：AI 失败时回退本地结果，不阻断主流程。
-    nextPersistedResult = localPersistedResult;
-  }
-
   resultCache.value = upsertTypeologyCachedResult(
     activeTestConfig.value.key,
-    nextPersistedResult,
+    localPersistedResult,
   );
   clearTypeologyProgressByTestKey(activeTestConfig.value.key);
 
-  currentResult.value = nextPersistedResult;
+  currentResult.value = localPersistedResult;
   stage.value = STAGE_DETAIL;
   showAllSummary.value = false;
+
+  // 关键逻辑：结果页先展示本地结果，再流式填充 AI 文案，缩短用户“首屏等待”时间。
+  void runAiInsightGeneration({
+    baseResult: localPersistedResult,
+    timeoutMs: 16000,
+    showSuccessToast: false,
+    showErrorToast: false,
+  });
 }
 
 /**
  * 重新测试当前类型。
  */
 function restartCurrentType() {
+  cancelActiveAiInsightRequest();
   clearTypeologyProgressByTestKey(activeTestConfig.value.key);
   stage.value = STAGE_HOME;
   currentResult.value = null;
@@ -2208,6 +2695,7 @@ function restartCurrentType() {
  * 返回测试面板。
  */
 function backToHome() {
+  cancelActiveAiInsightRequest();
   stage.value = STAGE_HOME;
   currentResult.value = null;
   showAllSummary.value = false;
@@ -2246,32 +2734,16 @@ async function generateAiInsight() {
     return;
   }
 
-  isGeneratingAiInsight.value = true;
+  const baseResult = {
+    ...currentResult.value,
+  };
 
-  try {
-    const aiInsightResult = await analyzeTypeologyWithAi({
-      testConfig: activeTestConfig.value,
-      localResult: currentResult.value,
-      timeoutMs: 20000,
-    });
-
-    const mergedResult = {
-      ...currentResult.value,
-      aiInsight: aiInsightResult,
-      insight: aiInsightResult?.narrative ?? currentResult.value.insight,
-    };
-
-    resultCache.value = upsertTypeologyCachedResult(
-      activeTestConfig.value.key,
-      mergedResult,
-    );
-    currentResult.value = mergedResult;
-    showToast("进阶解读已更新");
-  } catch (error) {
-    showToast(error?.message ?? "进阶解读暂不可用，请稍后重试");
-  } finally {
-    isGeneratingAiInsight.value = false;
-  }
+  await runAiInsightGeneration({
+    baseResult,
+    timeoutMs: 20000,
+    showSuccessToast: true,
+    showErrorToast: true,
+  });
 }
 
 /**
@@ -2348,6 +2820,7 @@ onBeforeUnmount(() => {
     // 关键逻辑：页面卸载前兜底保存进度，避免刷新/跳转导致最近一题丢失。
     persistCurrentTestingProgress();
   }
+  cancelActiveAiInsightRequest();
   stopLoadingTicker();
 });
 </script>
@@ -2862,6 +3335,11 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
+.typeology-bullet-list-skeleton {
+  list-style: none;
+  padding-left: 0;
+}
+
 .typeology-summary-toggle {
   margin-top: 10px;
   border: 1px solid var(--type-chip-border);
@@ -2885,6 +3363,13 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
+.typeology-ai-stream-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--type-muted);
+}
+
 .typeology-ai-empty {
   margin: 8px 0 0;
   font-size: 13px;
@@ -2903,6 +3388,23 @@ onBeforeUnmount(() => {
   color: var(--type-muted);
   line-height: 1.6;
   font-size: 13px;
+}
+
+.typeology-ai-cursor {
+  display: inline-block;
+  width: 6px;
+  height: 1em;
+  margin-left: 3px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--type-accent) 82%, #ffffff 18%);
+  vertical-align: -1px;
+  animation: typeologyCursorBlink 1s steps(1, end) infinite;
+}
+
+.typeology-ai-narrative-skeleton {
+  margin-top: 6px;
+  display: grid;
+  gap: 6px;
 }
 
 .typeology-ai-grid {
@@ -2941,6 +3443,43 @@ onBeforeUnmount(() => {
 .typeology-ai-grid li {
   color: color-mix(in srgb, var(--type-text) 82%, var(--type-muted) 18%);
   font-size: 12px;
+}
+
+.typeology-ai-grid-skeleton article {
+  position: relative;
+  overflow: hidden;
+}
+
+.typeology-skeleton-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.typeology-skeleton-line {
+  display: block;
+  width: 82%;
+  height: 10px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--type-card-border) 82%, transparent) 20%,
+      color-mix(in srgb, var(--type-card-border) 52%, #ffffff 48%) 50%,
+      color-mix(in srgb, var(--type-card-border) 82%, transparent) 80%
+    );
+  background-size: 220% 100%;
+  animation: typeologySkeletonShimmer 1.15s linear infinite;
+}
+
+.typeology-skeleton-line.is-wide {
+  width: 95%;
+}
+
+.typeology-skeleton-line.is-short {
+  width: 65%;
 }
 
 .typeology-module-head h2 {
@@ -3418,6 +3957,26 @@ onBeforeUnmount(() => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes typeologyCursorBlink {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  52%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes typeologySkeletonShimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
   }
 }
 

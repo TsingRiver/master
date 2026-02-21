@@ -161,17 +161,25 @@ function normalizeMbtiAiInsight(deepResult, localResult) {
  * @param {object} params.testConfig 测试配置。
  * @param {object} params.localResult 本地结果。
  * @param {number} [params.timeoutMs=18000] 超时时间。
+ * @param {(fullText: string, deltaText: string) => void} [params.onStreamText] 流式文本回调。
+ * @param {AbortSignal} [params.abortSignal] 外部取消信号。
  * @returns {Promise<object>} 归一化后的进阶解读结果。
  */
 export async function analyzeTypeologyWithAi({
   testConfig,
   localResult,
   timeoutMs = 18000,
+  onStreamText,
+  abortSignal,
 }) {
   if (testConfig?.key === "mbti" && localResult?.mbtiLocalResult) {
     const deepResult = await analyzeMbtiWithDeepInsight(
       buildMbtiDeepPayload(localResult),
-      { timeoutMs },
+      {
+        timeoutMs,
+        onStreamText,
+        abortSignal,
+      },
     );
 
     return normalizeMbtiAiInsight(deepResult, localResult);
@@ -182,8 +190,9 @@ export async function analyzeTypeologyWithAi({
     userPrompt: buildGenericUserPrompt(testConfig, localResult),
     timeoutMs,
     temperature: 0.35,
+    onTextUpdate: onStreamText,
+    signal: abortSignal,
   });
 
   return normalizeGenericAiInsight(aiData, localResult);
 }
-

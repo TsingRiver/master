@@ -170,6 +170,8 @@ function normalizeMbtiDeepResult(aiData, localResult) {
  * @param {object} payload.localResult 本地完整结果。
  * @param {object} [options] 调用配置。
  * @param {number} [options.timeoutMs=18000] 超时时间。
+ * @param {(fullText: string, deltaText: string) => void} [options.onStreamText] 流式文本回调。
+ * @param {AbortSignal} [options.abortSignal] 外部取消信号。
  * @returns {Promise<{ mainType: object, topThree: Array<object>, profileTitle: string, insight: string, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }>} 标准化结果。
  */
 export async function analyzeMbtiWithDeepInsight(payload, options = {}) {
@@ -178,6 +180,8 @@ export async function analyzeMbtiWithDeepInsight(payload, options = {}) {
     userPrompt: buildUserPrompt(payload),
     timeoutMs: options.timeoutMs ?? 18000,
     temperature: 0.35,
+    onTextUpdate: options.onStreamText,
+    signal: options.abortSignal,
   });
 
   return normalizeMbtiDeepResult(aiData, payload.localResult);

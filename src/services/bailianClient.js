@@ -238,60 +238,140 @@ function parseSseTextContent(rawSseText) {
   }
 
   const eventBlockList = rawSseText.split(/\r?\n\r?\n/);
-  const textSegmentList = [];
+  return eventBlockList.map(extractTextFromSseEventBlock).join("");
+}
 
-  eventBlockList.forEach((eventBlock) => {
-    if (!eventBlock) {
-      return;
+/**
+ * 从单个 SSE 事件块提取文本。
+ * 复杂度评估：O(L)，L 为事件块长度。
+ * @param {string} eventBlock SSE 事件块文本。
+ * @returns {string} 当前事件块提取到的文本。
+ */
+function extractTextFromSseEventBlock(eventBlock) {
+  if (!eventBlock) {
+    return "";
+  }
+
+  const dataLineList = eventBlock
+    .split(/\r?\n/)
+    .filter((lineItem) => lineItem.startsWith("data:"))
+    .map((lineItem) => lineItem.slice(5).trim())
+    .filter(Boolean);
+
+  if (dataLineList.length === 0) {
+    return "";
+  }
+
+  const eventDataText = dataLineList.join("\n").trim();
+  if (!eventDataText || eventDataText === "[DONE]") {
+    return "";
+  }
+
+  try {
+    const parsedChunkJson = JSON.parse(eventDataText);
+    return extractAssistantContentFromChunk(parsedChunkJson);
+  } catch {
+    // 关键逻辑：忽略异常事件块，避免单块格式问题导致整次请求失败。
+    return "";
+  }
+}
+
+/**
+ * 安全触发流式文本更新回调。
+ * @param {(fullText: string, deltaText: string) => void | undefined} onTextUpdate 流式文本回调。
+ * @param {string} fullText 当前累计文本。
+ * @param {string} deltaText 本次新增文本。
+ */
+function emitTextUpdate(onTextUpdate, fullText, deltaText) {
+  if (typeof onTextUpdate !== "function") {
+    return;
+  }
+
+  try {
+    onTextUpdate(fullText, deltaText);
+  } catch {
+    // 关键逻辑：UI 回调异常不影响主流程，保证模型请求可完成。
+  }
+}
+
+/**
+ * 使用 Reader 增量读取 SSE，并实时回调文本进度。
+ * 关键逻辑：优先走增量读取，提升“边生成边展示”体验；不支持 Reader 时由上层兜底回退。
+ * 复杂度评估：O(N)，N 为 SSE 总文本长度。
+ * @param {Response} response fetch 响应对象。
+ * @param {(fullText: string, deltaText: string) => void | undefined} onTextUpdate 流式文本回调。
+ * @returns {Promise<string>} 最终拼接后的完整文本。
+ */
+async function readAssistantTextFromSseStream(response, onTextUpdate) {
+  const reader = response.body?.getReader?.();
+  if (!reader) {
+    const rawSseText = await response.text();
+    const fullText = parseSseTextContent(rawSseText);
+    emitTextUpdate(onTextUpdate, fullText, fullText);
+    return fullText;
+  }
+
+  const textDecoder = new TextDecoder("utf-8");
+  let sseBuffer = "";
+  let fullText = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
     }
 
-    const dataLineList = eventBlock
-      .split(/\r?\n/)
-      .filter((lineItem) => lineItem.startsWith("data:"))
-      .map((lineItem) => lineItem.slice(5).trim())
-      .filter(Boolean);
+    sseBuffer += textDecoder.decode(value, { stream: true });
+    const eventBlockList = sseBuffer.split(/\r?\n\r?\n/);
+    sseBuffer = eventBlockList.pop() ?? "";
 
-    if (dataLineList.length === 0) {
-      return;
-    }
-
-    const eventDataText = dataLineList.join("\n").trim();
-    if (!eventDataText || eventDataText === "[DONE]") {
-      return;
-    }
-
-    try {
-      const parsedChunkJson = JSON.parse(eventDataText);
-      const chunkText = extractAssistantContentFromChunk(parsedChunkJson);
-      if (chunkText) {
-        textSegmentList.push(chunkText);
+    eventBlockList.forEach((eventBlock) => {
+      const deltaText = extractTextFromSseEventBlock(eventBlock);
+      if (!deltaText) {
+        return;
       }
-    } catch {
-      // 关键逻辑：忽略异常事件块，避免单块格式问题导致整次请求失败。
+
+      fullText += deltaText;
+      emitTextUpdate(onTextUpdate, fullText, deltaText);
+    });
+  }
+
+  // 关键逻辑：流结束后 flush 解码器尾部缓存，避免 UTF-8 多字节字符被截断。
+  sseBuffer += textDecoder.decode();
+  const tailEventBlockList = sseBuffer.split(/\r?\n\r?\n/);
+  tailEventBlockList.forEach((eventBlock) => {
+    const deltaText = extractTextFromSseEventBlock(eventBlock);
+    if (!deltaText) {
+      return;
     }
+
+    fullText += deltaText;
+    emitTextUpdate(onTextUpdate, fullText, deltaText);
   });
 
-  return textSegmentList.join("");
+  return fullText;
 }
 
 /**
  * 读取百炼响应中的助手文本，兼容 JSON 与 SSE 两种返回格式。
  * @param {Response} response fetch 响应对象。
+ * @param {(fullText: string, deltaText: string) => void} [onTextUpdate] 流式文本回调。
  * @returns {Promise<string>} 助手文本。
  */
-async function readAssistantTextFromResponse(response) {
+async function readAssistantTextFromResponse(response, onTextUpdate) {
   const responseContentType = String(
     response.headers.get("content-type") ?? "",
   ).toLowerCase();
   const isStreamContent = responseContentType.includes("text/event-stream");
 
   if (isStreamContent) {
-    const rawSseText = await response.text();
-    return parseSseTextContent(rawSseText);
+    return readAssistantTextFromSseStream(response, onTextUpdate);
   }
 
   const responseJson = await response.json();
-  return extractAssistantContentFromChunk(responseJson);
+  const fullText = extractAssistantContentFromChunk(responseJson);
+  emitTextUpdate(onTextUpdate, fullText, fullText);
+  return fullText;
 }
 
 /**
@@ -443,6 +523,8 @@ function resolveRequestModelCandidates(model, modelCandidates) {
  * @param {boolean} [params.switchModelOnTimeout=false] 超时时是否自动切换到下一个模型。
  * @param {boolean} [params.enableThinking=false] 是否启用思考模式。
  * @param {boolean} [params.stream=true] 是否启用流式输出。
+ * @param {(fullText: string, deltaText: string) => void} [params.onTextUpdate] 流式文本增量回调（可选）。
+ * @param {AbortSignal} [params.signal] 外部取消信号（可选）。
  * @returns {Promise<object|null>} 解析后的 JSON；若解析失败返回 null。
  */
 export async function requestBailianJson({
@@ -458,6 +540,8 @@ export async function requestBailianJson({
   switchModelOnTimeout = false,
   enableThinking = BAILIAN_ENABLE_THINKING_DEFAULT,
   stream = BAILIAN_STREAM_DEFAULT,
+  onTextUpdate,
+  signal,
 }) {
   if (!BAILIAN_API_KEY) {
     throw new Error("缺少 VITE_BAILIAN_API_KEY，无法调用百炼接口");
@@ -501,15 +585,34 @@ export async function requestBailianJson({
     let switchedByModelStrategy = false;
 
     for (let attemptIndex = 0; attemptIndex <= safeRetryCount; attemptIndex += 1) {
+      if (signal?.aborted) {
+        throw new Error("请求已取消");
+      }
+
       // 关键逻辑：每次重试按比例放宽超时，避免首轮边缘超时后仍然过早取消。
       const attemptTimeoutMs =
         attemptIndex === 0
           ? timeoutMs
           : Math.round(timeoutMs * (1 + attemptIndex * 0.55));
 
-      const timeoutController = new AbortController();
+      const requestAbortController = new AbortController();
+      let removeExternalAbortListener = null;
+      if (signal && typeof signal.addEventListener === "function") {
+        if (signal.aborted) {
+          requestAbortController.abort();
+        } else {
+          const handleExternalAbort = () => {
+            requestAbortController.abort();
+          };
+          signal.addEventListener("abort", handleExternalAbort, { once: true });
+          removeExternalAbortListener = () => {
+            signal.removeEventListener("abort", handleExternalAbort);
+          };
+        }
+      }
+
       const timeoutHandle = setTimeout(
-        () => timeoutController.abort(),
+        () => requestAbortController.abort(),
         attemptTimeoutMs,
       );
 
@@ -531,7 +634,7 @@ export async function requestBailianJson({
               { role: "user", content: userPrompt },
             ],
           }),
-          signal: timeoutController.signal,
+          signal: requestAbortController.signal,
         });
 
         if (!response.ok) {
@@ -547,10 +650,14 @@ export async function requestBailianJson({
           throw requestError;
         }
 
-        const textContent = await readAssistantTextFromResponse(response);
+        const textContent = await readAssistantTextFromResponse(response, onTextUpdate);
         return parseJsonFromText(textContent);
       } catch (error) {
         lastError = error;
+
+        if (signal?.aborted) {
+          throw new Error("请求已取消");
+        }
 
         // 关键逻辑：额度/模型不可用等场景触发自动切模型，减少 403 直接失败。
         if (hasNextModel && shouldSwitchToNextModel(error)) {
@@ -578,6 +685,9 @@ export async function requestBailianJson({
         await sleep(safeRetryDelayMs * (attemptIndex + 1));
       } finally {
         clearTimeout(timeoutHandle);
+        if (typeof removeExternalAbortListener === "function") {
+          removeExternalAbortListener();
+        }
       }
     }
 
