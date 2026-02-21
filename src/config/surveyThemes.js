@@ -24,6 +24,7 @@ export const UNIFIED_RESULT_TEMPLATE = {
   easterEggText: "",
   tagChips: [],
   distributionChart: { title: "", items: [] },
+  radarChart: { title: "", items: [] },
   typeCard: { title: "", items: [] },
   topThreeTitle: "",
   topThree: [],
@@ -100,6 +101,7 @@ const CITY_MATCH_REASON_FALLBACK_LINES = [
  * @param {{ title: string, content: string }} payload.highlightCard 高亮卡片。
  * @param {string} payload.insight 解释文案。
  * @param {string} [payload.easterEggText] 彩蛋文案（可选）。
+ * @param {{ title: string, items: Array<{ name: string, label?: string, score: number, color?: string }> }} [payload.radarChart] 雷达图配置（可选）。
  * @param {{ title: string, items: Array<{ label: string, value: string }> }} [payload.typeCard] 类型学卡片。
  * @param {string} payload.topThreeTitle Top3 标题。
  * @param {Array<{ name: string, score: number, tags?: Array<string> }>} payload.topThree Top3 列表。
@@ -374,6 +376,239 @@ function buildCityLocalUnifiedResult(localResult) {
     summaryLines: localResult.summaryLines,
     restartButtonText: "重新测评",
   });
+}
+
+/**
+ * 五行城市主题：构建深度分析请求负载。
+ * @param {object} localResult 本地分析结果。
+ * @returns {{ localResult: object, summaryLines: Array<string>, coreProfile: object, elementPercentages: object, candidateCities: Array<object>, localTopThree: Array<object> }} 深度分析负载。
+ */
+function buildFiveElementsCityDeepPayload(localResult) {
+  const rankedCities = Array.isArray(localResult?.scoredCities)
+    ? localResult.scoredCities
+    : [];
+
+  return {
+    localResult,
+    summaryLines: Array.isArray(localResult?.summaryLines)
+      ? localResult.summaryLines
+      : [],
+    coreProfile: localResult?.coreProfile ?? {},
+    elementPercentages: localResult?.elementPercentages ?? {},
+    candidateCities: rankedCities.slice(0, 10).map((cityItem) => ({
+      name: cityItem.name,
+      score: cityItem.score,
+      coreElementLabels: cityItem.coreElementLabels,
+      tags: cityItem.tags,
+    })),
+    localTopThree: Array.isArray(localResult?.topThree)
+      ? localResult.topThree.slice(0, 3)
+      : [],
+  };
+}
+
+/**
+ * 五行城市主题：构建统一结果对象。
+ * @param {object} result 分析结果对象。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildFiveElementsCityUnifiedResult(result, sourceType) {
+  const coreProfile = result?.coreProfile ?? {};
+  const topCity = result?.topCity ?? {};
+  const topThree = Array.isArray(result?.topThree) ? result.topThree : [];
+  const elementDistribution = Array.isArray(result?.elementDistribution)
+    ? result.elementDistribution
+    : [];
+  const summaryLines = Array.isArray(result?.summaryLines) ? result.summaryLines : [];
+  const energyLines = Array.isArray(result?.energyInterpretationLines)
+    ? result.energyInterpretationLines
+    : [];
+  const cityReasonLines = Array.isArray(result?.cityReasonLines)
+    ? result.cityReasonLines
+    : [];
+  const typeCardItems = Array.isArray(result?.typeCardItems)
+    ? result.typeCardItems
+    : [];
+
+  const mainName = String(coreProfile?.displayName ?? "").trim() || "五行待校准";
+  const mainScore = Number.isFinite(Number(coreProfile?.topPercentage))
+    ? Math.max(0, Math.round(Number(coreProfile.topPercentage)))
+    : 0;
+  const coreTags = Array.isArray(coreProfile?.tags)
+    ? coreProfile.tags.slice(0, 3)
+    : [];
+
+  const topCityName = String(topCity?.name ?? "").trim() || "待匹配城市";
+  const topCityScore = Number.isFinite(Number(topCity?.score))
+    ? Math.max(0, Math.round(Number(topCity.score)))
+    : 0;
+  const topCityReason =
+    String(topCity?.reasonText ?? "").trim() ||
+    "你的能量特征与该城市生活气韵更容易形成长期同频。";
+  const customHighlightCardTitle = String(result?.highlightCard?.title ?? "").trim();
+  const customHighlightCardContent = String(result?.highlightCard?.content ?? "").trim();
+  // 关键逻辑：把“首选城市”塞进首屏主标签，确保用户不下滑也能看到最终推荐城市。
+  const mainTags = [`首选城市 ${topCityName} · ${topCityScore}%`, ...coreTags].slice(0, 3);
+
+  const resolvedTopThree = topThree.map((cityItem) => {
+    const cityCoreLabels = Array.isArray(cityItem?.coreElementLabels)
+      ? cityItem.coreElementLabels.filter(Boolean)
+      : [];
+    const cityTags = Array.isArray(cityItem?.tags)
+      ? cityItem.tags.filter(Boolean)
+      : [];
+
+    return {
+      name: String(cityItem?.name ?? "").trim() || "待匹配城市",
+      score: Number.isFinite(Number(cityItem?.score))
+        ? Math.max(0, Math.round(Number(cityItem.score)))
+        : 0,
+      tags: [
+        `核心：${cityCoreLabels.length > 0 ? cityCoreLabels.join(" / ") : "待校准"}`,
+        ...cityTags.slice(0, 2),
+      ],
+    };
+  });
+
+  const topThreeHighlightLines =
+    resolvedTopThree.length > 0
+      ? resolvedTopThree.map((cityItem, cityIndex) => {
+          const rawHighlight = Array.isArray(topThree[cityIndex]?.highlights)
+            ? topThree[cityIndex].highlights[0]
+            : "";
+          const fallbackHighlight =
+            String(topThree[cityIndex]?.reasonText ?? "").trim() ||
+            "生活节奏与城市气质更容易长期同频。";
+          return `${cityItem.name}：${String(rawHighlight || fallbackHighlight).trim()}`;
+        })
+      : ["当前暂无可用城市亮点，请稍后重试。"];
+
+  const distributionItems =
+    elementDistribution.length > 0
+      ? elementDistribution.map((item) => ({
+          name: item.name,
+          score: Number.isFinite(Number(item.score))
+            ? Math.max(0, Math.round(Number(item.score)))
+            : 0,
+          color: item.color,
+        }))
+      : [];
+
+  return createUnifiedResult({
+    source: sourceType,
+    // 关键逻辑：首屏前缀直接展示第一匹配城市，增强“一眼可见”的结果聚焦。
+    prefixLabel: `你的能量核心（首选城市：${topCityName}）`,
+    scoreLabel: "核心占比",
+    main: {
+      name: mainName,
+      score: mainScore,
+      tags: mainTags,
+    },
+    highlightCard: {
+      // 关键逻辑：深度结果优先使用 AI 定制高亮卡片，缺失时回退本地模板。
+      title: customHighlightCardTitle || `最终推荐城市：${topCityName}`,
+      content:
+        customHighlightCardContent ||
+        `${topCityName} 匹配度 ${topCityScore}% · ${topCityReason}`,
+    },
+    insight:
+      String(result?.insight ?? "").trim() ||
+      `${topCityName}与当前能量结构匹配度较高，建议先进行短期试居再做长期决策。`,
+    tagChips: distributionItems.slice(0, 3).map(
+      (item) => `${item.name} ${item.score}%`,
+    ),
+    // 关键逻辑：五行主题图谱改为雷达图展示，条形分布图显式置空，避免重复展示同一数据。
+    distributionChart: { title: "", items: [] },
+    radarChart: {
+      title: "五行能量图谱",
+      items: distributionItems.map((item) => ({
+        ...item,
+        label: item.name,
+      })),
+    },
+    typeCard: {
+      title: "判定速览",
+      items: typeCardItems.slice(0, 4),
+    },
+    topThreeTitle: "TOP 3 匹配城市",
+    topThree: resolvedTopThree,
+    detailSections: [
+      {
+        title: "五行能量解读",
+        items:
+          energyLines.length > 0
+            ? energyLines
+            : ["当前暂无能量解读，请稍后重试。"],
+      },
+      {
+        title: "城市匹配原因",
+        items:
+          cityReasonLines.length > 0
+            ? cityReasonLines
+            : [topCityReason],
+      },
+      {
+        title: "城市适配亮点",
+        items: topThreeHighlightLines,
+      },
+    ],
+    summaryTitle: "答题回放",
+    summaryLines,
+    restartButtonText: "重新测试",
+  });
+}
+
+/**
+ * 五行城市主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildFiveElementsCityDeepUnifiedResult(deepResult, localResult) {
+  if (!deepResult || typeof deepResult !== "object") {
+    return buildFiveElementsCityUnifiedResult(localResult, "deep");
+  }
+
+  const mergedResult = {
+    ...localResult,
+    ...deepResult,
+    // 关键逻辑：对象字段做浅层合并，避免 AI 只返回部分字段时覆盖掉完整本地数据。
+    topCity: {
+      ...(localResult?.topCity ?? {}),
+      ...(deepResult?.topCity ?? {}),
+    },
+    // 关键逻辑：列表字段优先用 AI 结果；AI 缺失时保持本地稳定输出。
+    topThree:
+      Array.isArray(deepResult?.topThree) && deepResult.topThree.length > 0
+        ? deepResult.topThree
+        : localResult?.topThree ?? [],
+    cityReasonLines:
+      Array.isArray(deepResult?.cityReasonLines) &&
+      deepResult.cityReasonLines.length > 0
+        ? deepResult.cityReasonLines
+        : localResult?.cityReasonLines ?? [],
+    energyInterpretationLines:
+      Array.isArray(deepResult?.energyInterpretationLines) &&
+      deepResult.energyInterpretationLines.length > 0
+        ? deepResult.energyInterpretationLines
+        : localResult?.energyInterpretationLines ?? [],
+    typeCardItems:
+      Array.isArray(deepResult?.typeCardItems) && deepResult.typeCardItems.length > 0
+        ? deepResult.typeCardItems
+        : localResult?.typeCardItems ?? [],
+  };
+
+  return buildFiveElementsCityUnifiedResult(mergedResult, "deep");
+}
+
+/**
+ * 五行城市主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildFiveElementsCityLocalUnifiedResult(localResult) {
+  return buildFiveElementsCityUnifiedResult(localResult, "local");
 }
 
 /**
@@ -2475,6 +2710,100 @@ export const SURVEY_THEME_CONFIGS = [
       buildDeepUnifiedResult: buildCityDeepUnifiedResult,
       buildLocalUnifiedResult: buildCityLocalUnifiedResult,
       deepFailToast: "深度匹配暂不可用，已切换本地规则结果",
+    },
+  },
+  {
+    key: "five-elements-city",
+    routePaths: [
+      "/five-elements-city",
+      "/five-elements-city.html",
+      "/wuxing-city",
+      "/wuxing-city.html",
+    ],
+    pageMeta: {
+      title: "五行推测 + 城市匹配度心理测试",
+      description:
+        "通过 20 道生活场景题推测你的五行意象能量，并输出 TOP3 城市匹配建议。",
+    },
+    theme: {
+      className: "theme-five-elements-city",
+      badge: "五行意象 · CITY MATCH",
+      title: "五行推测 + 城市匹配度心理测试",
+      description:
+        "完成 20 道题，解锁你的能量核心（金·鎏序/木·森屿/水·沧澜/火·曜阳/土·坤域）与城市匹配结果。",
+      progressColor: "linear-gradient(90deg, #9FBFA6, #9BB9C9)",
+      progressTrackColor: "rgba(155, 185, 201, 0.2)",
+      checkedColor: "#9FBFA6",
+      sourceTag: {
+        deep: {
+          label: "五行意象解读结果",
+          color: "#ECF4EF",
+          textColor: "#4E6B57",
+        },
+        local: {
+          label: "本地稳定结果",
+          color: "#F5EFE6",
+          textColor: "#75634C",
+        },
+      },
+      loadingMessages: [
+        "正在校准你的五行意象能量...",
+        "正在匹配最同频的城市气韵...",
+        "正在生成你的专属结果...",
+      ],
+      submitButtonText: "提交答案",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { FIVE_ELEMENTS_CITY_QUESTION_BANK } = await import(
+          "../data/fiveElementsQuestionBank"
+        );
+        return FIVE_ELEMENTS_CITY_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 20,
+        maxCount: 20,
+      },
+      // 关键逻辑：启用“选择即下一题”，并在 UI 侧隐藏“下一题”按钮。
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      cover: {
+        enabled: true,
+        kicker: "趣味心理探索",
+        titleEmphasis: "五行意象",
+        titleMain: "测测你最同频的居住城市",
+        promoTag: "20 题完整判定",
+        intro:
+          "通过日常场景选择，推测你的五行能量核心，并基于生克逻辑匹配最适合长期居住的城市。",
+        points: [
+          "结果包含：五行能量图谱 + 能量核心解读 + TOP3 匹配城市。",
+          "核心五行：金·鎏序、木·森屿、水·沧澜、火·曜阳、土·坤域。",
+          "仅需约 2~3 分钟，建议凭第一直觉作答。",
+        ],
+        startButtonText: "进入测试",
+        hookLine: "同一种能量，可能在不同城市活出完全不同的生活状态。",
+        tip: "测试结果仅供趣味参考",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeFiveElementsCityLocally } = await import(
+          "../services/fiveElementsCityAnalyzer"
+        );
+        return analyzeFiveElementsCityLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildFiveElementsCityDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        const { analyzeFiveElementsCityWithAI } = await import(
+          "../services/fiveElementsCityAiAnalyzer"
+        );
+        return analyzeFiveElementsCityWithAI(payload, { timeoutMs: 26000 });
+      },
+      buildDeepUnifiedResult: buildFiveElementsCityDeepUnifiedResult,
+      buildLocalUnifiedResult: buildFiveElementsCityLocalUnifiedResult,
+      deepFailToast: "AI深度解读暂不可用，已切换本地稳定结果",
     },
   },
   {

@@ -169,7 +169,7 @@
             :disabled="currentQuestionIndex === 0"
             @click="goPrev"
           >
-            上一步
+            上一题
           </van-button>
           <p class="romancex-auto-next-tip">点击选项自动进入下一题</p>
         </div>

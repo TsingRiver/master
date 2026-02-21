@@ -282,7 +282,7 @@
             :disabled="currentQuestionIndex === 0"
             @click="goPrev"
           >
-            上一步
+            上一题
           </van-button>
           <van-button
             v-if="!shouldAutoAdvance"
@@ -332,6 +332,29 @@
         </div>
 
         <div v-else-if="unifiedResult" class="survey-result-state">
+          <div
+            v-if="isFiveElementsCityTheme"
+            class="survey-five-hero"
+          >
+            <p class="survey-five-hero-kicker">五行城市档案</p>
+            <h3 class="survey-five-hero-title">{{ fiveElementsHeroTitle }}</h3>
+            <p class="survey-five-hero-subtitle">{{ fiveElementsHeroSubtitle }}</p>
+            <div class="survey-five-hero-badge-track" aria-hidden="true">
+              <span
+                v-for="(badgeItem, badgeIndex) in fiveElementsHeroBadges"
+                :key="`five-hero-badge-${badgeItem.label}-${badgeIndex}`"
+                class="survey-five-hero-badge"
+                :style="{
+                  '--five-badge-color': badgeItem.color || activeCheckedColor,
+                  '--five-badge-delay': `${badgeIndex * 180}ms`,
+                }"
+              >
+                <em class="survey-five-hero-badge-label">{{ badgeItem.label }}</em>
+                <strong class="survey-five-hero-badge-score">{{ badgeItem.score }}%</strong>
+              </span>
+            </div>
+          </div>
+
           <div class="survey-source-wrap">
             <van-tag :color="sourceTagStyle.color" :text-color="sourceTagStyle.textColor" round>
               {{ sourceTagStyle.label }}
@@ -339,7 +362,61 @@
           </div>
 
           <p class="survey-result-prefix">{{ unifiedResult.prefixLabel }}</p>
-          <h2 class="survey-main-title">{{ unifiedResult.main.name }}</h2>
+          <div class="survey-main-title-row">
+            <h2 class="survey-main-title">{{ unifiedResult.main.name }}</h2>
+            <span
+              v-if="isFiveElementsCityTheme && fiveElementResultIconKey"
+              class="survey-five-result-icon"
+              :class="`is-${fiveElementResultIconKey}`"
+              aria-hidden="true"
+            >
+              <svg viewBox="0 0 64 64" focusable="false">
+                <template v-if="fiveElementResultIconKey === 'metal'">
+                  <path d="M32 10L50 32L32 54L14 32Z" class="survey-five-icon-stroke" />
+                  <path d="M32 19L42 32L32 45L22 32Z" class="survey-five-icon-fill" />
+                </template>
+                <template v-else-if="fiveElementResultIconKey === 'wood'">
+                  <path
+                    d="M32 11C44 17 50 29 44 42C39 53 25 55 19 45C13 35 18 19 32 11Z"
+                    class="survey-five-icon-fill"
+                  />
+                  <path d="M32 19V47" class="survey-five-icon-stroke" />
+                  <path d="M32 28L24 34" class="survey-five-icon-stroke" />
+                  <path d="M32 34L40 40" class="survey-five-icon-stroke" />
+                </template>
+                <template v-else-if="fiveElementResultIconKey === 'water'">
+                  <path
+                    d="M32 9C23 22 16 31 16 40C16 50 23 56 32 56C41 56 48 50 48 40C48 31 41 22 32 9Z"
+                    class="survey-five-icon-fill"
+                  />
+                  <path
+                    d="M20 39C24 35 28 35 32 39C36 43 40 43 44 39"
+                    class="survey-five-icon-stroke"
+                  />
+                </template>
+                <template v-else-if="fiveElementResultIconKey === 'fire'">
+                  <path
+                    d="M33 8C41 20 47 25 47 36C47 48 39 56 29 56C20 56 13 49 13 40C13 32 18 25 24 20C27 17 29 12 30 8C31 10 32 12 33 16Z"
+                    class="survey-five-icon-fill"
+                  />
+                  <path
+                    d="M31 24C36 30 40 34 40 40C40 47 35 51 30 51C25 51 21 47 21 42C21 37 24 33 27 30C29 28 30 26 31 24Z"
+                    class="survey-five-icon-stroke"
+                  />
+                </template>
+                <template v-else-if="fiveElementResultIconKey === 'earth'">
+                  <path d="M12 46L24 29L32 38L40 25L52 46" class="survey-five-icon-stroke" />
+                  <path d="M17 46H47" class="survey-five-icon-stroke" />
+                  <circle cx="32" cy="20" r="4.5" class="survey-five-icon-fill" />
+                </template>
+                <template v-else>
+                  <circle cx="32" cy="32" r="20" class="survey-five-icon-stroke" />
+                  <path d="M32 16L46 26L41 43L23 43L18 26Z" class="survey-five-icon-fill" />
+                  <circle cx="32" cy="32" r="3.5" class="survey-five-icon-stroke" />
+                </template>
+              </svg>
+            </span>
+          </div>
           <p class="survey-main-score">
             {{ unifiedResult.scoreLabel }}：{{ unifiedResult.main.score }}{{ resolvedMainScoreSuffix }}
           </p>
@@ -783,12 +860,12 @@ const isAdvancingToNext = ref(false);
 
 /**
  * 深度分析交互策略：
- * 1. 14 秒内若拿到深度结果，直接展示深度结果。
- * 2. 超过 14 秒先展示本地结果，深度分析在后台继续。
- * 3. 深度分析设置 45 秒硬超时，避免超长等待。
+ * 1. 6 秒内若拿到深度结果，直接展示深度结果。
+ * 2. 超过 6 秒先展示本地结果，深度分析在后台继续。
+ * 3. 深度分析设置 28 秒硬超时，避免超长等待。
  */
-const LOCAL_RESULT_FALLBACK_DELAY_MS = 14000;
-const DEEP_RESULT_HARD_TIMEOUT_MS = 45000;
+const LOCAL_RESULT_FALLBACK_DELAY_MS = 6000;
+const DEEP_RESULT_HARD_TIMEOUT_MS = 28000;
 
 /**
  * 深度分析会话令牌：
@@ -1559,6 +1636,64 @@ const shouldShowSummaryToggle = computed(
  * 是否为城市主题。
  */
 const isCityTheme = computed(() => props.themeConfig.key === "city");
+/**
+ * 是否为五行城市主题。
+ */
+const isFiveElementsCityTheme = computed(
+  () => props.themeConfig.key === "five-elements-city",
+);
+
+/**
+ * 根据主结果名称解析五行图标键。
+ * @param {unknown} mainResultName 主结果名称（例如：金·鎏序、火·曜阳）。
+ * @returns {"metal"|"wood"|"water"|"fire"|"earth"|"balanced"|""} 图标键。
+ */
+function resolveFiveElementResultIconKey(mainResultName) {
+  const normalizedName = String(mainResultName ?? "").trim();
+  if (!normalizedName) {
+    return "";
+  }
+
+  // 关键逻辑：均衡态单独映射为综合图腾，避免误判到单一元素图标。
+  if (
+    normalizedName.includes("五维调和") ||
+    normalizedName.includes("万象共生") ||
+    normalizedName.includes("综合五行")
+  ) {
+    return "balanced";
+  }
+
+  const firstChar = normalizedName.charAt(0);
+  if (firstChar === "金") {
+    return "metal";
+  }
+  if (firstChar === "木") {
+    return "wood";
+  }
+  if (firstChar === "水") {
+    return "water";
+  }
+  if (firstChar === "火") {
+    return "fire";
+  }
+  if (firstChar === "土") {
+    return "earth";
+  }
+
+  return "";
+}
+
+/**
+ * 五行结果图腾键：
+ * 关键逻辑：仅在五行城市主题启用，其他主题不渲染该视觉层。
+ */
+const fiveElementResultIconKey = computed(() => {
+  if (!isFiveElementsCityTheme.value) {
+    return "";
+  }
+
+  return resolveFiveElementResultIconKey(unifiedResult.value?.main?.name);
+});
 
 /**
  * 判断题目 ID 是否属于国际版题库。
@@ -1604,6 +1739,70 @@ const cityThemeVariantClass = computed(() =>
  * 是否为浪漫主题。
  */
 const isRomanceTheme = computed(() => props.themeConfig.key === "romance");
+
+/**
+ * 五行主题顶部主标题：
+ * 关键逻辑：优先取 Top1 城市，确保结果首屏“先看城市再看解释”。
+ */
+const fiveElementsHeroTitle = computed(() => {
+  if (!isFiveElementsCityTheme.value) {
+    return "";
+  }
+
+  const topCityItem = unifiedResult.value?.topThree?.[0];
+  const topCityName = String(topCityItem?.name ?? "").trim() || "推荐城市";
+  return `${topCityName} · 当前最同频城市`;
+});
+
+/**
+ * 五行主题顶部副标题。
+ */
+const fiveElementsHeroSubtitle = computed(() => {
+  if (!isFiveElementsCityTheme.value) {
+    return "";
+  }
+
+  const topCityItem = unifiedResult.value?.topThree?.[0];
+  const topCityScore = Number.isFinite(Number(topCityItem?.score))
+    ? Math.max(0, Math.round(Number(topCityItem.score)))
+    : 0;
+  const mainEnergyName = String(unifiedResult.value?.main?.name ?? "").trim() || "五行主轴";
+  return `能量核心：${mainEnergyName} · 城市匹配度：${topCityScore}%`;
+});
+
+/**
+ * 五行主题顶部徽章：
+ * 关键逻辑：优先读取雷达图数据，兼容旧结构回退到分布图，确保主题切换后徽章仍可稳定渲染。
+ */
+const fiveElementsHeroBadges = computed(() => {
+  if (!isFiveElementsCityTheme.value) {
+    return [];
+  }
+
+  const radarItems = Array.isArray(unifiedResult.value?.radarChart?.items)
+    ? unifiedResult.value.radarChart.items
+    : [];
+  const fallbackDistributionItems = Array.isArray(unifiedResult.value?.distributionChart?.items)
+    ? unifiedResult.value.distributionChart.items
+    : [];
+  const badgeSourceItems = radarItems.length > 0 ? radarItems : fallbackDistributionItems;
+
+  return badgeSourceItems.slice(0, 5).map((item, index) => {
+    const rawLabel = String(item?.label ?? item?.name ?? "").trim();
+    const compactLabel = rawLabel.includes("·")
+      ? rawLabel.split("·")[0]
+      : rawLabel || `能量${index + 1}`;
+    const scoreValue = Number.isFinite(Number(item?.score))
+      ? Math.max(0, Math.round(Number(item.score)))
+      : 0;
+
+    return {
+      label: compactLabel,
+      score: scoreValue,
+      color: String(item?.color ?? "").trim(),
+    };
+  });
+});
 
 /**
  * 是否为恋爱脑主题。
@@ -1744,6 +1943,16 @@ const RADAR_GRID_LEVELS = [0.25, 0.5, 0.75, 1];
  */
 const radarChartItems = computed(
   () => unifiedResult.value?.radarChart?.items ?? [],
+);
+/**
+ * 雷达图分值列表：
+ * 复杂度评估：O(N)
+ * N 为雷达维度数量，当前场景一般 <= 6。
+ */
+const radarChartScoreList = computed(() =>
+  radarChartItems.value
+    .map((item) => Number(item?.score ?? 0))
+    .filter((scoreValue) => Number.isFinite(scoreValue) && scoreValue >= 0),
 );
 const radarChartViewBox = computed(
   () => `0 0 ${RADAR_VIEWBOX_SIZE} ${RADAR_VIEWBOX_SIZE}`,
@@ -2171,17 +2380,60 @@ const activeProgressTrackColor = computed(() => {
 });
 
 /**
- * 把百分比分值转换为 0~1 比例。
+ * 把分值转换为 0~1 比例。
  * @param {number} score 百分比分值。
+ * @param {{
+ *  enableAdaptive?: boolean,
+ *  scoreList?: Array<number>
+ * }} [options] 比例转换参数。
  * @returns {number} 比例值。
  */
-function normalizeScoreRatio(score) {
+function normalizeScoreRatio(score, options = {}) {
   const safeScore = Number(score ?? 0);
   if (!Number.isFinite(safeScore)) {
     return 0;
   }
 
-  return Math.max(0, Math.min(1, safeScore / 100));
+  const baseRatio = Math.max(0, Math.min(1, safeScore / 100));
+  const isAdaptiveEnabled = Boolean(options?.enableAdaptive);
+  if (!isAdaptiveEnabled) {
+    return baseRatio;
+  }
+
+  const scoreList = Array.isArray(options?.scoreList)
+    ? options.scoreList
+      .map((item) => Number(item))
+      .filter((item) => Number.isFinite(item) && item >= 0)
+    : [];
+  if (scoreList.length === 0) {
+    return baseRatio;
+  }
+
+  const maxScore = Math.max(...scoreList);
+  const minScore = Math.min(...scoreList);
+  const scoreSpread = maxScore - minScore;
+
+  // 关键逻辑：五行占比常在 20% 左右，采用“抬底 + 封顶”映射保证图形更饱满且不越界。
+  const VISUAL_MIN_RATIO = 0.52;
+  const VISUAL_MAX_RATIO = 0.92;
+
+  const relativeRatio = maxScore > 0 ? safeScore / maxScore : 0;
+  const clampedRelativeRatio = Math.max(0, Math.min(1, relativeRatio));
+
+  let adaptiveRatio =
+    VISUAL_MIN_RATIO +
+    clampedRelativeRatio * (VISUAL_MAX_RATIO - VISUAL_MIN_RATIO);
+
+  if (scoreSpread > 0.01) {
+    const rangeRatio = (safeScore - minScore) / scoreSpread;
+    const clampedRangeRatio = Math.max(0, Math.min(1, rangeRatio));
+    const rangeAdaptiveRatio =
+      VISUAL_MIN_RATIO +
+      clampedRangeRatio * (VISUAL_MAX_RATIO - VISUAL_MIN_RATIO);
+    adaptiveRatio = adaptiveRatio * 0.68 + rangeAdaptiveRatio * 0.32;
+  }
+
+  return Math.max(0, Math.min(1, adaptiveRatio));
 }
 
 /**
@@ -2207,12 +2459,17 @@ const radarAxisPoints = computed(() => {
   }
 
   const axisCount = items.length;
+  const isAdaptiveRadarEnabled = isFiveElementsCityTheme.value;
+  const scoreList = radarChartScoreList.value;
   return items.map((item, index) => {
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * index) / axisCount;
     const outerPoint = resolveRadarPoint(angleRadians, 1);
     const dataPoint = resolveRadarPoint(
       angleRadians,
-      normalizeScoreRatio(item.score),
+      normalizeScoreRatio(item.score, {
+        enableAdaptive: isAdaptiveRadarEnabled,
+        scoreList,
+      }),
     );
     const labelPoint = resolveRadarPoint(angleRadians, 1.2);
 
@@ -2896,6 +3153,10 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
 
   const axisCount = items.length;
   const gridLevels = [0.25, 0.5, 0.75, 1];
+  const isAdaptiveRadarEnabled = isFiveElementsCityTheme.value;
+  const scoreList = items
+    .map((item) => Number(item?.score ?? 0))
+    .filter((scoreValue) => Number.isFinite(scoreValue) && scoreValue >= 0);
 
   context.save();
   context.strokeStyle = "rgba(255, 255, 255, 0.28)";
@@ -2929,7 +3190,10 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
 
   context.beginPath();
   items.forEach((item, axisIndex) => {
-    const ratio = normalizeScoreRatio(item.score);
+    const ratio = normalizeScoreRatio(item.score, {
+      enableAdaptive: isAdaptiveRadarEnabled,
+      scoreList,
+    });
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
     const pointX = centerX + Math.cos(angleRadians) * radius * ratio;
     const pointY = centerY + Math.sin(angleRadians) * radius * ratio;
@@ -2947,7 +3211,10 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
   context.stroke();
 
   items.forEach((item, axisIndex) => {
-    const ratio = normalizeScoreRatio(item.score);
+    const ratio = normalizeScoreRatio(item.score, {
+      enableAdaptive: isAdaptiveRadarEnabled,
+      scoreList,
+    });
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
     const pointX = centerX + Math.cos(angleRadians) * radius * ratio;
     const pointY = centerY + Math.sin(angleRadians) * radius * ratio;

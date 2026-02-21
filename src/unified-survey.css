@@ -23,8 +23,16 @@ body {
  * 每个主题通过 class 覆盖变量，避免复制结构样式。 */
 .survey-page {
   --page-bg: linear-gradient(135deg, #f4f8f6, #e9f0ec);
-  --page-overlay-one: radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.85), transparent 34%);
-  --page-overlay-two: radial-gradient(circle at 88% 84%, rgba(255, 255, 255, 0.34), transparent 42%);
+  --page-overlay-one: radial-gradient(
+    circle at 12% 16%,
+    rgba(255, 255, 255, 0.85),
+    transparent 34%
+  );
+  --page-overlay-two: radial-gradient(
+    circle at 88% 84%,
+    rgba(255, 255, 255, 0.34),
+    transparent 42%
+  );
   --text-main: #1f2a26;
   --text-muted: #5f6f68;
   --surface: rgba(255, 255, 255, 0.88);
@@ -37,7 +45,10 @@ body {
   --noise-dot: rgba(35, 81, 84, 0.4);
   --noise-opacity: 0.12;
   --noise-layer-one: radial-gradient(var(--noise-dot) 0.4px, transparent 0.4px);
-  --noise-layer-two: radial-gradient(var(--noise-dot) 0.28px, transparent 0.28px);
+  --noise-layer-two: radial-gradient(
+    var(--noise-dot) 0.28px,
+    transparent 0.28px
+  );
   --noise-size-one: 16px 16px;
   --noise-size-two: 20px 20px;
   --noise-position-one: 0 0;
@@ -68,10 +79,7 @@ body {
   min-height: 100vh;
   padding: 22px 14px 34px;
   color: var(--text-main);
-  background:
-    var(--page-overlay-one),
-    var(--page-overlay-two),
-    var(--page-bg);
+  background: var(--page-overlay-one), var(--page-overlay-two), var(--page-bg);
 }
 
 .theme-city {
@@ -119,6 +127,46 @@ body {
   --highlight-bg: #f5efff;
 }
 
+.theme-five-elements-city {
+  --page-bg:
+    radial-gradient(
+      circle at 18% 10%,
+      rgba(245, 235, 216, 0.58),
+      transparent 44%
+    ),
+    radial-gradient(
+      circle at 84% 78%,
+      rgba(220, 233, 240, 0.54),
+      transparent 48%
+    ),
+    linear-gradient(142deg, #f6f1e8 0%, #edf3ee 46%, #eef3f8 100%);
+  --five-wood: #7ea879;
+  --five-fire: #c97d71;
+  --five-earth: #c5a066;
+  --five-metal: #afb6c3;
+  --five-water: #7395bc;
+  --five-glyph: rgba(88, 76, 59, 0.08);
+  --text-main: #4b4339;
+  --text-muted: #7a705f;
+  --surface: rgba(255, 252, 247, 0.9);
+  --surface-border: rgba(222, 209, 188, 0.9);
+  --shadow: 0 26px 54px rgba(100, 85, 66, 0.15);
+  --primary: #88b29a;
+  --primary-dark: #7f94b5;
+  --aura-left: radial-gradient(circle at 34% 34%, #c8dbc2, #9dbf9b);
+  --aura-right: radial-gradient(circle at 34% 34%, #ccd9ec, #9ab5d8);
+  --noise-dot: rgba(110, 99, 82, 0.34);
+  --option-border: #dfd2c0;
+  --option-selected-border: #afc3a6;
+  --option-selected-bg: linear-gradient(180deg, #fffcf6, #f0f6ef);
+  --option-selected-shadow: rgba(132, 158, 129, 0.18);
+  --detail-border: #e5d7c4;
+  --detail-bg: linear-gradient(180deg, #fffcf6, #f7f2e9);
+  --highlight-border: #d8cbb6;
+  --highlight-bg: linear-gradient(180deg, #fff8ed, #f3efe6);
+  --title-font: "ZCOOL XiaoWei", "Noto Serif SC", serif;
+}
+
 .theme-fortune {
   --page-bg: linear-gradient(130deg, #fff1e6, #ffe6bf 56%, #f7e4ca);
   --text-main: #342619;
@@ -144,8 +192,16 @@ body {
 
 .theme-ancient {
   --ancient-page-bg:
-    radial-gradient(circle at 12% 10%, rgba(255, 245, 224, 0.54), transparent 42%),
-    radial-gradient(circle at 86% 82%, rgba(167, 105, 56, 0.2), transparent 48%),
+    radial-gradient(
+      circle at 12% 10%,
+      rgba(255, 245, 224, 0.54),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 86% 82%,
+      rgba(167, 105, 56, 0.2),
+      transparent 48%
+    ),
     linear-gradient(136deg, #e8cfaa 0%, #cfa176 56%, #946245 100%);
   --ancient-scene-image: url("/ancient/scene-dawn.svg");
   --ancient-scene-opacity: 0.78;
@@ -187,32 +243,31 @@ body {
   --option-border: var(--ancient-option-border, rgba(165, 118, 74, 0.38));
   --ancient-option-bg: rgba(255, 254, 250, 0.92);
   --option-selected-border: var(--ancient-option-selected-border, #a9663a);
-  --option-selected-bg:
-    linear-gradient(
-      180deg,
-      var(--ancient-option-selected-bg-start, rgba(255, 252, 247, 0.94)) 0%,
-      var(--ancient-option-selected-bg-end, rgba(245, 227, 197, 0.92)) 100%
-    );
-  --option-selected-shadow: var(--ancient-option-selected-shadow, rgba(134, 80, 40, 0.2));
+  --option-selected-bg: linear-gradient(
+    180deg,
+    var(--ancient-option-selected-bg-start, rgba(255, 252, 247, 0.94)) 0%,
+    var(--ancient-option-selected-bg-end, rgba(245, 227, 197, 0.92)) 100%
+  );
+  --option-selected-shadow: var(
+    --ancient-option-selected-shadow,
+    rgba(134, 80, 40, 0.2)
+  );
   --detail-border: var(--ancient-detail-border, rgba(166, 118, 76, 0.34));
-  --detail-bg:
-    linear-gradient(
-      180deg,
-      var(--ancient-detail-bg-start, rgba(255, 253, 249, 0.94)) 0%,
-      var(--ancient-detail-bg-end, rgba(249, 236, 214, 0.9)) 100%
-    );
+  --detail-bg: linear-gradient(
+    180deg,
+    var(--ancient-detail-bg-start, rgba(255, 253, 249, 0.94)) 0%,
+    var(--ancient-detail-bg-end, rgba(249, 236, 214, 0.9)) 100%
+  );
   --highlight-border: var(--ancient-highlight-border, rgba(157, 105, 62, 0.4));
-  --highlight-bg:
-    linear-gradient(
-      180deg,
-      var(--ancient-highlight-bg-start, rgba(253, 246, 232, 0.96)) 0%,
-      var(--ancient-highlight-bg-end, rgba(244, 225, 194, 0.92)) 100%
-    );
+  --highlight-bg: linear-gradient(
+    180deg,
+    var(--ancient-highlight-bg-start, rgba(253, 246, 232, 0.96)) 0%,
+    var(--ancient-highlight-bg-end, rgba(244, 225, 194, 0.92)) 100%
+  );
   --ancient-card-bg-start: rgba(255, 253, 247, 0.93);
   --ancient-card-bg-end: rgba(250, 237, 213, 0.88);
   --ancient-card-shadow:
-    0 26px 48px rgba(86, 53, 29, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.74);
+    0 26px 48px rgba(86, 53, 29, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.74);
   --ancient-header-bg-start: rgba(255, 250, 239, 0.86);
   --ancient-header-bg-end: rgba(247, 229, 200, 0.54);
   --title-font: "Noto Serif SC", serif;
@@ -284,16 +339,19 @@ body {
 }
 
 .theme-color-2026 {
-  --page-bg:
-    linear-gradient(
-      138deg,
-      var(--runtime-bg-start, #f4f6ff),
-      var(--runtime-bg-mid, #eef2ff) 50%,
-      var(--runtime-bg-end, #fff5ef)
-    );
+  --page-bg: linear-gradient(
+    138deg,
+    var(--runtime-bg-start, #f4f6ff),
+    var(--runtime-bg-mid, #eef2ff) 50%,
+    var(--runtime-bg-end, #fff5ef)
+  );
   --text-main: var(--runtime-text-main, #2d3250);
   --text-muted: var(--runtime-text-muted, #676e8e);
-  --surface: color-mix(in srgb, var(--runtime-surface, #ffffff) 90%, transparent);
+  --surface: color-mix(
+    in srgb,
+    var(--runtime-surface, #ffffff) 90%,
+    transparent
+  );
   --surface-border: color-mix(
     in srgb,
     var(--runtime-surface-border, #d8ddf5) 92%,
@@ -302,42 +360,52 @@ body {
   --shadow: var(--runtime-shadow, 0 24px 54px rgba(108, 121, 198, 0.16));
   --primary: var(--runtime-primary, #6c79c6);
   --primary-dark: var(--runtime-primary-dark, #a9b4e6);
-  --aura-left:
-    radial-gradient(
-      circle at 30% 30%,
-      var(--runtime-aura-left, #aebbff),
-      color-mix(in srgb, var(--runtime-aura-left, #aebbff) 72%, #ffffff 28%)
-    );
-  --aura-right:
-    radial-gradient(
-      circle at 30% 30%,
-      var(--runtime-aura-right, #f3b7c8),
-      color-mix(in srgb, var(--runtime-aura-right, #f3b7c8) 72%, #ffffff 28%)
-    );
-  --noise-dot: color-mix(in srgb, var(--runtime-primary, #6c79c6) 42%, #000000 58%);
+  --aura-left: radial-gradient(
+    circle at 30% 30%,
+    var(--runtime-aura-left, #aebbff),
+    color-mix(in srgb, var(--runtime-aura-left, #aebbff) 72%, #ffffff 28%)
+  );
+  --aura-right: radial-gradient(
+    circle at 30% 30%,
+    var(--runtime-aura-right, #f3b7c8),
+    color-mix(in srgb, var(--runtime-aura-right, #f3b7c8) 72%, #ffffff 28%)
+  );
+  --noise-dot: color-mix(
+    in srgb,
+    var(--runtime-primary, #6c79c6) 42%,
+    #000000 58%
+  );
   --option-border: var(--runtime-option-border, #d3d9f0);
   --option-selected-border: var(--runtime-option-selected-border, #9ca8df);
-  --option-selected-bg:
-    linear-gradient(
-      180deg,
-      var(--runtime-option-selected-bg-start, #ffffff),
-      var(--runtime-option-selected-bg-end, #eef2ff)
-    );
-  --option-selected-shadow: var(--runtime-option-shadow, rgba(108, 121, 198, 0.17));
-  --detail-border: color-mix(in srgb, var(--runtime-option-border, #d3d9f0) 84%, #ffffff 16%);
-  --detail-bg:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--runtime-surface, #ffffff) 98%, #ffffff 2%),
-      color-mix(in srgb, var(--runtime-option-selected-bg-end, #eef2ff) 42%, #ffffff 58%)
-    );
+  --option-selected-bg: linear-gradient(
+    180deg,
+    var(--runtime-option-selected-bg-start, #ffffff),
+    var(--runtime-option-selected-bg-end, #eef2ff)
+  );
+  --option-selected-shadow: var(
+    --runtime-option-shadow,
+    rgba(108, 121, 198, 0.17)
+  );
+  --detail-border: color-mix(
+    in srgb,
+    var(--runtime-option-border, #d3d9f0) 84%,
+    #ffffff 16%
+  );
+  --detail-bg: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--runtime-surface, #ffffff) 98%, #ffffff 2%),
+    color-mix(
+      in srgb,
+      var(--runtime-option-selected-bg-end, #eef2ff) 42%,
+      #ffffff 58%
+    )
+  );
   --highlight-border: var(--runtime-highlight-border, #d7dcf4);
-  --highlight-bg:
-    linear-gradient(
-      180deg,
-      var(--runtime-highlight-bg-start, #f6f8ff),
-      var(--runtime-highlight-bg-end, #fdeff5)
-    );
+  --highlight-bg: linear-gradient(
+    180deg,
+    var(--runtime-highlight-bg-start, #f6f8ff),
+    var(--runtime-highlight-bg-end, #fdeff5)
+  );
   --title-font: "Noto Serif SC", serif;
 }
 
@@ -473,13 +541,28 @@ body {
  * 避免所有主题都变成“同一颗球只换色”的观感。 */
 .theme-city {
   --page-overlay-one:
-    radial-gradient(circle at 10% 16%, rgba(255, 255, 255, 0.9), transparent 40%),
+    radial-gradient(
+      circle at 10% 16%,
+      rgba(255, 255, 255, 0.9),
+      transparent 40%
+    ),
     linear-gradient(118deg, rgba(16, 108, 88, 0.1), transparent 46%);
-  --page-overlay-two: radial-gradient(circle at 88% 82%, rgba(186, 232, 212, 0.45), transparent 44%);
+  --page-overlay-two: radial-gradient(
+    circle at 88% 82%,
+    rgba(186, 232, 212, 0.45),
+    transparent 44%
+  );
   --aura-left-radius: 42% 58% 64% 36% / 38% 44% 56% 62%;
   --aura-right-radius: 58% 42% 35% 65% / 44% 55% 45% 56%;
-  --noise-layer-one: linear-gradient(rgba(28, 85, 72, 0.13) 1px, transparent 1px);
-  --noise-layer-two: linear-gradient(90deg, rgba(28, 85, 72, 0.1) 1px, transparent 1px);
+  --noise-layer-one: linear-gradient(
+    rgba(28, 85, 72, 0.13) 1px,
+    transparent 1px
+  );
+  --noise-layer-two: linear-gradient(
+    90deg,
+    rgba(28, 85, 72, 0.1) 1px,
+    transparent 1px
+  );
   --noise-size-one: 30px 30px;
   --noise-size-two: 30px 30px;
   --noise-position-one: -2px -2px;
@@ -489,25 +572,113 @@ body {
 
 .theme-city.theme-city-international {
   --page-overlay-one:
-    radial-gradient(circle at 10% 16%, rgba(255, 255, 255, 0.92), transparent 40%),
+    radial-gradient(
+      circle at 10% 16%,
+      rgba(255, 255, 255, 0.92),
+      transparent 40%
+    ),
     linear-gradient(118deg, rgba(141, 107, 230, 0.14), transparent 48%);
-  --page-overlay-two: radial-gradient(circle at 88% 82%, rgba(211, 191, 255, 0.42), transparent 44%);
-  --noise-layer-one: linear-gradient(rgba(105, 79, 168, 0.13) 1px, transparent 1px);
-  --noise-layer-two: linear-gradient(90deg, rgba(105, 79, 168, 0.1) 1px, transparent 1px);
+  --page-overlay-two: radial-gradient(
+    circle at 88% 82%,
+    rgba(211, 191, 255, 0.42),
+    transparent 44%
+  );
+  --noise-layer-one: linear-gradient(
+    rgba(105, 79, 168, 0.13) 1px,
+    transparent 1px
+  );
+  --noise-layer-two: linear-gradient(
+    90deg,
+    rgba(105, 79, 168, 0.1) 1px,
+    transparent 1px
+  );
+}
+
+.theme-five-elements-city {
+  --page-overlay-one:
+    radial-gradient(
+      circle at 10% 16%,
+      color-mix(in srgb, var(--five-wood) 24%, #ffffff 76%),
+      transparent 41%
+    ),
+    radial-gradient(
+      circle at 84% 16%,
+      color-mix(in srgb, var(--five-fire) 22%, #ffffff 78%),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 50% 48%,
+      color-mix(in srgb, var(--five-earth) 17%, #ffffff 83%),
+      transparent 48%
+    );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 16% 84%,
+      color-mix(in srgb, var(--five-metal) 18%, #ffffff 82%),
+      transparent 43%
+    ),
+    radial-gradient(
+      circle at 84% 82%,
+      color-mix(in srgb, var(--five-water) 22%, #ffffff 78%),
+      transparent 44%
+    ),
+    linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--five-earth) 24%, transparent),
+      transparent 52%
+    );
+  --aura-left-size: 270px;
+  --aura-right-size: 270px;
+  --aura-left-radius: 28% 72% 56% 44% / 46% 34% 66% 54%;
+  --aura-right-radius: 66% 34% 46% 54% / 38% 60% 40% 62%;
+  --aura-float-duration: 10.6s;
+  --noise-layer-one: repeating-linear-gradient(
+    35deg,
+    rgba(128, 111, 88, 0.11) 0 1px,
+    transparent 1px 14px
+  );
+  --noise-layer-two: radial-gradient(
+    rgba(122, 104, 80, 0.2) 0.52px,
+    transparent 0.52px
+  );
+  --noise-size-one: 30px 30px;
+  --noise-size-two: 19px 19px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 10px 12px;
+  --noise-opacity: 0.12;
 }
 
 .theme-fortune {
   --page-overlay-one:
-    radial-gradient(circle at 12% 16%, rgba(255, 248, 230, 0.92), transparent 42%),
-    conic-gradient(from 210deg at 86% 18%, rgba(255, 174, 92, 0.28), transparent 58%);
-  --page-overlay-two: radial-gradient(circle at 90% 84%, rgba(255, 203, 146, 0.34), transparent 46%);
+    radial-gradient(
+      circle at 12% 16%,
+      rgba(255, 248, 230, 0.92),
+      transparent 42%
+    ),
+    conic-gradient(
+      from 210deg at 86% 18%,
+      rgba(255, 174, 92, 0.28),
+      transparent 58%
+    );
+  --page-overlay-two: radial-gradient(
+    circle at 90% 84%,
+    rgba(255, 203, 146, 0.34),
+    transparent 46%
+  );
   --aura-left-size: 252px;
   --aura-right-size: 258px;
   --aura-left-radius: 56% 44% 40% 60% / 48% 38% 62% 52%;
   --aura-right-radius: 65% 35% 58% 42% / 52% 63% 37% 48%;
   --aura-float-duration: 9.8s;
-  --noise-layer-one: repeating-linear-gradient(45deg, rgba(152, 97, 43, 0.12) 0 2px, transparent 2px 16px);
-  --noise-layer-two: radial-gradient(rgba(168, 110, 57, 0.25) 0.55px, transparent 0.55px);
+  --noise-layer-one: repeating-linear-gradient(
+    45deg,
+    rgba(152, 97, 43, 0.12) 0 2px,
+    transparent 2px 16px
+  );
+  --noise-layer-two: radial-gradient(
+    rgba(168, 110, 57, 0.25) 0.55px,
+    transparent 0.55px
+  );
   --noise-size-one: 26px 26px;
   --noise-size-two: 18px 18px;
   --noise-position-one: 0 0;
@@ -517,18 +688,21 @@ body {
 
 .theme-ancient {
   --page-overlay-one:
-    radial-gradient(circle at 10% 12%, rgba(255, 248, 231, 0.72), transparent 40%),
+    radial-gradient(
+      circle at 10% 12%,
+      rgba(255, 248, 231, 0.72),
+      transparent 40%
+    ),
     conic-gradient(
       from 244deg at 82% 18%,
       color-mix(in srgb, var(--primary) 22%, transparent),
       transparent 64%
     );
-  --page-overlay-two:
-    radial-gradient(
-      circle at 86% 80%,
-      color-mix(in srgb, var(--primary-dark) 26%, transparent),
-      transparent 48%
-    );
+  --page-overlay-two: radial-gradient(
+    circle at 86% 80%,
+    color-mix(in srgb, var(--primary-dark) 26%, transparent),
+    transparent 48%
+  );
   --aura-left-size: 350px;
   --aura-right-size: 330px;
   --aura-left-top: -130px;
@@ -540,14 +714,15 @@ body {
   --aura-blur: 0.8px;
   --aura-opacity: 0.28;
   --aura-float-duration: 13.4s;
-  --noise-layer-one:
-    repeating-linear-gradient(
-      -14deg,
-      rgba(115, 71, 40, 0.12) 0 2px,
-      transparent 2px 18px
-    );
-  --noise-layer-two:
-    radial-gradient(rgba(115, 71, 40, 0.21) 0.65px, transparent 0.65px);
+  --noise-layer-one: repeating-linear-gradient(
+    -14deg,
+    rgba(115, 71, 40, 0.12) 0 2px,
+    transparent 2px 18px
+  );
+  --noise-layer-two: radial-gradient(
+    rgba(115, 71, 40, 0.21) 0.65px,
+    transparent 0.65px
+  );
   --noise-size-one: 34px 34px;
   --noise-size-two: 22px 22px;
   --noise-position-one: 0 0;
@@ -557,13 +732,28 @@ body {
 
 .theme-talent {
   --page-overlay-one:
-    radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.9), transparent 38%),
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(255, 255, 255, 0.9),
+      transparent 38%
+    ),
     linear-gradient(130deg, rgba(12, 151, 148, 0.1), transparent 44%);
-  --page-overlay-two: radial-gradient(circle at 86% 82%, rgba(255, 211, 155, 0.38), transparent 44%);
+  --page-overlay-two: radial-gradient(
+    circle at 86% 82%,
+    rgba(255, 211, 155, 0.38),
+    transparent 44%
+  );
   --aura-left-radius: 37% 63% 49% 51% / 44% 48% 52% 56%;
   --aura-right-radius: 54% 46% 63% 37% / 58% 43% 57% 42%;
-  --noise-layer-one: repeating-linear-gradient(-30deg, rgba(26, 112, 116, 0.12) 0 2px, transparent 2px 18px);
-  --noise-layer-two: radial-gradient(rgba(26, 112, 116, 0.22) 0.6px, transparent 0.6px);
+  --noise-layer-one: repeating-linear-gradient(
+    -30deg,
+    rgba(26, 112, 116, 0.12) 0 2px,
+    transparent 2px 18px
+  );
+  --noise-layer-two: radial-gradient(
+    rgba(26, 112, 116, 0.22) 0.6px,
+    transparent 0.6px
+  );
   --noise-size-one: 32px 32px;
   --noise-size-two: 20px 20px;
   --noise-position-one: 0 0;
@@ -573,15 +763,35 @@ body {
 
 .theme-benefactor {
   --page-overlay-one:
-    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, 0.9), transparent 38%),
-    radial-gradient(circle at 86% 14%, rgba(152, 170, 255, 0.22), transparent 44%);
-  --page-overlay-two: radial-gradient(circle at 84% 84%, rgba(255, 181, 206, 0.3), transparent 46%);
+    radial-gradient(
+      circle at 14% 16%,
+      rgba(255, 255, 255, 0.9),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 86% 14%,
+      rgba(152, 170, 255, 0.22),
+      transparent 44%
+    );
+  --page-overlay-two: radial-gradient(
+    circle at 84% 84%,
+    rgba(255, 181, 206, 0.3),
+    transparent 46%
+  );
   --aura-left-size: 262px;
   --aura-right-size: 252px;
   --aura-left-radius: 50% 50% 62% 38% / 40% 60% 40% 60%;
   --aura-right-radius: 62% 38% 55% 45% / 56% 44% 56% 44%;
-  --noise-layer-one: radial-gradient(ellipse at center, rgba(93, 111, 201, 0.18) 0 38%, transparent 39% 100%);
-  --noise-layer-two: radial-gradient(ellipse at center, rgba(255, 131, 170, 0.14) 0 28%, transparent 29% 100%);
+  --noise-layer-one: radial-gradient(
+    ellipse at center,
+    rgba(93, 111, 201, 0.18) 0 38%,
+    transparent 39% 100%
+  );
+  --noise-layer-two: radial-gradient(
+    ellipse at center,
+    rgba(255, 131, 170, 0.14) 0 28%,
+    transparent 29% 100%
+  );
   --noise-size-one: 170px 170px;
   --noise-size-two: 110px 110px;
   --noise-position-one: -42px -24px;
@@ -590,23 +800,31 @@ body {
 }
 
 .theme-color-2026 {
-  --page-overlay-one:
-    radial-gradient(
-      circle at 12% 16%,
-      color-mix(in srgb, var(--runtime-primary, #6c79c6) 18%, #ffffff 82%),
-      transparent 40%
-    );
-  --page-overlay-two:
-    conic-gradient(
-      from 210deg at 82% 18%,
-      color-mix(in srgb, var(--runtime-primary, #6c79c6) 22%, transparent) 0 24%,
-      transparent 24% 76%,
-      color-mix(in srgb, var(--runtime-primary-dark, #a9b4e6) 24%, transparent) 76% 100%
-    );
+  --page-overlay-one: radial-gradient(
+    circle at 12% 16%,
+    color-mix(in srgb, var(--runtime-primary, #6c79c6) 18%, #ffffff 82%),
+    transparent 40%
+  );
+  --page-overlay-two: conic-gradient(
+    from 210deg at 82% 18%,
+    color-mix(in srgb, var(--runtime-primary, #6c79c6) 22%, transparent) 0 24%,
+    transparent 24% 76%,
+    color-mix(in srgb, var(--runtime-primary-dark, #a9b4e6) 24%, transparent)
+      76% 100%
+  );
   --aura-left-radius: 44% 56% 68% 32% / 38% 44% 56% 62%;
   --aura-right-radius: 64% 36% 44% 56% / 60% 42% 58% 40%;
-  --noise-layer-one: repeating-linear-gradient(60deg, color-mix(in srgb, var(--runtime-primary, #6c79c6) 22%, transparent) 0 2px, transparent 2px 20px);
-  --noise-layer-two: repeating-linear-gradient(-60deg, color-mix(in srgb, var(--runtime-primary-dark, #a9b4e6) 22%, transparent) 0 2px, transparent 2px 20px);
+  --noise-layer-one: repeating-linear-gradient(
+    60deg,
+    color-mix(in srgb, var(--runtime-primary, #6c79c6) 22%, transparent) 0 2px,
+    transparent 2px 20px
+  );
+  --noise-layer-two: repeating-linear-gradient(
+    -60deg,
+    color-mix(in srgb, var(--runtime-primary-dark, #a9b4e6) 22%, transparent) 0
+      2px,
+    transparent 2px 20px
+  );
   --noise-size-one: 34px 34px;
   --noise-size-two: 34px 34px;
   --noise-opacity: 0.11;
@@ -614,15 +832,34 @@ body {
 
 .theme-love-attachment {
   --page-overlay-one:
-    radial-gradient(circle at 14% 14%, rgba(255, 255, 255, 0.92), transparent 40%),
-    radial-gradient(circle at 78% 22%, rgba(250, 204, 225, 0.33), transparent 44%);
-  --page-overlay-two: radial-gradient(circle at 88% 86%, rgba(186, 201, 255, 0.3), transparent 46%);
+    radial-gradient(
+      circle at 14% 14%,
+      rgba(255, 255, 255, 0.92),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 78% 22%,
+      rgba(250, 204, 225, 0.33),
+      transparent 44%
+    );
+  --page-overlay-two: radial-gradient(
+    circle at 88% 86%,
+    rgba(186, 201, 255, 0.3),
+    transparent 46%
+  );
   --aura-left-size: 242px;
   --aura-right-size: 242px;
   --aura-left-radius: 60% 40% 52% 48% / 48% 60% 40% 52%;
   --aura-right-radius: 46% 54% 42% 58% / 58% 45% 55% 42%;
-  --noise-layer-one: radial-gradient(rgba(126, 101, 160, 0.2) 0.55px, transparent 0.55px);
-  --noise-layer-two: linear-gradient(120deg, rgba(126, 101, 160, 0.08) 1px, transparent 1px);
+  --noise-layer-one: radial-gradient(
+    rgba(126, 101, 160, 0.2) 0.55px,
+    transparent 0.55px
+  );
+  --noise-layer-two: linear-gradient(
+    120deg,
+    rgba(126, 101, 160, 0.08) 1px,
+    transparent 1px
+  );
   --noise-size-one: 18px 18px;
   --noise-size-two: 42px 42px;
   --noise-position-one: 0 0;
@@ -632,16 +869,32 @@ body {
 
 .theme-love-brain {
   --page-overlay-one:
-    radial-gradient(circle at 10% 14%, rgba(246, 252, 255, 0.9), transparent 40%),
+    radial-gradient(
+      circle at 10% 14%,
+      rgba(246, 252, 255, 0.9),
+      transparent 40%
+    ),
     linear-gradient(120deg, rgba(0, 166, 223, 0.12), transparent 42%);
-  --page-overlay-two: radial-gradient(circle at 88% 84%, rgba(255, 134, 172, 0.24), transparent 44%);
+  --page-overlay-two: radial-gradient(
+    circle at 88% 84%,
+    rgba(255, 134, 172, 0.24),
+    transparent 44%
+  );
   --aura-left-size: 238px;
   --aura-right-size: 244px;
   --aura-left-radius: 30% 70% 62% 38% / 46% 34% 66% 54%;
   --aura-right-radius: 66% 34% 44% 56% / 36% 62% 38% 64%;
   --aura-float-duration: 7.4s;
-  --noise-layer-one: repeating-linear-gradient(0deg, rgba(34, 86, 172, 0.16) 0 1px, transparent 1px 7px);
-  --noise-layer-two: repeating-linear-gradient(90deg, rgba(34, 86, 172, 0.08) 0 1px, transparent 1px 18px);
+  --noise-layer-one: repeating-linear-gradient(
+    0deg,
+    rgba(34, 86, 172, 0.16) 0 1px,
+    transparent 1px 7px
+  );
+  --noise-layer-two: repeating-linear-gradient(
+    90deg,
+    rgba(34, 86, 172, 0.08) 0 1px,
+    transparent 1px 18px
+  );
   --noise-size-one: 100% 100%;
   --noise-size-two: 100% 100%;
   --noise-opacity: 0.14;
@@ -649,15 +902,33 @@ body {
 
 .theme-romance {
   --page-overlay-one:
-    radial-gradient(circle at 16% 16%, rgba(255, 255, 255, 0.9), transparent 38%),
-    radial-gradient(circle at 82% 20%, rgba(252, 192, 219, 0.3), transparent 46%);
-  --page-overlay-two: radial-gradient(circle at 86% 84%, rgba(197, 196, 255, 0.32), transparent 46%);
+    radial-gradient(
+      circle at 16% 16%,
+      rgba(255, 255, 255, 0.9),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 82% 20%,
+      rgba(252, 192, 219, 0.3),
+      transparent 46%
+    );
+  --page-overlay-two: radial-gradient(
+    circle at 86% 84%,
+    rgba(197, 196, 255, 0.32),
+    transparent 46%
+  );
   --aura-left-size: 248px;
   --aura-right-size: 238px;
   --aura-left-radius: 58% 42% 60% 40% / 44% 58% 42% 56%;
   --aura-right-radius: 48% 52% 40% 60% / 60% 40% 60% 40%;
-  --noise-layer-one: radial-gradient(rgba(168, 132, 197, 0.18) 0.65px, transparent 0.65px);
-  --noise-layer-two: radial-gradient(rgba(232, 150, 187, 0.12) 1px, transparent 1px);
+  --noise-layer-one: radial-gradient(
+    rgba(168, 132, 197, 0.18) 0.65px,
+    transparent 0.65px
+  );
+  --noise-layer-two: radial-gradient(
+    rgba(232, 150, 187, 0.12) 1px,
+    transparent 1px
+  );
   --noise-size-one: 22px 22px;
   --noise-size-two: 38px 38px;
   --noise-position-one: 0 0;
@@ -667,17 +938,35 @@ body {
 
 .theme-mbti {
   --page-overlay-one:
-    radial-gradient(circle at 12% 15%, rgba(151, 140, 255, 0.16), transparent 42%),
-    radial-gradient(circle at 84% 18%, rgba(255, 128, 165, 0.14), transparent 46%);
-  --page-overlay-two: radial-gradient(circle at 82% 86%, rgba(122, 103, 186, 0.16), transparent 48%);
+    radial-gradient(
+      circle at 12% 15%,
+      rgba(151, 140, 255, 0.16),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 84% 18%,
+      rgba(255, 128, 165, 0.14),
+      transparent 46%
+    );
+  --page-overlay-two: radial-gradient(
+    circle at 82% 86%,
+    rgba(122, 103, 186, 0.16),
+    transparent 48%
+  );
   --aura-left-size: 268px;
   --aura-right-size: 258px;
   --aura-opacity: 0.34;
   --aura-blur: 8px;
   --aura-left-radius: 50% 50% 65% 35% / 35% 65% 35% 65%;
   --aura-right-radius: 65% 35% 50% 50% / 60% 40% 60% 40%;
-  --noise-layer-one: radial-gradient(rgba(224, 214, 255, 0.45) 0.65px, transparent 0.65px);
-  --noise-layer-two: radial-gradient(rgba(143, 141, 245, 0.42) 0.45px, transparent 0.45px);
+  --noise-layer-one: radial-gradient(
+    rgba(224, 214, 255, 0.45) 0.65px,
+    transparent 0.65px
+  );
+  --noise-layer-two: radial-gradient(
+    rgba(143, 141, 245, 0.42) 0.45px,
+    transparent 0.45px
+  );
   --noise-size-one: 28px 28px;
   --noise-size-two: 16px 16px;
   --noise-position-one: 0 0;
@@ -693,7 +982,8 @@ body {
   pointer-events: none;
   opacity: var(--aura-opacity);
   filter: blur(var(--aura-blur));
-  animation: surveyFloat var(--aura-float-duration) ease-in-out infinite alternate;
+  animation: surveyFloat var(--aura-float-duration) ease-in-out infinite
+    alternate;
 }
 
 .aura-left {
@@ -721,12 +1011,8 @@ body {
   pointer-events: none;
   opacity: var(--noise-opacity);
   background-image: var(--noise-layer-one), var(--noise-layer-two);
-  background-size:
-    var(--noise-size-one),
-    var(--noise-size-two);
-  background-position:
-    var(--noise-position-one),
-    var(--noise-position-two);
+  background-size: var(--noise-size-one), var(--noise-size-two);
+  background-position: var(--noise-position-one), var(--noise-position-two);
 }
 
 /* 首屏性能策略：
@@ -749,6 +1035,86 @@ body {
 .theme-ancient:not(.survey-page-perf-ready)::before,
 .theme-ancient:not(.survey-page-perf-ready)::after {
   content: none;
+}
+
+.theme-five-elements-city:not(.survey-page-perf-ready)::before,
+.theme-five-elements-city:not(.survey-page-perf-ready)::after {
+  content: none;
+}
+
+/* 五行主题背景关联增强：
+ * 关键逻辑：背景拆为“能量团 + 流转环 + 五行字纹”三层语义，直接表达木火土金水。
+ * 复杂度评估：O(1)，仅 2 个固定伪元素，不随题目数量变化。 */
+.theme-five-elements-city::before {
+  content: "";
+  position: fixed;
+  inset: -8% -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.72;
+  background:
+    radial-gradient(
+      circle at 18% 18%,
+      color-mix(in srgb, var(--five-wood) 34%, #ffffff 66%) 0 16%,
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 82% 20%,
+      color-mix(in srgb, var(--five-fire) 30%, #ffffff 70%) 0 15%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 52%,
+      color-mix(in srgb, var(--five-earth) 28%, #ffffff 72%) 0 14%,
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 18% 82%,
+      color-mix(in srgb, var(--five-metal) 30%, #ffffff 70%) 0 15%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 82% 82%,
+      color-mix(in srgb, var(--five-water) 32%, #ffffff 68%) 0 15%,
+      transparent 50%
+    ),
+    conic-gradient(
+      from -18deg at 50% 52%,
+      color-mix(in srgb, var(--five-wood) 16%, transparent) 0 18%,
+      color-mix(in srgb, var(--five-fire) 16%, transparent) 18% 36%,
+      color-mix(in srgb, var(--five-earth) 16%, transparent) 36% 56%,
+      color-mix(in srgb, var(--five-metal) 16%, transparent) 56% 76%,
+      color-mix(in srgb, var(--five-water) 16%, transparent) 76% 100%
+    );
+  filter: saturate(1.06);
+}
+
+.theme-five-elements-city::after {
+  content: "木 火 土 金 水 · 五行流转 · 木 火 土 金 水 · 五行流转 · 木 火 土 金 水";
+  position: fixed;
+  left: -12%;
+  right: -12%;
+  bottom: 12%;
+  z-index: 0;
+  pointer-events: none;
+  font-family: var(--title-font);
+  font-size: clamp(22px, 4.8vw, 38px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.26em;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--five-glyph);
+  transform: rotate(-8deg);
+}
+
+.theme-five-elements-city .survey-aura,
+.theme-five-elements-city .survey-noise {
+  z-index: 1;
+}
+
+.theme-five-elements-city .survey-shell {
+  z-index: 2;
 }
 
 /* 关键逻辑：古风主题增加“楼阁场景图 + 雾幕”双层背景，随答题进度切换变量实现晨昏夜变化。 */
@@ -815,27 +1181,25 @@ body {
   position: absolute;
   inset: -14px -12px auto;
   height: 2px;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--primary) 56%, transparent) 22%,
-      color-mix(in srgb, var(--primary-dark) 82%, transparent) 50%,
-      color-mix(in srgb, var(--primary) 56%, transparent) 78%,
-      transparent 100%
-    );
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary) 56%, transparent) 22%,
+    color-mix(in srgb, var(--primary-dark) 82%, transparent) 50%,
+    color-mix(in srgb, var(--primary) 56%, transparent) 78%,
+    transparent 100%
+  );
   pointer-events: none;
 }
 
 .theme-ancient .survey-card {
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--surface-border) 88%, #ffffff 12%);
-  background:
-    linear-gradient(
-      180deg,
-      var(--ancient-card-bg-start, rgba(255, 253, 247, 0.93)) 0%,
-      var(--ancient-card-bg-end, rgba(250, 237, 213, 0.88)) 100%
-    );
+  background: linear-gradient(
+    180deg,
+    var(--ancient-card-bg-start, rgba(255, 253, 247, 0.93)) 0%,
+    var(--ancient-card-bg-end, rgba(250, 237, 213, 0.88)) 100%
+  );
   box-shadow: var(
     --ancient-card-shadow,
     0 26px 48px rgba(86, 53, 29, 0.2),
@@ -849,12 +1213,11 @@ body {
   padding: 10px 12px 14px;
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--surface-border) 86%, #ffffff 14%);
-  background:
-    linear-gradient(
-      180deg,
-      var(--ancient-header-bg-start, rgba(255, 250, 239, 0.86)) 0%,
-      var(--ancient-header-bg-end, rgba(247, 229, 200, 0.54)) 100%
-    );
+  background: linear-gradient(
+    180deg,
+    var(--ancient-header-bg-start, rgba(255, 250, 239, 0.86)) 0%,
+    var(--ancient-header-bg-end, rgba(247, 229, 200, 0.54)) 100%
+  );
   backdrop-filter: blur(2px);
 }
 
@@ -865,15 +1228,14 @@ body {
   right: 2px;
   bottom: 0;
   height: 1px;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--primary) 46%, transparent) 20%,
-      color-mix(in srgb, var(--primary-dark) 66%, transparent) 50%,
-      color-mix(in srgb, var(--primary) 46%, transparent) 80%,
-      transparent 100%
-    );
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary) 46%, transparent) 20%,
+    color-mix(in srgb, var(--primary-dark) 66%, transparent) 50%,
+    color-mix(in srgb, var(--primary) 46%, transparent) 80%,
+    transparent 100%
+  );
 }
 
 .theme-ancient .survey-cover-kicker {
@@ -882,12 +1244,11 @@ body {
 
 .theme-ancient .survey-cover-promo-tag {
   border-color: color-mix(in srgb, var(--primary) 44%, #ffffff 56%);
-  background:
-    linear-gradient(
-      130deg,
-      color-mix(in srgb, var(--primary) 22%, #ffffff 78%),
-      color-mix(in srgb, var(--primary-dark) 20%, #ffffff 80%)
-    );
+  background: linear-gradient(
+    130deg,
+    color-mix(in srgb, var(--primary) 22%, #ffffff 78%),
+    color-mix(in srgb, var(--primary-dark) 20%, #ffffff 80%)
+  );
   color: color-mix(in srgb, #3b2618 84%, #ffffff 16%);
 }
 
@@ -974,12 +1335,11 @@ body {
 
 .theme-ancient .survey-cover-start-btn {
   min-height: 50px;
-  background:
-    linear-gradient(
-      120deg,
-      color-mix(in srgb, #153f4a 78%, #ffffff 22%),
-      color-mix(in srgb, #1f5d6f 78%, #ffffff 22%)
-    ) !important;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, #153f4a 78%, #ffffff 22%),
+    color-mix(in srgb, #1f5d6f 78%, #ffffff 22%)
+  ) !important;
   box-shadow:
     0 12px 24px rgba(24, 72, 84, 0.34),
     0 0 0 1px rgba(168, 214, 225, 0.42);
@@ -988,12 +1348,11 @@ body {
 
 .theme-ancient .survey-cover-hook-line {
   border-color: rgba(54, 90, 98, 0.34);
-  background:
-    linear-gradient(
-      120deg,
-      rgba(241, 248, 249, 0.88),
-      rgba(225, 242, 246, 0.88)
-    );
+  background: linear-gradient(
+    120deg,
+    rgba(241, 248, 249, 0.88),
+    rgba(225, 242, 246, 0.88)
+  );
   color: #27444c;
 }
 
@@ -1039,13 +1398,12 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 0%,
-      color-mix(in srgb, var(--primary) 14%, transparent) 48%,
-      transparent 100%
-    );
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary) 14%, transparent) 48%,
+    transparent 100%
+  );
   transform: translateX(-100%);
   transition: transform 360ms ease;
 }
@@ -1090,6 +1448,242 @@ body {
   border: 1px solid rgba(154, 106, 64, 0.5);
 }
 
+/* 五行城市主题视觉重构：
+ * 关键逻辑：通过“卷轴底纹 + 五色点缀 + 柔和边框”建立专属识别，避免与通用主题同质化。 */
+.theme-five-elements-city .survey-shell {
+  isolation: isolate;
+}
+
+.theme-five-elements-city .survey-shell::before,
+.theme-five-elements-city .survey-shell::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.theme-five-elements-city .survey-shell::before {
+  inset: -10px -4px auto;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(159, 191, 166, 0.7) 22%,
+    rgba(155, 185, 201, 0.7) 48%,
+    rgba(217, 190, 139, 0.64) 74%,
+    transparent 100%
+  );
+}
+
+.theme-five-elements-city .survey-shell::after {
+  inset: auto -8px -10px;
+  height: 26px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(190, 175, 149, 0.18) 0%,
+    transparent 68%
+  );
+}
+
+.theme-five-elements-city .survey-header {
+  position: relative;
+  margin: 8px 2px 18px;
+  padding: 12px 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(204, 190, 170, 0.8);
+  background: linear-gradient(
+    138deg,
+    rgba(255, 252, 245, 0.9),
+    rgba(246, 241, 232, 0.82) 58%,
+    rgba(239, 246, 250, 0.72)
+  );
+  box-shadow: 0 14px 24px rgba(123, 107, 86, 0.1);
+}
+
+.theme-five-elements-city .survey-badge {
+  color: #6f624e;
+  letter-spacing: 0.11em;
+}
+
+.theme-five-elements-city .survey-header h1 {
+  color: #4f4437;
+  letter-spacing: 0.01em;
+}
+
+.theme-five-elements-city .survey-desc {
+  color: #736856;
+}
+
+.theme-five-elements-city .survey-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(209, 194, 172, 0.84);
+  background: linear-gradient(
+    136deg,
+    rgba(255, 252, 247, 0.92),
+    rgba(248, 243, 235, 0.9) 56%,
+    rgba(241, 247, 251, 0.88)
+  );
+  box-shadow: 0 22px 44px rgba(119, 103, 82, 0.14);
+}
+
+.theme-five-elements-city .survey-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    rgba(159, 191, 166, 0.08),
+    transparent 32%,
+    rgba(155, 185, 201, 0.08) 62%,
+    transparent 100%
+  );
+}
+
+.theme-five-elements-city .survey-cover-card {
+  border-radius: 22px;
+}
+
+.theme-five-elements-city .survey-cover-title {
+  letter-spacing: 0.01em;
+}
+
+.theme-five-elements-city .survey-cover-title-emphasis {
+  font-size: clamp(31px, 9.8vw, 45px);
+  line-height: 1.08;
+  color: #6f7f63;
+}
+
+.theme-five-elements-city .survey-cover-title-main {
+  color: #5b4f40;
+}
+
+.theme-five-elements-city .survey-cover-intro {
+  color: #746957;
+}
+
+.theme-five-elements-city .survey-cover-points li {
+  border-color: rgba(206, 194, 174, 0.8);
+  background: linear-gradient(
+    132deg,
+    rgba(255, 252, 246, 0.94),
+    rgba(249, 243, 234, 0.9)
+  );
+}
+
+.theme-five-elements-city .survey-cover-points li:nth-child(5n + 1) {
+  border-color: rgba(163, 195, 171, 0.82);
+}
+
+.theme-five-elements-city .survey-cover-points li:nth-child(5n + 2) {
+  border-color: rgba(160, 191, 211, 0.82);
+}
+
+.theme-five-elements-city .survey-cover-points li:nth-child(5n + 3) {
+  border-color: rgba(216, 189, 140, 0.82);
+}
+
+.theme-five-elements-city .survey-cover-points li:nth-child(5n + 4) {
+  border-color: rgba(211, 160, 149, 0.82);
+}
+
+.theme-five-elements-city .survey-cover-points li:nth-child(5n) {
+  border-color: rgba(198, 186, 168, 0.82);
+}
+
+.theme-five-elements-city .survey-progress-meta {
+  border: 1px solid rgba(201, 188, 167, 0.82);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: linear-gradient(
+    132deg,
+    rgba(255, 251, 243, 0.94),
+    rgba(243, 248, 251, 0.86)
+  );
+  color: #716350;
+}
+
+.theme-five-elements-city .survey-question-title {
+  color: #53473a;
+}
+
+.theme-five-elements-city .survey-question-desc {
+  color: #786d5c;
+}
+
+.theme-five-elements-city .survey-option {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  border-width: 1.5px;
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(252, 248, 241, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-option::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #9fbfa6, #9bb9c9);
+  opacity: 0.38;
+  transition: opacity 220ms ease;
+}
+
+.theme-five-elements-city .survey-option-selected {
+  border-color: #aac2a5;
+  box-shadow:
+    0 12px 24px rgba(129, 154, 125, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.theme-five-elements-city .survey-option-selected::before {
+  opacity: 1;
+}
+
+.theme-five-elements-city .survey-btn {
+  border-radius: 14px !important;
+  min-height: 44px;
+}
+
+.theme-five-elements-city .survey-btn-primary {
+  background: linear-gradient(
+    128deg,
+    #9fbfa6 0%,
+    #9bb9c9 42%,
+    #d9be8b 70%,
+    #d78e82 100%
+  ) !important;
+  box-shadow: 0 12px 22px rgba(124, 113, 91, 0.2);
+}
+
+.theme-five-elements-city .survey-btn-secondary {
+  border-color: rgba(188, 174, 153, 0.86) !important;
+  background: linear-gradient(
+    130deg,
+    rgba(255, 253, 248, 0.95),
+    rgba(247, 242, 233, 0.9)
+  ) !important;
+  color: #635847 !important;
+}
+
+.theme-five-elements-city .survey-home-action-btn {
+  border-style: solid !important;
+}
+
+.theme-five-elements-city .survey-result-card {
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+}
+
 .survey-shell {
   position: relative;
   z-index: 2;
@@ -1115,7 +1709,11 @@ body {
   font-weight: 700;
   line-height: 1.5;
   color: #fff;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 88%, #ffffff 12%), var(--primary-dark));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 88%, #ffffff 12%),
+    var(--primary-dark)
+  );
   box-shadow: 0 14px 30px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
@@ -1139,7 +1737,11 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.24), rgba(17, 12, 31, 0.72) 66%);
+  background: radial-gradient(
+    circle at 50% 20%,
+    rgba(255, 255, 255, 0.24),
+    rgba(17, 12, 31, 0.72) 66%
+  );
   backdrop-filter: blur(6px);
 }
 
@@ -1166,7 +1768,11 @@ body {
 
 .survey-destiny-processing::before {
   background:
-    radial-gradient(circle at 50% 24%, rgba(255, 212, 235, 0.32), transparent 56%),
+    radial-gradient(
+      circle at 50% 24%,
+      rgba(255, 212, 235, 0.32),
+      transparent 56%
+    ),
     linear-gradient(145deg, rgba(41, 26, 66, 0.72), rgba(26, 18, 49, 0.9));
 }
 
@@ -1176,14 +1782,26 @@ body {
 
 .survey-destiny-success::before {
   background:
-    radial-gradient(circle at 50% 20%, rgba(255, 240, 193, 0.38), transparent 60%),
-    radial-gradient(circle at 50% 80%, rgba(206, 183, 255, 0.28), transparent 60%),
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(255, 240, 193, 0.38),
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 50% 80%,
+      rgba(206, 183, 255, 0.28),
+      transparent 60%
+    ),
     linear-gradient(145deg, rgba(70, 39, 98, 0.7), rgba(25, 18, 43, 0.92));
 }
 
 .survey-destiny-fail::before {
   background:
-    radial-gradient(circle at 50% 16%, rgba(182, 191, 216, 0.18), transparent 56%),
+    radial-gradient(
+      circle at 50% 16%,
+      rgba(182, 191, 216, 0.18),
+      transparent 56%
+    ),
     linear-gradient(155deg, rgba(27, 29, 40, 0.88), rgba(13, 13, 18, 0.95));
 }
 
@@ -1453,12 +2071,11 @@ body {
   margin: 0;
   border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--option-border) 86%, #ffffff 14%);
-  background:
-    linear-gradient(
-      130deg,
-      color-mix(in srgb, var(--primary) 10%, #ffffff 90%),
-      color-mix(in srgb, var(--primary-dark) 10%, #ffffff 90%)
-    );
+  background: linear-gradient(
+    130deg,
+    color-mix(in srgb, var(--primary) 10%, #ffffff 90%),
+    color-mix(in srgb, var(--primary-dark) 10%, #ffffff 90%)
+  );
   color: color-mix(in srgb, var(--text-main) 86%, #ffffff 14%);
   font-size: 12px;
   line-height: 1.6;
@@ -1524,12 +2141,11 @@ body {
   inset: 0 auto 0 0;
   width: 0;
   border-radius: inherit;
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      color-mix(in srgb, var(--primary) 90%, #ffffff 10%) 0 8px,
-      color-mix(in srgb, var(--primary-dark) 78%, #ffffff 22%) 8px 16px
-    );
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--primary) 90%, #ffffff 10%) 0 8px,
+    color-mix(in srgb, var(--primary-dark) 78%, #ffffff 22%) 8px 16px
+  );
   transition: width 340ms ease;
 }
 
@@ -1571,12 +2187,11 @@ body {
 }
 
 .survey-romance-progress-wrap.is-success .survey-romance-wave-fill {
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      color-mix(in srgb, #ff9ec7 80%, #ffffff 20%) 0 8px,
-      color-mix(in srgb, #a38bff 80%, #ffffff 20%) 8px 16px
-    );
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, #ff9ec7 80%, #ffffff 20%) 0 8px,
+    color-mix(in srgb, #a38bff 80%, #ffffff 20%) 8px 16px
+  );
   animation: surveyWaveBurst 0.6s ease-out 1;
 }
 
@@ -1676,7 +2291,11 @@ body {
 .survey-btn-primary {
   color: #fff !important;
   border: 0 !important;
-  background: linear-gradient(132deg, var(--primary), var(--primary-dark)) !important;
+  background: linear-gradient(
+    132deg,
+    var(--primary),
+    var(--primary-dark)
+  ) !important;
 }
 
 .survey-btn-secondary {
@@ -1715,7 +2334,11 @@ body {
   border-radius: 999px;
   border: 2px solid color-mix(in srgb, var(--primary) 64%, #ffffff 36%);
   background:
-    radial-gradient(circle at 24% 35%, rgba(255, 255, 255, 0.52), transparent 44%),
+    radial-gradient(
+      circle at 24% 35%,
+      rgba(255, 255, 255, 0.52),
+      transparent 44%
+    ),
     linear-gradient(
       120deg,
       color-mix(in srgb, var(--primary) 28%, #ffffff 72%),
@@ -1732,7 +2355,11 @@ body {
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  background: radial-gradient(circle at 35% 35%, #fff, color-mix(in srgb, var(--primary) 88%, #ffffff 12%));
+  background: radial-gradient(
+    circle at 35% 35%,
+    #fff,
+    color-mix(in srgb, var(--primary) 88%, #ffffff 12%)
+  );
   box-shadow:
     0 0 0 5px color-mix(in srgb, var(--primary) 24%, transparent),
     0 0 16px color-mix(in srgb, var(--primary-dark) 44%, transparent);
@@ -1750,14 +2377,13 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(
-      180deg,
-      transparent 0%,
-      color-mix(in srgb, var(--primary) 32%, #ffffff 68%) 45%,
-      color-mix(in srgb, var(--primary-dark) 26%, #ffffff 74%) 55%,
-      transparent 100%
-    );
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary) 32%, #ffffff 68%) 45%,
+    color-mix(in srgb, var(--primary-dark) 26%, #ffffff 74%) 55%,
+    transparent 100%
+  );
   animation: surveyBrainScan 1.28s linear infinite;
 }
 
@@ -1875,12 +2501,57 @@ body {
   font-size: 12px;
 }
 
+.survey-main-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .survey-main-title {
   margin: 8px 0 6px;
   font-size: clamp(35px, 10.6vw, 50px);
   line-height: 1.12;
   font-family: var(--title-font);
   letter-spacing: 0.02em;
+}
+
+.survey-five-result-icon {
+  --five-icon-bg-start: #f5ecdc;
+  --five-icon-bg-end: #dfd1b9;
+  --five-icon-stroke: #6d5f4c;
+  --five-icon-fill: rgba(119, 103, 82, 0.18);
+  /* width: 48px; */
+  /* height: 48px; */
+  border-radius: 14px;
+  display: inline-grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  animation: surveyFiveTotemFloat 4.2s ease-in-out infinite;
+}
+
+.survey-five-result-icon svg {
+  width: 30px;
+  height: 30px;
+  display: block;
+}
+
+.survey-five-icon-stroke {
+  fill: none;
+  stroke: var(--five-icon-stroke);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.survey-five-icon-fill {
+  fill: var(--five-icon-fill);
+  stroke: var(--five-icon-stroke);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .survey-main-score {
@@ -2278,7 +2949,11 @@ body {
   margin: 0 0 10px;
   padding: 4px 10px;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(15, 138, 99, 0.18), rgba(113, 169, 232, 0.14));
+  background: linear-gradient(
+    135deg,
+    rgba(15, 138, 99, 0.18),
+    rgba(113, 169, 232, 0.14)
+  );
   border: 1px solid color-mix(in srgb, var(--primary) 24%, #ffffff 76%);
 }
 
@@ -2297,14 +2972,13 @@ body {
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .theme-city .survey-main-title {
-    background:
-      linear-gradient(
-        122deg,
-        #0b7f61 0%,
-        #16a57f 34%,
-        #2f89b8 72%,
-        #cd9953 100%
-      );
+    background: linear-gradient(
+      122deg,
+      #0b7f61 0%,
+      #16a57f 34%,
+      #2f89b8 72%,
+      #cd9953 100%
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -2318,39 +2992,54 @@ body {
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--primary) 28%, #ffffff 72%);
-  background: linear-gradient(130deg, rgba(15, 138, 99, 0.14), rgba(113, 169, 232, 0.16));
+  background: linear-gradient(
+    130deg,
+    rgba(15, 138, 99, 0.14),
+    rgba(113, 169, 232, 0.16)
+  );
   color: #1f5f80;
   box-shadow: 0 8px 22px rgba(15, 138, 99, 0.13);
 }
 
 .theme-city .survey-main-tag-item:nth-child(3n + 1) {
   border-color: color-mix(in srgb, #f0bf74 46%, #ffffff 54%);
-  background: linear-gradient(135deg, rgba(255, 248, 229, 0.96), rgba(255, 243, 220, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgba(255, 248, 229, 0.96),
+    rgba(255, 243, 220, 0.92)
+  );
   color: #8f6b31;
 }
 
 .theme-city .survey-main-tag-item:nth-child(3n + 2) {
   border-color: color-mix(in srgb, #5cc3a0 48%, #ffffff 52%);
-  background: linear-gradient(135deg, rgba(230, 250, 242, 0.96), rgba(219, 245, 236, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgba(230, 250, 242, 0.96),
+    rgba(219, 245, 236, 0.92)
+  );
   color: #0b6c52;
 }
 
 .theme-city .survey-main-tag-item:nth-child(3n) {
   border-color: color-mix(in srgb, #7daee8 46%, #ffffff 54%);
-  background: linear-gradient(135deg, rgba(233, 245, 255, 0.96), rgba(220, 238, 255, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgba(233, 245, 255, 0.96),
+    rgba(220, 238, 255, 0.92)
+  );
   color: #2d6da3;
 }
 
 .theme-city .survey-highlight-box {
   border-width: 1.5px;
   border-color: color-mix(in srgb, #5ec9a7 44%, #ffffff 56%);
-  background:
-    linear-gradient(
-      128deg,
-      rgba(255, 250, 238, 0.94),
-      rgba(237, 252, 245, 0.92) 58%,
-      rgba(236, 246, 255, 0.91)
-    );
+  background: linear-gradient(
+    128deg,
+    rgba(255, 250, 238, 0.94),
+    rgba(237, 252, 245, 0.92) 58%,
+    rgba(236, 246, 255, 0.91)
+  );
   box-shadow: 0 12px 24px rgba(39, 122, 105, 0.12);
 }
 
@@ -2360,13 +3049,12 @@ body {
 
 .theme-city .survey-top-wrap {
   border-color: color-mix(in srgb, var(--primary) 34%, #ffffff 66%);
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255, 254, 248, 0.95),
-      rgba(241, 252, 247, 0.92) 52%,
-      rgba(238, 248, 255, 0.9)
-    );
+  background: linear-gradient(
+    135deg,
+    rgba(255, 254, 248, 0.95),
+    rgba(241, 252, 247, 0.92) 52%,
+    rgba(238, 248, 255, 0.9)
+  );
   box-shadow: 0 14px 26px rgba(20, 118, 102, 0.1);
 }
 
@@ -2382,38 +3070,43 @@ body {
 .theme-city .survey-top-list .survey-top-item:nth-child(1) {
   /* 关键逻辑：第一推荐位单独提亮，强化“首选城市”视觉权重。 */
   border-color: color-mix(in srgb, #e3b25f 52%, #ffffff 48%);
-  background:
-    linear-gradient(
-      128deg,
-      rgba(255, 251, 239, 0.98),
-      rgba(244, 252, 246, 0.95) 58%,
-      rgba(238, 248, 255, 0.93)
-    );
+  background: linear-gradient(
+    128deg,
+    rgba(255, 251, 239, 0.98),
+    rgba(244, 252, 246, 0.95) 58%,
+    rgba(238, 248, 255, 0.93)
+  );
   box-shadow: 0 10px 20px rgba(191, 141, 66, 0.14);
 }
 
 .theme-city .survey-top-tag-item {
   border-color: color-mix(in srgb, #7bb6de 26%, #ffffff 74%);
-  background: linear-gradient(130deg, rgba(243, 249, 255, 0.95), rgba(233, 245, 255, 0.88));
+  background: linear-gradient(
+    130deg,
+    rgba(243, 249, 255, 0.95),
+    rgba(233, 245, 255, 0.88)
+  );
 }
 
 .theme-city .survey-top-item-score {
   color: #0f7b5d;
 }
 
-.theme-city .survey-top-list .survey-top-item:nth-child(1) .survey-top-item-score {
+.theme-city
+  .survey-top-list
+  .survey-top-item:nth-child(1)
+  .survey-top-item-score {
   color: #b0823f;
 }
 
 .theme-city .survey-detail-wrap:first-of-type {
   border-color: color-mix(in srgb, #5ec9a7 42%, #ffffff 58%);
-  background:
-    linear-gradient(
-      132deg,
-      rgba(235, 252, 245, 0.95),
-      rgba(242, 251, 255, 0.93) 55%,
-      rgba(255, 250, 240, 0.91)
-    );
+  background: linear-gradient(
+    132deg,
+    rgba(235, 252, 245, 0.95),
+    rgba(242, 251, 255, 0.93) 55%,
+    rgba(255, 250, 240, 0.91)
+  );
 }
 
 .theme-city .survey-detail-wrap:first-of-type h3 {
@@ -2422,11 +3115,19 @@ body {
 
 .theme-city .survey-detail-wrap:first-of-type .survey-bullet-list li {
   border-color: color-mix(in srgb, #66c4a4 30%, #ffffff 70%);
-  background: linear-gradient(130deg, rgba(255, 255, 255, 0.94), rgba(239, 250, 246, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.94),
+    rgba(239, 250, 246, 0.92)
+  );
 }
 
 .theme-city.theme-city-international .survey-source-wrap {
-  background: linear-gradient(135deg, rgba(126, 96, 214, 0.2), rgba(123, 177, 245, 0.18));
+  background: linear-gradient(
+    135deg,
+    rgba(126, 96, 214, 0.2),
+    rgba(123, 177, 245, 0.18)
+  );
   border-color: color-mix(in srgb, #8d6be6 32%, #ffffff 68%);
 }
 
@@ -2441,14 +3142,13 @@ body {
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .theme-city.theme-city-international .survey-main-title {
-    background:
-      linear-gradient(
-        122deg,
-        #6f58cb 0%,
-        #8d6be6 32%,
-        #5f9de6 68%,
-        #d38acb 100%
-      );
+    background: linear-gradient(
+      122deg,
+      #6f58cb 0%,
+      #8d6be6 32%,
+      #5f9de6 68%,
+      #d38acb 100%
+    );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -2457,7 +3157,11 @@ body {
 
 .theme-city.theme-city-international .survey-main-score {
   border-color: color-mix(in srgb, #9c84e8 38%, #ffffff 62%);
-  background: linear-gradient(130deg, rgba(247, 241, 255, 0.9), rgba(236, 244, 255, 0.88));
+  background: linear-gradient(
+    130deg,
+    rgba(247, 241, 255, 0.9),
+    rgba(236, 244, 255, 0.88)
+  );
   color: #5f47a6;
   box-shadow: 0 8px 22px rgba(111, 88, 188, 0.18);
 }
@@ -2465,38 +3169,53 @@ body {
 /* 关键逻辑：国际版结果标签采用 4 色轮替，避免“整屏同色”导致信息层级不清。 */
 .theme-city.theme-city-international .survey-main-tag-item:nth-child(4n + 1) {
   border-color: color-mix(in srgb, #c9a1ef 46%, #ffffff 54%);
-  background: linear-gradient(135deg, rgba(249, 242, 255, 0.96), rgba(241, 232, 255, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgba(249, 242, 255, 0.96),
+    rgba(241, 232, 255, 0.92)
+  );
   color: #6f4cb2;
 }
 
 .theme-city.theme-city-international .survey-main-tag-item:nth-child(4n + 2) {
   border-color: color-mix(in srgb, #7dbde9 46%, #ffffff 54%);
-  background: linear-gradient(135deg, rgba(235, 247, 255, 0.96), rgba(224, 241, 255, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgba(235, 247, 255, 0.96),
+    rgba(224, 241, 255, 0.92)
+  );
   color: #2c6ea6;
 }
 
 .theme-city.theme-city-international .survey-main-tag-item:nth-child(4n + 3) {
   border-color: color-mix(in srgb, #d79ed9 48%, #ffffff 52%);
-  background: linear-gradient(135deg, rgba(253, 241, 253, 0.96), rgba(247, 230, 247, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgba(253, 241, 253, 0.96),
+    rgba(247, 230, 247, 0.92)
+  );
   color: #8a4f8a;
 }
 
 .theme-city.theme-city-international .survey-main-tag-item:nth-child(4n) {
   border-color: color-mix(in srgb, #a5b7f1 46%, #ffffff 54%);
-  background: linear-gradient(135deg, rgba(241, 245, 255, 0.96), rgba(231, 238, 255, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgba(241, 245, 255, 0.96),
+    rgba(231, 238, 255, 0.92)
+  );
   color: #4e63ad;
 }
 
 .theme-city.theme-city-international .survey-highlight-box {
   border-width: 1.5px;
   border-color: color-mix(in srgb, #c6a0ed 42%, #ffffff 58%);
-  background:
-    linear-gradient(
-      128deg,
-      rgba(250, 243, 255, 0.95),
-      rgba(243, 235, 255, 0.93) 56%,
-      rgba(240, 244, 255, 0.92)
-    );
+  background: linear-gradient(
+    128deg,
+    rgba(250, 243, 255, 0.95),
+    rgba(243, 235, 255, 0.93) 56%,
+    rgba(240, 244, 255, 0.92)
+  );
   box-shadow: 0 12px 24px rgba(116, 89, 194, 0.14);
 }
 
@@ -2510,13 +3229,12 @@ body {
 
 .theme-city.theme-city-international .survey-top-wrap {
   border-color: color-mix(in srgb, #6aa9e6 34%, #ffffff 66%);
-  background:
-    linear-gradient(
-      135deg,
-      rgba(247, 251, 255, 0.96),
-      rgba(235, 246, 255, 0.93) 52%,
-      rgba(232, 239, 255, 0.91)
-    );
+  background: linear-gradient(
+    135deg,
+    rgba(247, 251, 255, 0.96),
+    rgba(235, 246, 255, 0.93) 52%,
+    rgba(232, 239, 255, 0.91)
+  );
   box-shadow: 0 14px 26px rgba(83, 134, 195, 0.12);
 }
 
@@ -2526,69 +3244,96 @@ body {
 
 .theme-city.theme-city-international .survey-top-list .survey-top-item {
   border-color: color-mix(in srgb, #8caee3 32%, #ffffff 68%);
-  background: linear-gradient(130deg, rgba(255, 255, 255, 0.98), rgba(241, 248, 255, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(241, 248, 255, 0.92)
+  );
 }
 
-.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(1) {
+.theme-city.theme-city-international
+  .survey-top-list
+  .survey-top-item:nth-child(1) {
   border-color: color-mix(in srgb, #c99ced 50%, #ffffff 50%);
-  background:
-    linear-gradient(
-      128deg,
-      rgba(252, 247, 255, 0.98),
-      rgba(244, 236, 255, 0.95) 58%,
-      rgba(236, 228, 255, 0.93)
-    );
+  background: linear-gradient(
+    128deg,
+    rgba(252, 247, 255, 0.98),
+    rgba(244, 236, 255, 0.95) 58%,
+    rgba(236, 228, 255, 0.93)
+  );
   box-shadow: 0 10px 20px rgba(134, 96, 198, 0.18);
 }
 
-.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(2) {
+.theme-city.theme-city-international
+  .survey-top-list
+  .survey-top-item:nth-child(2) {
   border-color: color-mix(in srgb, #79bbe7 46%, #ffffff 54%);
-  background:
-    linear-gradient(
-      128deg,
-      rgba(242, 250, 255, 0.98),
-      rgba(231, 246, 255, 0.95) 58%,
-      rgba(222, 239, 255, 0.93)
-    );
+  background: linear-gradient(
+    128deg,
+    rgba(242, 250, 255, 0.98),
+    rgba(231, 246, 255, 0.95) 58%,
+    rgba(222, 239, 255, 0.93)
+  );
 }
 
-.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(3) {
+.theme-city.theme-city-international
+  .survey-top-list
+  .survey-top-item:nth-child(3) {
   border-color: color-mix(in srgb, #d39be3 46%, #ffffff 54%);
-  background:
-    linear-gradient(
-      128deg,
-      rgba(252, 243, 255, 0.98),
-      rgba(245, 234, 252, 0.95) 58%,
-      rgba(236, 225, 246, 0.93)
-    );
+  background: linear-gradient(
+    128deg,
+    rgba(252, 243, 255, 0.98),
+    rgba(245, 234, 252, 0.95) 58%,
+    rgba(236, 225, 246, 0.93)
+  );
 }
 
 .theme-city.theme-city-international .survey-top-tag-item {
   border-color: color-mix(in srgb, #bca0f7 26%, #ffffff 74%);
-  background: linear-gradient(130deg, rgba(249, 244, 255, 0.95), rgba(241, 232, 255, 0.9));
+  background: linear-gradient(
+    130deg,
+    rgba(249, 244, 255, 0.95),
+    rgba(241, 232, 255, 0.9)
+  );
 }
 
 .theme-city.theme-city-international .survey-top-tag-item:nth-child(4n + 1) {
   border-color: color-mix(in srgb, #caa2ee 36%, #ffffff 64%);
-  background: linear-gradient(130deg, rgba(250, 243, 255, 0.96), rgba(241, 233, 255, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(250, 243, 255, 0.96),
+    rgba(241, 233, 255, 0.92)
+  );
   color: #6f4cb1;
 }
 
 .theme-city.theme-city-international .survey-top-tag-item:nth-child(4n + 2) {
   border-color: color-mix(in srgb, #80bce9 36%, #ffffff 64%);
-  background: linear-gradient(130deg, rgba(238, 248, 255, 0.96), rgba(226, 241, 255, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(238, 248, 255, 0.96),
+    rgba(226, 241, 255, 0.92)
+  );
   color: #2e6ea5;
 }
 
 .theme-city.theme-city-international .survey-top-tag-item:nth-child(4n + 3) {
   border-color: color-mix(in srgb, #d59ee2 36%, #ffffff 64%);
-  background: linear-gradient(130deg, rgba(252, 243, 255, 0.96), rgba(245, 232, 250, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(252, 243, 255, 0.96),
+    rgba(245, 232, 250, 0.92)
+  );
   color: #8a4f8a;
 }
 
 .theme-city.theme-city-international .survey-top-tag-item:nth-child(4n) {
   border-color: color-mix(in srgb, #c3a0ec 36%, #ffffff 64%);
-  background: linear-gradient(130deg, rgba(248, 241, 255, 0.96), rgba(239, 230, 255, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(248, 241, 255, 0.96),
+    rgba(239, 230, 255, 0.92)
+  );
   color: #6c4cad;
 }
 
@@ -2596,76 +3341,734 @@ body {
   color: #516fb9;
 }
 
-.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(1) .survey-top-item-score {
+.theme-city.theme-city-international
+  .survey-top-list
+  .survey-top-item:nth-child(1)
+  .survey-top-item-score {
   color: #6f4eb6;
 }
 
-.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(2) .survey-top-item-score {
+.theme-city.theme-city-international
+  .survey-top-list
+  .survey-top-item:nth-child(2)
+  .survey-top-item-score {
   color: #2f76ae;
 }
 
-.theme-city.theme-city-international .survey-top-list .survey-top-item:nth-child(3) .survey-top-item-score {
+.theme-city.theme-city-international
+  .survey-top-list
+  .survey-top-item:nth-child(3)
+  .survey-top-item-score {
   color: #8a4f8a;
 }
 
 .theme-city.theme-city-international .survey-detail-wrap {
   border-color: color-mix(in srgb, #b7a2eb 32%, #ffffff 68%);
-  background: linear-gradient(135deg, rgba(250, 246, 255, 0.95), rgba(243, 237, 255, 0.92));
+  background: linear-gradient(
+    135deg,
+    rgba(250, 246, 255, 0.95),
+    rgba(243, 237, 255, 0.92)
+  );
 }
 
 .theme-city.theme-city-international .survey-detail-wrap:first-of-type {
   border-color: color-mix(in srgb, #9cb3ef 44%, #ffffff 56%);
-  background:
-    linear-gradient(
-      132deg,
-      rgba(239, 246, 255, 0.95),
-      rgba(230, 240, 255, 0.93) 55%,
-      rgba(237, 246, 255, 0.91)
-    );
+  background: linear-gradient(
+    132deg,
+    rgba(239, 246, 255, 0.95),
+    rgba(230, 240, 255, 0.93) 55%,
+    rgba(237, 246, 255, 0.91)
+  );
 }
 
 .theme-city.theme-city-international .survey-detail-wrap:first-of-type h3 {
   color: #4e69ae;
 }
 
-.theme-city.theme-city-international .survey-detail-wrap:first-of-type .survey-bullet-list li {
+.theme-city.theme-city-international
+  .survey-detail-wrap:first-of-type
+  .survey-bullet-list
+  li {
   border-color: color-mix(in srgb, #a8bdf0 32%, #ffffff 68%);
-  background: linear-gradient(130deg, rgba(255, 255, 255, 0.95), rgba(237, 244, 255, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(237, 244, 255, 0.92)
+  );
 }
 
-.theme-city.theme-city-international .survey-detail-wrap:first-of-type .survey-bullet-list li:nth-child(even) {
+.theme-city.theme-city-international
+  .survey-detail-wrap:first-of-type
+  .survey-bullet-list
+  li:nth-child(even) {
   border-color: color-mix(in srgb, #c4a0ee 30%, #ffffff 70%);
-  background: linear-gradient(130deg, rgba(255, 255, 255, 0.95), rgba(245, 236, 255, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(245, 236, 255, 0.92)
+  );
 }
 
 .theme-city.theme-city-international .survey-type-card-wrap {
   border-color: color-mix(in srgb, #aeb6f0 34%, #ffffff 66%);
-  background: linear-gradient(132deg, rgba(244, 247, 255, 0.95), rgba(239, 233, 255, 0.92));
+  background: linear-gradient(
+    132deg,
+    rgba(244, 247, 255, 0.95),
+    rgba(239, 233, 255, 0.92)
+  );
 }
 
 .theme-city.theme-city-international .survey-type-card-item:nth-child(3n + 1) {
   border-color: color-mix(in srgb, #cba4ef 40%, #ffffff 60%);
-  background: linear-gradient(130deg, rgba(250, 243, 255, 0.96), rgba(241, 233, 255, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(250, 243, 255, 0.96),
+    rgba(241, 233, 255, 0.92)
+  );
 }
 
 .theme-city.theme-city-international .survey-type-card-item:nth-child(3n + 2) {
   border-color: color-mix(in srgb, #8abeee 40%, #ffffff 60%);
-  background: linear-gradient(130deg, rgba(239, 248, 255, 0.96), rgba(228, 241, 255, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(239, 248, 255, 0.96),
+    rgba(228, 241, 255, 0.92)
+  );
 }
 
 .theme-city.theme-city-international .survey-type-card-item:nth-child(3n) {
   border-color: color-mix(in srgb, #d5a3e5 40%, #ffffff 60%);
-  background: linear-gradient(130deg, rgba(252, 243, 255, 0.96), rgba(244, 232, 250, 0.92));
+  background: linear-gradient(
+    130deg,
+    rgba(252, 243, 255, 0.96),
+    rgba(244, 232, 250, 0.92)
+  );
 }
 
 .theme-city.theme-city-international .survey-distribution-wrap {
   border-color: color-mix(in srgb, #86b9ea 36%, #ffffff 64%);
-  background: linear-gradient(132deg, rgba(242, 249, 255, 0.95), rgba(235, 244, 255, 0.92));
+  background: linear-gradient(
+    132deg,
+    rgba(242, 249, 255, 0.95),
+    rgba(235, 244, 255, 0.92)
+  );
 }
 
 .theme-city.theme-city-international .survey-radar-wrap {
   border-color: color-mix(in srgb, #ad95ea 36%, #ffffff 64%);
-  background: linear-gradient(132deg, rgba(248, 243, 255, 0.95), rgba(240, 233, 255, 0.92));
+  background: linear-gradient(
+    132deg,
+    rgba(248, 243, 255, 0.95),
+    rgba(240, 233, 255, 0.92)
+  );
+}
+
+/* 五行城市主题结果增强：
+ * 关键逻辑：通过“核心能量 + 首选城市 + 模块分色”建立信息层级，避免结果页视觉过于平均。 */
+.theme-five-elements-city .survey-five-hero {
+  position: relative;
+  margin: 0 0 14px;
+  padding: 16px 14px 13px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(186, 170, 146, 0.9);
+  background: linear-gradient(
+    132deg,
+    rgba(255, 250, 240, 0.98) 0%,
+    rgba(236, 248, 241, 0.95) 34%,
+    rgba(233, 242, 251, 0.94) 66%,
+    rgba(252, 238, 223, 0.96) 100%
+  );
+  box-shadow:
+    0 18px 28px rgba(108, 91, 69, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66);
+  isolation: isolate;
+}
+
+.theme-five-elements-city .survey-five-hero::before {
+  content: "";
+  position: absolute;
+  inset: -42px -46px auto auto;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: conic-gradient(
+    from 14deg,
+    rgba(159, 191, 166, 0.36),
+    rgba(155, 185, 201, 0.34),
+    rgba(217, 190, 139, 0.34),
+    rgba(215, 142, 130, 0.31),
+    rgba(210, 201, 181, 0.3),
+    rgba(159, 191, 166, 0.36)
+  );
+  filter: blur(3px);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.theme-five-elements-city .survey-five-hero::after {
+  content: "";
+  position: absolute;
+  left: -12%;
+  right: -12%;
+  bottom: 0;
+  height: 52px;
+  background: linear-gradient(
+    90deg,
+    rgba(159, 191, 166, 0.15),
+    rgba(155, 185, 201, 0.12) 38%,
+    rgba(217, 190, 139, 0.11) 70%,
+    rgba(215, 142, 130, 0.14)
+  );
+  transform: skewY(-2.2deg) translateY(20px);
+  pointer-events: none;
+}
+
+.theme-five-elements-city .survey-five-hero-kicker {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.11em;
+  color: #7a6d58;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.theme-five-elements-city .survey-five-hero-title {
+  margin: 8px 0 4px;
+  font-family: var(--title-font);
+  font-size: clamp(24px, 6.4vw, 34px);
+  line-height: 1.22;
+  color: #4d4336;
+  letter-spacing: 0.01em;
+  text-shadow: 0 10px 18px rgba(118, 101, 80, 0.16);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .theme-five-elements-city .survey-five-hero-title {
+    background: linear-gradient(
+      120deg,
+      #6f9a86 0%,
+      #6e8eb4 32%,
+      #ad8553 64%,
+      #97524a 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.theme-five-elements-city .survey-five-hero-subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #6f614d;
+  font-weight: 600;
+}
+
+.theme-five-elements-city .survey-five-hero-badge-track {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.theme-five-elements-city .survey-five-hero-badge {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  padding: 8px 5px 7px;
+  border: 1px solid color-mix(in srgb, var(--five-badge-color) 42%, #ffffff 58%);
+  background: linear-gradient(
+    132deg,
+    color-mix(in srgb, var(--five-badge-color) 18%, #ffffff 82%),
+    color-mix(in srgb, var(--five-badge-color) 10%, #ffffff 90%)
+  );
+  box-shadow: 0 9px 14px
+    color-mix(in srgb, var(--five-badge-color) 26%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transform: translateY(0);
+  animation: surveyFiveBadgeBreath 2.8s ease-in-out infinite;
+  animation-delay: var(--five-badge-delay);
+}
+
+.theme-five-elements-city .survey-five-hero-badge::after {
+  content: "";
+  position: absolute;
+  inset: -18px auto auto -48%;
+  width: 72%;
+  height: 160%;
+  background: linear-gradient(
+    108deg,
+    rgba(255, 255, 255, 0.26),
+    rgba(255, 255, 255, 0)
+  );
+  transform: rotate(10deg);
+  pointer-events: none;
+}
+
+.theme-five-elements-city .survey-five-hero-badge-label {
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--five-badge-color) 78%, #3f3a32 22%);
+  font-weight: 700;
+}
+
+.theme-five-elements-city .survey-five-hero-badge-score {
+  font-size: 12px;
+  line-height: 1.1;
+  color: #564b3d;
+}
+
+.theme-five-elements-city .survey-source-wrap {
+  display: inline-flex;
+  margin: 0 0 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(159, 191, 166, 0.2),
+    rgba(155, 185, 201, 0.18)
+  );
+  border: 1px solid rgba(177, 197, 188, 0.85);
+}
+
+.theme-five-elements-city .survey-result-prefix {
+  color: #7b6d59;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.theme-five-elements-city .survey-main-title {
+  color: #7c6a53;
+  text-shadow: 0 10px 20px rgba(157, 141, 118, 0.18);
+}
+
+.theme-five-elements-city .survey-main-title-row {
+  gap: 12px;
+}
+
+.theme-five-elements-city .survey-five-result-icon.is-metal {
+  --five-icon-bg-start: #f4ecdd;
+  --five-icon-bg-end: #e0d2b8;
+  --five-icon-stroke: #8a785f;
+  --five-icon-fill: rgba(201, 181, 146, 0.3);
+}
+
+.theme-five-elements-city .survey-five-result-icon.is-wood {
+  --five-icon-bg-start: #eaf4ea;
+  --five-icon-bg-end: #d4e7d2;
+  --five-icon-stroke: #5d7f63;
+  --five-icon-fill: rgba(146, 182, 152, 0.28);
+}
+
+.theme-five-elements-city .survey-five-result-icon.is-water {
+  --five-icon-bg-start: #e9f2f8;
+  --five-icon-bg-end: #d6e7f3;
+  --five-icon-stroke: #587d98;
+  --five-icon-fill: rgba(133, 169, 197, 0.26);
+}
+
+.theme-five-elements-city .survey-five-result-icon.is-fire {
+  --five-icon-bg-start: #f8e9e4;
+  --five-icon-bg-end: #f1d8d1;
+  --five-icon-stroke: #9f6158;
+  --five-icon-fill: rgba(215, 142, 130, 0.28);
+}
+
+.theme-five-elements-city .survey-five-result-icon.is-earth {
+  --five-icon-bg-start: #f7efdf;
+  --five-icon-bg-end: #f0e1c7;
+  --five-icon-stroke: #9a7d47;
+  --five-icon-fill: rgba(217, 190, 139, 0.28);
+}
+
+.theme-five-elements-city .survey-five-result-icon.is-balanced {
+  --five-icon-bg-start: #eef2ec;
+  --five-icon-bg-end: #e2e8ee;
+  --five-icon-stroke: #6f695d;
+  --five-icon-fill: rgba(170, 167, 158, 0.26);
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .theme-five-elements-city .survey-main-title {
+    background: linear-gradient(
+      126deg,
+      #9fbfa6 0%,
+      #9bb9c9 32%,
+      #d9be8b 68%,
+      #d78e82 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.theme-five-elements-city .survey-main-score {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(203, 190, 169, 0.85);
+  background: linear-gradient(
+    130deg,
+    rgba(255, 250, 242, 0.92),
+    rgba(241, 246, 250, 0.9)
+  );
+  color: #7a6651;
+  box-shadow: 0 8px 18px rgba(121, 104, 82, 0.12);
+}
+
+.theme-five-elements-city .survey-main-tag-item:nth-child(5n + 1) {
+  border-color: rgba(216, 203, 182, 0.9);
+  background: linear-gradient(
+    130deg,
+    rgba(252, 247, 239, 0.96),
+    rgba(244, 236, 224, 0.92)
+  );
+  color: #79644c;
+}
+
+.theme-five-elements-city .survey-main-tag-item:nth-child(5n + 2) {
+  border-color: rgba(166, 198, 173, 0.9);
+  background: linear-gradient(
+    130deg,
+    rgba(240, 249, 242, 0.96),
+    rgba(229, 243, 233, 0.92)
+  );
+  color: #4d7157;
+}
+
+.theme-five-elements-city .survey-main-tag-item:nth-child(5n + 3) {
+  border-color: rgba(166, 193, 208, 0.9);
+  background: linear-gradient(
+    130deg,
+    rgba(240, 247, 252, 0.96),
+    rgba(228, 240, 248, 0.92)
+  );
+  color: #496b7f;
+}
+
+.theme-five-elements-city .survey-main-tag-item:nth-child(5n + 4) {
+  border-color: rgba(217, 190, 139, 0.9);
+  background: linear-gradient(
+    130deg,
+    rgba(253, 247, 233, 0.96),
+    rgba(247, 236, 212, 0.92)
+  );
+  color: #8a6c3d;
+}
+
+.theme-five-elements-city .survey-main-tag-item:nth-child(5n) {
+  border-color: rgba(216, 157, 146, 0.9);
+  background: linear-gradient(
+    130deg,
+    rgba(253, 243, 241, 0.96),
+    rgba(247, 228, 224, 0.92)
+  );
+  color: #8d5a52;
+}
+
+.theme-five-elements-city .survey-highlight-box {
+  border-width: 1.5px;
+  border-color: rgba(185, 203, 193, 0.88);
+  background: linear-gradient(
+    130deg,
+    rgba(255, 251, 243, 0.95),
+    rgba(238, 247, 241, 0.93) 54%,
+    rgba(237, 244, 250, 0.91)
+  );
+  box-shadow: 0 12px 22px rgba(124, 109, 85, 0.12);
+}
+
+.theme-five-elements-city .survey-highlight-box h3 {
+  color: #666a57;
+}
+
+.theme-five-elements-city .survey-distribution-wrap {
+  border-color: rgba(196, 210, 199, 0.85);
+  background: linear-gradient(
+    132deg,
+    rgba(255, 252, 245, 0.96),
+    rgba(243, 248, 244, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-type-card-wrap {
+  border-color: rgba(204, 190, 167, 0.84);
+  background: linear-gradient(
+    132deg,
+    rgba(255, 250, 240, 0.95),
+    rgba(247, 242, 233, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-type-card-grid {
+  /* 关键逻辑：判定速览改为“单列一行一个标签”，提升移动端扫读效率。 */
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.theme-five-elements-city .survey-type-card-item {
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 9px 12px;
+}
+
+.theme-five-elements-city .survey-type-card-label {
+  margin: 0;
+  order: 1;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6e624f;
+  white-space: nowrap;
+}
+
+.theme-five-elements-city .survey-type-card-label::after {
+  content: "：";
+}
+
+.theme-five-elements-city .survey-type-card-value {
+  margin: 0;
+  order: 2;
+  font-size: 14px;
+  line-height: 1.35;
+  font-family: var(--survey-font-body);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.theme-five-elements-city .survey-type-card-item:nth-child(3n + 1) {
+  border-color: rgba(159, 191, 166, 0.88);
+  background: linear-gradient(
+    130deg,
+    rgba(242, 250, 244, 0.96),
+    rgba(231, 245, 236, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-type-card-item:nth-child(3n + 2) {
+  border-color: rgba(155, 185, 201, 0.88);
+  background: linear-gradient(
+    130deg,
+    rgba(241, 248, 252, 0.96),
+    rgba(229, 240, 248, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-type-card-item:nth-child(3n) {
+  border-color: rgba(217, 190, 139, 0.88);
+  background: linear-gradient(
+    130deg,
+    rgba(253, 247, 235, 0.96),
+    rgba(247, 237, 216, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-top-wrap {
+  border-color: rgba(187, 202, 191, 0.88);
+  background: linear-gradient(
+    134deg,
+    rgba(255, 252, 245, 0.96),
+    rgba(240, 247, 244, 0.92)
+  );
+  box-shadow: 0 14px 24px rgba(118, 103, 82, 0.1);
+}
+
+.theme-five-elements-city .survey-top-wrap h3 {
+  color: #5f634f;
+}
+
+.theme-five-elements-city .survey-top-list .survey-top-item {
+  border-color: rgba(198, 210, 202, 0.84);
+  background: linear-gradient(130deg, #ffffff, rgba(246, 250, 248, 0.9));
+}
+
+.theme-five-elements-city .survey-top-list .survey-top-item:nth-child(1) {
+  border-color: rgba(177, 197, 188, 0.96);
+  background: linear-gradient(
+    125deg,
+    rgba(242, 252, 245, 0.98),
+    rgba(235, 246, 251, 0.95) 52%,
+    rgba(252, 244, 227, 0.93)
+  );
+  box-shadow: 0 10px 20px rgba(136, 162, 146, 0.2);
+}
+
+.theme-five-elements-city .survey-top-item-score {
+  color: #5f7154;
+}
+
+.theme-five-elements-city
+  .survey-top-list
+  .survey-top-item:nth-child(1)
+  .survey-top-item-score {
+  color: #547b6d;
+}
+
+.theme-five-elements-city .survey-top-tag-item {
+  border-color: rgba(198, 189, 173, 0.84);
+  background: linear-gradient(
+    130deg,
+    rgba(255, 252, 245, 0.95),
+    rgba(246, 242, 233, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-top-tag-item:nth-child(3n + 1) {
+  border-color: rgba(161, 193, 168, 0.9);
+  background: linear-gradient(
+    130deg,
+    rgba(242, 250, 244, 0.96),
+    rgba(233, 245, 237, 0.92)
+  );
+  color: #4f7159;
+}
+
+.theme-five-elements-city .survey-top-tag-item:nth-child(3n + 2) {
+  border-color: rgba(158, 190, 208, 0.9);
+  background: linear-gradient(
+    130deg,
+    rgba(241, 248, 252, 0.96),
+    rgba(230, 241, 249, 0.92)
+  );
+  color: #4d6d81;
+}
+
+.theme-five-elements-city .survey-top-tag-item:nth-child(3n) {
+  border-color: rgba(215, 190, 144, 0.9);
+  background: linear-gradient(
+    130deg,
+    rgba(253, 247, 235, 0.96),
+    rgba(247, 237, 216, 0.92)
+  );
+  color: #876b40;
+}
+
+.theme-five-elements-city .survey-detail-wrap {
+  border-color: rgba(206, 195, 174, 0.86);
+  background: linear-gradient(
+    132deg,
+    rgba(255, 252, 246, 0.95),
+    rgba(247, 243, 235, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-detail-wrap:nth-of-type(1) {
+  border-color: rgba(179, 200, 184, 0.9);
+  background: linear-gradient(
+    132deg,
+    rgba(240, 250, 243, 0.96),
+    rgba(233, 245, 238, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-detail-wrap:nth-of-type(2) {
+  border-color: rgba(170, 193, 210, 0.9);
+  background: linear-gradient(
+    132deg,
+    rgba(239, 247, 252, 0.96),
+    rgba(229, 241, 249, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-detail-wrap:nth-of-type(3) {
+  border-color: rgba(216, 191, 145, 0.9);
+  background: linear-gradient(
+    132deg,
+    rgba(253, 248, 237, 0.96),
+    rgba(247, 237, 217, 0.92)
+  );
+}
+
+/* 结果模块分层强化：
+ * 关键逻辑：统一模块容器结构，再用顶部渐变色条区分“分布/速览/城市/解读”，
+ * 用户在移动端首屏可快速识别重点区域。 */
+.theme-five-elements-city .survey-distribution-wrap,
+.theme-five-elements-city .survey-type-card-wrap,
+.theme-five-elements-city .survey-radar-wrap,
+.theme-five-elements-city .survey-top-wrap,
+.theme-five-elements-city .survey-detail-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-five-elements-city .survey-distribution-wrap::before,
+.theme-five-elements-city .survey-type-card-wrap::before,
+.theme-five-elements-city .survey-radar-wrap::before,
+.theme-five-elements-city .survey-top-wrap::before,
+.theme-five-elements-city .survey-detail-wrap::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 0;
+  height: 3px;
+  border-bottom-left-radius: 999px;
+  border-bottom-right-radius: 999px;
+  pointer-events: none;
+}
+
+.theme-five-elements-city .survey-distribution-wrap::before {
+  background: linear-gradient(90deg, #9fbfa6, #80aeb5);
+}
+
+.theme-five-elements-city .survey-type-card-wrap::before {
+  background: linear-gradient(90deg, #9bb9c9, #8b9fca);
+}
+
+.theme-five-elements-city .survey-radar-wrap {
+  border-color: rgba(184, 201, 192, 0.86);
+  background: linear-gradient(
+    132deg,
+    rgba(252, 249, 241, 0.96),
+    rgba(241, 247, 244, 0.92)
+  );
+}
+
+.theme-five-elements-city .survey-radar-wrap::before {
+  background: linear-gradient(90deg, #d9be8b, #cba873);
+}
+
+.theme-five-elements-city .survey-radar-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  fill: #5b4f40;
+}
+
+.theme-five-elements-city .survey-top-wrap::before {
+  background: linear-gradient(90deg, #90b9a0, #96aecd, #d2ad76);
+}
+
+.theme-five-elements-city .survey-detail-wrap:nth-of-type(1)::before {
+  background: linear-gradient(90deg, #95bfa0, #78b198);
+}
+
+.theme-five-elements-city .survey-detail-wrap:nth-of-type(2)::before {
+  background: linear-gradient(90deg, #92b6d1, #7f9fc4);
+}
+
+.theme-five-elements-city .survey-detail-wrap:nth-of-type(3)::before {
+  background: linear-gradient(90deg, #d9bc85, #bf9661);
+}
+
+.theme-five-elements-city
+  .survey-top-list
+  .survey-top-item:nth-child(1)
+  .survey-top-item-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #4d6e61;
 }
 
 .survey-poster-wrap {
@@ -2743,12 +4146,11 @@ body {
   border-radius: 14px;
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--primary) 28%, #ffffff 72%);
-  background:
-    linear-gradient(
-      130deg,
-      color-mix(in srgb, var(--primary) 16%, #ffffff 84%),
-      color-mix(in srgb, var(--primary-dark) 14%, #ffffff 86%)
-    );
+  background: linear-gradient(
+    130deg,
+    color-mix(in srgb, var(--primary) 16%, #ffffff 84%),
+    color-mix(in srgb, var(--primary-dark) 14%, #ffffff 86%)
+  );
   color: color-mix(in srgb, var(--text-main) 84%, #ffffff 16%);
   font-size: 12px;
   font-weight: 700;
@@ -2955,9 +4357,52 @@ body {
   }
 }
 
+@keyframes surveyFiveBadgeBreath {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    filter: saturate(1);
+  }
+  50% {
+    transform: translateY(-1.5px) scale(1.03);
+    filter: saturate(1.12);
+  }
+}
+
+@keyframes surveyFiveTotemFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
 @media (max-width: 360px) {
   .survey-question-wrap {
     min-height: 380px;
+  }
+
+  .theme-five-elements-city::after {
+    font-size: 17px;
+    letter-spacing: 0.18em;
+    bottom: 7%;
+  }
+
+  .theme-five-elements-city .survey-five-hero-badge-track {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .theme-five-elements-city .survey-five-result-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .theme-five-elements-city .survey-five-result-icon svg {
+    width: 27px;
+    height: 27px;
   }
 
   .theme-ancient .survey-cover-symbol.symbol-fan {
@@ -2989,6 +4434,17 @@ body {
 }
 
 @media (max-width: 759px) {
+  .theme-five-elements-city::before {
+    opacity: 0.62;
+  }
+
+  .theme-five-elements-city::after {
+    font-size: clamp(18px, 5.6vw, 28px);
+    letter-spacing: 0.2em;
+    bottom: 8%;
+    opacity: 0.74;
+  }
+
   .survey-card {
     /* 关键逻辑：移动端禁用卡片毛玻璃可显著降低首屏合成与重绘成本。 */
     backdrop-filter: none;
@@ -3007,6 +4463,14 @@ body {
   .survey-cover-city-fade-enter-active,
   .survey-cover-city-fade-leave-active {
     transition: none;
+  }
+
+  .theme-five-elements-city .survey-five-hero-badge {
+    animation: none;
+  }
+
+  .theme-five-elements-city .survey-five-result-icon {
+    animation: none;
   }
 }
 
