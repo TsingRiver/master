@@ -1,4 +1,18 @@
-import { MBTI_PRO_120_QUESTION_BANK } from "./mbtiQuestionBank";
+import {
+  MBTI_PRO_120_QUESTION_BANK,
+  MBTI_QUICK_32_QUESTION_BANK,
+} from "./mbtiQuestionBank";
+import {
+  ENNEAGRAM_PRO_120_QUESTION_BANK,
+  ENNEAGRAM_QUICK_36_QUESTION_BANK,
+} from "./enneagramQuestionBank";
+import { IDEAL_MATCH_CORE_64_QUESTION_BANK } from "./idealMatchQuestionBank";
+import { JUNG_CLASSIC_QUESTION_BANK } from "./jungClassicQuestionBank";
+import { TEMPERAMENT_CORE_60_QUESTION_BANK } from "./temperamentQuestionBank";
+import { DND_ALIGNMENT_CORE_60_QUESTION_BANK } from "./dndAlignmentQuestionBank";
+import { ATTACHMENT_CORE_64_QUESTION_BANK } from "./attachmentTypeQuestionBank";
+import { HOLLAND_CORE_60_QUESTION_BANK } from "./hollandQuestionBank";
+import { BIG_FIVE_CORE_60_QUESTION_BANK } from "./bigFiveQuestionBank";
 
 /**
  * 类型学统一测试目录：
@@ -100,14 +114,31 @@ function createTestDefinition(definition) {
 }
 
 /**
- * 获取题目场景文案。
- * 复杂度评估：O(1)。
- * @param {object} testConfig 测试配置。
- * @param {number} questionIndex 题目索引。
- * @returns {string} 场景文案。
+ * 测试题目场景标签映射：
+ * 关键逻辑：固定前缀不再拼进题干，改为独立标签展示，降低题干阅读长度。
  */
-function resolveQuestionScene(testConfig, questionIndex) {
-  return SCENE_LIBRARY[(questionIndex + testConfig.sceneOffset) % SCENE_LIBRARY.length];
+const TEST_QUESTION_CONTEXT_LABEL_MAP = {
+  enneagram: "",
+  "social-persona": "团队协作场景",
+  "ideal-match": "亲密关系场景",
+  "jung-classic": "问题分析场景",
+  disc: "协作推进场景",
+  "attitude-psy": "决策场景",
+  temperament: "日常状态场景",
+  "big-five": "长期行为场景",
+  "dnd-alignment": "原则选择场景",
+  attachment: "亲密关系场景",
+  holland: "工作学习场景",
+};
+
+/**
+ * 获取题目场景标签。
+ * 复杂度评估：O(1)。
+ * @param {string} testKey 测试键。
+ * @returns {string} 场景标签。
+ */
+function resolveQuestionContextLabel(testKey) {
+  return TEST_QUESTION_CONTEXT_LABEL_MAP[testKey] ?? "";
 }
 
 /**
@@ -181,17 +212,92 @@ function buildAgreementLikertOptions({ questionId, outcomeKey }) {
  * 关键逻辑：题干统一陈述句，确保“同意/不同意”可直接作答。
  * 复杂度评估：O(L)，L 为 cue 文本长度。
  * @param {object} params 参数对象。
- * @param {string} params.sceneText 场景文案。
  * @param {string} params.cueText 倾向描述文案。
+ * @param {number} params.statementVariantIndex 题干变体索引。
  * @returns {string} 题干文本。
  */
-function buildLikertQuestionTitle({ sceneText, cueText }) {
+function buildLikertQuestionTitle({ cueText, statementVariantIndex }) {
   const normalizedCueText = String(cueText ?? "")
     .trim()
     .replace(/[。！？!?]+$/g, "");
-  // 关键逻辑：场景句已包含时间语义（如“...时”），首句出现“我通常...”会冗余，统一压缩为“我...”。
+  // 关键逻辑：统一保留第一人称口语化句式，避免“术语堆叠+语义跳跃”。
   const refinedCueText = normalizedCueText.replace(/^我通常/, "我");
-  return `${sceneText}，${refinedCueText}。`;
+  const statementVariants = [
+    // 关键逻辑：首个模板保持最短句，降低阅读负担。
+    ({ cueSentence }) => `${cueSentence}。`,
+    ({ cueSentence }) => `${cueSentence}。`,
+    ({ cueSentence }) => `${cueSentence}。`,
+    ({ cueSentence }) => `${cueSentence}。`,
+    ({ cueSentence }) => `${cueSentence}。`,
+    ({ cueSentence }) => `${cueSentence}。`,
+    ({ cueSentence }) => `${cueSentence}。`,
+    ({ cueSentence }) => `${cueSentence}。`,
+  ];
+
+  const normalizedVariantIndex = Number(statementVariantIndex ?? 0);
+  const safeVariantIndex =
+    Number.isFinite(normalizedVariantIndex) && normalizedVariantIndex >= 0
+      ? Math.floor(normalizedVariantIndex)
+      : 0;
+  const activeVariantBuilder =
+    statementVariants[safeVariantIndex % statementVariants.length];
+
+  return activeVariantBuilder({
+    cueSentence: refinedCueText,
+  });
+}
+
+/**
+ * 构建冲突兜底题干（自然语言，不暴露技术标记）。
+ * 关键逻辑：通过“场景 + 引导短句 + 陈述句”组合扩大表达空间，确保题干可读且可唯一化。
+ * 复杂度评估：O(1)。
+ * @param {object} params 参数对象。
+ * @param {object} params.testConfig 测试配置。
+ * @param {string} params.cueText 倾向描述文案。
+ * @param {number} params.questionIndex 题目索引。
+ * @param {number} params.attemptIndex 当前尝试次数。
+ * @returns {string} 兜底题干文本。
+ */
+function buildFallbackLikertQuestionTitle({
+  testConfig,
+  cueText,
+  questionIndex,
+  attemptIndex,
+}) {
+  const normalizedCueText = String(cueText ?? "")
+    .trim()
+    .replace(/[。！？!?]+$/g, "");
+  const refinedCueText = normalizedCueText.replace(/^我通常/, "我");
+  const sceneText =
+    SCENE_LIBRARY[
+      (Number(questionIndex ?? 0) + Number(attemptIndex ?? 0)) % SCENE_LIBRARY.length
+    ];
+  const promptList = Array.isArray(testConfig?.promptTemplates)
+    ? testConfig.promptTemplates
+    : [];
+  // 关键逻辑：优先输出短句，降低移动端阅读压力。
+  const conciseFallbackTitle = `${sceneText}，${refinedCueText}。`;
+
+  if (promptList.length > 0) {
+    const promptIndex =
+      Math.floor(
+        (Number(questionIndex ?? 0) + Number(attemptIndex ?? 0)) /
+          Math.max(1, SCENE_LIBRARY.length),
+      ) % promptList.length;
+    const normalizedPromptText = String(promptList[promptIndex] ?? "")
+      .trim()
+      .replace(/[。！？!?：:]+$/g, "");
+
+    if (normalizedPromptText) {
+      const promptFallbackTitle = `${sceneText}，${normalizedPromptText}：${refinedCueText}。`;
+      // 关键逻辑：题干超过 34 字时回退短句，避免“场景+提示+陈述”叠加过长。
+      if (promptFallbackTitle.length <= 34) {
+        return promptFallbackTitle;
+      }
+    }
+  }
+
+  return conciseFallbackTitle;
 }
 
 /**
@@ -199,6 +305,7 @@ function buildLikertQuestionTitle({ sceneText, cueText }) {
  * 关键逻辑：只改展示文本，不改题目向量与评分逻辑，保证结果稳定性。
  */
 const OPTION_LABEL_SIMPLIFY_RULES = [
+  { pattern: /校准标准/g, replacement: "把标准想清楚" },
   { pattern: /低干扰高准确/g, replacement: "少打扰、但更准确" },
   { pattern: /化学反应/g, replacement: "心动感觉" },
   { pattern: /并肩升级/g, replacement: "一起变得更好" },
@@ -340,6 +447,162 @@ function simplifyOptionLabel(inputText, testKey) {
 }
 
 /**
+ * 题干扩容后缀词库（通用版）。
+ * 关键逻辑：在不改变原始倾向方向的前提下，为同一倾向生成更多口语化变体，提升题库容量。
+ */
+const DEFAULT_CUE_EXPANSION_SUFFIXES = [
+  "这会让我更有掌控感",
+  "这会让我更安心",
+  "这会让我更愿意投入",
+  "这会让我更容易坚持",
+  "这会让我判断更清楚",
+  "这会让我推进更顺手",
+  "这会让我减少内耗",
+  "这会让我更快进入状态",
+  "这会让我更有把握",
+  "这会让我更愿意长期这样做",
+  "这会让我更容易和他人配合",
+  "这会让我更稳定地做决定",
+  "这会让我在压力下也更从容",
+  "这会让我更容易看见重点",
+  "这会让我更愿意承担结果",
+  "这会让我更容易保持节奏",
+];
+
+/**
+ * 题干扩容后缀词库（关系向测试）。
+ */
+const RELATION_CUE_EXPANSION_SUFFIXES = [
+  "这会让我更有安全感",
+  "这会让我更愿意长期投入",
+  "这会让我更容易建立信任",
+  "这会让我更愿意表达真实想法",
+  "这会让我更愿意共同规划未来",
+  "这会让我更容易放下防备",
+  "这会让我在关系里更安心",
+  "这会让我更愿意一起解决问题",
+  "这会让我更愿意持续经营关系",
+  "这会让我更愿意靠近对方",
+  "这会让我更愿意沟通真实需求",
+  "这会让我更容易稳定相处",
+  "这会让我更愿意修复冲突",
+  "这会让我对这段关系更有把握",
+  "这会让我更愿意共同承担现实压力",
+  "这会让我更相信彼此是同一队",
+];
+
+/**
+ * 题干扩容后缀词库（协作向测试）。
+ */
+const COLLAB_CUE_EXPANSION_SUFFIXES = [
+  "这会让协作推进更顺畅",
+  "这能减少团队反复沟通成本",
+  "这会让大家更容易达成共识",
+  "这会让执行节奏更稳定",
+  "这会让任务落地更可控",
+  "这会让分工更清晰",
+  "这会让我更快判断优先级",
+  "这会让团队更容易对齐目标",
+  "这会让推进阻力更小",
+  "这会让整体配合更高效",
+  "这会让我在复杂协作里更从容",
+  "这会让任务交付更稳",
+  "这会让信息传递更准确",
+  "这会让协作质量更高",
+  "这会让问题更快收口",
+  "这会让关键节点更少失误",
+];
+
+/**
+ * 解析测试对应的扩容后缀词库。
+ * 复杂度评估：O(1)。
+ * @param {string} testKey 测试键。
+ * @returns {Array<string>} 后缀词库。
+ */
+function resolveCueExpansionSuffixes(testKey) {
+  if (testKey === "ideal-match" || testKey === "attachment") {
+    return RELATION_CUE_EXPANSION_SUFFIXES;
+  }
+
+  if (testKey === "social-persona" || testKey === "disc") {
+    return COLLAB_CUE_EXPANSION_SUFFIXES;
+  }
+
+  return DEFAULT_CUE_EXPANSION_SUFFIXES;
+}
+
+/**
+ * 去重并规范化 cue 列表。
+ * 复杂度评估：O(N * L)，N 为 cue 数量，L 为平均文本长度。
+ * @param {Array<string>} cueList 原始 cue 列表。
+ * @returns {Array<string>} 去重后的 cue 列表。
+ */
+function normalizeCueList(cueList) {
+  const dedupedCueList = [];
+  const seenCueSet = new Set();
+  const safeCueList = Array.isArray(cueList) ? cueList : [];
+
+  safeCueList.forEach((cueText) => {
+    const normalizedCueText = String(cueText ?? "")
+      .trim()
+      .replace(/[。！？!?]+$/g, "");
+    if (!normalizedCueText || seenCueSet.has(normalizedCueText)) {
+      return;
+    }
+
+    seenCueSet.add(normalizedCueText);
+    dedupedCueList.push(normalizedCueText);
+  });
+
+  return dedupedCueList;
+}
+
+/**
+ * 按目标容量扩展单个 outcome 的 cue 列表。
+ * 关键逻辑：
+ * 1. 先保留原始 cue；
+ * 2. 若容量不足，则通过“原始 cue + 后缀词库”构造稳定变体；
+ * 3. 保证生成过程确定性，避免线上会话题库抖动。
+ * 复杂度评估：O(T)，T 为目标 cue 容量（常量级，通常 < 20）。
+ * @param {object} params 参数对象。
+ * @param {Array<string>} params.baseCueList 原始 cue 列表。
+ * @param {string} params.testKey 测试键。
+ * @param {number} params.targetCount 目标 cue 容量。
+ * @returns {Array<string>} 扩展后的 cue 列表。
+ */
+function expandOutcomeCueList({ baseCueList, testKey, targetCount }) {
+  const normalizedBaseCueList = normalizeCueList(baseCueList);
+  if (normalizedBaseCueList.length === 0) {
+    return [];
+  }
+
+  const safeTargetCount = Math.max(1, Math.floor(targetCount || 0));
+  if (normalizedBaseCueList.length >= safeTargetCount) {
+    return normalizedBaseCueList;
+  }
+
+  const suffixList = resolveCueExpansionSuffixes(testKey);
+  const expandedCueList = [...normalizedBaseCueList];
+  const seenCueSet = new Set(expandedCueList);
+  const maxIteration = normalizedBaseCueList.length * Math.max(1, suffixList.length) * 2;
+  let iterationIndex = 0;
+
+  while (expandedCueList.length < safeTargetCount && iterationIndex < maxIteration) {
+    const baseCue = normalizedBaseCueList[iterationIndex % normalizedBaseCueList.length];
+    const suffix =
+      suffixList[Math.floor(iterationIndex / normalizedBaseCueList.length) % suffixList.length];
+    const expandedCue = `${baseCue}，${suffix}`;
+    if (!seenCueSet.has(expandedCue)) {
+      seenCueSet.add(expandedCue);
+      expandedCueList.push(expandedCue);
+    }
+    iterationIndex += 1;
+  }
+
+  return expandedCueList;
+}
+
+/**
  * 生成单个测试的题库。
  * 复杂度评估：O(N)，N 为该测试题库容量。
  * @param {object} testConfig 测试配置。
@@ -351,25 +614,83 @@ function buildGeneratedQuestionPool(testConfig) {
   }
 
   const outcomeCount = testConfig.outcomes.length;
+  const modeList = Array.isArray(testConfig?.modes) ? testConfig.modes : [];
+  const maxModeQuestionCount = modeList.reduce((maxCount, modeItem) => {
+    const baseCount = Math.max(0, Math.floor(Number(modeItem?.baseCount ?? 0)));
+    return Math.max(maxCount, baseCount);
+  }, 0);
+  const targetCueCountPerOutcome = Math.max(
+    1,
+    Math.ceil(maxModeQuestionCount / Math.max(1, outcomeCount)),
+  );
+  // 关键逻辑：对每个结果类型先扩容 cue，确保固定题量模式下题干覆盖更充分。
+  const resolvedOutcomeList = testConfig.outcomes.map((outcomeItem) => ({
+    ...outcomeItem,
+    cues: expandOutcomeCueList({
+      baseCueList: outcomeItem.cues,
+      testKey: testConfig.key,
+      targetCount: targetCueCountPerOutcome,
+    }),
+  }));
   const generatedQuestions = [];
+  const usedTitleSet = new Set();
+  const questionContextLabel = resolveQuestionContextLabel(testConfig.key);
 
   for (let questionIndex = 0; questionIndex < testConfig.poolSize; questionIndex += 1) {
     const questionId = `${testConfig.key}-q-${String(questionIndex + 1).padStart(3, "0")}`;
-    const selectedOutcome = pickOutcomeForLikertQuestion(testConfig.outcomes, questionIndex);
+    const selectedOutcome = pickOutcomeForLikertQuestion(resolvedOutcomeList, questionIndex);
     if (!selectedOutcome) {
       continue;
     }
 
-    const cueIndex = Math.floor(questionIndex / outcomeCount) % selectedOutcome.cues.length;
+    const blockIndex = Math.floor(questionIndex / outcomeCount);
+    const cueIndex = blockIndex % selectedOutcome.cues.length;
+    const statementVariantIndex = Math.floor(
+      blockIndex / Math.max(1, selectedOutcome.cues.length),
+    );
     const normalizedCueText = simplifyOptionLabel(selectedOutcome.cues[cueIndex], testConfig.key);
-    const sceneText = resolveQuestionScene(testConfig, questionIndex);
+
+    let resolvedTitle = buildLikertQuestionTitle({
+      cueText: normalizedCueText,
+      statementVariantIndex,
+    });
+
+    let titleRetryCount = 0;
+    const maxTitleRetryCount = 48;
+    while (usedTitleSet.has(resolvedTitle) && titleRetryCount < maxTitleRetryCount) {
+      titleRetryCount += 1;
+      // 关键逻辑：先走同语义变体，再走“场景+引导短句”兜底，确保题量不缩水。
+      if (titleRetryCount <= 24) {
+        resolvedTitle = buildLikertQuestionTitle({
+          cueText: normalizedCueText,
+          statementVariantIndex: statementVariantIndex + titleRetryCount,
+        });
+      } else {
+        resolvedTitle = buildFallbackLikertQuestionTitle({
+          testConfig,
+          cueText: normalizedCueText,
+          questionIndex,
+          attemptIndex: titleRetryCount - 24,
+        });
+      }
+    }
+
+    if (usedTitleSet.has(resolvedTitle)) {
+      // 关键逻辑：最终兜底不再丢题，避免模式题量被削减。
+      resolvedTitle = buildFallbackLikertQuestionTitle({
+        testConfig,
+        cueText: normalizedCueText,
+        questionIndex,
+        attemptIndex: titleRetryCount + questionIndex + 97,
+      });
+    }
+
+    usedTitleSet.add(resolvedTitle);
 
     generatedQuestions.push({
       id: questionId,
-      title: buildLikertQuestionTitle({
-        sceneText,
-        cueText: normalizedCueText,
-      }),
+      title: resolvedTitle,
+      contextLabel: questionContextLabel,
       // 关键逻辑：题目已统一陈述句，辅助文案统一为“符合程度”引导，降低理解成本。
       description: "请根据符合程度作答。",
       weight: 1,
@@ -381,6 +702,235 @@ function buildGeneratedQuestionPool(testConfig) {
   }
 
   return generatedQuestions;
+}
+
+/**
+ * 社会人格静态题目蓝图：
+ * 1. 第一项为题干；
+ * 2. 第二项为题目对应结果维度键。
+ * 关键逻辑：使用“题干 + 维度键”最小结构，便于后续低风险批量替换题库。
+ */
+const SOCIAL_PERSONA_QUESTION_BLUEPRINT = [
+  ["我会先定方向，再带着大家推进。", "s-lead"],
+  ["我习惯照顾身边人的情绪和需求。", "s-empathy"],
+  ["我做事理性，习惯先分析利弊。", "s-analyst"],
+  ["我喜欢稳定，不喜欢频繁变动。", "s-stability"],
+  ["我乐于尝试新鲜事物，敢于冒险。", "s-explorer"],
+  ["我在社交中很主动，容易和人熟络。", "s-social"],
+  ["我更愿意独处，享受安静的时光。", "s-independent"],
+  ["我有自己的原则，不轻易妥协。", "s-principle"],
+  ["团队出现分歧时，我会主动协调。", "s-lead"],
+  ["别人难过时，我会真心安慰。", "s-empathy"],
+  ["我做决定很少受情绪影响。", "s-analyst"],
+  ["生活有规律，我才会觉得安心。", "s-stability"],
+  ["我喜欢挑战自己，突破舒适区。", "s-explorer"],
+  ["聚会时，我通常是活跃气氛的人。", "s-social"],
+  ["人多的场合会让我觉得疲惫。", "s-independent"],
+  ["我不会为了合群而违背本心。", "s-principle"],
+  ["我喜欢安排任务，推动进度。", "s-lead"],
+  ["我很在意身边人过得好不好。", "s-empathy"],
+  ["我习惯用数据和事实说话。", "s-analyst"],
+  ["突然的变动会让我很不适应。", "s-stability"],
+  ["我对未知的事物充满好奇。", "s-explorer"],
+  ["我主动认识新朋友，拓展圈子。", "s-social"],
+  ["我更喜欢一个人完成事情。", "s-independent"],
+  ["我清楚自己的底线，不会退让。", "s-principle"],
+  ["大家遇到问题会习惯找我拿主意。", "s-lead"],
+  ["我愿意为了在乎的人付出很多。", "s-empathy"],
+  ["我能客观看待问题，不偏袒。", "s-analyst"],
+  ["我喜欢按计划一步步执行。", "s-stability"],
+  ["我不喜欢一成不变的生活。", "s-explorer"],
+  ["我在社交场合中很放松自然。", "s-social"],
+  ["社交过后，我需要独处恢复精力。", "s-independent"],
+  ["我不喜欢虚伪客套，只做真实的自己。", "s-principle"],
+  ["我享受掌控局面的感觉。", "s-lead"],
+  ["我很会换位思考，体谅他人。", "s-empathy"],
+  ["情绪波动很少影响我的判断。", "s-analyst"],
+  ["安稳踏实的生活让我满足。", "s-stability"],
+  ["我愿意为了兴趣尝试各种可能。", "s-explorer"],
+  ["我很容易和陌生人聊得来。", "s-social"],
+  ["我不太喜欢主动开启话题。", "s-independent"],
+  ["我做事有底线，不会随波逐流。", "s-principle"],
+  ["我擅长组织活动，统筹资源。", "s-lead"],
+  ["我会记住别人对我的好。", "s-empathy"],
+  ["我擅长理性分析，解决复杂问题。", "s-analyst"],
+  ["我不喜欢突如其来的变化。", "s-stability"],
+  ["我喜欢探索不同的生活方式。", "s-explorer"],
+  ["我喜欢和很多人保持良好关系。", "s-social"],
+  ["我更适合独立思考和工作。", "s-independent"],
+  ["我不会为了利益放弃原则。", "s-principle"],
+  ["我敢于拍板，承担责任。", "s-lead"],
+  ["我待人真诚，愿意用心经营关系。", "s-empathy"],
+  ["我看重逻辑自洽，不喜欢双标。", "s-analyst"],
+  ["我追求长期稳定，而非短期刺激。", "s-stability"],
+  ["我喜欢体验新鲜感，拒绝无聊。", "s-explorer"],
+  ["我擅长表达，能清晰传递想法。", "s-social"],
+  ["我喜欢安静的环境，远离喧嚣。", "s-independent"],
+  ["我做人有态度，不迎合、不讨好。", "s-principle"],
+  ["我愿意为团队目标付出全力。", "s-lead"],
+  ["我能察觉别人的情绪变化。", "s-empathy"],
+  ["遇到问题，我习惯先找原因。", "s-analyst"],
+  ["我喜欢按部就班，不喜欢打乱节奏。", "s-stability"],
+  ["我喜欢不断学习，拓宽眼界。", "s-explorer"],
+  ["我在人群中容易成为焦点。", "s-social"],
+  ["我习惯在自己的世界里放松。", "s-independent"],
+  ["我坚持做正确的事，而不是容易的事。", "s-principle"],
+];
+
+/**
+ * 构建社会人格静态题库。
+ * 复杂度评估：O(N)，N 为题目数量。
+ * @returns {Array<object>} 题库对象数组。
+ */
+function buildSocialPersonaStaticQuestionPool() {
+  const contextLabel = resolveQuestionContextLabel("social-persona");
+  const normalizedQuestionBlueprint = Array.isArray(SOCIAL_PERSONA_QUESTION_BLUEPRINT)
+    ? SOCIAL_PERSONA_QUESTION_BLUEPRINT
+    : [];
+  const builtQuestionPool = [];
+  const seenTitleSet = new Set();
+
+  normalizedQuestionBlueprint.forEach((questionTuple, questionIndex) => {
+    const tupleTitle = String(questionTuple?.[0] ?? "").trim();
+    const tupleOutcomeKey = String(questionTuple?.[1] ?? "").trim();
+    if (!tupleTitle || !tupleOutcomeKey || seenTitleSet.has(tupleTitle)) {
+      return;
+    }
+
+    seenTitleSet.add(tupleTitle);
+    const questionId = `social-persona-q-${String(questionIndex + 1).padStart(3, "0")}`;
+    // 关键逻辑：选项结构统一复用李克特生成器，保证评分类口径一致。
+    builtQuestionPool.push({
+      id: questionId,
+      title: tupleTitle,
+      contextLabel,
+      description: "请根据符合程度作答。",
+      weight: 1,
+      options: buildAgreementLikertOptions({
+        questionId,
+        outcomeKey: tupleOutcomeKey,
+      }),
+    });
+  });
+
+  return builtQuestionPool;
+}
+
+/**
+ * DISC 静态题目蓝图。
+ * 关键逻辑：保留 title / outcomeKey / weight 结构，便于后续直接用 JSON 覆盖题库。
+ */
+const DISC_QUESTION_BLUEPRINT = [
+  { title: "我会在不确定时先拍板推进。", outcomeKey: "d", weight: 1 },
+  { title: "我喜欢通过互动带动团队氛围。", outcomeKey: "i", weight: 1 },
+  { title: "我做事稳重，尽量避免风险。", outcomeKey: "s", weight: 1 },
+  { title: "我注重细节和规则，追求准确。", outcomeKey: "c", weight: 1 },
+  { title: "我喜欢挑战，敢于直面冲突。", outcomeKey: "d", weight: 1 },
+  { title: "我容易和陌生人快速熟悉。", outcomeKey: "i", weight: 1 },
+  { title: "我习惯配合他人，不喜欢争抢。", outcomeKey: "s", weight: 1 },
+  { title: "我做决定前会反复核对信息。", outcomeKey: "c", weight: 1 },
+  { title: "我目标感强，不达目的不罢休。", outcomeKey: "d", weight: 1 },
+  { title: "我喜欢表达自己，乐于分享。", outcomeKey: "i", weight: 1 },
+  { title: "我性格温和，不轻易发脾气。", outcomeKey: "s", weight: 1 },
+  { title: "我做事严谨，不喜欢模糊地带。", outcomeKey: "c", weight: 1 },
+  { title: "我喜欢掌控局面，自己做决定。", outcomeKey: "d", weight: 1 },
+  { title: "我擅长鼓励别人，带动气氛。", outcomeKey: "i", weight: 1 },
+  { title: "我做事有耐心，愿意慢慢等待。", outcomeKey: "s", weight: 1 },
+  { title: "我重视逻辑和事实，不凭感觉。", outcomeKey: "c", weight: 1 },
+  { title: "我行动力强，想到就尽快做。", outcomeKey: "d", weight: 1 },
+  { title: "我喜欢热闹环境，享受被关注。", outcomeKey: "i", weight: 1 },
+  { title: "我追求稳定，不喜欢频繁变动。", outcomeKey: "s", weight: 1 },
+  { title: "我习惯先分析再行动，谨慎严谨。", outcomeKey: "c", weight: 1 },
+  { title: "我敢于竞争，希望比别人更强。", outcomeKey: "d", weight: 1 },
+  { title: "我善于社交，人脉比较广。", outcomeKey: "i", weight: 1 },
+  { title: "我不喜欢冲突，尽量息事宁人。", outcomeKey: "s", weight: 1 },
+  { title: "我做事有条理，按流程执行。", outcomeKey: "c", weight: 1 },
+  { title: "我说话直接，不喜欢绕弯子。", outcomeKey: "d", weight: 1 },
+  { title: "我乐观积极，容易感染别人。", outcomeKey: "i", weight: 1 },
+  { title: "我善于倾听，给人安全感。", outcomeKey: "s", weight: 1 },
+  { title: "我追求完美，不允许马虎出错。", outcomeKey: "c", weight: 1 },
+  { title: "我遇到压力会更想掌控局面。", outcomeKey: "d", weight: 1 },
+  { title: "压力大时我会找人倾诉放松。", outcomeKey: "i", weight: 1 },
+  { title: "压力大时我会保持沉默慢慢来。", outcomeKey: "s", weight: 1 },
+  { title: "压力大时我会反复检查确认。", outcomeKey: "c", weight: 1 },
+  { title: "我喜欢高效，讨厌拖延。", outcomeKey: "d", weight: 1 },
+  { title: "我喜欢新鲜有趣，讨厌沉闷。", outcomeKey: "i", weight: 1 },
+  { title: "我做事踏实，一步一个脚印。", outcomeKey: "s", weight: 1 },
+  { title: "我重视数据和依据，讲究严谨。", outcomeKey: "c", weight: 1 },
+  { title: "我敢于承担责任，带头做事。", outcomeKey: "d", weight: 1 },
+  { title: "我擅长拉近关系，让人舒服。", outcomeKey: "i", weight: 1 },
+  { title: "我包容性强，愿意迁就他人。", outcomeKey: "s", weight: 1 },
+  { title: "我善于发现问题和漏洞。", outcomeKey: "c", weight: 1 },
+  { title: "我不喜欢被指挥，渴望自主。", outcomeKey: "d", weight: 1 },
+  { title: "我喜欢被认可、被赞美。", outcomeKey: "i", weight: 1 },
+  { title: "我喜欢安稳，不喜欢突发变化。", outcomeKey: "s", weight: 1 },
+  { title: "我做事讲原则，守规矩。", outcomeKey: "c", weight: 1 },
+  { title: "我果断干脆，不优柔寡断。", outcomeKey: "d", weight: 1 },
+  { title: "我擅长表达，感染力强。", outcomeKey: "i", weight: 1 },
+  { title: "我态度平和，情绪稳定。", outcomeKey: "s", weight: 1 },
+  { title: "我思考深入，注重本质。", outcomeKey: "c", weight: 1 },
+  { title: "我争强好胜，渴望赢。", outcomeKey: "d", weight: 1 },
+  { title: "我喜欢交朋友，拓展圈子。", outcomeKey: "i", weight: 1 },
+  { title: "我做事低调，不喜欢张扬。", outcomeKey: "s", weight: 1 },
+  { title: "我喜欢规划清晰，有据可依。", outcomeKey: "c", weight: 1 },
+  { title: "我面对困难会迎难而上。", outcomeKey: "d", weight: 1 },
+  { title: "我擅长用热情化解尴尬。", outcomeKey: "i", weight: 1 },
+  { title: "我善于坚持，不轻易放弃。", outcomeKey: "s", weight: 1 },
+  { title: "我善于理性分析，客观冷静。", outcomeKey: "c", weight: 1 },
+  { title: "我喜欢主导事情发展方向。", outcomeKey: "d", weight: 1 },
+  { title: "我喜欢轻松愉快的工作氛围。", outcomeKey: "i", weight: 1 },
+  { title: "我善于配合团队完成任务。", outcomeKey: "s", weight: 1 },
+  { title: "我注重质量，精益求精。", outcomeKey: "c", weight: 1 },
+];
+
+/**
+ * 构建 DISC 静态题库。
+ * 复杂度评估：O(N)，N 为题目数量。
+ * @returns {Array<object>} 题库对象数组。
+ */
+function buildDiscStaticQuestionPool() {
+  const contextLabel = resolveQuestionContextLabel("disc");
+  const validOutcomeKeySet = new Set(["d", "i", "s", "c"]);
+  const normalizedQuestionBlueprint = Array.isArray(DISC_QUESTION_BLUEPRINT)
+    ? DISC_QUESTION_BLUEPRINT
+    : [];
+  const builtQuestionPool = [];
+  const seenTitleSet = new Set();
+
+  normalizedQuestionBlueprint.forEach((questionItem, questionIndex) => {
+    const normalizedTitle = String(questionItem?.title ?? "").trim();
+    const normalizedOutcomeKey = String(questionItem?.outcomeKey ?? "")
+      .trim()
+      .toLowerCase();
+    const normalizedWeight = Number(questionItem?.weight ?? 1);
+    const resolvedWeight =
+      Number.isFinite(normalizedWeight) && normalizedWeight > 0 ? normalizedWeight : 1;
+
+    // 关键逻辑：构建阶段显式做去重和合法性过滤，避免线上题库脏数据影响测评稳定性。
+    if (
+      !normalizedTitle ||
+      seenTitleSet.has(normalizedTitle) ||
+      !validOutcomeKeySet.has(normalizedOutcomeKey)
+    ) {
+      return;
+    }
+
+    seenTitleSet.add(normalizedTitle);
+    const questionId = `disc-q-${String(questionIndex + 1).padStart(3, "0")}`;
+    builtQuestionPool.push({
+      id: questionId,
+      title: normalizedTitle,
+      contextLabel,
+      description: "请根据符合程度作答。",
+      weight: resolvedWeight,
+      options: buildAgreementLikertOptions({
+        questionId,
+        outcomeKey: normalizedOutcomeKey,
+      }),
+    });
+  });
+
+  return builtQuestionPool;
 }
 
 /**
@@ -409,6 +959,11 @@ export const TYPEOLOGY_TESTS = [
       "你下意识会先关注哪一边？",
     ],
     outcomes: [],
+    // 关键逻辑：pro72 保持当前题库；quick32 使用独立强区分题库，避免题面与专业版同质化。
+    modeQuestionPoolMap: {
+      pro72: MBTI_PRO_120_QUESTION_BANK,
+      quick32: MBTI_QUICK_32_QUESTION_BANK,
+    },
     staticQuestionPool: MBTI_PRO_120_QUESTION_BANK,
   }),
   createTestDefinition({
@@ -423,7 +978,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-enneagram",
     sceneOffset: 7,
     modes: [createMode("pro120", "120题专业版", 120), createMode("quick36", "36题速测版", 36)],
-    poolSize: 140,
+    poolSize: 120,
     promptTemplates: [
       "你内心最常被什么驱动？",
       "你平时最在意哪类需求？",
@@ -506,6 +1061,12 @@ export const TYPEOLOGY_TESTS = [
         actions: ["练习更早表达个人立场", "把重要事项设置硬截止", "每天给自己一个优先任务"],
       },
     ],
+    // 关键逻辑：九型人格按模式使用独立题库，避免 quick36 被专业版题面覆盖。
+    modeQuestionPoolMap: {
+      pro120: ENNEAGRAM_PRO_120_QUESTION_BANK,
+      quick36: ENNEAGRAM_QUICK_36_QUESTION_BANK,
+    },
+    staticQuestionPool: ENNEAGRAM_PRO_120_QUESTION_BANK,
   }),
   createTestDefinition({
     key: "social-persona",
@@ -517,7 +1078,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-social",
     sceneOffset: 11,
     modes: [createMode("core64", "64题", 64)],
-    poolSize: 84,
+    poolSize: 64,
     promptTemplates: [
       "这类场景下你通常会怎么做？",
       "你平时最常用哪种应对方式？",
@@ -528,58 +1089,74 @@ export const TYPEOLOGY_TESTS = [
     outcomes: [
       {
         key: "s-lead",
-        label: "领航者",
-        // 关键逻辑：社会人格选项采用第一人称动作句，降低术语感并提升可读性。
+        label: "推动掌舵型",
         cues: [
           "我会先定方向，再带着大家推进",
-          "我愿意把人和事协调起来",
-          "我喜欢先把任务排好，再快速推动执行",
+          "我喜欢安排任务，推动进度",
+          "我敢于拍板，承担责任",
         ],
-        summary: "擅长定方向、起节奏与带队推进。",
-        tags: ["组织力", "推进力", "决策性"],
-        actions: ["留出讨论缓冲，避免压制他人节奏", "把决策依据公开化", "建立可继任的流程"],
+        summary: "擅长明确目标、组织资源并推动团队落地。",
+        tags: ["方向感", "统筹力", "责任感"],
+        actions: ["补充向上同步与风险披露", "关键节点引入共识确认", "沉淀可复用推进流程"],
       },
       {
-        key: "s-bridge",
-        label: "连接者",
-        cues: ["我会先把关键的人连起来", "我擅长找到双方都能接受的说法", "我通常先沟通搭桥，再推进事情"],
-        summary: "擅长联结资源与修复关系。",
-        tags: ["关系敏感", "协同", "沟通"],
-        actions: ["避免过度迎合", "关键议题写明边界", "把关系资产转成项目资产"],
+        key: "s-empathy",
+        label: "共情关怀型",
+        cues: ["我习惯照顾身边人的情绪和需求", "我会真心安慰状态不好的同伴", "我能察觉别人的情绪变化"],
+        summary: "擅长感知情绪、提供支持并维护关系温度。",
+        tags: ["同理心", "信任感", "关系经营"],
+        actions: ["持续共情同时明确边界", "将支持经验文档化", "避免长期情绪透支"],
       },
       {
         key: "s-analyst",
-        label: "观察者",
-        cues: ["我会先观察，再决定要不要参与", "我更看重信息是否真实准确", "我倾向少打扰、少发言，但判断尽量准确"],
-        summary: "擅长评估局势与结构洞察。",
-        tags: ["判断力", "信息过滤", "冷静"],
-        actions: ["提高公开表达频次", "洞察配合行动建议输出", "给决策设置时限"],
+        label: "理性分析型",
+        cues: ["我做事理性，习惯先分析利弊", "我习惯用数据和事实说话", "遇到问题，我习惯先找原因"],
+        summary: "擅长提炼事实、拆解问题并形成可验证判断。",
+        tags: ["逻辑性", "结构化", "客观判断"],
+        actions: ["结论同步时增加业务语境", "避免分析过久错失窗口", "用小实验快速验证假设"],
       },
       {
-        key: "s-guardian",
-        label: "守序者",
-        cues: ["我会先稳住规则和边界", "我看重说到做到、前后一致", "我不喜欢协作方式太混乱"],
-        summary: "擅长维持秩序与系统可靠性。",
-        tags: ["稳定", "规则", "责任"],
-        actions: ["在变动场景保持弹性", "识别“必要破例”", "优化规则解释成本"],
+        key: "s-stability",
+        label: "稳健秩序型",
+        cues: ["我喜欢按计划一步步执行", "生活有规律，我才会觉得安心", "我不喜欢突如其来的变化"],
+        summary: "擅长维持节奏、控制波动并保证执行稳定性。",
+        tags: ["稳定性", "计划性", "可靠性"],
+        actions: ["为变化场景预留弹性区间", "建立异常处理预案", "定期评估规则是否过度保守"],
       },
       {
         key: "s-explorer",
-        label: "开拓者",
-        cues: ["我会先试一试，再慢慢收口", "到新场合我会主动破冰聊天", "我更喜欢变化多一点的社交节奏"],
-        summary: "擅长打开新局与探索机会。",
-        tags: ["探索", "灵活", "机会感"],
-        actions: ["建立收口机制", "减少目标切换频率", "把灵感转为迭代清单"],
+        label: "探索开拓型",
+        cues: ["我乐于尝试新鲜事物，敢于冒险", "我喜欢挑战自己，突破舒适区", "我喜欢不断学习，拓宽眼界"],
+        summary: "擅长打开增量机会并推动个人与团队持续进化。",
+        tags: ["好奇心", "行动力", "创新倾向"],
+        actions: ["设定阶段性收口目标", "控制并行探索数量", "把探索结果沉淀成复盘资产"],
       },
       {
-        key: "s-support",
-        label: "支持者",
-        cues: ["我会先让团队状态稳定下来", "缺人手时我愿意补位把事做完", "我更习惯在幕后支持团队"],
-        summary: "擅长托底执行与持续协同。",
-        tags: ["稳定输出", "耐心", "配合度"],
-        actions: ["主动争取可见度", "明确个人成长议程", "避免长期隐形劳动"],
+        key: "s-social",
+        label: "社交影响型",
+        cues: ["我在社交中很主动，容易和人熟络", "我很容易和陌生人聊得来", "我擅长表达，能清晰传递想法"],
+        summary: "擅长建立连接、活跃协作氛围并扩展网络影响力。",
+        tags: ["表达力", "外向性", "影响力"],
+        actions: ["在高互动外加入深度倾听", "建立关键关系维护节奏", "减少无效社交分散成本"],
+      },
+      {
+        key: "s-independent",
+        label: "独立内倾型",
+        cues: ["我更愿意独处，享受安静的时光", "社交过后，我需要独处恢复精力", "我更适合独立思考和工作"],
+        summary: "擅长深度思考与自我驱动，偏好低噪声高专注环境。",
+        tags: ["专注力", "自驱", "深度思考"],
+        actions: ["主动同步阶段性产出", "与团队约定低成本沟通机制", "在关键节点提前暴露风险"],
+      },
+      {
+        key: "s-principle",
+        label: "原则坚守型",
+        cues: ["我有自己的原则，不轻易妥协", "我清楚自己的底线，不会退让", "我坚持做正确的事，而不是容易的事"],
+        summary: "擅长守住价值边界，在复杂场景中保持一致性与可信度。",
+        tags: ["价值观", "一致性", "边界感"],
+        actions: ["将原则转化为可执行判断标准", "区分“底线”与“偏好”以保留协作弹性", "高冲突场景先对齐共同目标"],
       },
     ],
+    staticQuestionPool: buildSocialPersonaStaticQuestionPool(),
   }),
   createTestDefinition({
     key: "ideal-match",
@@ -591,7 +1168,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-ideal",
     sceneOffset: 15,
     modes: [createMode("core64", "64题", 64)],
-    poolSize: 84,
+    poolSize: 64,
     promptTemplates: [
       "你更容易被哪种特质吸引？",
       "长期相处时你最看重什么？",
@@ -603,7 +1180,11 @@ export const TYPEOLOGY_TESTS = [
       {
         key: "i-stable",
         label: "稳定共建型",
-        cues: ["价值观一致优先", "节奏稳定比刺激更重要", "愿意长期经营与共建"],
+        cues: [
+          "我更看重两个人价值观一致",
+          "我更喜欢稳定的关系节奏，不追求反复拉扯",
+          "我愿意把关系当作长期经营的事情",
+        ],
         summary: "追求长期可靠、可成长的关系结构。",
         tags: ["稳定", "责任", "长期主义"],
         actions: ["明确双方成长目标", "建立定期沟通机制", "保留独立空间"],
@@ -611,7 +1192,11 @@ export const TYPEOLOGY_TESTS = [
       {
         key: "i-passion",
         label: "高能吸引型",
-        cues: ["化学反应与激情优先", "偏好强烈表达", "希望关系有持续新鲜感"],
+        cues: [
+          "我容易被强烈的心动感觉吸引",
+          "我喜欢对方直接表达喜欢和在意",
+          "我希望关系里一直有新鲜感",
+        ],
         summary: "追求高强度连接与情绪共振。",
         tags: ["热度", "表达", "新鲜感"],
         actions: ["设置冲突降温机制", "把激情转为日常连接动作", "减少情绪化决策"],
@@ -619,36 +1204,17 @@ export const TYPEOLOGY_TESTS = [
       {
         key: "i-growth",
         label: "共同成长型",
-        cues: ["希望彼此推动进步", "会重视目标与能力匹配", "看重“并肩升级”"],
+        cues: [
+          "我希望两个人能互相鼓励、一起成长",
+          "我会看重双方目标和能力是否匹配",
+          "我更喜欢一起进步的伴侣关系",
+        ],
         summary: "追求互相成就与阶段成长。",
         tags: ["成长", "目标", "互相赋能"],
         actions: ["定期共识复盘", "避免把关系工具化", "给亲密留白"],
       },
-      {
-        key: "i-healing",
-        label: "温柔疗愈型",
-        cues: ["情绪承接能力优先", "偏好高质量陪伴", "在意是否被理解"],
-        summary: "追求高共情和被接住感。",
-        tags: ["共情", "情绪价值", "安全感"],
-        actions: ["明确需求而非让对方猜", "避免过度依赖情绪确认", "建立现实层面协作"],
-      },
-      {
-        key: "i-freedom",
-        label: "自由同频型",
-        cues: ["彼此独立又同频", "尊重边界和空间", "不喜欢过度捆绑"],
-        summary: "追求边界清晰的轻负担亲密。",
-        tags: ["独立", "边界", "松弛"],
-        actions: ["设定连接仪式感", "关键议题及时沟通", "避免长期回避承诺"],
-      },
-      {
-        key: "i-partner",
-        label: "现实搭档型",
-        cues: ["重视执行与生活能力", "偏好务实合作", "看重责任分担"],
-        summary: "追求生活层面的高匹配伙伴关系。",
-        tags: ["务实", "协作", "稳定产出"],
-        actions: ["避免只看功能忽视情感", "明确财务与分工规则", "定期更新共同目标"],
-      },
     ],
+    staticQuestionPool: IDEAL_MATCH_CORE_64_QUESTION_BANK,
   }),
   createTestDefinition({
     key: "jung-classic",
@@ -660,7 +1226,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-jung",
     sceneOffset: 18,
     modes: [createMode("core60", "60题", 60)],
-    poolSize: 80,
+    poolSize: 60,
     promptTemplates: [
       "你平时更依赖哪种心理功能？",
       "你通常会先用哪种处理方式？",
@@ -734,6 +1300,7 @@ export const TYPEOLOGY_TESTS = [
         actions: ["增加事实校验频率", "把抽象洞察转为短动作", "减少过度预测"],
       },
     ],
+    staticQuestionPool: JUNG_CLASSIC_QUESTION_BANK,
   }),
   createTestDefinition({
     key: "disc",
@@ -745,7 +1312,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-disc",
     sceneOffset: 22,
     modes: [createMode("core60", "60题", 60)],
-    poolSize: 80,
+    poolSize: 60,
     promptTemplates: [
       "你的默认行为风格更像哪种？",
       "你通常会先采取哪类动作？",
@@ -787,6 +1354,7 @@ export const TYPEOLOGY_TESTS = [
         actions: ["减少过度求稳", "设定“足够好”阈值", "在不确定中练习小步试错"],
       },
     ],
+    staticQuestionPool: buildDiscStaticQuestionPool(),
   }),
   createTestDefinition({
     key: "attitude-psy",
@@ -851,7 +1419,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-temperament",
     sceneOffset: 29,
     modes: [createMode("core60", "60题", 60)],
-    poolSize: 80,
+    poolSize: 60,
     promptTemplates: [
       "你最常见的情绪节奏是？",
       "你的气质反应更像哪种？",
@@ -893,6 +1461,7 @@ export const TYPEOLOGY_TESTS = [
         actions: ["避免过度内耗", "把情绪写成行动清单", "增加外部正反馈输入"],
       },
     ],
+    staticQuestionPool: TEMPERAMENT_CORE_60_QUESTION_BANK,
   }),
   createTestDefinition({
     key: "big-five",
@@ -904,7 +1473,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-bigfive",
     sceneOffset: 31,
     modes: [createMode("core60", "60题", 60)],
-    poolSize: 80,
+    poolSize: 60,
     promptTemplates: [
       "你的整体人格更接近哪种组合？",
       "你的长期行为倾向更像哪种？",
@@ -962,6 +1531,7 @@ export const TYPEOLOGY_TESTS = [
         actions: ["提高对外可见度", "练习快速表达", "减少完美主义门槛"],
       },
     ],
+    staticQuestionPool: BIG_FIVE_CORE_60_QUESTION_BANK,
   }),
   createTestDefinition({
     key: "dnd-alignment",
@@ -973,7 +1543,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-dnd",
     sceneOffset: 34,
     modes: [createMode("core60", "60题", 60)],
-    poolSize: 80,
+    poolSize: 60,
     promptTemplates: [
       "面对选择时你更会走哪条价值路径？",
       "在规则和善恶之间你更偏向哪边？",
@@ -1055,6 +1625,7 @@ export const TYPEOLOGY_TESTS = [
         actions: ["强化冲动管理", "建立后果评估机制", "增加稳定支持系统"],
       },
     ],
+    staticQuestionPool: DND_ALIGNMENT_CORE_60_QUESTION_BANK,
   }),
   createTestDefinition({
     key: "attachment",
@@ -1065,8 +1636,8 @@ export const TYPEOLOGY_TESTS = [
     history: "依恋理论常用于理解关系互动模式、情绪触发点与修复路径。",
     effectClass: "theme-type-attachment",
     sceneOffset: 37,
-    modes: [createMode("core24", "24题", 24)],
-    poolSize: 40,
+    modes: [createMode("core64", "64题", 64)],
+    poolSize: 64,
     promptTemplates: [
       "在亲密关系里你更常出现哪种反应？",
       "关系不确定时你第一反应通常是？",
@@ -1108,6 +1679,7 @@ export const TYPEOLOGY_TESTS = [
         actions: ["先建立稳定日常连接", "分阶段建立信任", "必要时寻求专业支持"],
       },
     ],
+    staticQuestionPool: ATTACHMENT_CORE_64_QUESTION_BANK,
   }),
   createTestDefinition({
     key: "holland",
@@ -1119,7 +1691,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-holland",
     sceneOffset: 41,
     modes: [createMode("core60", "60题", 60)],
-    poolSize: 80,
+    poolSize: 60,
     promptTemplates: [
       "你更愿意投入哪类工作场景？",
       "哪类任务最能让你有能量？",
@@ -1177,6 +1749,7 @@ export const TYPEOLOGY_TESTS = [
         actions: ["增加变化适应训练", "学习自动化工具", "避免过度保守"],
       },
     ],
+    staticQuestionPool: HOLLAND_CORE_60_QUESTION_BANK,
   }),
 ];
 

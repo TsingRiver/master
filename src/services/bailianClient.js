@@ -5,11 +5,40 @@
 const BAILIAN_ENDPOINT =
   import.meta.env.VITE_BAILIAN_ENDPOINT ??
   "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
-const BAILIAN_MODEL = import.meta.env.VITE_BAILIAN_MODEL ?? "qwen-plus";
+const BAILIAN_MODEL =
+  import.meta.env.VITE_BAILIAN_MODEL ?? "qwen3.5-plus-2026-02-15";
 const BAILIAN_MODEL_FALLBACKS =
   import.meta.env.VITE_BAILIAN_MODEL_FALLBACKS ?? "";
 const BAILIAN_MODEL_PRIORITY = import.meta.env.VITE_BAILIAN_MODEL_PRIORITY ?? "";
 const BAILIAN_API_KEY = import.meta.env.VITE_BAILIAN_API_KEY ?? "";
+
+/**
+ * 解析布尔配置值。
+ * @param {unknown} rawValue 原始配置值。
+ * @param {boolean} fallbackValue 兜底值。
+ * @returns {boolean} 布尔结果。
+ */
+function parseBooleanValue(rawValue, fallbackValue) {
+  const normalizedValue = String(rawValue ?? "").trim().toLowerCase();
+  if (["true", "1", "yes", "y", "on"].includes(normalizedValue)) {
+    return true;
+  }
+
+  if (["false", "0", "no", "n", "off"].includes(normalizedValue)) {
+    return false;
+  }
+
+  return fallbackValue;
+}
+
+const BAILIAN_ENABLE_THINKING_DEFAULT = parseBooleanValue(
+  import.meta.env.VITE_BAILIAN_ENABLE_THINKING,
+  false,
+);
+const BAILIAN_STREAM_DEFAULT = parseBooleanValue(
+  import.meta.env.VITE_BAILIAN_STREAM,
+  true,
+);
 
 /**
  * 解析正整数配置值。
@@ -129,6 +158,140 @@ function parseJsonFromText(text) {
       return null;
     }
   }
+}
+
+/**
+ * 归一化模型 content 字段，兼容字符串、数组和对象结构。
+ * @param {unknown} rawContent 模型原始 content。
+ * @returns {string} 归一化后的文本内容。
+ */
+function normalizeModelContent(rawContent) {
+  if (typeof rawContent === "string") {
+    return rawContent;
+  }
+
+  if (Array.isArray(rawContent)) {
+    return rawContent
+      .map((contentItem) => {
+        if (typeof contentItem === "string") {
+          return contentItem;
+        }
+
+        if (typeof contentItem?.text === "string") {
+          return contentItem.text;
+        }
+
+        if (typeof contentItem?.content === "string") {
+          return contentItem.content;
+        }
+
+        if (typeof contentItem?.output_text === "string") {
+          return contentItem.output_text;
+        }
+
+        return "";
+      })
+      .join("");
+  }
+
+  if (rawContent && typeof rawContent === "object") {
+    if (typeof rawContent.text === "string") {
+      return rawContent.text;
+    }
+
+    if (typeof rawContent.content === "string") {
+      return rawContent.content;
+    }
+  }
+
+  return "";
+}
+
+/**
+ * 从单个响应块提取助手内容。
+ * @param {unknown} chunkJson 流式事件或普通响应块。
+ * @returns {string} 当前块的文本内容。
+ */
+function extractAssistantContentFromChunk(chunkJson) {
+  const firstChoice = chunkJson?.choices?.[0];
+  if (!firstChoice) {
+    return "";
+  }
+
+  const rawContent =
+    firstChoice?.delta?.content ??
+    firstChoice?.message?.content ??
+    firstChoice?.text ??
+    "";
+  return normalizeModelContent(rawContent);
+}
+
+/**
+ * 解析 SSE 文本并拼接模型最终输出。
+ * 复杂度评估：O(N)，N 为 SSE 原始文本长度。
+ * @param {string} rawSseText SSE 原始文本。
+ * @returns {string} 拼接后的助手文本。
+ */
+function parseSseTextContent(rawSseText) {
+  if (!rawSseText || typeof rawSseText !== "string") {
+    return "";
+  }
+
+  const eventBlockList = rawSseText.split(/\r?\n\r?\n/);
+  const textSegmentList = [];
+
+  eventBlockList.forEach((eventBlock) => {
+    if (!eventBlock) {
+      return;
+    }
+
+    const dataLineList = eventBlock
+      .split(/\r?\n/)
+      .filter((lineItem) => lineItem.startsWith("data:"))
+      .map((lineItem) => lineItem.slice(5).trim())
+      .filter(Boolean);
+
+    if (dataLineList.length === 0) {
+      return;
+    }
+
+    const eventDataText = dataLineList.join("\n").trim();
+    if (!eventDataText || eventDataText === "[DONE]") {
+      return;
+    }
+
+    try {
+      const parsedChunkJson = JSON.parse(eventDataText);
+      const chunkText = extractAssistantContentFromChunk(parsedChunkJson);
+      if (chunkText) {
+        textSegmentList.push(chunkText);
+      }
+    } catch {
+      // 关键逻辑：忽略异常事件块，避免单块格式问题导致整次请求失败。
+    }
+  });
+
+  return textSegmentList.join("");
+}
+
+/**
+ * 读取百炼响应中的助手文本，兼容 JSON 与 SSE 两种返回格式。
+ * @param {Response} response fetch 响应对象。
+ * @returns {Promise<string>} 助手文本。
+ */
+async function readAssistantTextFromResponse(response) {
+  const responseContentType = String(
+    response.headers.get("content-type") ?? "",
+  ).toLowerCase();
+  const isStreamContent = responseContentType.includes("text/event-stream");
+
+  if (isStreamContent) {
+    const rawSseText = await response.text();
+    return parseSseTextContent(rawSseText);
+  }
+
+  const responseJson = await response.json();
+  return extractAssistantContentFromChunk(responseJson);
 }
 
 /**
@@ -278,6 +441,8 @@ function resolveRequestModelCandidates(model, modelCandidates) {
  * @param {Array<string>} [params.modelCandidates] 本次请求指定模型候选序列（可选）。
  * @param {number} [params.maxTokens] 本次请求输出 token 上限（可选）。
  * @param {boolean} [params.switchModelOnTimeout=false] 超时时是否自动切换到下一个模型。
+ * @param {boolean} [params.enableThinking=false] 是否启用思考模式。
+ * @param {boolean} [params.stream=true] 是否启用流式输出。
  * @returns {Promise<object|null>} 解析后的 JSON；若解析失败返回 null。
  */
 export async function requestBailianJson({
@@ -291,6 +456,8 @@ export async function requestBailianJson({
   modelCandidates,
   maxTokens,
   switchModelOnTimeout = false,
+  enableThinking = BAILIAN_ENABLE_THINKING_DEFAULT,
+  stream = BAILIAN_STREAM_DEFAULT,
 }) {
   if (!BAILIAN_API_KEY) {
     throw new Error("缺少 VITE_BAILIAN_API_KEY，无法调用百炼接口");
@@ -356,6 +523,8 @@ export async function requestBailianJson({
           body: JSON.stringify({
             model: activeModelName,
             temperature,
+            stream: Boolean(stream),
+            enable_thinking: Boolean(enableThinking),
             ...(safeMaxTokens > 0 ? { max_tokens: safeMaxTokens } : {}),
             messages: [
               { role: "system", content: systemPrompt },
@@ -378,10 +547,7 @@ export async function requestBailianJson({
           throw requestError;
         }
 
-        const responseJson = await response.json();
-        const rawContent = responseJson?.choices?.[0]?.message?.content ?? "";
-        const textContent =
-          typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
+        const textContent = await readAssistantTextFromResponse(response);
         return parseJsonFromText(textContent);
       } catch (error) {
         lastError = error;

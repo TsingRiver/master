@@ -54,6 +54,39 @@ function dedupeQuestionsById(questions) {
 }
 
 /**
+ * 归一化题干文本：
+ * 关键逻辑：仅做轻量 trim，避免误伤真实不同语义题目。
+ * @param {string} rawTitle 原始题干。
+ * @returns {string} 归一化题干。
+ */
+function normalizeQuestionTitle(rawTitle) {
+  return String(rawTitle ?? "").trim();
+}
+
+/**
+ * 对题库按题干去重：
+ * 关键逻辑：同一轮测试不允许出现“完全相同题干”，优先保留首次出现项。
+ * @param {Array<object>} questions 原始题库。
+ * @returns {Array<object>} 题干去重后的题库。
+ */
+function dedupeQuestionsByTitle(questions) {
+  const seenTitleSet = new Set();
+  const dedupedQuestions = [];
+
+  questions.forEach((questionItem) => {
+    const normalizedTitle = normalizeQuestionTitle(questionItem?.title);
+    if (!normalizedTitle || seenTitleSet.has(normalizedTitle)) {
+      return;
+    }
+
+    seenTitleSet.add(normalizedTitle);
+    dedupedQuestions.push(questionItem);
+  });
+
+  return dedupedQuestions;
+}
+
+/**
  * 原地洗牌（Fisher-Yates）。
  * @param {Array<object>} sourceArray 输入数组。
  * @returns {Array<object>} 洗牌后的新数组。
@@ -91,7 +124,8 @@ export function selectRandomQuestionsWithoutRepeat({
   maxCount = 15,
 }) {
   const normalizedQuestions = Array.isArray(questions) ? questions : [];
-  const dedupedQuestions = dedupeQuestionsById(normalizedQuestions);
+  const dedupedQuestionsById = dedupeQuestionsById(normalizedQuestions);
+  const dedupedQuestions = dedupeQuestionsByTitle(dedupedQuestionsById);
   const { resolvedMin, resolvedMax } = normalizeCountRange(
     dedupedQuestions.length,
     minCount,
@@ -134,7 +168,8 @@ export function selectRandomQuestionsWithDimensionCoverage({
   dimensionKey,
 }) {
   const normalizedQuestions = Array.isArray(questions) ? questions : [];
-  const dedupedQuestions = dedupeQuestionsById(normalizedQuestions);
+  const dedupedQuestionsById = dedupeQuestionsById(normalizedQuestions);
+  const dedupedQuestions = dedupeQuestionsByTitle(dedupedQuestionsById);
   const { resolvedMin, resolvedMax } = normalizeCountRange(
     dedupedQuestions.length,
     minCount,

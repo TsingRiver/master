@@ -1,6 +1,5 @@
 import { analyzeMbtiLocally } from "./mbtiAnalyzer";
 import { getTypeologyQuestionPool } from "../data/typeologyCatalog";
-import { selectRandomQuestionsWithoutRepeat } from "../utils/randomQuestionSelector";
 
 /**
  * 限制百分比分值到 [0, 100]。
@@ -51,6 +50,80 @@ export function resolveFixedQuestionRange(baseCount, poolSize) {
 }
 
 /**
+ * 规范化题干文本。
+ * @param {string} rawTitle 原始题干。
+ * @returns {string} 规范化题干。
+ */
+function normalizeQuestionTitle(rawTitle) {
+  return String(rawTitle ?? "").trim();
+}
+
+/**
+ * 对会话题目做稳定去重（按 id + title）。
+ * 关键逻辑：固定题库模式下也需要兜底，避免历史题库数据问题导致重复题进入会话。
+ * 复杂度评估：O(N)。
+ * @param {Array<object>} questionList 题目列表。
+ * @returns {Array<object>} 去重后的题目列表。
+ */
+function dedupeSessionQuestions(questionList) {
+  const seenIdSet = new Set();
+  const seenTitleSet = new Set();
+  const dedupedQuestionList = [];
+
+  questionList.forEach((questionItem) => {
+    const questionId = String(questionItem?.id ?? "").trim();
+    const normalizedTitle = normalizeQuestionTitle(questionItem?.title);
+    if (!questionId || !normalizedTitle) {
+      return;
+    }
+
+    if (seenIdSet.has(questionId) || seenTitleSet.has(normalizedTitle)) {
+      return;
+    }
+
+    seenIdSet.add(questionId);
+    seenTitleSet.add(normalizedTitle);
+    dedupedQuestionList.push(questionItem);
+  });
+
+  return dedupedQuestionList;
+}
+
+/**
+ * 读取模式对应的固定题库。
+ * 关键逻辑：
+ * 1. 若配置了 `modeQuestionPoolMap`，优先使用模式专属题库。
+ * 2. 否则回退到测试总题库按顺序截取。
+ * 复杂度评估：O(N)，N 为候选题量（仅线性去重）。
+ * @param {object} params 参数对象。
+ * @param {object} params.testConfig 测试配置。
+ * @param {object} params.modeConfig 模式配置。
+ * @returns {Array<object>} 固定题目列表。
+ */
+function resolveFixedQuestionsForMode({ testConfig, modeConfig }) {
+  const modeKey = String(modeConfig?.key ?? "").trim();
+  const configuredModeQuestionPoolMap = testConfig?.modeQuestionPoolMap;
+  const modeSpecificQuestionPool =
+    configuredModeQuestionPoolMap &&
+    typeof configuredModeQuestionPoolMap === "object" &&
+    Array.isArray(configuredModeQuestionPoolMap[modeKey])
+      ? configuredModeQuestionPoolMap[modeKey]
+      : null;
+
+  const sourceQuestionPool = Array.isArray(modeSpecificQuestionPool)
+    ? modeSpecificQuestionPool
+    : getTypeologyQuestionPool(testConfig?.key);
+
+  const dedupedQuestionPool = dedupeSessionQuestions(sourceQuestionPool);
+  const fixedQuestionRange = resolveFixedQuestionRange(
+    modeConfig?.baseCount ?? 0,
+    dedupedQuestionPool.length,
+  );
+
+  return dedupedQuestionPool.slice(0, fixedQuestionRange.maxCount);
+}
+
+/**
  * 构建单次测试会话题集。
  * 复杂度评估：
  * 1. 题库读取：缓存命中 O(1)，首次生成见 catalog 中定义。
@@ -62,17 +135,14 @@ export function resolveFixedQuestionRange(baseCount, poolSize) {
  */
 export function buildTypeologyTestSession({ testConfig, modeKey }) {
   const modeConfig = resolveModeConfig(testConfig, modeKey);
-  const questionPool = getTypeologyQuestionPool(testConfig?.key);
+  const selectedQuestions = resolveFixedQuestionsForMode({
+    testConfig,
+    modeConfig,
+  });
   const questionRange = resolveFixedQuestionRange(
     modeConfig?.baseCount ?? 0,
-    questionPool.length,
+    selectedQuestions.length,
   );
-
-  const selectedQuestions = selectRandomQuestionsWithoutRepeat({
-    questions: questionPool,
-    minCount: questionRange.minCount,
-    maxCount: questionRange.maxCount,
-  });
 
   return {
     modeConfig,

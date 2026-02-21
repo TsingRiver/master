@@ -92,8 +92,14 @@
 
         <transition name="typeology-fade" mode="out-in">
           <div :key="currentQuestion.id" class="typeology-question-wrap">
-            <h2>{{ currentQuestion.title }}</h2>
-            <p>{{ currentQuestion.description }}</p>
+            <p
+              v-if="currentQuestion.contextLabel"
+              class="typeology-question-context"
+            >
+              {{ currentQuestion.contextLabel }}
+            </p>
+            <h2>{{ displayQuestionTitle }}</h2>
+            <p class="typeology-question-description">{{ currentQuestion.description }}</p>
 
             <van-radio-group
               :model-value="answers[currentQuestionIndex]"
@@ -491,7 +497,14 @@ const STAGE_DETAIL = "detail";
  * 作答进度缓存版本：
  * 关键逻辑：题库结构变化时可通过提升版本号让旧进度自动失效，避免恢复错题。
  */
-const TYPEOLOGY_PROGRESS_SCHEMA_VERSION = 1;
+// 关键逻辑：题库模式映射与题面变更后提升版本号，避免旧缓存恢复到错误题目。
+const TYPEOLOGY_PROGRESS_SCHEMA_VERSION = 10;
+
+/**
+ * 进度缓存最小答题阈值。
+ * 关键逻辑：答题少于该值时不保存，避免大量低价值碎片缓存。
+ */
+const TYPEOLOGY_PROGRESS_MIN_ANSWER_COUNT = 10;
 
 /**
  * 类型学卡片默认展示顺序。
@@ -1223,6 +1236,149 @@ const currentQuestion = computed(
 );
 
 /**
+ * 解析题目核心陈述句（默认短句展示）。
+ * 关键逻辑：
+ * 1. 有场景标签时，优先取冒号后的核心句。
+ * 2. 无冒号时尝试剥离“xx时，”场景前缀，保留可直接作答内容。
+ * 复杂度评估：O(L)，L 为题干长度。
+ * @param {object|null|undefined} questionItem 当前题目对象。
+ * @returns {string} 核心陈述句。
+ */
+function resolveQuestionCoreTitle(questionItem) {
+  const rawTitle = String(questionItem?.title ?? "").trim();
+  if (!rawTitle) {
+    return "";
+  }
+
+  const hasContextLabel = String(questionItem?.contextLabel ?? "").trim().length > 0;
+  if (!hasContextLabel) {
+    return rawTitle;
+  }
+
+  const colonIndex = Math.max(rawTitle.lastIndexOf("："), rawTitle.lastIndexOf(":"));
+  if (colonIndex >= 0 && colonIndex < rawTitle.length - 1) {
+    return rawTitle.slice(colonIndex + 1).trim();
+  }
+
+  const scenePrefixPattern = /^[^，。]{2,24}(?:时|后|里)，/;
+  const compactTitle = rawTitle.replace(scenePrefixPattern, "").trim();
+  return compactTitle || rawTitle;
+}
+
+/**
+ * 提取题干中的场景短语。
+ * 关键逻辑：用于“短句重复”时做轻量区分显示，避免同轮出现视觉重复题面。
+ * 复杂度评估：O(L)，L 为题干长度。
+ * @param {string} rawTitle 原始题干。
+ * @returns {string} 场景短语，例如“需要说服他人时”。
+ */
+function resolveQuestionSceneTitle(rawTitle) {
+  const normalizedTitle = String(rawTitle ?? "").trim();
+  if (!normalizedTitle) {
+    return "";
+  }
+
+  const sceneMatch = normalizedTitle.match(/^([^，。:：]{2,24}(?:时|后|里))/);
+  return sceneMatch?.[1] ?? "";
+}
+
+/**
+ * 为当前会话构建“最终展示题干”映射。
+ * 关键逻辑：
+ * 1. 默认用核心短句。
+ * 2. 若短句在同轮重复，则加“场景 · 短句”。
+ * 3. 若仍重复，则回退原题干，最终保证展示唯一性。
+ * 复杂度评估：O(N * L)，N 为题量，L 为题干平均长度。
+ * @param {Array<object>} questionList 本轮题目列表。
+ * @returns {Map<string, string>} key=questionId, value=展示题干。
+ */
+function buildDisplayQuestionTitleMap(questionList) {
+  const safeQuestionList = Array.isArray(questionList) ? questionList : [];
+  const questionMetaById = new Map();
+  const coreTitleCountMap = new Map();
+  const displayTitleMap = new Map();
+
+  safeQuestionList.forEach((questionItem) => {
+    const questionId = String(questionItem?.id ?? "").trim();
+    if (!questionId) {
+      return;
+    }
+
+    const rawTitle = String(questionItem?.title ?? "").trim();
+    const coreTitle = resolveQuestionCoreTitle(questionItem) || rawTitle;
+    const sceneTitle = resolveQuestionSceneTitle(rawTitle);
+    questionMetaById.set(questionId, {
+      rawTitle,
+      coreTitle,
+      sceneTitle,
+    });
+
+    coreTitleCountMap.set(coreTitle, (coreTitleCountMap.get(coreTitle) ?? 0) + 1);
+    displayTitleMap.set(questionId, coreTitle);
+  });
+
+  const sceneDisplayCountMap = new Map();
+  displayTitleMap.forEach((displayTitle, questionId) => {
+    if ((coreTitleCountMap.get(displayTitle) ?? 0) <= 1) {
+      return;
+    }
+
+    const questionMeta = questionMetaById.get(questionId);
+    if (!questionMeta) {
+      return;
+    }
+
+    const sceneDisplayTitle =
+      questionMeta.sceneTitle && questionMeta.coreTitle
+        ? `${questionMeta.sceneTitle} · ${questionMeta.coreTitle}`
+        : questionMeta.rawTitle || questionMeta.coreTitle;
+    displayTitleMap.set(questionId, sceneDisplayTitle);
+    sceneDisplayCountMap.set(
+      sceneDisplayTitle,
+      (sceneDisplayCountMap.get(sceneDisplayTitle) ?? 0) + 1,
+    );
+  });
+
+  // 关键逻辑：二次兜底，若“场景 · 短句”仍撞车，则回退完整原题干。
+  displayTitleMap.forEach((displayTitle, questionId) => {
+    if ((sceneDisplayCountMap.get(displayTitle) ?? 0) <= 1) {
+      return;
+    }
+
+    const questionMeta = questionMetaById.get(questionId);
+    if (!questionMeta) {
+      return;
+    }
+
+    displayTitleMap.set(questionId, questionMeta.rawTitle || displayTitle);
+  });
+
+  return displayTitleMap;
+}
+
+/**
+ * 当前会话展示题干映射。
+ */
+const displayQuestionTitleMap = computed(() =>
+  buildDisplayQuestionTitleMap(questionBank.value),
+);
+
+/**
+ * 当前题目展示标题。
+ */
+const displayQuestionTitle = computed(() => {
+  const questionId = String(currentQuestion.value?.id ?? "").trim();
+  if (!questionId) {
+    return resolveQuestionCoreTitle(currentQuestion.value);
+  }
+
+  return (
+    displayQuestionTitleMap.value.get(questionId) ??
+    resolveQuestionCoreTitle(currentQuestion.value)
+  );
+});
+
+/**
  * 进度百分比。
  */
 const progressPercent = computed(() => {
@@ -1584,25 +1740,47 @@ function buildTestingProgressPayload({
     normalizedAnswers.push(null);
   }
 
+  const answeredCount = normalizedAnswers.filter(Boolean).length;
+
   return {
     schemaVersion: TYPEOLOGY_PROGRESS_SCHEMA_VERSION,
     testKey,
     modeKey: modeConfig?.key ?? "",
     questionIds: normalizedQuestionBank.map((questionItem) => questionItem.id),
     answerIds: normalizedAnswers,
+    answeredCount,
     currentQuestionIndex: Math.max(0, Number(questionIndex ?? 0) || 0),
     updatedAt: Date.now(),
   };
 }
 
 /**
+ * 计算已作答题数。
+ * 复杂度评估：O(Q)，Q 为当前会话题量。
+ * @param {Array<string|null>} answerIdList 当前答案列表。
+ * @returns {number} 已作答题数。
+ */
+function resolveAnsweredQuestionCount(answerIdList) {
+  const normalizedAnswerList = Array.isArray(answerIdList) ? answerIdList : [];
+  return normalizedAnswerList.filter(Boolean).length;
+}
+
+/**
  * 保存当前作答进度。
  * 复杂度评估：O(Q)，Q 为本轮题量（最多约 120）；每次仅执行一次轻量 JSON 序列化。
+ * @returns {boolean} 是否成功写入进度缓存。
  */
 function persistCurrentTestingProgress() {
   const testKey = String(activeTestConfig.value?.key ?? "").trim();
   if (!testKey || questionBank.value.length === 0) {
-    return;
+    return false;
+  }
+
+  const answeredCount = resolveAnsweredQuestionCount(answers.value);
+  if (answeredCount < TYPEOLOGY_PROGRESS_MIN_ANSWER_COUNT) {
+    // 关键逻辑：答题不足阈值时不留缓存，同时清理旧缓存避免误恢复。
+    clearTypeologyProgressByTestKey(testKey);
+    return false;
   }
 
   const modeConfig =
@@ -1618,6 +1796,7 @@ function persistCurrentTestingProgress() {
   });
 
   saveTypeologyProgressCache(testKey, progressPayload);
+  return true;
 }
 
 /**
@@ -1677,6 +1856,47 @@ function normalizeRestoredAnswers(restoredQuestions, cachedAnswerIds) {
 }
 
 /**
+ * 读取缓存中的已作答题数。
+ * 关键逻辑：优先使用缓存字段，缺失时回退为按答案数组实时计算，兼容旧版本缓存。
+ * @param {object} cachedProgress 缓存进度对象。
+ * @param {Array<string|null>} normalizedAnswers 标准化答案数组。
+ * @returns {number} 已作答题数。
+ */
+function resolveCachedAnsweredCount(cachedProgress, normalizedAnswers) {
+  const cachedAnsweredCount = Number(cachedProgress?.answeredCount ?? 0);
+  if (Number.isFinite(cachedAnsweredCount) && cachedAnsweredCount >= 0) {
+    return Math.floor(cachedAnsweredCount);
+  }
+
+  return resolveAnsweredQuestionCount(normalizedAnswers);
+}
+
+/**
+ * 判断题目列表是否存在重复题干。
+ * 复杂度评估：O(Q)，Q 为题量。
+ * @param {Array<object>} questionList 题目列表。
+ * @returns {boolean} 是否存在重复题干。
+ */
+function hasDuplicateQuestionTitles(questionList) {
+  const seenTitleSet = new Set();
+
+  for (let index = 0; index < questionList.length; index += 1) {
+    const normalizedTitle = String(questionList[index]?.title ?? "").trim();
+    if (!normalizedTitle) {
+      continue;
+    }
+
+    if (seenTitleSet.has(normalizedTitle)) {
+      return true;
+    }
+
+    seenTitleSet.add(normalizedTitle);
+  }
+
+  return false;
+}
+
+/**
  * 构建可恢复的会话对象。
  * @param {object} params 参数对象。
  * @param {object} params.testConfig 测试配置。
@@ -1710,11 +1930,20 @@ function buildRestorableSession({ testConfig, cachedProgress }) {
     return null;
   }
 
-  const { normalizedAnswers, answeredCount } = normalizeRestoredAnswers(
+  if (hasDuplicateQuestionTitles(restoredQuestions)) {
+    // 关键逻辑：历史缓存存在重复题干时直接失效，避免用户继续答“重复题”。
+    return null;
+  }
+
+  const { normalizedAnswers } = normalizeRestoredAnswers(
     restoredQuestions,
     cachedProgress.answerIds,
   );
-  if (answeredCount <= 0) {
+  const cachedAnsweredCount = resolveCachedAnsweredCount(
+    cachedProgress,
+    normalizedAnswers,
+  );
+  if (cachedAnsweredCount < TYPEOLOGY_PROGRESS_MIN_ANSWER_COUNT) {
     return null;
   }
 
@@ -1725,7 +1954,7 @@ function buildRestorableSession({ testConfig, cachedProgress }) {
   );
   const reachedQuestionNumber = Math.max(
     1,
-    Math.min(restoredQuestions.length, answeredCount),
+    Math.min(restoredQuestions.length, cachedAnsweredCount),
   );
 
   return {
@@ -1830,16 +2059,20 @@ async function confirmBeforeSwitchTest(nextTestKey) {
   try {
     await showConfirmDialog({
       title: "确认退出当前作答？",
-      message: `切换到「${targetName}」后将离开当前作答页，本轮进度会自动保存。`,
+      message: `切换到「${targetName}」后将离开当前作答页，已答满${TYPEOLOGY_PROGRESS_MIN_ANSWER_COUNT}题时会自动保存进度。`,
       confirmButtonText: "退出并切换",
       cancelButtonText: "继续作答",
       closeOnClickOverlay: true,
     });
 
-    persistCurrentTestingProgress();
+    const hasPersistedProgress = persistCurrentTestingProgress();
     resetTestingSessionState();
     stage.value = STAGE_HOME;
-    showToast("已保存当前进度");
+    if (hasPersistedProgress) {
+      showToast("已保存当前进度");
+    } else {
+      showToast(`已退出当前作答（少于${TYPEOLOGY_PROGRESS_MIN_ANSWER_COUNT}题不保存进度）`);
+    }
     return true;
   } catch {
     // 关键逻辑：用户取消时保持当前题目和作答进度，不做任何状态变更。
@@ -1851,10 +2084,14 @@ async function confirmBeforeSwitchTest(nextTestKey) {
  * 退出当前测试。
  */
 function quitCurrentTest() {
-  persistCurrentTestingProgress();
+  const hasPersistedProgress = persistCurrentTestingProgress();
   resetTestingSessionState();
   stage.value = STAGE_HOME;
-  showToast("已保存当前进度");
+  if (hasPersistedProgress) {
+    showToast("已保存当前进度");
+  } else {
+    showToast(`已退出当前作答（少于${TYPEOLOGY_PROGRESS_MIN_ANSWER_COUNT}题不保存进度）`);
+  }
 }
 
 /**
@@ -2388,7 +2625,22 @@ onBeforeUnmount(() => {
   font-family: "Noto Serif SC", serif;
 }
 
-.typeology-question-wrap p {
+.typeology-question-context {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  margin: 8px 0 2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--type-accent) 48%, #ffffff 52%);
+  background: color-mix(in srgb, var(--type-accent-soft) 78%, #ffffff 22%);
+  color: color-mix(in srgb, var(--type-text) 76%, var(--type-accent) 24%);
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.typeology-question-description {
   margin: 0 0 10px;
   color: color-mix(in srgb, var(--type-text) 78%, var(--type-muted) 22%);
   font-size: 14px;
