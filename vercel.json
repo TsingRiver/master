@@ -11,16 +11,29 @@
       ]
     },
     {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        }
+      ]
+    },
+    {
       "source": "/index.html",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate, s-maxage=86400, stale-while-revalidate=604800"
+          "value": "no-store, max-age=0"
         }
       ]
     }
   ],
   "rewrites": [
+    {
+      "source": "/(.*\\..*)",
+      "destination": "/$1"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
