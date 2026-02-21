@@ -2,7 +2,7 @@
  * 十六型人格题库（公开改编版，非官方版权原题）：
  * 1. 题库基于 MBTI 四维度常见公开测评框架改编（E/I、S/N、T/F、J/P）。
  * 2. 提供两个版本：120 题专业版、36 题速测版。
- * 3. 每题统一 4 档同意度选项，便于稳定计算维度倾向。
+ * 3. 每题统一 5 档同意度选项，便于与类型学中心其他测试保持一致。
  */
 
 /**
@@ -77,7 +77,7 @@ function createAxisVector(dimensionTag, strength) {
 }
 
 /**
- * 构建 4 档同意度选项。
+ * 构建 5 档同意度选项。
  * @param {object} params 参数对象。
  * @param {string} params.id 题目 ID。
  * @param {"ei"|"sn"|"tf"|"jp"} params.dimensionTag 维度标签。
@@ -91,22 +91,27 @@ function buildLikertOptions({ id, dimensionTag, direction }) {
   return [
     {
       id: `${id}-option-a`,
-      label: "非常符合",
+      label: "非常同意",
       vector: createAxisVector(dimensionTag, strong),
     },
     {
       id: `${id}-option-b`,
-      label: "比较符合",
+      label: "同意",
       vector: createAxisVector(dimensionTag, mild),
     },
     {
       id: `${id}-option-c`,
-      label: "不太符合",
-      vector: createAxisVector(dimensionTag, -mild),
+      label: "中立",
+      vector: createAxisVector(dimensionTag, 0),
     },
     {
       id: `${id}-option-d`,
-      label: "完全不符合",
+      label: "不太同意",
+      vector: createAxisVector(dimensionTag, -mild),
+    },
+    {
+      id: `${id}-option-e`,
+      label: "非常不同意",
       vector: createAxisVector(dimensionTag, -strong),
     },
   ];
@@ -126,7 +131,8 @@ function buildQuestion({ id, title, dimensionTag, direction, weight = 1 }) {
   return {
     id,
     title,
-    description: `按第一反应作答（${MBTI_DIMENSION_CONFIG[dimensionTag].positiveLabel}/${MBTI_DIMENSION_CONFIG[dimensionTag].negativeLabel} 维度）`,
+    // 关键逻辑：统一“符合程度”引导，匹配 5 档同意度作答方式。
+    description: "请根据符合程度作答。",
     weight,
     dimensionTag,
     options: buildLikertOptions({ id, dimensionTag, direction }),
@@ -392,4 +398,3 @@ export const MBTI_QUICK_36_QUESTION_BANK = buildQuick36QuestionBank();
  * 旧逻辑若仍引用 MBTI_QUESTION_BANK，默认走 36 题速测版。
  */
 export const MBTI_QUESTION_BANK = MBTI_QUICK_36_QUESTION_BANK;
-

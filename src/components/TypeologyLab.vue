@@ -457,6 +457,7 @@ import { showConfirmDialog, showToast } from "vant";
 import {
   DEFAULT_TYPEOLOGY_TEST_KEY,
   TYPEOLOGY_TEST_ORDER,
+  getTypeologyQuestionPool,
   getTypeologyTestConfig,
 } from "../data/typeologyCatalog";
 import {
@@ -467,6 +468,9 @@ import {
 import { analyzeTypeologyWithAi } from "../services/typeologyAiAnalyzer";
 import {
   loadTypeologyResultCache,
+  loadTypeologyProgressCache,
+  removeTypeologyProgressCache,
+  saveTypeologyProgressCache,
   upsertTypeologyCachedResult,
 } from "../services/typeologyStorage";
 
@@ -482,6 +486,12 @@ const STAGE_HOME = "home";
 const STAGE_TESTING = "testing";
 const STAGE_ANALYZING = "analyzing";
 const STAGE_DETAIL = "detail";
+
+/**
+ * 作答进度缓存版本：
+ * 关键逻辑：题库结构变化时可通过提升版本号让旧进度自动失效，避免恢复错题。
+ */
+const TYPEOLOGY_PROGRESS_SCHEMA_VERSION = 1;
 
 /**
  * 类型学卡片默认展示顺序。
@@ -1514,11 +1524,262 @@ async function handleCardClick(testKey) {
 }
 
 /**
- * 启动当前测试。
+ * 激活当前测试会话。
  */
-function startCurrentTest() {
+function activateTestingSession({
+  modeConfig,
+  questions,
+  answerIds,
+  questionIndex,
+}) {
+  const normalizedQuestionBank = Array.isArray(questions) ? questions : [];
+  const normalizedAnswers = Array.isArray(answerIds)
+    ? answerIds.slice(0, normalizedQuestionBank.length)
+    : [];
+  while (normalizedAnswers.length < normalizedQuestionBank.length) {
+    normalizedAnswers.push(null);
+  }
+
+  const safeQuestionIndex = Math.max(
+    0,
+    Math.min(
+      Number(normalizedQuestionBank.length > 0 ? normalizedQuestionBank.length - 1 : 0),
+      Number(questionIndex ?? 0) || 0,
+    ),
+  );
+
+  runningModeConfig.value = modeConfig ?? null;
+  questionBank.value = normalizedQuestionBank;
+  answers.value = normalizedAnswers;
+  currentQuestionIndex.value = safeQuestionIndex;
+  isNavigatingQuestion.value = false;
+  stage.value = STAGE_TESTING;
+  currentResult.value = null;
+  showAllSummary.value = false;
+}
+
+/**
+ * 构建可持久化的进度对象。
+ * @param {object} params 参数对象。
+ * @param {string} params.testKey 测试键。
+ * @param {object} params.modeConfig 运行模式对象。
+ * @param {Array<object>} params.questions 题目列表。
+ * @param {Array<string|null>} params.answerIds 答案列表。
+ * @param {number} params.questionIndex 当前题目索引。
+ * @returns {object} 进度对象。
+ */
+function buildTestingProgressPayload({
+  testKey,
+  modeConfig,
+  questions,
+  answerIds,
+  questionIndex,
+}) {
+  const normalizedQuestionBank = Array.isArray(questions) ? questions : [];
+  const normalizedAnswers = Array.isArray(answerIds)
+    ? answerIds.slice(0, normalizedQuestionBank.length)
+    : [];
+
+  while (normalizedAnswers.length < normalizedQuestionBank.length) {
+    normalizedAnswers.push(null);
+  }
+
+  return {
+    schemaVersion: TYPEOLOGY_PROGRESS_SCHEMA_VERSION,
+    testKey,
+    modeKey: modeConfig?.key ?? "",
+    questionIds: normalizedQuestionBank.map((questionItem) => questionItem.id),
+    answerIds: normalizedAnswers,
+    currentQuestionIndex: Math.max(0, Number(questionIndex ?? 0) || 0),
+    updatedAt: Date.now(),
+  };
+}
+
+/**
+ * 保存当前作答进度。
+ * 复杂度评估：O(Q)，Q 为本轮题量（最多约 120）；每次仅执行一次轻量 JSON 序列化。
+ */
+function persistCurrentTestingProgress() {
+  const testKey = String(activeTestConfig.value?.key ?? "").trim();
+  if (!testKey || questionBank.value.length === 0) {
+    return;
+  }
+
+  const modeConfig =
+    runningModeConfig.value ??
+    resolveModeConfig(activeTestConfig.value, selectedModeKey.value);
+
+  const progressPayload = buildTestingProgressPayload({
+    testKey,
+    modeConfig,
+    questions: questionBank.value,
+    answerIds: answers.value,
+    questionIndex: currentQuestionIndex.value,
+  });
+
+  saveTypeologyProgressCache(testKey, progressPayload);
+}
+
+/**
+ * 清理当前测试进度缓存。
+ * @param {string} testKey 测试键。
+ */
+function clearTypeologyProgressByTestKey(testKey) {
+  removeTypeologyProgressCache(testKey);
+}
+
+/**
+ * 按缓存中的题目 ID 恢复题目列表。
+ * @param {string} testKey 测试键。
+ * @param {Array<string>} questionIdList 题目 ID 列表。
+ * @returns {Array<object>|null} 可恢复题目列表；若题库结构变更导致缺题则返回 null。
+ */
+function restoreQuestionsByProgress(testKey, questionIdList) {
+  const normalizedQuestionIdList = Array.isArray(questionIdList) ? questionIdList : [];
+  if (normalizedQuestionIdList.length === 0) {
+    return null;
+  }
+
+  const questionPool = getTypeologyQuestionPool(testKey);
+  const questionMap = new Map(questionPool.map((questionItem) => [questionItem.id, questionItem]));
+
+  const restoredQuestions = normalizedQuestionIdList
+    .map((questionId) => questionMap.get(questionId))
+    .filter(Boolean);
+
+  if (restoredQuestions.length !== normalizedQuestionIdList.length) {
+    // 关键逻辑：题库更新后若无法完整恢复，进度视为失效并走新会话。
+    return null;
+  }
+
+  return restoredQuestions;
+}
+
+/**
+ * 标准化恢复后的答案列表。
+ * @param {Array<object>} restoredQuestions 恢复后的题目列表。
+ * @param {Array<string|null>} cachedAnswerIds 缓存答案列表。
+ * @returns {{ normalizedAnswers: Array<string|null>, answeredCount: number }} 标准化结果。
+ */
+function normalizeRestoredAnswers(restoredQuestions, cachedAnswerIds) {
+  const normalizedAnswers = restoredQuestions.map((questionItem, questionIndex) => {
+    const cachedAnswerId = Array.isArray(cachedAnswerIds) ? cachedAnswerIds[questionIndex] : null;
+    const isValidAnswer = questionItem.options.some(
+      (optionItem) => optionItem.id === cachedAnswerId,
+    );
+    return isValidAnswer ? cachedAnswerId : null;
+  });
+
+  return {
+    normalizedAnswers,
+    answeredCount: normalizedAnswers.filter(Boolean).length,
+  };
+}
+
+/**
+ * 构建可恢复的会话对象。
+ * @param {object} params 参数对象。
+ * @param {object} params.testConfig 测试配置。
+ * @param {object|null} params.cachedProgress 缓存进度对象。
+ * @returns {object|null} 可恢复会话对象；无效时返回 null。
+ */
+function buildRestorableSession({ testConfig, cachedProgress }) {
+  if (!cachedProgress || typeof cachedProgress !== "object") {
+    return null;
+  }
+
+  const normalizedTestKey = String(testConfig?.key ?? "").trim();
+  if (!normalizedTestKey) {
+    return null;
+  }
+
+  const schemaVersion = Number(cachedProgress.schemaVersion ?? 0);
+  const progressTestKey = String(cachedProgress.testKey ?? "").trim();
+  if (
+    schemaVersion !== TYPEOLOGY_PROGRESS_SCHEMA_VERSION ||
+    progressTestKey !== normalizedTestKey
+  ) {
+    return null;
+  }
+
+  const restoredQuestions = restoreQuestionsByProgress(
+    normalizedTestKey,
+    cachedProgress.questionIds,
+  );
+  if (!restoredQuestions || restoredQuestions.length === 0) {
+    return null;
+  }
+
+  const { normalizedAnswers, answeredCount } = normalizeRestoredAnswers(
+    restoredQuestions,
+    cachedProgress.answerIds,
+  );
+  if (answeredCount <= 0) {
+    return null;
+  }
+
+  const savedQuestionIndex = Number(cachedProgress.currentQuestionIndex ?? 0);
+  const resumeQuestionIndex = Math.max(
+    0,
+    Math.min(restoredQuestions.length - 1, Number.isFinite(savedQuestionIndex) ? savedQuestionIndex : 0),
+  );
+  const reachedQuestionNumber = Math.max(
+    1,
+    Math.min(restoredQuestions.length, answeredCount),
+  );
+
+  return {
+    modeConfig: resolveModeConfig(testConfig, cachedProgress.modeKey),
+    questions: restoredQuestions,
+    answerIds: normalizedAnswers,
+    resumeQuestionIndex,
+    reachedQuestionNumber,
+  };
+}
+
+/**
+ * 启动当前测试：
+ * 关键逻辑：优先尝试恢复进度；用户选择“重新开始”后清理旧进度并新建会话。
+ */
+async function startCurrentTest() {
+  const testConfig = activeTestConfig.value;
+  const testKey = String(testConfig?.key ?? "").trim();
+  const cachedProgress = loadTypeologyProgressCache(testKey);
+  const restorableSession = buildRestorableSession({
+    testConfig,
+    cachedProgress,
+  });
+
+  if (cachedProgress && !restorableSession) {
+    clearTypeologyProgressByTestKey(testKey);
+  }
+
+  if (restorableSession) {
+    try {
+      await showConfirmDialog({
+        title: "继续上次测试？",
+        message: `上次答题到第${restorableSession.reachedQuestionNumber}题，继续测试吗？`,
+        confirmButtonText: "继续",
+        cancelButtonText: "重新开始",
+        closeOnClickOverlay: true,
+      });
+
+      selectedModeKey.value = restorableSession.modeConfig?.key ?? selectedModeKey.value;
+      activateTestingSession({
+        modeConfig: restorableSession.modeConfig,
+        questions: restorableSession.questions,
+        answerIds: restorableSession.answerIds,
+        questionIndex: restorableSession.resumeQuestionIndex,
+      });
+      showToast("已恢复上次进度");
+      return;
+    } catch {
+      clearTypeologyProgressByTestKey(testKey);
+    }
+  }
+
   const sessionPayload = buildTypeologyTestSession({
-    testConfig: activeTestConfig.value,
+    testConfig,
     modeKey: selectedModeKey.value,
   });
 
@@ -1527,14 +1788,12 @@ function startCurrentTest() {
     return;
   }
 
-  runningModeConfig.value = sessionPayload.modeConfig;
-  questionBank.value = sessionPayload.questions;
-  answers.value = Array.from({ length: questionBank.value.length }, () => null);
-  currentQuestionIndex.value = 0;
-  isNavigatingQuestion.value = false;
-  stage.value = STAGE_TESTING;
-  currentResult.value = null;
-  showAllSummary.value = false;
+  activateTestingSession({
+    modeConfig: sessionPayload.modeConfig,
+    questions: sessionPayload.questions,
+    answerIds: Array.from({ length: sessionPayload.questions.length }, () => null),
+    questionIndex: 0,
+  });
 
   // 关键逻辑：每轮题目都重新抽取并重置答案，保证轮次独立且无重复题。
 }
@@ -1571,15 +1830,16 @@ async function confirmBeforeSwitchTest(nextTestKey) {
   try {
     await showConfirmDialog({
       title: "确认退出当前作答？",
-      message: `切换到「${targetName}」后，本轮答题进度将清空，需要重新开始作答。`,
+      message: `切换到「${targetName}」后将离开当前作答页，本轮进度会自动保存。`,
       confirmButtonText: "退出并切换",
       cancelButtonText: "继续作答",
       closeOnClickOverlay: true,
     });
 
+    persistCurrentTestingProgress();
     resetTestingSessionState();
     stage.value = STAGE_HOME;
-    showToast("已退出本轮作答");
+    showToast("已保存当前进度");
     return true;
   } catch {
     // 关键逻辑：用户取消时保持当前题目和作答进度，不做任何状态变更。
@@ -1591,9 +1851,10 @@ async function confirmBeforeSwitchTest(nextTestKey) {
  * 退出当前测试。
  */
 function quitCurrentTest() {
+  persistCurrentTestingProgress();
   resetTestingSessionState();
   stage.value = STAGE_HOME;
-  showToast("已退出本轮测试");
+  showToast("已保存当前进度");
 }
 
 /**
@@ -1613,9 +1874,12 @@ async function handleOptionSelect(optionId) {
     if (selectedIndex < questionBank.value.length - 1) {
       // 关键逻辑：保存当前题答案后直接推进到下一题，减少一次手动“下一题”操作。
       currentQuestionIndex.value = selectedIndex + 1;
+      persistCurrentTestingProgress();
       return;
     }
 
+    // 关键逻辑：最后一题在提交前先落盘，避免提交链路中断导致最后一步丢失。
+    persistCurrentTestingProgress();
     await submitCurrentTest();
   } finally {
     isNavigatingQuestion.value = false;
@@ -1632,6 +1896,7 @@ function goPrevQuestion() {
 
   if (currentQuestionIndex.value > 0) {
     currentQuestionIndex.value -= 1;
+    persistCurrentTestingProgress();
   }
 }
 
@@ -1682,6 +1947,7 @@ async function submitCurrentTest() {
     activeTestConfig.value.key,
     nextPersistedResult,
   );
+  clearTypeologyProgressByTestKey(activeTestConfig.value.key);
 
   currentResult.value = nextPersistedResult;
   stage.value = STAGE_DETAIL;
@@ -1692,6 +1958,7 @@ async function submitCurrentTest() {
  * 重新测试当前类型。
  */
 function restartCurrentType() {
+  clearTypeologyProgressByTestKey(activeTestConfig.value.key);
   stage.value = STAGE_HOME;
   currentResult.value = null;
   questionBank.value = [];
@@ -1840,6 +2107,10 @@ onMounted(() => {
  * 组件卸载时清理定时器。
  */
 onBeforeUnmount(() => {
+  if (stage.value === STAGE_TESTING || stage.value === STAGE_ANALYZING) {
+    // 关键逻辑：页面卸载前兜底保存进度，避免刷新/跳转导致最近一题丢失。
+    persistCurrentTestingProgress();
+  }
   stopLoadingTicker();
 });
 </script>

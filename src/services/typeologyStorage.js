@@ -5,6 +5,12 @@
 const TYPEOLOGY_RESULT_CACHE_KEY = "asking_typeology_result_cache_v1";
 
 /**
+ * 类型学进度缓存键前缀：
+ * 关键逻辑：按测试键拆分缓存，避免每次答题都重写整份大对象。
+ */
+const TYPEOLOGY_PROGRESS_CACHE_KEY_PREFIX = "asking_typeology_progress_v1_";
+
+/**
  * 安全解析 JSON 字符串。
  * @param {string} rawString 原始字符串。
  * @returns {Record<string, object>} 解析结果对象；异常时返回空对象。
@@ -78,3 +84,72 @@ export function upsertTypeologyCachedResult(testKey, resultPayload) {
   return nextCacheObject;
 }
 
+/**
+ * 构建单个测试的进度缓存键。
+ * @param {string} testKey 测试键。
+ * @returns {string} 进度缓存键。
+ */
+function buildTypeologyProgressCacheKey(testKey) {
+  return `${TYPEOLOGY_PROGRESS_CACHE_KEY_PREFIX}${String(testKey ?? "").trim()}`;
+}
+
+/**
+ * 读取单个测试进度缓存。
+ * @param {string} testKey 测试键。
+ * @returns {object|null} 进度对象；异常或无缓存时返回 null。
+ */
+export function loadTypeologyProgressCache(testKey) {
+  const normalizedTestKey = String(testKey ?? "").trim();
+  if (!normalizedTestKey) {
+    return null;
+  }
+
+  try {
+    const rawProgressValue = window.localStorage.getItem(
+      buildTypeologyProgressCacheKey(normalizedTestKey),
+    );
+    const parsedProgressObject = safeParseObject(rawProgressValue);
+    return Object.keys(parsedProgressObject).length > 0 ? parsedProgressObject : null;
+  } catch {
+    // 关键逻辑：隐私模式/禁用存储时不抛异常，主流程降级为“仅本次会话内进度”。
+    return null;
+  }
+}
+
+/**
+ * 更新单个测试进度缓存。
+ * @param {string} testKey 测试键。
+ * @param {object} progressPayload 进度对象。
+ */
+export function saveTypeologyProgressCache(testKey, progressPayload) {
+  const normalizedTestKey = String(testKey ?? "").trim();
+  if (!normalizedTestKey) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      buildTypeologyProgressCacheKey(normalizedTestKey),
+      JSON.stringify(progressPayload ?? {}),
+    );
+  } catch {
+    // 关键逻辑：写入失败不阻断答题流程。
+  }
+}
+
+/**
+ * 删除单个测试进度缓存。
+ * @param {string} testKey 测试键。
+ */
+export function removeTypeologyProgressCache(testKey) {
+  const normalizedTestKey = String(testKey ?? "").trim();
+  if (!normalizedTestKey) {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(buildTypeologyProgressCacheKey(normalizedTestKey));
+  } catch {
+    // 关键逻辑：删除失败不影响业务流程。
+  }
+}

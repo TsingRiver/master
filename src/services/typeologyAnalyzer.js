@@ -342,22 +342,31 @@ function resolveEnneagramTritype(scoreItemMap, coreKey) {
 }
 
 /**
- * 从单题摘要中提取被选中的九型 key。
+ * 从单题摘要中提取九型信号（类型 + 强度）。
+ * 关键逻辑：统一同意度题型下，向量值表示“认同强度”，需按强度加权而非仅判断是否命中。
  * @param {object} summaryItem 单题摘要。
- * @returns {string|null} 九型 key。
+ * @returns {{ typeKey: string|null, strength: number }} 九型信号。
  */
-function resolveSelectedEnneagramKey(summaryItem) {
+function resolveSelectedEnneagramSignal(summaryItem) {
   const vectorEntries = Object.entries(summaryItem?.vector ?? {}).filter(([vectorKey]) =>
     /^e[1-9]$/.test(vectorKey),
   );
   if (vectorEntries.length === 0) {
-    return null;
+    return {
+      typeKey: null,
+      strength: 0,
+    };
   }
 
   const sortedEntries = vectorEntries.sort(
     (leftEntry, rightEntry) => Number(rightEntry[1] ?? 0) - Number(leftEntry[1] ?? 0),
   );
-  return sortedEntries[0][0] ?? null;
+  const [typeKey, rawStrength] = sortedEntries[0] ?? [null, 0];
+
+  return {
+    typeKey: typeKey ?? null,
+    strength: Math.max(0, Number(rawStrength ?? 0)),
+  };
 }
 
 /**
@@ -375,22 +384,27 @@ function buildEnneagramInstinctScore(answerSummary, coreKey) {
   };
 
   answerSummary.forEach((summaryItem) => {
-    const selectedTypeKey = resolveSelectedEnneagramKey(summaryItem);
-    if (selectedTypeKey && ENNEAGRAM_TYPE_INSTINCT_WEIGHT[selectedTypeKey]) {
-      const typeWeight = ENNEAGRAM_TYPE_INSTINCT_WEIGHT[selectedTypeKey];
+    const { typeKey, strength } = resolveSelectedEnneagramSignal(summaryItem);
+    const normalizedStrength = Math.max(0, Math.min(1, strength / 4));
+
+    if (typeKey && ENNEAGRAM_TYPE_INSTINCT_WEIGHT[typeKey]) {
+      const typeWeight = ENNEAGRAM_TYPE_INSTINCT_WEIGHT[typeKey];
       ENNEAGRAM_INSTINCT_KEYS.forEach((instinctKey) => {
-        instinctScoreMap[instinctKey] += Number(typeWeight[instinctKey] ?? 0);
+        instinctScoreMap[instinctKey] += Number(typeWeight[instinctKey] ?? 0) * normalizedStrength;
       });
     }
 
-    const searchableText = `${summaryItem.questionTitle} ${summaryItem.optionLabel}`.toLowerCase();
-    ENNEAGRAM_INSTINCT_KEYS.forEach((instinctKey) => {
-      ENNEAGRAM_INSTINCT_KEYWORD_MAP[instinctKey].forEach((keyword) => {
-        if (searchableText.includes(keyword.toLowerCase())) {
-          instinctScoreMap[instinctKey] += 1;
-        }
+    // 关键逻辑：关键词仅在“有认同强度”时加权生效，避免题目固定文本造成无效偏置。
+    if (normalizedStrength > 0) {
+      const searchableText = `${summaryItem.questionTitle}`.toLowerCase();
+      ENNEAGRAM_INSTINCT_KEYS.forEach((instinctKey) => {
+        ENNEAGRAM_INSTINCT_KEYWORD_MAP[instinctKey].forEach((keyword) => {
+          if (searchableText.includes(keyword.toLowerCase())) {
+            instinctScoreMap[instinctKey] += normalizedStrength;
+          }
+        });
       });
-    });
+    }
   });
 
   const fallbackOrder = ENNEAGRAM_CORE_INSTINCT_FALLBACK[coreKey] ?? ["sp", "so", "sx"];

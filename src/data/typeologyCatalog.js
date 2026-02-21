@@ -54,21 +54,21 @@ const SCENE_LIBRARY = [
   "有多个任务并行时",
   "面对模糊信息时",
   "有人触碰你边界时",
-  "你感到焦虑时",
+  "感到焦虑时",
   "看到规则不合理时",
   "身处复杂人际网络时",
   "需要长期坚持时",
   "准备一次重要见面时",
   "资源有限但目标很高时",
-  "你被误解时",
-  "你需要带队时",
+  "被误解时",
+  "需要带队时",
   "出现意外变化时",
-  "你在学习新知识时",
-  "你在整理生活节奏时",
-  "你在消费和投资时",
-  "你在规划关系未来时",
-  "你在讨论价值观时",
-  "你在面对未知风险时",
+  "学习新知识时",
+  "整理生活节奏时",
+  "消费和投资时",
+  "规划关系未来时",
+  "讨论价值观时",
+  "面对未知风险时",
 ];
 
 /**
@@ -100,44 +100,243 @@ function createTestDefinition(definition) {
 }
 
 /**
- * 选择每题的 4 个结果选项。
- * 复杂度评估：O(1)，因为每题固定取 4 项。
- * @param {Array<object>} outcomes 结果类型数组。
+ * 获取题目场景文案。
+ * 复杂度评估：O(1)。
+ * @param {object} testConfig 测试配置。
  * @param {number} questionIndex 题目索引。
- * @returns {Array<object>} 本题结果项。
+ * @returns {string} 场景文案。
  */
-function pickOutcomeWindow(outcomes, questionIndex) {
-  const outcomeCount = outcomes.length;
-  if (outcomeCount <= 4) {
-    return outcomes;
-  }
-
-  const startIndex = (questionIndex * 3) % outcomeCount;
-  const pickedOutcomes = [];
-
-  for (let offset = 0; offset < 4; offset += 1) {
-    const outcomeIndex = (startIndex + offset) % outcomeCount;
-    pickedOutcomes.push(outcomes[outcomeIndex]);
-  }
-
-  return pickedOutcomes;
+function resolveQuestionScene(testConfig, questionIndex) {
+  return SCENE_LIBRARY[(questionIndex + testConfig.sceneOffset) % SCENE_LIBRARY.length];
 }
 
 /**
- * 生成单题题干。
- * @param {object} testConfig 测试配置。
+ * 为当前题选择对应结果类型。
+ * 关键逻辑：按顺序轮转 outcome，保证各类型曝光均衡，避免某些类型样本过少。
+ * 复杂度评估：O(1)。
+ * @param {Array<object>} outcomes 结果类型数组。
  * @param {number} questionIndex 题目索引。
+ * @returns {object|null} 当前题对应的结果类型。
+ */
+function pickOutcomeForLikertQuestion(outcomes, questionIndex) {
+  if (!Array.isArray(outcomes) || outcomes.length === 0) {
+    return null;
+  }
+
+  const outcomeIndex = questionIndex % outcomes.length;
+  return outcomes[outcomeIndex] ?? null;
+}
+
+/**
+ * 构建统一 5 档同意度选项（非常同意 ~ 非常不同意）。
+ * 关键逻辑：生成型测试统一采用 5 级李克特量表，便于用户理解并提升跨测试一致性。
+ * 复杂度评估：O(1)。
+ * @param {object} params 参数对象。
+ * @param {string} params.questionId 题目 ID。
+ * @param {string} params.outcomeKey 结果键。
+ * @returns {Array<object>} 5 档同意度选项。
+ */
+function buildAgreementLikertOptions({ questionId, outcomeKey }) {
+  return [
+    {
+      id: `${questionId}-option-a`,
+      label: "非常同意",
+      vector: {
+        [outcomeKey]: 4,
+      },
+    },
+    {
+      id: `${questionId}-option-b`,
+      label: "同意",
+      vector: {
+        [outcomeKey]: 3,
+      },
+    },
+    {
+      id: `${questionId}-option-c`,
+      label: "中立",
+      vector: {
+        [outcomeKey]: 2,
+      },
+    },
+    {
+      id: `${questionId}-option-d`,
+      label: "不太同意",
+      vector: {
+        [outcomeKey]: 1,
+      },
+    },
+    {
+      id: `${questionId}-option-e`,
+      label: "非常不同意",
+      vector: {
+        [outcomeKey]: 0,
+      },
+    },
+  ];
+}
+
+/**
+ * 生成适配同意度量表的题干。
+ * 关键逻辑：题干统一陈述句，确保“同意/不同意”可直接作答。
+ * 复杂度评估：O(L)，L 为 cue 文本长度。
+ * @param {object} params 参数对象。
+ * @param {string} params.sceneText 场景文案。
+ * @param {string} params.cueText 倾向描述文案。
  * @returns {string} 题干文本。
  */
-function buildQuestionTitle(testConfig, questionIndex) {
-  const scene = SCENE_LIBRARY[(questionIndex + testConfig.sceneOffset) % SCENE_LIBRARY.length];
-  const prompt =
-    testConfig.promptTemplates[
-      Math.floor((questionIndex + testConfig.sceneOffset) / SCENE_LIBRARY.length) %
-        testConfig.promptTemplates.length
-    ];
+function buildLikertQuestionTitle({ sceneText, cueText }) {
+  const normalizedCueText = String(cueText ?? "")
+    .trim()
+    .replace(/[。！？!?]+$/g, "");
+  // 关键逻辑：场景句已包含时间语义（如“...时”），首句出现“我通常...”会冗余，统一压缩为“我...”。
+  const refinedCueText = normalizedCueText.replace(/^我通常/, "我");
+  return `${sceneText}，${refinedCueText}。`;
+}
 
-  return `${scene}，${prompt}`;
+/**
+ * 题目选项文案口语化替换规则：
+ * 关键逻辑：只改展示文本，不改题目向量与评分逻辑，保证结果稳定性。
+ */
+const OPTION_LABEL_SIMPLIFY_RULES = [
+  { pattern: /低干扰高准确/g, replacement: "少打扰、但更准确" },
+  { pattern: /化学反应/g, replacement: "心动感觉" },
+  { pattern: /并肩升级/g, replacement: "一起变得更好" },
+  { pattern: /情绪承接能力/g, replacement: "接住你情绪的能力" },
+  { pattern: /同频/g, replacement: "合拍" },
+  { pattern: /过度捆绑/g, replacement: "绑得太紧" },
+  { pattern: /逻辑自洽/g, replacement: "逻辑说得通" },
+  { pattern: /概念精度/g, replacement: "表达准确度" },
+  { pattern: /独立推演/g, replacement: "自己想清楚再做" },
+  { pattern: /外部组织资源/g, replacement: "外部资源" },
+  { pattern: /自我校准/g, replacement: "按内心重新调整" },
+  { pattern: /现场信息/g, replacement: "眼前现场的信息" },
+  { pattern: /稳态执行/g, replacement: "按稳定节奏执行" },
+  { pattern: /跨域联想/g, replacement: "跨领域联想" },
+  { pattern: /隐含模式/g, replacement: "隐藏规律" },
+  { pattern: /深度洞察/g, replacement: "深入看透问题" },
+  { pattern: /可预期推进/g, replacement: "按可预期节奏推进" },
+  { pattern: /精细验证/g, replacement: "仔细核对验证" },
+  { pattern: /问题模型/g, replacement: "问题结构" },
+  { pattern: /情绪温度/g, replacement: "情绪状态" },
+  { pattern: /行动态/g, replacement: "行动状态" },
+  { pattern: /实际体感是否舒适/g, replacement: "身体和心理是否舒服" },
+  { pattern: /守序/g, replacement: "守规则" },
+  { pattern: /利他/g, replacement: "对他人有益" },
+  { pattern: /工具化/g, replacement: "工具性" },
+  { pattern: /绝对意志/g, replacement: "完全按自己意志" },
+  { pattern: /拉扯反应/g, replacement: "一会靠近一会后退" },
+  { pattern: /实体操作/g, replacement: "动手操作" },
+  { pattern: /偏好高变化社交/g, replacement: "更喜欢变化多一点的社交节奏" },
+  { pattern: /偏好幕后支撑/g, replacement: "更习惯在幕后支持团队" },
+  { pattern: /喜欢把人和事快速排布/g, replacement: "喜欢先把人和事快速安排好" },
+  { pattern: /不喜欢混乱协作/g, replacement: "不喜欢协作方式太混乱" },
+  { pattern: /价值观一致优先/g, replacement: "更看重价值观一致" },
+  { pattern: /节奏稳定比刺激更重要/g, replacement: "更喜欢稳定节奏，不追求太多刺激" },
+  { pattern: /愿意长期经营与共建/g, replacement: "愿意长期经营这段关系" },
+  { pattern: /会重视目标与能力匹配/g, replacement: "会看重双方目标和能力是否匹配" },
+  { pattern: /高质量陪伴/g, replacement: "稳定且有质量的陪伴" },
+  { pattern: /重视执行与生活能力/g, replacement: "看重执行力和生活能力" },
+  { pattern: /偏好务实合作/g, replacement: "更喜欢务实配合" },
+  { pattern: /看重责任分担/g, replacement: "看重责任是否能一起分担" },
+  { pattern: /重视系统可预期/g, replacement: "看重系统是否稳定可预期" },
+  { pattern: /倾向客观中立执行/g, replacement: "倾向按客观中立的方式执行" },
+  { pattern: /重视均衡与弹性/g, replacement: "看重平衡和灵活度" },
+  { pattern: /重视现实收益/g, replacement: "更看重现实收益" },
+  { pattern: /重视问题本质/g, replacement: "更关注问题本质" },
+  { pattern: /偏好影响与推动/g, replacement: "更喜欢影响他人并推动事情" },
+  { pattern: /愿意承担目标压力/g, replacement: "愿意扛目标压力" },
+  { pattern: /擅长资源整合/g, replacement: "擅长把资源整合起来" },
+  { pattern: /情绪受对方反馈影响大/g, replacement: "我的情绪容易受对方反馈影响" },
+];
+
+/**
+ * 需要启用“第一人称动作句”渲染的测试键集合。
+ * 关键逻辑：按用户反馈，除 MBTI 外，其余类型学测试均统一做口语化增强。
+ */
+const FIRST_PERSON_OPTION_TEST_KEYS = new Set([
+  "enneagram",
+  "social-persona",
+  "ideal-match",
+  "jung-classic",
+  "disc",
+  "attitude-psy",
+  "temperament",
+  "big-five",
+  "dnd-alignment",
+  "attachment",
+  "holland",
+]);
+
+/**
+ * 判断测试是否应启用第一人称动作句。
+ * @param {string} testKey 测试键。
+ * @returns {boolean} 是否启用第一人称动作句。
+ */
+function shouldUseFirstPersonOptionStyle(testKey) {
+  return FIRST_PERSON_OPTION_TEST_KEYS.has(testKey);
+}
+
+/**
+ * 将短语改写为第一人称完整句。
+ * 关键逻辑：社会人格题目优先呈现“我会/我更…”句式，降低抽象阅读成本。
+ * @param {string} inputText 口语化替换后的文本。
+ * @returns {string} 第一人称句式文本。
+ */
+function toFirstPersonSentence(inputText) {
+  const normalizedText = String(inputText ?? "").trim();
+  if (!normalizedText) {
+    return normalizedText;
+  }
+
+  if (/^我/.test(normalizedText)) {
+    return normalizedText;
+  }
+
+  if (normalizedText.startsWith("先")) {
+    return `我会${normalizedText}`;
+  }
+
+  if (normalizedText.startsWith("会") || normalizedText.startsWith("愿意") || normalizedText.startsWith("喜欢")) {
+    return `我${normalizedText}`;
+  }
+
+  if (
+    normalizedText.startsWith("偏好") ||
+    normalizedText.startsWith("倾向") ||
+    normalizedText.startsWith("重视") ||
+    normalizedText.startsWith("在意")
+  ) {
+    return `我更${normalizedText}`;
+  }
+
+  if (normalizedText.startsWith("不喜欢")) {
+    return `我${normalizedText}`;
+  }
+
+  // 关键逻辑：兜底场景统一前缀，保证选项读起来像完整口语句子。
+  return `我通常${normalizedText}`;
+}
+
+/**
+ * 口语化选项文本。
+ * 复杂度评估：O(R * L)；R 为替换规则数量，L 为文本长度。R 为固定小常数（< 40），可近似视为 O(L)。
+ * @param {string} inputText 原始文本。
+ * @param {string} testKey 测试键。
+ * @returns {string} 口语化后的文本。
+ */
+function simplifyOptionLabel(inputText, testKey) {
+  let normalizedText = String(inputText ?? "");
+
+  OPTION_LABEL_SIMPLIFY_RULES.forEach((ruleItem) => {
+    normalizedText = normalizedText.replace(ruleItem.pattern, ruleItem.replacement);
+  });
+
+  if (shouldUseFirstPersonOptionStyle(testKey)) {
+    normalizedText = toFirstPersonSentence(normalizedText);
+  }
+
+  return normalizedText;
 }
 
 /**
@@ -147,28 +346,36 @@ function buildQuestionTitle(testConfig, questionIndex) {
  * @returns {Array<object>} 题库。
  */
 function buildGeneratedQuestionPool(testConfig) {
+  if (!Array.isArray(testConfig?.outcomes) || testConfig.outcomes.length === 0) {
+    return [];
+  }
+
+  const outcomeCount = testConfig.outcomes.length;
   const generatedQuestions = [];
 
   for (let questionIndex = 0; questionIndex < testConfig.poolSize; questionIndex += 1) {
     const questionId = `${testConfig.key}-q-${String(questionIndex + 1).padStart(3, "0")}`;
-    const selectedOutcomes = pickOutcomeWindow(testConfig.outcomes, questionIndex);
+    const selectedOutcome = pickOutcomeForLikertQuestion(testConfig.outcomes, questionIndex);
+    if (!selectedOutcome) {
+      continue;
+    }
+
+    const cueIndex = Math.floor(questionIndex / outcomeCount) % selectedOutcome.cues.length;
+    const normalizedCueText = simplifyOptionLabel(selectedOutcome.cues[cueIndex], testConfig.key);
+    const sceneText = resolveQuestionScene(testConfig, questionIndex);
 
     generatedQuestions.push({
       id: questionId,
-      title: buildQuestionTitle(testConfig, questionIndex),
-      description: "按第一直觉选择最像你的一项。",
+      title: buildLikertQuestionTitle({
+        sceneText,
+        cueText: normalizedCueText,
+      }),
+      // 关键逻辑：题目已统一陈述句，辅助文案统一为“符合程度”引导，降低理解成本。
+      description: "请根据符合程度作答。",
       weight: 1,
-      options: selectedOutcomes.map((outcome, optionIndex) => {
-        const optionId = `${questionId}-option-${String.fromCharCode(97 + optionIndex)}`;
-        const cueIndex = questionIndex % outcome.cues.length;
-
-        return {
-          id: optionId,
-          label: outcome.cues[cueIndex],
-          vector: {
-            [outcome.key]: 3,
-          },
-        };
+      options: buildAgreementLikertOptions({
+        questionId,
+        outcomeKey: selectedOutcome.key,
       }),
     });
   }
@@ -194,12 +401,12 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("pro72", "72题专业版", 72), createMode("quick32", "32题速测版", 32)],
     poolSize: 120,
     promptTemplates: [
-      "你通常会先采取哪种反应？",
-      "你更自然的做法是？",
-      "你更认同哪种处理路径？",
-      "你会优先考虑什么？",
-      "你最容易进入的状态是？",
-      "你会把注意力放在哪一侧？",
+      "你第一反应通常是？",
+      "你平时更常这样做？",
+      "你更倾向哪种处理方式？",
+      "你会先考虑什么？",
+      "你最容易进入哪种状态？",
+      "你下意识会先关注哪一边？",
     ],
     outcomes: [],
     staticQuestionPool: MBTI_PRO_120_QUESTION_BANK,
@@ -218,12 +425,12 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("pro120", "120题专业版", 120), createMode("quick36", "36题速测版", 36)],
     poolSize: 140,
     promptTemplates: [
-      "你最像哪一种内在驱动？",
-      "你通常会被哪种需求牵引？",
-      "哪种反应更符合你当下的本能？",
-      "你更常见的策略是？",
-      "你下意识会先守住什么？",
-      "你在压力下更可能走向？",
+      "你内心最常被什么驱动？",
+      "你平时最在意哪类需求？",
+      "这时你第一反应通常是？",
+      "你最常用的应对方式是？",
+      "你下意识最想先守住什么？",
+      "压力大时你更容易进入哪种状态？",
     ],
     outcomes: [
       {
@@ -312,17 +519,22 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("core64", "64题", 64)],
     poolSize: 84,
     promptTemplates: [
-      "你更自然的社会角色是？",
-      "你通常会采取哪种对外策略？",
-      "你在群体中的首要动作更接近？",
-      "你更容易用什么方式影响他人？",
-      "你会把精力放在哪个社交目标上？",
+      "这类场景下你通常会怎么做？",
+      "你平时最常用哪种应对方式？",
+      "在群体里你第一步一般会做什么？",
+      "你更常怎么影响别人？",
+      "你最愿意把精力先放在哪件事上？",
     ],
     outcomes: [
       {
         key: "s-lead",
         label: "领航者",
-        cues: ["主动定方向并推动", "会承担组织协调职责", "喜欢把人和事快速排布"],
+        // 关键逻辑：社会人格选项采用第一人称动作句，降低术语感并提升可读性。
+        cues: [
+          "我会先定方向，再带着大家推进",
+          "我愿意把人和事协调起来",
+          "我喜欢先把任务排好，再快速推动执行",
+        ],
         summary: "擅长定方向、起节奏与带队推进。",
         tags: ["组织力", "推进力", "决策性"],
         actions: ["留出讨论缓冲，避免压制他人节奏", "把决策依据公开化", "建立可继任的流程"],
@@ -330,7 +542,7 @@ export const TYPEOLOGY_TESTS = [
       {
         key: "s-bridge",
         label: "连接者",
-        cues: ["优先连接关键关系", "擅长找共同语言", "会先搭桥再推进"],
+        cues: ["我会先把关键的人连起来", "我擅长找到双方都能接受的说法", "我通常先沟通搭桥，再推进事情"],
         summary: "擅长联结资源与修复关系。",
         tags: ["关系敏感", "协同", "沟通"],
         actions: ["避免过度迎合", "关键议题写明边界", "把关系资产转成项目资产"],
@@ -338,7 +550,7 @@ export const TYPEOLOGY_TESTS = [
       {
         key: "s-analyst",
         label: "观察者",
-        cues: ["先观察再参与", "重视信息质量", "倾向低干扰高准确"],
+        cues: ["我会先观察，再决定要不要参与", "我更看重信息是否真实准确", "我倾向少打扰、少发言，但判断尽量准确"],
         summary: "擅长评估局势与结构洞察。",
         tags: ["判断力", "信息过滤", "冷静"],
         actions: ["提高公开表达频次", "洞察配合行动建议输出", "给决策设置时限"],
@@ -346,7 +558,7 @@ export const TYPEOLOGY_TESTS = [
       {
         key: "s-guardian",
         label: "守序者",
-        cues: ["优先稳定规则与边界", "重视承诺与一致性", "不喜欢混乱协作"],
+        cues: ["我会先稳住规则和边界", "我看重说到做到、前后一致", "我不喜欢协作方式太混乱"],
         summary: "擅长维持秩序与系统可靠性。",
         tags: ["稳定", "规则", "责任"],
         actions: ["在变动场景保持弹性", "识别“必要破例”", "优化规则解释成本"],
@@ -354,7 +566,7 @@ export const TYPEOLOGY_TESTS = [
       {
         key: "s-explorer",
         label: "开拓者",
-        cues: ["先试错再收敛", "喜欢破冰新场景", "偏好高变化社交"],
+        cues: ["我会先试一试，再慢慢收口", "到新场合我会主动破冰聊天", "我更喜欢变化多一点的社交节奏"],
         summary: "擅长打开新局与探索机会。",
         tags: ["探索", "灵活", "机会感"],
         actions: ["建立收口机制", "减少目标切换频率", "把灵感转为迭代清单"],
@@ -362,7 +574,7 @@ export const TYPEOLOGY_TESTS = [
       {
         key: "s-support",
         label: "支持者",
-        cues: ["先确保团队状态稳定", "愿意补位保障执行", "偏好幕后支撑"],
+        cues: ["我会先让团队状态稳定下来", "缺人手时我愿意补位把事做完", "我更习惯在幕后支持团队"],
         summary: "擅长托底执行与持续协同。",
         tags: ["稳定输出", "耐心", "配合度"],
         actions: ["主动争取可见度", "明确个人成长议程", "避免长期隐形劳动"],
@@ -383,9 +595,9 @@ export const TYPEOLOGY_TESTS = [
     promptTemplates: [
       "你更容易被哪种特质吸引？",
       "长期相处时你最看重什么？",
-      "出现矛盾时你最希望对方怎么做？",
-      "你会优先选择哪种关系节奏？",
-      "在关系中你最需要的安全感来自？",
+      "有矛盾时你最希望对方怎么做？",
+      "你更想要哪种关系节奏？",
+      "在关系里，你的安全感主要来自哪里？",
     ],
     outcomes: [
       {
@@ -450,11 +662,11 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("core60", "60题", 60)],
     poolSize: 80,
     promptTemplates: [
-      "你通常更依赖哪种心理功能？",
-      "你会优先启动哪种处理方式？",
-      "你在压力下最常回到哪种本能？",
-      "你更像哪类思维路径？",
-      "你更常用哪种内在指南针？",
+      "你平时更依赖哪种心理功能？",
+      "你通常会先用哪种处理方式？",
+      "压力大时你最容易回到哪种状态？",
+      "你的思考方式更像哪一类？",
+      "你更常凭哪种内在判断做决定？",
     ],
     outcomes: [
       {
@@ -535,11 +747,11 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("core60", "60题", 60)],
     poolSize: 80,
     promptTemplates: [
-      "你的默认行为风格更像？",
-      "你更可能优先采取哪类动作？",
-      "你通常会以哪种方式影响局面？",
-      "在冲突中你最自然的反应是？",
-      "你在团队中更常扮演哪种角色？",
+      "你的默认行为风格更像哪种？",
+      "你通常会先采取哪类动作？",
+      "你平时更常怎么影响局面？",
+      "冲突时你最自然的反应是什么？",
+      "团队里你更常扮演哪种角色？",
     ],
     outcomes: [
       {
@@ -588,11 +800,11 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("core64", "64题", 64)],
     poolSize: 84,
     promptTemplates: [
-      "你更倾向先调用哪种心理资源？",
-      "你会优先相信哪一类判断信号？",
-      "你在冲突中最先守住什么？",
-      "你最自然的应对顺位是？",
-      "你更常凭哪种态度做取舍？",
+      "你更习惯先调动哪种心理资源？",
+      "你更相信哪类判断信号？",
+      "冲突来临时你最先守住什么？",
+      "你最自然的应对顺序是？",
+      "做取舍时你通常更看重什么？",
     ],
     outcomes: [
       {
@@ -641,11 +853,11 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("core60", "60题", 60)],
     poolSize: 80,
     promptTemplates: [
-      "你最常出现的情绪节奏是？",
-      "你更像哪种气质反应？",
-      "你在压力里通常会走向？",
-      "你最自然的状态更接近？",
-      "你恢复能量的路径更像？",
+      "你最常见的情绪节奏是？",
+      "你的气质反应更像哪种？",
+      "压力下你通常会进入哪种状态？",
+      "你最自然的状态更接近哪种？",
+      "你恢复精力的方式更像哪种？",
     ],
     outcomes: [
       {
@@ -694,11 +906,11 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("core60", "60题", 60)],
     poolSize: 80,
     promptTemplates: [
-      "你更可能落在哪种人格组合？",
-      "你的长期行为倾向更接近？",
-      "你在压力与协作中的常态更像？",
-      "你更稳定的风格标签是？",
-      "你更常展现哪类特征组合？",
+      "你的整体人格更接近哪种组合？",
+      "你的长期行为倾向更像哪种？",
+      "在压力和协作中你通常是什么状态？",
+      "你更稳定的风格标签是什么？",
+      "你平时更常展现哪类特征组合？",
     ],
     outcomes: [
       {
@@ -763,11 +975,11 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("core60", "60题", 60)],
     poolSize: 80,
     promptTemplates: [
-      "你更可能选择哪种价值路径？",
-      "你在规则与善恶间更偏向？",
-      "你通常会把什么放在优先位？",
-      "面对冲突你更认同哪种原则？",
-      "你会优先捍卫哪种底线？",
+      "面对选择时你更会走哪条价值路径？",
+      "在规则和善恶之间你更偏向哪边？",
+      "你通常会先把什么放在第一位？",
+      "面对冲突时你更认同哪种原则？",
+      "你会先捍卫哪条底线？",
     ],
     outcomes: [
       {
@@ -856,11 +1068,11 @@ export const TYPEOLOGY_TESTS = [
     modes: [createMode("core24", "24题", 24)],
     poolSize: 40,
     promptTemplates: [
-      "亲密关系中你更常出现哪种反应？",
-      "当关系不确定时你更可能？",
-      "你在关系冲突里更偏向？",
-      "你如何确认自己被爱？",
-      "你在靠近与边界间更常选择？",
+      "在亲密关系里你更常出现哪种反应？",
+      "关系不确定时你第一反应通常是？",
+      "发生冲突时你更偏向哪种做法？",
+      "你通常怎样确认自己被爱？",
+      "在亲近和边界之间你更常怎么选？",
     ],
     outcomes: [
       {
@@ -910,10 +1122,10 @@ export const TYPEOLOGY_TESTS = [
     poolSize: 80,
     promptTemplates: [
       "你更愿意投入哪类工作场景？",
-      "你最有能量的任务类型是？",
+      "哪类任务最能让你有能量？",
       "你会优先选择哪种职业活动？",
       "你更享受哪种工作反馈？",
-      "你长期更适配哪种岗位氛围？",
+      "长期看你更适合哪种岗位氛围？",
     ],
     outcomes: [
       {
@@ -1021,4 +1233,3 @@ export function getTypeologyQuestionPool(testKey) {
  * 默认测试键。
  */
 export const DEFAULT_TYPEOLOGY_TEST_KEY = "mbti";
-
