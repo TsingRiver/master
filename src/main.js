@@ -225,5 +225,12 @@ const app = createApp(App);
   app.use(vantComponent);
 });
 app.mount("#app");
+/**
+ * 启动成功后清理资源自愈标记：
+ * 关键逻辑：确保前置自愈脚本的“单次重试”状态及时重置，避免影响后续正常访问。
+ */
+if (typeof window.__ASKING_ON_APP_BOOT__ === "function") {
+  window.__ASKING_ON_APP_BOOT__();
+}
 // 关键逻辑：Speed Insights 为可选增强能力，采用空闲调度避免阻塞首屏渲染。
 scheduleSpeedInsightsSetup();

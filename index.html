@@ -36,6 +36,105 @@
         rel="stylesheet"
       />
     </noscript>
+    <script>
+      /**
+       * 前端资源加载自愈：
+       * 关键逻辑：
+       * 1. 旧缓存命中导致模块脚本加载失败时，自动触发一次带 cache-busting 参数的重载。
+       * 2. 使用 sessionStorage 限制短时间内仅重试一次，避免无限刷新。
+       * 3. 应用成功启动后由 main.js 清除重试标记与临时查询参数。
+       */
+      (function bootstrapModuleRecovery() {
+        const RETRY_STATE_KEY = "asking_module_recovery_ts_v1";
+        const RETRY_QUERY_KEY = "__asset_retry";
+        const RETRY_COOLDOWN_MS = 15000;
+
+        /**
+         * 判断是否允许自动重试。
+         * @returns {boolean} 是否允许重试。
+         */
+        function canAutoRetry() {
+          const lastRetryTimestamp = Number(
+            window.sessionStorage.getItem(RETRY_STATE_KEY) ?? 0,
+          );
+          if (!Number.isFinite(lastRetryTimestamp) || lastRetryTimestamp <= 0) {
+            return true;
+          }
+          return Date.now() - lastRetryTimestamp > RETRY_COOLDOWN_MS;
+        }
+
+        /**
+         * 标记本次重试时间戳。
+         */
+        function markRetry() {
+          window.sessionStorage.setItem(RETRY_STATE_KEY, String(Date.now()));
+        }
+
+        /**
+         * 执行带 cache-busting 的重载。
+         * @param {string} triggerReason 触发原因。
+         */
+        function reloadWithCacheBypass(triggerReason) {
+          if (!canAutoRetry()) {
+            return;
+          }
+
+          markRetry();
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set(RETRY_QUERY_KEY, String(Date.now()));
+          // 关键逻辑：replace 避免污染历史栈，用户回退时不产生“白屏页面”残留。
+          window.location.replace(currentUrl.toString());
+          void triggerReason;
+        }
+
+        /**
+         * 暴露给应用启动后的清理钩子。
+         * @returns {void}
+         */
+        window.__ASKING_ON_APP_BOOT__ = function onAppBoot() {
+          window.sessionStorage.removeItem(RETRY_STATE_KEY);
+
+          const currentUrl = new URL(window.location.href);
+          if (!currentUrl.searchParams.has(RETRY_QUERY_KEY)) {
+            return;
+          }
+
+          currentUrl.searchParams.delete(RETRY_QUERY_KEY);
+          const cleanSearch = currentUrl.searchParams.toString();
+          const cleanUrl = `${currentUrl.pathname}${cleanSearch ? `?${cleanSearch}` : ""}${currentUrl.hash}`;
+          window.history.replaceState(null, "", cleanUrl);
+        };
+
+        window.addEventListener(
+          "error",
+          (errorEvent) => {
+            const eventTarget = errorEvent?.target;
+            const isModuleScriptError =
+              eventTarget &&
+              eventTarget.tagName === "SCRIPT" &&
+              String(eventTarget.type ?? "").toLowerCase() === "module";
+
+            if (isModuleScriptError) {
+              reloadWithCacheBypass("module-script-error");
+            }
+          },
+          true,
+        );
+
+        window.addEventListener("unhandledrejection", (event) => {
+          const rawReason = event?.reason;
+          const reasonMessage = String(rawReason?.message ?? rawReason ?? "");
+          const isDynamicImportFailure =
+            /Failed to fetch dynamically imported module|Importing a module script failed|MIME type/i.test(
+              reasonMessage,
+            );
+
+          if (isDynamicImportFailure) {
+            reloadWithCacheBypass("dynamic-import-error");
+          }
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
