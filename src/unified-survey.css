@@ -447,6 +447,29 @@ body {
   --title-font: "Noto Serif SC", serif;
 }
 
+.theme-soul-cat {
+  --page-bg: linear-gradient(140deg, #fffaf7, #fdf6fb 52%, #f5f8fc 100%);
+  --text-main: #3f353a;
+  --text-muted: #7d6d74;
+  --surface: rgba(255, 255, 255, 0.94);
+  --surface-border: rgba(245, 226, 233, 0.92);
+  --shadow: 0 22px 48px rgba(139, 112, 123, 0.14);
+  --primary: #d99db0;
+  --primary-dark: #bf7f95;
+  --aura-left: radial-gradient(circle at 30% 30%, #f6d3dd, #efb8c8);
+  --aura-right: radial-gradient(circle at 30% 30%, #f4dbe4, #e8bed0);
+  --noise-dot: rgba(151, 126, 136, 0.3);
+  --option-border: #e8dbe1;
+  --option-selected-border: #dcaec1;
+  --option-selected-bg: linear-gradient(180deg, #ffffff, #fdf3f7);
+  --option-selected-shadow: rgba(185, 130, 152, 0.16);
+  --detail-border: #efe1e7;
+  --detail-bg: linear-gradient(180deg, #fff, #fdf7fa);
+  --highlight-border: #efd7e0;
+  --highlight-bg: linear-gradient(180deg, #fff9fb, #f7f2ff);
+  --title-font: "Noto Serif SC", serif;
+}
+
 .theme-love-brain {
   --page-bg: linear-gradient(138deg, #e9f3ff, #e7eeff 44%, #ffeaf2 100%);
   --text-main: #1c2e54;
@@ -865,6 +888,43 @@ body {
   --noise-position-one: 0 0;
   --noise-position-two: 7px 13px;
   --noise-opacity: 0.1;
+}
+
+.theme-soul-cat {
+  --page-overlay-one:
+    radial-gradient(
+      circle at 14% 14%,
+      rgba(255, 255, 255, 0.94),
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 80% 18%,
+      rgba(242, 195, 212, 0.25),
+      transparent 46%
+    );
+  --page-overlay-two: radial-gradient(
+    circle at 86% 86%,
+    rgba(236, 198, 213, 0.28),
+    transparent 46%
+  );
+  --aura-left-size: 228px;
+  --aura-right-size: 236px;
+  --aura-left-radius: 56% 44% 60% 40% / 48% 62% 38% 52%;
+  --aura-right-radius: 44% 56% 40% 60% / 58% 42% 58% 42%;
+  --noise-layer-one: radial-gradient(
+    rgba(174, 145, 160, 0.2) 0.6px,
+    transparent 0.6px
+  );
+  --noise-layer-two: linear-gradient(
+    120deg,
+    rgba(174, 145, 160, 0.06) 1px,
+    transparent 1px
+  );
+  --noise-size-one: 18px 18px;
+  --noise-size-two: 44px 44px;
+  --noise-position-one: 0 0;
+  --noise-position-two: 9px 13px;
+  --noise-opacity: 0.08;
 }
 
 .theme-love-brain {
@@ -1684,6 +1744,138 @@ body {
   border-top-right-radius: 24px;
 }
 
+.theme-soul-cat .survey-header {
+  margin: 10px 4px 18px;
+}
+
+.theme-soul-cat .survey-badge {
+  letter-spacing: 0.12em;
+}
+
+.theme-soul-cat .survey-header h1 {
+  letter-spacing: 0.01em;
+}
+
+.theme-soul-cat .survey-cover-card {
+  text-align: center;
+}
+
+.theme-soul-cat .survey-cover-title-emphasis {
+  font-size: clamp(26px, 8vw, 34px);
+  line-height: 1.18;
+}
+
+.theme-soul-cat .survey-cover-title-main {
+  font-size: clamp(30px, 9vw, 38px);
+  line-height: 1.2;
+}
+
+.theme-soul-cat .survey-cover-intro {
+  margin-inline: auto;
+  max-width: 30ch;
+}
+
+.theme-soul-cat .survey-cover-points {
+  text-align: left;
+}
+
+.theme-soul-cat .survey-card {
+  border-radius: 20px;
+}
+
+.theme-soul-cat .survey-option {
+  border-radius: 16px;
+  border-width: 1px;
+}
+
+.theme-soul-cat .survey-option-selected {
+  border-color: #dcaec1;
+  background: linear-gradient(180deg, #fff, #fdf3f7);
+}
+
+.theme-soul-cat .survey-btn {
+  border-radius: 14px !important;
+}
+
+.theme-soul-cat .survey-btn-primary {
+  background: linear-gradient(
+    130deg,
+    #edc2d0 0%,
+    #d99db0 56%,
+    #c8839d 100%
+  ) !important;
+  border-color: rgba(219, 159, 182, 0.7) !important;
+  box-shadow: 0 10px 22px rgba(180, 132, 150, 0.2);
+}
+
+.theme-soul-cat .survey-btn-secondary {
+  border-color: #edd7df !important;
+}
+
+.theme-soul-cat .survey-main-title {
+  font-size: clamp(31px, 9.2vw, 42px);
+  line-height: 1.2;
+}
+
+.theme-soul-cat .survey-main-score {
+  color: #7f6670;
+}
+
+.theme-soul-cat .survey-main-tag-item {
+  border-color: #e9ccd8;
+  background: linear-gradient(130deg, #fff8fb, #fdeef4);
+  color: #805968;
+}
+
+.theme-soul-cat .survey-highlight-box {
+  border-color: #ebd4de;
+  background: linear-gradient(130deg, #fff7fb, #fceff4);
+}
+
+.theme-soul-cat .survey-detail-wrap {
+  border-color: #efdee6;
+  background: linear-gradient(180deg, #fff, #fdf8fb);
+}
+
+.theme-soul-cat .survey-top-wrap {
+  border-color: #eddbe4;
+  background: linear-gradient(180deg, #fff, #fdf7fa);
+}
+
+/* 关键逻辑：答题卡作为绝对定位参照系，保证头像浮层不参与文档流。 */
+.theme-soul-cat.survey-stage-survey .survey-card {
+  position: relative;
+}
+
+/* 关键逻辑：头像改为 absolute + right:0，不占位且始终贴右侧展示。 */
+.theme-soul-cat.survey-stage-survey .survey-soul-cat-avatar-row {
+  position: absolute;
+  top: 64px;
+  right: 0;
+  display: block;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.theme-soul-cat.survey-stage-survey .survey-soul-cat-avatar-image {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(164, 124, 138, 0.18));
+  opacity: 0.96;
+}
+
+@media (min-width: 768px) {
+  .theme-soul-cat.survey-stage-survey .survey-soul-cat-avatar-row {
+    top: 70px;
+  }
+
+  .theme-soul-cat.survey-stage-survey .survey-soul-cat-avatar-image {
+    width: 64px;
+    height: 64px;
+  }
+}
+
 .survey-shell {
   position: relative;
   z-index: 2;
@@ -1925,6 +2117,18 @@ body {
 
 .survey-cover-title-main {
   font-weight: 800;
+}
+
+.survey-cover-hero-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.survey-cover-hero-image {
+  width: min(100%, 220px);
+  height: auto;
+  filter: drop-shadow(0 10px 18px rgba(66, 56, 62, 0.12));
+  will-change: opacity, transform, filter;
 }
 
 .survey-cover-intro {
@@ -2443,6 +2647,28 @@ body {
   filter: blur(0);
 }
 
+.survey-cover-hero-fade-enter-active,
+.survey-cover-hero-fade-leave-active {
+  transition:
+    opacity 420ms ease,
+    transform 420ms ease,
+    filter 420ms ease;
+}
+
+.survey-cover-hero-fade-enter-from,
+.survey-cover-hero-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.965);
+  filter: blur(1.6px);
+}
+
+.survey-cover-hero-fade-enter-to,
+.survey-cover-hero-fade-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
 .survey-cheer-pop-enter-active,
 .survey-cheer-pop-leave-active {
   transition:
@@ -2586,9 +2812,6 @@ body {
   width: 100%;
   display: block;
   border-radius: 14px;
-  border: 1px solid var(--detail-border);
-  background: #fff;
-  box-shadow: 0 12px 26px color-mix(in srgb, var(--primary) 24%, transparent);
 }
 
 .survey-hero-artwork-caption {
@@ -4460,6 +4683,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .survey-cover-hero-fade-enter-active,
+  .survey-cover-hero-fade-leave-active,
   .survey-cover-city-fade-enter-active,
   .survey-cover-city-fade-leave-active {
     transition: none;

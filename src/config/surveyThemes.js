@@ -1,3 +1,5 @@
+import { buildSoulCatCoverArtworkPool } from "../constants/soulCatArtwork";
+
 /**
  * 浪漫主题守门员默认配置：
  * 关键逻辑：从 analyzer 中下沉到配置层常量，避免首屏静态引入 romance 分析模块。
@@ -88,6 +90,12 @@ const CITY_MATCH_REASON_FALLBACK_LINES = [
   "通勤便利度与生活配套更贴合你的常用场景。",
   "在机会密度与恢复空间之间更平衡，适合持续生活。",
 ];
+
+/**
+ * 灵魂猫咪封面轮播素材池：
+ * 关键逻辑：封面和结果页共用同一份“key=文件名”素材定义，避免配置漂移。
+ */
+const SOUL_CAT_COVER_ARTWORK_POOL = Object.freeze(buildSoulCatCoverArtworkPool());
 
 /**
  * 创建标准化结果对象。
@@ -2567,6 +2575,175 @@ function buildLoveBrainLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 灵魂猫咪主题：构建深度分析请求负载。
+ * 关键逻辑：分数与类型由本地模型锁定，AI 仅用于生成解读文案，避免类型漂移。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildSoulCatDeepPayload(localResult) {
+  const mainProfile = localResult?.matchedProfile ?? {};
+  const localTopThree = Array.isArray(localResult?.topThreeProfiles)
+    ? localResult.topThreeProfiles.slice(0, 3)
+    : [];
+
+  return {
+    totalScore: Number(localResult?.totalScore ?? 16),
+    mainProfile: {
+      key: String(mainProfile.key ?? "").trim(),
+      name: String(mainProfile.name ?? "").trim(),
+      tagLine: String(mainProfile.tagLine ?? "").trim(),
+      personalityBase: String(mainProfile.personalityBase ?? "").trim(),
+      nextLifeScript: String(mainProfile.nextLifeScript ?? "").trim(),
+      bestLife: String(mainProfile.bestLife ?? "").trim(),
+      healingMessage: String(mainProfile.healingMessage ?? "").trim(),
+    },
+    localTopThree: localTopThree.map((profileItem) => ({
+      name: String(profileItem?.name ?? "").trim(),
+      score: Number(profileItem?.score ?? 0),
+      tagLine: String(profileItem?.tagLine ?? "").trim(),
+    })),
+    summaryLines: Array.isArray(localResult?.summaryLines)
+      ? localResult.summaryLines
+      : [],
+    localNarrative: String(localResult?.localNarrative ?? "").trim(),
+  };
+}
+
+/**
+ * 灵魂猫咪主题：组装统一结果模型。
+ * @param {object} analysisResult 分析结果对象。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildSoulCatUnifiedResult(analysisResult, sourceType) {
+  const matchedProfile = analysisResult?.matchedProfile ?? {};
+  const totalScore = Number(analysisResult?.totalScore ?? 16);
+  const topThreeProfiles = Array.isArray(analysisResult?.topThreeProfiles)
+    ? analysisResult.topThreeProfiles
+    : [];
+  const summaryLines = Array.isArray(analysisResult?.summaryLines)
+    ? analysisResult.summaryLines
+    : [];
+  const heroArtwork =
+    analysisResult?.heroArtwork && typeof analysisResult.heroArtwork === "object"
+      ? analysisResult.heroArtwork
+      : null;
+  const fallbackTagLine = String(matchedProfile.tagLine ?? "").trim();
+  const highlightCardFromResult = analysisResult?.highlightCard;
+  const resolvedHighlightCard =
+    highlightCardFromResult && typeof highlightCardFromResult === "object"
+      ? {
+          title: String(highlightCardFromResult.title ?? "").trim() || "猫咪标签",
+          content:
+            String(highlightCardFromResult.content ?? "").trim() ||
+            fallbackTagLine ||
+            "正在匹配你的猫咪标签",
+        }
+      : {
+          title: "猫咪标签",
+          content: fallbackTagLine || "正在匹配你的猫咪标签",
+        };
+  const resolvedPersonalityBase = String(
+    analysisResult?.personalityBase ?? matchedProfile.personalityBase ?? "",
+  ).trim() || "你有柔软而稳定的内心力量。";
+  const resolvedNextLifeScript = String(
+    analysisResult?.nextLifeScript ?? matchedProfile.nextLifeScript ?? "",
+  ).trim() || "你会拥有更被偏爱的生活体验。";
+  const resolvedBestLife = String(
+    analysisResult?.bestLife ?? matchedProfile.bestLife ?? "",
+  ).trim() || "稳定、松弛、被理解，就是你最舒服的状态。";
+  const resolvedHealingMessage = String(
+    analysisResult?.healingMessage ?? matchedProfile.healingMessage ?? "",
+  ).trim() || "愿你被温柔接住，慢慢发光。";
+  const resolvedCatLanguageWish = String(
+    analysisResult?.catLanguageWish ?? "",
+  ).trim() || "喵喵喵，喵喵喵喵！";
+  const resolvedInsight = String(
+    analysisResult?.insight ?? analysisResult?.localNarrative ?? "",
+  ).trim();
+  const normalizedTagChips = Array.isArray(analysisResult?.tagChips)
+    ? analysisResult.tagChips
+        .map((tagItem) => String(tagItem ?? "").trim())
+        .filter(Boolean)
+        .slice(0, 4)
+    : [];
+
+  return createUnifiedResult({
+    source: sourceType,
+    prefixLabel: "你是：",
+    scoreLabel: "猫咪倾向分",
+    scoreSuffix: "/64",
+    main: {
+      name: String(matchedProfile.name ?? "灵魂猫咪待判定"),
+      score: Number.isFinite(totalScore) ? totalScore : 16,
+      tags: [fallbackTagLine].filter(Boolean),
+    },
+    heroArtwork,
+    highlightCard: resolvedHighlightCard,
+    insight: resolvedInsight,
+    tagChips:
+      normalizedTagChips.length > 0
+        ? normalizedTagChips
+        : [fallbackTagLine].filter(Boolean),
+    topThreeTitle: "你还可能是",
+    topThree: topThreeProfiles.map((profileItem) => ({
+      name: String(profileItem.name ?? "待判定"),
+      score: Number(profileItem.score ?? 0),
+      tags: [String(profileItem.tagLine ?? "").trim()].filter(Boolean),
+    })),
+    detailSections: [
+      {
+        title: "性格底色",
+        items: [resolvedPersonalityBase],
+      },
+      {
+        title: "下辈子剧本",
+        items: [resolvedNextLifeScript],
+      },
+      {
+        title: "最适合你的生活",
+        items: [resolvedBestLife],
+      },
+      {
+        title: "专属治愈寄语",
+        items: [resolvedHealingMessage],
+      },
+      {
+        // 关键逻辑：该模块固定使用本地猫语文案，不依赖 AI 结果。
+        title: "猫语寄托",
+        items: [resolvedCatLanguageWish],
+      },
+    ],
+    summaryTitle: "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次",
+  });
+}
+
+/**
+ * 灵魂猫咪主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildSoulCatDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  return buildSoulCatUnifiedResult(normalizedResult, "deep");
+}
+
+/**
+ * 灵魂猫咪主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildSoulCatLocalUnifiedResult(localResult) {
+  return buildSoulCatUnifiedResult(localResult, "local");
+}
+
+/**
  * 统一主题配置列表。
  * 新增测试时只需：
  * 1. 加题库和分析器
@@ -3434,6 +3611,107 @@ export const SURVEY_THEME_CONFIGS = [
       buildDeepUnifiedResult: buildLoveAttachmentDeepUnifiedResult,
       buildLocalUnifiedResult: buildLoveAttachmentLocalUnifiedResult,
       deepFailToast: "AI结果暂不可用，已切换本地基础结果",
+    },
+  },
+  {
+    key: "soul-cat",
+    routePaths: [
+      "/soul-cat",
+      "/soul-cat.html",
+      "/cat",
+      "/cat-test",
+      "/soul-cat-test",
+    ],
+    pageMeta: {
+      title: "灵魂猫咪测试｜你是什么神仙小猫咪？",
+      description:
+        "16 题快速测试，解锁你的专属猫生剧本与治愈寄语。",
+    },
+    theme: {
+      className: "theme-soul-cat",
+      badge: "SOUL CAT TEST",
+      title: "灵魂猫咪测试",
+      description: "共16题 · 约1分钟",
+      progressColor: "linear-gradient(90deg, #f2c4d3, #d99db0)",
+      progressTrackColor: "rgba(145, 125, 124, 0.15)",
+      checkedColor: "#d99db0",
+      sourceTag: {
+        deep: {
+          label: "猫生剧本结果",
+          color: "#f8edf2",
+          textColor: "#8a5769",
+        },
+        local: {
+          label: "猫生剧本结果",
+          color: "#f8edf2",
+          textColor: "#8a5769",
+        },
+      },
+      loadingMessages: [
+        "正在读取你的小猫咪性格线索...",
+        "正在匹配你的猫生剧本...",
+        "正在写下专属治愈寄语...",
+      ],
+      submitButtonText: "生成我的猫生剧本",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { SOUL_CAT_QUESTION_BANK } = await import(
+          "../data/soulCatQuestionBank"
+        );
+        return SOUL_CAT_QUESTION_BANK;
+      },
+      questionSelection: { minCount: 16, maxCount: 16 },
+      useSequentialQuestionOrder: true,
+      autoAdvanceOnSelect: true,
+      minimumAnalyzingDurationMs: 420,
+      cover: {
+        enabled: true,
+        kicker: "灵魂猫咪测试",
+        titleEmphasis: "灵魂猫咪测试",
+        titleMain: "你是什么神仙小猫咪？",
+        promoTag: "16题快速测试",
+        intro:
+          "从性格、习惯、内心深处，测出你下辈子会投胎成哪只猫咪。治愈又准，快来看看你的猫生剧本。",
+        points: [
+          "一屏一题，按第一反应作答更准确。",
+          "结果包含：猫咪类型、性格底色、下辈子剧本和治愈寄语。",
+          "完成后可一键重测，看看不同状态下的你。",
+        ],
+        heroArtwork: {
+          url: "/cats/ragdoll.png",
+          alt: "灵魂猫咪封面插画",
+          maxWidth: 236,
+          rotate: {
+            enabled: true,
+            random: true,
+            switchIntervalMs: 2100,
+            artworks: SOUL_CAT_COVER_ARTWORK_POOL,
+          },
+        },
+        startButtonText: "开启我的猫生剧本",
+        tip: "共16题 · 约1分钟",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeSoulCatLocally } = await import(
+          "../services/soulCatAnalyzer"
+        );
+        return analyzeSoulCatLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildSoulCatDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        const { analyzeSoulCatWithAI } = await import(
+          "../services/soulCatAiAnalyzer"
+        );
+        return analyzeSoulCatWithAI(payload, { timeoutMs: 22000 });
+      },
+      buildDeepUnifiedResult: buildSoulCatDeepUnifiedResult,
+      buildLocalUnifiedResult: buildSoulCatLocalUnifiedResult,
+      deepFailToast: "解读服务暂不可用，已切换稳定结果",
     },
   },
   {

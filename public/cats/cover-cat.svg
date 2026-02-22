@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" role="img" aria-label="灵魂猫咪封面插图">
+  <g fill="none" fill-rule="evenodd">
+    <ellipse cx="178" cy="258" rx="112" ry="24" fill="#F3DFE7" opacity=".7"/>
+    <path d="M102 214c0-52 38-94 84-94s84 42 84 94v18H102z" fill="#F8F5F8"/>
+    <path d="M132 128l-22-46 44 18z" fill="#DCCBD8"/>
+    <path d="M240 128l22-46-44 18z" fill="#DCCBD8"/>
+    <path d="M147 96l-13-25 23 10z" fill="#EAC9D4"/>
+    <path d="M225 96l13-25-23 10z" fill="#EAC9D4"/>
+    <circle cx="186" cy="150" r="76" fill="#F8F5F8"/>
+    <ellipse cx="156" cy="152" rx="10" ry="13" fill="#84ABC8"/>
+    <ellipse cx="216" cy="152" rx="10" ry="13" fill="#84ABC8"/>
+    <ellipse cx="156" cy="148" rx="2.8" ry="3.6" fill="#fff" opacity=".9"/>
+    <ellipse cx="216" cy="148" rx="2.8" ry="3.6" fill="#fff" opacity=".9"/>
+    <path d="M186 166c-5.5 0-9.5 3.4-9.5 7.8 0 4.8 4.2 8.2 9.5 8.2s9.5-3.4 9.5-8.2c0-4.4-4-7.8-9.5-7.8z" fill="#E2A9AF"/>
+    <path d="M186 180v12m0 0c-8.5 9-17 9-25.5 2m25.5-2c8.5 9 17 9 25.5 2" stroke="#7F6A69" stroke-linecap="round" stroke-width="3.6"/>
+    <path d="M117 180h34m-34 12h30m139-12h-34m34 12h-30" stroke="#8F7A79" stroke-linecap="round" stroke-width="2.6" opacity=".7"/>
+    <path d="M268 232c23 2 44-9 52-27 6-14 5-29-2-40" stroke="#C6B3BE" stroke-linecap="round" stroke-width="10"/>
+  </g>
+</svg>

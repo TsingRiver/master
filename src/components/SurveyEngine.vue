@@ -4,6 +4,7 @@
     :class="[
       themeConfig.theme.className,
       cityThemeVariantClass,
+      `survey-stage-${stage}`,
       { 'survey-page-perf-ready': isVisualEffectsReady },
     ]"
     :style="runtimeThemeStyle"
@@ -102,6 +103,23 @@
           </span>
           <span class="survey-cover-title-main">{{ coverConfig.titleMain }}</span>
         </h2>
+        <div
+          v-if="activeCoverHeroArtwork?.url"
+          class="survey-cover-hero-wrap"
+          :style="coverHeroWrapStyle"
+        >
+          <transition name="survey-cover-hero-fade" mode="out-in">
+            <img
+              :key="`cover-hero-${coverHeroRenderKey}`"
+              class="survey-cover-hero-image"
+              :src="activeCoverHeroArtwork.url"
+              :alt="activeCoverHeroArtwork.alt || `${themeConfig.theme.title}封面插画`"
+              :style="coverHeroStyle"
+              loading="lazy"
+              decoding="async"
+            />
+          </transition>
+        </div>
         <p class="survey-cover-intro">{{ coverConfig.intro }}</p>
         <div
           v-if="coverConfig.cityShowcase.enabled"
@@ -242,6 +260,19 @@
             :track-color="activeProgressTrackColor"
           />
         </template>
+        <div
+          v-if="isSoulCatTheme && activeSoulCatQuestionAvatar"
+          class="survey-soul-cat-avatar-row"
+          aria-hidden="true"
+        >
+          <img
+            class="survey-soul-cat-avatar-image"
+            :src="activeSoulCatQuestionAvatar.src"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
 
         <transition name="survey-fade" mode="out-in">
           <div :key="currentQuestion.id" class="survey-question-wrap">
@@ -789,6 +820,13 @@ const activeCoverActionKey = ref("");
 const coverShowcaseCity = ref(null);
 const coverShowcaseRenderKey = ref(0);
 let coverShowcaseTimer = null;
+/**
+ * 封面主图轮播状态：
+ * 关键逻辑：独立 renderKey 驱动过渡动画，避免仅替换 src 时动画不触发。
+ */
+const coverHeroArtwork = ref(null);
+const coverHeroRenderKey = ref(0);
+let coverHeroTickerTimer = null;
 
 /**
  * 题库加载会话令牌：
@@ -1343,6 +1381,79 @@ function resolveCoverTitleParts(rawCoverConfig, fallbackTitle) {
 }
 
 /**
+ * 规范化封面轮播插画列表。
+ * @param {Array<object> | unknown} rawArtworkList 原始轮播插画列表。
+ * @returns {Array<{ url: string, alt: string }>} 标准化后的轮播插画列表。
+ */
+function normalizeCoverHeroRotateArtworks(rawArtworkList) {
+  if (!Array.isArray(rawArtworkList)) {
+    return [];
+  }
+
+  const uniqueUrlSet = new Set();
+  return rawArtworkList
+    .map((artworkItem) => ({
+      url: String(artworkItem?.url ?? "").trim(),
+      alt: String(artworkItem?.alt ?? "").trim(),
+    }))
+    .filter((artworkItem) => {
+      if (!artworkItem.url || uniqueUrlSet.has(artworkItem.url)) {
+        return false;
+      }
+
+      uniqueUrlSet.add(artworkItem.url);
+      return true;
+    });
+}
+
+/**
+ * 规范化封面主视觉插画配置。
+ * @param {object | null | undefined} rawHeroArtwork 原始封面插画配置。
+ * @returns {{ url: string, alt: string, maxWidth: number, rotate: { enabled: boolean, random: boolean, switchIntervalMs: number, artworks: Array<{ url: string, alt: string }> } } | null} 标准化封面插画配置。
+ */
+function resolveCoverHeroArtwork(rawHeroArtwork) {
+  if (!rawHeroArtwork || typeof rawHeroArtwork !== "object") {
+    return null;
+  }
+
+  const heroUrl = String(rawHeroArtwork.url ?? "").trim();
+  if (!heroUrl) {
+    return null;
+  }
+
+  const maxWidth = Math.max(120, Math.min(320, Number(rawHeroArtwork.maxWidth) || 220));
+  const baseArtwork = {
+    url: heroUrl,
+    alt: String(rawHeroArtwork.alt ?? "").trim(),
+  };
+  const rawRotateConfig = rawHeroArtwork.rotate ?? {};
+  const rotateArtworkList = normalizeCoverHeroRotateArtworks(
+    rawRotateConfig.artworks,
+  );
+  const mergedRotateArtworkList = normalizeCoverHeroRotateArtworks([
+    baseArtwork,
+    ...rotateArtworkList,
+  ]);
+  // 关键逻辑：只有候选数量 >=2 时才启用轮播，避免无意义动画与定时器开销。
+  const rotateEnabled =
+    Boolean(rawRotateConfig.enabled) && mergedRotateArtworkList.length > 1;
+
+  return {
+    ...baseArtwork,
+    maxWidth,
+    rotate: {
+      enabled: rotateEnabled,
+      random: rawRotateConfig.random !== false,
+      switchIntervalMs: Math.max(
+        1200,
+        Number(rawRotateConfig.switchIntervalMs) || 2100,
+      ),
+      artworks: mergedRotateArtworkList,
+    },
+  };
+}
+
+/**
  * 封面配置：
  * 1. 仅当 survey.cover.enabled=true 时启用。
  * 2. intro 为空时视为无效配置并自动关闭封面。
@@ -1397,6 +1508,7 @@ const coverConfig = computed(() => {
     1200,
     Number(rawCityShowcaseConfig.switchIntervalMs) || 1900,
   );
+  const resolvedCoverHeroArtwork = resolveCoverHeroArtwork(rawCoverConfig.heroArtwork);
   // 关键逻辑：轮播开关由封面配置控制，且必须有可用城市列表才启用。
   const cityShowcaseEnabled =
     Boolean(rawCityShowcaseConfig.enabled) && cityShowcaseCities.length > 0;
@@ -1406,6 +1518,7 @@ const coverConfig = computed(() => {
     promoTag: String(rawCoverConfig.promoTag ?? "").trim(),
     titleEmphasis: resolvedTitleParts.titleEmphasis,
     titleMain: resolvedTitleParts.titleMain,
+    heroArtwork: resolvedCoverHeroArtwork,
     intro: introText,
     points: coverPointsSnapshot.value,
     hookLine: String(rawCoverConfig.hookLine ?? "").trim(),
@@ -1421,6 +1534,162 @@ const coverConfig = computed(() => {
     socialProof: String(rawCoverConfig.socialProof ?? "").trim(),
   };
 });
+
+/**
+ * 封面主图槽位尺寸。
+ * 关键逻辑：封面轮播统一使用固定槽位，避免图片切换时因高度变化导致闪屏。
+ */
+const coverHeroSlotSize = computed(() => {
+  const maxWidth = Number(coverConfig.value?.heroArtwork?.maxWidth ?? 220);
+  return Math.max(120, Math.min(320, maxWidth));
+});
+
+/**
+ * 封面主图容器样式。
+ * 关键逻辑：固定高度占位，确保轮播切图时卡片布局稳定。
+ */
+const coverHeroWrapStyle = computed(() => ({
+  width: `min(100%, ${coverHeroSlotSize.value}px)`,
+  height: `${coverHeroSlotSize.value}px`,
+  // 关键逻辑：固定槽位宽度小于父容器时，通过自动外边距保持水平居中。
+  marginInline: "auto",
+}));
+
+/**
+ * 封面主视觉样式：
+ * 关键逻辑：图片在固定槽位内按 contain 缩放，避免拉伸和跳高。
+ */
+const coverHeroStyle = computed(() => ({
+  width: "100%",
+  height: "100%",
+  objectFit: "contain",
+}));
+
+/**
+ * 当前封面主图：
+ * 关键逻辑：优先使用轮播状态中的主图，未启用轮播时回退配置主图。
+ */
+const activeCoverHeroArtwork = computed(() => {
+  if (coverHeroArtwork.value?.url) {
+    return coverHeroArtwork.value;
+  }
+
+  return coverConfig.value?.heroArtwork ?? null;
+});
+
+/**
+ * 选择下一张封面主图（随机或顺序）。
+ * 复杂度评估：O(N)
+ * N 为轮播候选数量（当前固定 9），常量级开销。
+ * @param {Array<{ url: string, alt: string }>} artworkItems 候选主图列表。
+ * @param {{ url?: string } | null} previousArtwork 上一张主图。
+ * @param {boolean} useRandom 是否使用随机轮换。
+ * @returns {{ url: string, alt: string } | null} 下一张主图。
+ */
+function pickNextCoverHeroArtwork(artworkItems, previousArtwork, useRandom) {
+  if (!Array.isArray(artworkItems) || artworkItems.length === 0) {
+    return null;
+  }
+
+  if (artworkItems.length === 1) {
+    return artworkItems[0];
+  }
+
+  const previousUrl = String(previousArtwork?.url ?? "").trim();
+  if (!useRandom) {
+    const previousIndex = artworkItems.findIndex(
+      (artworkItem) => artworkItem.url === previousUrl,
+    );
+    const nextIndex = previousIndex >= 0
+      ? (previousIndex + 1) % artworkItems.length
+      : 0;
+    return artworkItems[nextIndex] ?? artworkItems[0];
+  }
+
+  let nextIndex = Math.floor(Math.random() * artworkItems.length);
+  if (artworkItems[nextIndex]?.url === previousUrl) {
+    // 关键逻辑：随机命中同一张时强制偏移，避免用户感知“没有轮换”。
+    const shiftOffset = 1 + Math.floor(Math.random() * (artworkItems.length - 1));
+    nextIndex = (nextIndex + shiftOffset) % artworkItems.length;
+  }
+
+  return artworkItems[nextIndex] ?? artworkItems[0];
+}
+
+/**
+ * 刷新封面主图轮播内容。
+ */
+function refreshCoverHeroArtwork() {
+  const heroConfig = coverConfig.value?.heroArtwork;
+  if (!heroConfig?.url) {
+    coverHeroArtwork.value = null;
+    coverHeroRenderKey.value = 0;
+    return;
+  }
+
+  const rotateConfig = heroConfig.rotate;
+  if (!rotateConfig?.enabled || rotateConfig.artworks.length === 0) {
+    coverHeroArtwork.value = {
+      url: heroConfig.url,
+      alt: heroConfig.alt,
+    };
+    coverHeroRenderKey.value = 0;
+    return;
+  }
+
+  const nextArtwork = pickNextCoverHeroArtwork(
+    rotateConfig.artworks,
+    coverHeroArtwork.value,
+    rotateConfig.random,
+  );
+  if (!nextArtwork?.url) {
+    coverHeroArtwork.value = {
+      url: heroConfig.url,
+      alt: heroConfig.alt,
+    };
+    coverHeroRenderKey.value = 0;
+    return;
+  }
+
+  coverHeroArtwork.value = nextArtwork;
+  coverHeroRenderKey.value += 1;
+}
+
+/**
+ * 启动封面主图轮播定时器。
+ * @param {number} switchIntervalMs 切换间隔（毫秒）。
+ */
+function startCoverHeroTicker(switchIntervalMs) {
+  stopCoverHeroTicker();
+  refreshCoverHeroArtwork();
+
+  const rotateConfig = coverConfig.value?.heroArtwork?.rotate;
+  const artworkCount = Array.isArray(rotateConfig?.artworks)
+    ? rotateConfig.artworks.length
+    : 0;
+  if (!rotateConfig?.enabled || artworkCount <= 1) {
+    return;
+  }
+
+  const safeIntervalMs = Math.max(1200, Number(switchIntervalMs) || 2100);
+  coverHeroTickerTimer = window.setInterval(() => {
+    if (stage.value !== "cover") {
+      return;
+    }
+
+    refreshCoverHeroArtwork();
+  }, safeIntervalMs);
+}
+
+/**
+ * 停止封面主图轮播定时器。
+ */
+function stopCoverHeroTicker() {
+  if (coverHeroTickerTimer) {
+    window.clearInterval(coverHeroTickerTimer);
+    coverHeroTickerTimer = null;
+  }
+}
 
 /**
  * 随机选择封面展示城市（尽量避免连续重复）。
@@ -1557,6 +1826,50 @@ const questionCount = computed(() => questionBank.value.length);
 const currentQuestion = computed(
   () => questionBank.value[currentQuestionIndex.value],
 );
+/**
+ * 灵魂猫咪主题答题头像候选集。
+ * 关键逻辑：统一收敛头像资源路径，后续仅需替换该常量即可更新问卷视觉素材。
+ */
+const SOUL_CAT_QUESTION_AVATAR_ASSETS = Object.freeze([
+  // 关键逻辑：优先使用用户提供的 PNG 素材，确保与设计稿一致。
+  { src: "/cats/question-avatar-1.png" },
+  { src: "/cats/question-avatar-2.png" },
+]);
+
+/**
+ * 是否为灵魂猫咪主题。
+ */
+const isSoulCatTheme = computed(() => props.themeConfig.key === "soul-cat");
+
+/**
+ * 当前题目对应的猫咪头像。
+ * 复杂度评估：O(1)
+ * 关键逻辑：答题前半段固定显示头像 1，后半段固定显示头像 2，避免每题切换导致视觉跳动。
+ */
+const activeSoulCatQuestionAvatar = computed(() => {
+  if (!isSoulCatTheme.value || SOUL_CAT_QUESTION_AVATAR_ASSETS.length === 0) {
+    return null;
+  }
+
+  // 关键逻辑：向上取整保证奇数题量时“前半段”不少于“后半段”。
+  const halfQuestionCount = Math.max(
+    1,
+    Math.ceil((Number(questionCount.value) || 0) / 2),
+  );
+  const normalizedQuestionIndex = Math.max(
+    0,
+    Number(currentQuestionIndex.value) || 0,
+  );
+  const avatarIndex = normalizedQuestionIndex < halfQuestionCount ? 0 : 1;
+
+  // 关键逻辑：兜底到头像 1，避免未来资源变更导致数组越界。
+  if (!SOUL_CAT_QUESTION_AVATAR_ASSETS[avatarIndex]) {
+    return SOUL_CAT_QUESTION_AVATAR_ASSETS[0];
+  }
+
+  return SOUL_CAT_QUESTION_AVATAR_ASSETS[avatarIndex];
+});
+
 const isLastQuestion = computed(
   () =>
     questionBank.value.length > 0 &&
@@ -2670,6 +2983,7 @@ async function resetSurveyState() {
   stopAutoAdvanceTimer();
   stopEncouragementTimer();
   stopCoverShowcaseTicker();
+  stopCoverHeroTicker();
   isEncouragementVisible.value = false;
   hasShownMidwayEncouragement.value = false;
   isDestinyOverlayVisible.value = false;
@@ -2693,6 +3007,8 @@ async function resetSurveyState() {
   activeCoverActionKey.value = "";
   coverShowcaseCity.value = null;
   coverShowcaseRenderKey.value = 0;
+  coverHeroArtwork.value = null;
+  coverHeroRenderKey.value = 0;
   questionPoolLoadError.value = "";
   loadingMessageIndex.value = 0;
   currentQuestionIndex.value = 0;
@@ -3763,7 +4079,7 @@ watch(
 );
 
 /**
- * 监听阶段切换，管理加载文案与封面城市轮播。
+ * 监听阶段切换，管理加载文案与封面轮播资源。
  */
 watch(stage, (nextStage, previousStage) => {
   if (nextStage === "result" && previousStage !== "result") {
@@ -3771,12 +4087,23 @@ watch(stage, (nextStage, previousStage) => {
     isSummaryExpanded.value = false;
   }
 
-  if (nextStage === "cover" && coverConfig.value?.cityShowcase.enabled) {
-    startCoverShowcaseTicker(coverConfig.value.cityShowcase.switchIntervalMs);
+  if (nextStage === "cover") {
+    if (coverConfig.value?.cityShowcase.enabled) {
+      startCoverShowcaseTicker(coverConfig.value.cityShowcase.switchIntervalMs);
+    } else {
+      stopCoverShowcaseTicker();
+      coverShowcaseCity.value = null;
+      coverShowcaseRenderKey.value = 0;
+    }
+
+    startCoverHeroTicker(coverConfig.value?.heroArtwork?.rotate?.switchIntervalMs);
   } else {
     stopCoverShowcaseTicker();
     coverShowcaseCity.value = null;
     coverShowcaseRenderKey.value = 0;
+    stopCoverHeroTicker();
+    coverHeroArtwork.value = null;
+    coverHeroRenderKey.value = 0;
   }
 
   if (nextStage === "analyzing") {
@@ -3816,6 +4143,7 @@ onBeforeUnmount(() => {
   stopAutoAdvanceTimer();
   stopEncouragementTimer();
   stopCoverShowcaseTicker();
+  stopCoverHeroTicker();
   isDestinyOverlayVisible.value = false;
   resetPosterState();
 });
