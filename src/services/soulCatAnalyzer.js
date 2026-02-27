@@ -9,7 +9,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "ragdoll",
     minScore: 16,
     maxScore: 23,
-    name: "布偶猫・温柔天使型",
+    name: "布偶猫・温柔天使",
     tagLine: "被爱包围的小温柔",
     personalityBase:
       "你天生柔软敏感，习惯照顾别人情绪，总把懂事留给世界。",
@@ -23,7 +23,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "british-shorthair",
     minScore: 24,
     maxScore: 31,
-    name: "英短猫・安稳佛系型",
+    name: "英短猫・安稳佛系",
     tagLine: "淡定通透的小福气",
     personalityBase:
       "情绪稳定，不爱计较，懂得自愈，是身边人最安心的存在。",
@@ -37,7 +37,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "american-shorthair",
     minScore: 32,
     maxScore: 39,
-    name: "美短猫・元气机灵型",
+    name: "美短猫・元气机灵",
     tagLine: "永远好奇的小太阳",
     personalityBase:
       "活泼开朗，对世界永远充满热情，心里住着长不大的小孩。",
@@ -51,7 +51,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "siamese",
     minScore: 40,
     maxScore: 45,
-    name: "暹罗猫・粘人忠诚型",
+    name: "暹罗猫・粘人忠诚",
     tagLine: "认定了就不放手",
     personalityBase:
       "重情专一，爱得直白，一旦信任，就会毫无保留。",
@@ -65,7 +65,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "persian",
     minScore: 46,
     maxScore: 50,
-    name: "波斯猫・优雅贵气型",
+    name: "波斯猫・优雅贵气",
     tagLine: "自带气质的小贵族",
     personalityBase:
       "精致慢热，有品位有风骨，不爱争抢，自带疏离感。",
@@ -79,7 +79,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "maine-coon",
     minScore: 51,
     maxScore: 55,
-    name: "缅因猫・温柔巨人型",
+    name: "缅因猫・温柔巨人",
     tagLine: "外冷内热的守护者",
     personalityBase:
       "外表强大独立，内心却柔软善良，习惯默默保护身边人。",
@@ -93,7 +93,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "devon-rex",
     minScore: 56,
     maxScore: 59,
-    name: "德文卷毛猫・精灵古怪型",
+    name: "德文卷毛猫・精灵古怪",
     tagLine: "古灵精怪的小调皮",
     personalityBase:
       "脑洞超大，有趣不呆板，是人群里最特别的开心果。",
@@ -107,7 +107,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "orange-cat",
     minScore: 60,
     maxScore: 62,
-    name: "橘猫・治愈吃货型",
+    name: "橘猫・治愈吃货",
     tagLine: "没心没肺小幸福",
     personalityBase:
       "心大乐观，容易满足，烦恼很少，快乐很简单。",
@@ -121,7 +121,7 @@ const SOUL_CAT_PROFILE_RULES = [
     key: "native-cat",
     minScore: 63,
     maxScore: 64,
-    name: "狸花猫・自由灵魂型",
+    name: "狸花猫・自由灵魂",
     tagLine: "不讨好、不依附，只忠于自己",
     personalityBase:
       "热爱自由，有原则有骄傲，不喜欢被束缚，也不爱勉强。",

@@ -664,7 +664,7 @@
             {{ unifiedResult.easterEggText }}
           </p>
 
-          <div v-if="shouldShowPosterSection" class="survey-poster-wrap">
+          <div v-if="shouldShowPosterSection && !isSoulCatTheme" class="survey-poster-wrap">
             <h3>分享长图</h3>
             <p class="survey-poster-desc">
               已自动生成分享长图，可长按预览图保存，或点击按钮下载。
@@ -707,36 +707,190 @@
           </div>
 
           <div
-            v-if="resolvedSummaryLines.length"
-            class="survey-summary-wrap"
+            v-if="shouldShowSoulCatCompatibilityModule && soulCatCompatibilityResult"
+            class="survey-soul-cat-compat-wrap"
           >
-            <h3>{{ unifiedResult.summaryTitle }}</h3>
-            <ul class="survey-summary-list">
-              <li
-                v-for="(line, lineIndex) in visibleSummaryLines"
-                :key="`${line}-${lineIndex}`"
-                class="survey-summary-item"
-              >
-                {{ line }}
-              </li>
-            </ul>
-            <button
-              v-if="shouldShowSummaryToggle"
-              type="button"
-              class="survey-summary-toggle-btn"
-              @click="toggleSummaryExpandState"
+            <h3>铲屎官默契度</h3>
+            <p class="survey-soul-cat-compat-intro">
+              选择你想养的猫咪品种，看看你们是不是天生一对的灵魂搭子。
+            </p>
+            <label class="survey-soul-cat-compat-label" for="soul-cat-compat-select">
+              你的猫主子是
+            </label>
+            <select
+              id="soul-cat-compat-select"
+              v-model="selectedSoulCatBreedKey"
+              class="survey-soul-cat-compat-select"
             >
-              {{ isSummaryExpanded ? "收起答卷回放" : "展开全部答卷回放" }}
-            </button>
+              <option value="">请选择猫咪品种</option>
+              <option
+                v-for="(breedOption, breedIndex) in SOUL_CAT_BREED_OPTIONS"
+                :key="`soul-cat-breed-option-${breedOption.key}-${breedIndex}`"
+                :value="breedOption.key"
+              >
+                {{ breedOption.name }}
+              </option>
+            </select>
+
+            <div class="survey-soul-cat-compat-board">
+              <figure class="survey-soul-cat-compat-side">
+                <div class="survey-soul-cat-compat-avatar">
+                  <img
+                    :src="soulCatCompatibilityResult.profileImageUrl"
+                    :alt="soulCatCompatibilityResult.profileImageAlt"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <figcaption class="survey-soul-cat-compat-side-name">
+                  {{ soulCatCompatibilityResult.profileDisplayName }}
+                </figcaption>
+              </figure>
+
+              <div class="survey-soul-cat-compat-heart">
+                <svg
+                  class="survey-soul-cat-compat-heart-svg"
+                  viewBox="0 0 120 110"
+                  role="img"
+                  :aria-label="`当前默契度 ${soulCatCompatibilityResult.score}%`"
+                >
+                  <defs>
+                    <clipPath id="soul-cat-compat-heart-clip">
+                      <path
+                        d="M60 102C57 99 54 96 50 93C27 74 10 59 10 37C10 20 23 8 40 8C49 8 56 12 60 19C64 12 71 8 80 8C97 8 110 20 110 37C110 59 93 74 70 93C66 96 63 99 60 102Z"
+                      />
+                    </clipPath>
+                    <linearGradient id="soul-cat-compat-heart-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#ffc9dd" />
+                      <stop offset="100%" stop-color="#d99db0" />
+                    </linearGradient>
+                  </defs>
+                  <rect
+                    x="0"
+                    y="0"
+                    width="120"
+                    height="110"
+                    fill="#f8e9f0"
+                    clip-path="url(#soul-cat-compat-heart-clip)"
+                  />
+                  <rect
+                    x="0"
+                    :y="soulCatCompatibilityResult.heartFillY"
+                    width="120"
+                    :height="soulCatCompatibilityResult.heartFillHeight"
+                    fill="url(#soul-cat-compat-heart-gradient)"
+                    clip-path="url(#soul-cat-compat-heart-clip)"
+                  />
+                  <path
+                    d="M60 102C57 99 54 96 50 93C27 74 10 59 10 37C10 20 23 8 40 8C49 8 56 12 60 19C64 12 71 8 80 8C97 8 110 20 110 37C110 59 93 74 70 93C66 96 63 99 60 102Z"
+                    fill="none"
+                    stroke="#d99db0"
+                    stroke-width="4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <p class="survey-soul-cat-compat-score">
+                  {{ soulCatCompatibilityResult.scoreLabel }}
+                </p>
+              </div>
+
+              <figure class="survey-soul-cat-compat-side">
+                <template v-if="soulCatCompatibilityResult.selectedBreedImageUrl">
+                  <div class="survey-soul-cat-compat-avatar">
+                    <img
+                      :src="soulCatCompatibilityResult.selectedBreedImageUrl"
+                      :alt="soulCatCompatibilityResult.selectedBreedImageAlt"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <figcaption class="survey-soul-cat-compat-side-name">
+                    {{ soulCatCompatibilityResult.selectedBreedName }}
+                  </figcaption>
+                </template>
+                <template v-else>
+                  <div class="survey-soul-cat-compat-avatar survey-soul-cat-compat-avatar-placeholder">
+                    待选择
+                  </div>
+                  <figcaption class="survey-soul-cat-compat-side-name">
+                    猫咪品种
+                  </figcaption>
+                </template>
+              </figure>
+            </div>
+
+            <p class="survey-soul-cat-compat-title">
+              {{ soulCatCompatibilityResult.title }}
+            </p>
+            <p class="survey-soul-cat-compat-copy">
+              {{ soulCatCompatibilityResult.summary }}
+            </p>
+            <p class="survey-soul-cat-compat-service-tip">
+              解锁更多猫咪品种？欢迎联系客服提建议，我们会持续扩充猫咪库。
+            </p>
           </div>
 
-          <van-button
-            block
-            class="survey-btn survey-btn-primary survey-restart-btn"
-            @click="restart"
+          <div
+            v-if="shouldShowSoulCatSharePosterSection"
+            class="survey-share-guide-wrap"
           >
-            {{ unifiedResult.restartButtonText }}
-          </van-button>
+            <p class="survey-share-guide-title">
+              晒出你的灵魂猫咪，吸猫运！
+            </p>
+            <p class="survey-share-guide-desc">
+              截图结果发小红书，或长按海报保存到相册，带上 #灵魂猫咪测试
+              <br />
+              在评论区召唤同款灵魂猫咪，抱团吸猫运!<br/>(据说和同款灵魂猫贴贴，今年会被猫咪的好运狠狠包围哦~)
+            </p>
+          </div>
+
+          <div
+            v-if="shouldShowSoulCatSharePosterSection"
+            class="survey-poster-wrap survey-poster-wrap-soul-cat"
+          >
+            <h3>分享海报</h3>
+            <p class="survey-poster-desc">
+              海报已自动生成，快去分享吧！
+            </p>
+
+            <div
+              v-if="posterPreviewUrl"
+              class="survey-poster-preview"
+              :style="posterContainerStyle"
+            >
+              <img :src="posterPreviewUrl" :alt="posterImageAltText" loading="lazy" />
+            </div>
+            <div
+              v-else
+              class="survey-poster-loading"
+              :style="posterContainerStyle"
+            >
+              <van-loading :color="activeCheckedColor" size="24px" />
+              <span>正在生成小红书分享海报...</span>
+            </div>
+
+            <div class="survey-poster-actions survey-poster-actions-single">
+              <van-button
+                block
+                class="survey-btn survey-btn-primary"
+                :disabled="!posterPreviewUrl"
+                @click="savePosterImage"
+              >
+                保存海报
+              </van-button>
+            </div>
+          </div>
+
+          <div class="survey-restart-wrap">
+            <van-button
+              block
+              class="survey-btn survey-btn-primary survey-restart-btn"
+              @click="restart"
+            >
+              {{ unifiedResult.restartButtonText }}
+            </van-button>
+          </div>
         </div>
       </section>
     </main>
@@ -761,6 +915,10 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { showToast } from "vant";
+import {
+  buildSoulCatBreedOptionList,
+  resolveSoulCatCompatibilityByKeys,
+} from "../constants/soulCatCompatibility";
 import {
   selectRandomQuestionsWithoutRepeat,
   selectRandomQuestionsWithDimensionCoverage,
@@ -806,7 +964,11 @@ const loadedQuestionPool = ref([]);
 const questionPoolLoadError = ref("");
 const coverPointsSnapshot = ref([]);
 const themeDescriptionSnapshot = ref("");
-const isSummaryExpanded = ref(false);
+/**
+ * 灵魂猫咪“铲屎官默契度”选中品种 key。
+ * 关键逻辑：默认空值表示“未选择品种”，用于触发通用提示文案。
+ */
+const selectedSoulCatBreedKey = ref("");
 /**
  * 封面动作状态：
  * 关键逻辑：多按钮封面场景下需要区分“当前触发按钮”，避免重复点击触发并发加载。
@@ -1870,6 +2032,237 @@ const activeSoulCatQuestionAvatar = computed(() => {
   return SOUL_CAT_QUESTION_AVATAR_ASSETS[avatarIndex];
 });
 
+/**
+ * 灵魂猫咪测试可选品种列表（按题目素材顺序）。
+ * 关键逻辑：下拉框只展示本测试已覆盖的猫咪品种，避免配置与结果脱节。
+ */
+const SOUL_CAT_BREED_OPTIONS = Object.freeze(buildSoulCatBreedOptionList());
+
+/**
+ * 从猫咪插画地址提取猫格 key。
+ * 复杂度评估：O(L)
+ * L 为 URL 字符串长度，当前 URL 极短，实际可视为常量开销。
+ * @param {unknown} artworkUrl 插画地址。
+ * @returns {string} 猫格 key，解析失败返回空字符串。
+ */
+function resolveSoulCatProfileKeyFromArtworkUrl(artworkUrl) {
+  const normalizedUrl = String(artworkUrl ?? "").trim();
+  if (!normalizedUrl) {
+    return "";
+  }
+
+  const parsedResult = normalizedUrl.match(/\/cats\/([^/.?]+)\.[a-zA-Z]+(?:\?.*)?$/);
+  return parsedResult?.[1] ? String(parsedResult[1]).trim() : "";
+}
+
+/**
+ * 是否展示“铲屎官默契度”模块。
+ */
+const shouldShowSoulCatCompatibilityModule = computed(
+  () =>
+    isSoulCatTheme.value &&
+    stage.value === "result" &&
+    Boolean(unifiedResult.value),
+);
+
+/**
+ * 当前结果对应的猫格 key。
+ * 关键逻辑：优先使用统一结果中的 main.key；兼容旧结构时回退到插画 URL 反解。
+ */
+const activeSoulCatProfileKey = computed(() => {
+  if (!shouldShowSoulCatCompatibilityModule.value) {
+    return "";
+  }
+
+  const profileKeyFromResult = String(unifiedResult.value?.main?.key ?? "").trim();
+  if (profileKeyFromResult) {
+    return profileKeyFromResult;
+  }
+
+  return resolveSoulCatProfileKeyFromArtworkUrl(unifiedResult.value?.heroArtwork?.url);
+});
+
+/**
+ * 当前结果猫格对应的品种对象。
+ */
+const activeSoulCatProfileOption = computed(() =>
+  SOUL_CAT_BREED_OPTIONS.find(
+    (breedOption) => breedOption.key === activeSoulCatProfileKey.value,
+  ) ?? null,
+);
+
+/**
+ * 下拉框选中的品种对象。
+ */
+const selectedSoulCatBreedOption = computed(() => {
+  const normalizedKey = String(selectedSoulCatBreedKey.value ?? "").trim();
+  if (!normalizedKey) {
+    return null;
+  }
+
+  return SOUL_CAT_BREED_OPTIONS.find(
+    (breedOption) => breedOption.key === normalizedKey,
+  ) ?? null;
+});
+
+/**
+ * 组装“铲屎官默契度”解读文案。
+ * @param {object} params 文案参数。
+ * @param {boolean} params.hasSelectedBreed 是否已选择品种。
+ * @param {string} params.profileDisplayName 当前猫格显示名。
+ * @param {string} params.selectedBreedName 已选品种名。
+ * @param {number} params.score 默契得分（0~100）。
+ * @param {string} params.levelKey 默契等级 key。
+ * @param {string} params.levelLabel 默契等级标签。
+ * @param {Array<string>} params.overlapTags 标签交集。
+ * @param {Array<string>} params.profileTags 猫格标签。
+ * @param {Array<string>} params.breedTags 品种标签。
+ * @returns {{ title: string, summary: string, scoreLabel: string }} 解读文案对象。
+ */
+function buildSoulCatCompatibilityCopy({
+  hasSelectedBreed,
+  profileDisplayName,
+  selectedBreedName,
+  score,
+  levelKey,
+  levelLabel,
+  overlapTags,
+  profileTags,
+  breedTags,
+}) {
+  if (!hasSelectedBreed) {
+    return {
+      title: "通用款",
+      summary: `你的灵魂猫咪是「${profileDisplayName}」，快养一只同款搭子，解锁满分默契！`,
+      scoreLabel: "契合度待解锁",
+    };
+  }
+
+  const safeScore = Number.isFinite(Number(score)) ? Math.max(0, Math.round(score)) : 0;
+  const overlapPreview = overlapTags.slice(0, 2).join("、");
+  const profilePreviewTag = String(profileTags[0] ?? "松弛").trim();
+  const breedPreviewTag = String(breedTags[0] ?? "可爱").trim();
+  const normalizedLevelLabel = String(levelLabel ?? "").trim() || "待匹配";
+
+  if (levelKey === "high") {
+    return {
+      title: "同款款",
+      summary:
+        `你是「${profileDisplayName}」，家养「${selectedBreedName}」→` +
+        `“亲生实锤！${overlapPreview ? `你们在「${overlapPreview}」上` : "你们的相处节奏"}完美契合，是彼此的专属小棉袄～”`,
+      scoreLabel: `契合度 ${safeScore}% · ${normalizedLevelLabel}`,
+    };
+  }
+
+  if (levelKey === "medium") {
+    return {
+      title: "反差款（强推）",
+      summary:
+        `你是「${profileDisplayName}」，家养「${selectedBreedName}」→` +
+        `“跨品种灵魂搭档！你负责${profilePreviewTag}，它负责${breedPreviewTag}，互补型幸福指数拉满～”`,
+      scoreLabel: `契合度 ${safeScore}% · ${normalizedLevelLabel}`,
+    };
+  }
+
+  return {
+    title: "磨合款",
+    summary:
+      `你是「${profileDisplayName}」，家养「${selectedBreedName}」→` +
+      `“反差有点大但也有惊喜！你偏${profilePreviewTag}，它偏${breedPreviewTag}，多一点耐心就能磨出独家默契～”`,
+    scoreLabel: `契合度 ${safeScore}% · ${normalizedLevelLabel}`,
+  };
+}
+
+/**
+ * “铲屎官默契度”结果对象。
+ * 复杂度评估：O(B + T)
+ * B 为品种查询遍历（最多 9），T 为标签集合运算（固定 3+3），整体常量级。
+ */
+const soulCatCompatibilityResult = computed(() => {
+  if (!shouldShowSoulCatCompatibilityModule.value || !activeSoulCatProfileOption.value) {
+    return null;
+  }
+
+  const profileOption = activeSoulCatProfileOption.value;
+  /**
+   * 关键逻辑：默契度模块仅使用“纯品种名”，不拼接结果标题后缀（如“温柔天使型”）。
+   */
+  const profileDisplayName = String(profileOption.name ?? "").trim() || "灵魂猫咪";
+  const profileImageUrl =
+    String(unifiedResult.value?.heroArtwork?.url ?? "").trim() || profileOption.artworkUrl;
+  const profileImageAlt =
+    String(unifiedResult.value?.heroArtwork?.alt ?? "").trim() ||
+    `${profileDisplayName}插画`;
+  const selectedOption = selectedSoulCatBreedOption.value;
+  if (!selectedOption) {
+    const fallbackCopy = buildSoulCatCompatibilityCopy({
+      hasSelectedBreed: false,
+      profileDisplayName,
+      selectedBreedName: "",
+      score: 0,
+      levelKey: "",
+      levelLabel: "",
+      overlapTags: [],
+      profileTags: profileOption.personalityTags,
+      breedTags: [],
+    });
+
+    return {
+      title: fallbackCopy.title,
+      summary: fallbackCopy.summary,
+      scoreLabel: fallbackCopy.scoreLabel,
+      score: 0,
+      heartFillHeight: 0,
+      heartFillY: 110,
+      profileDisplayName,
+      profileImageUrl,
+      profileImageAlt,
+      selectedBreedName: "",
+      selectedBreedImageUrl: "",
+      selectedBreedImageAlt: "",
+    };
+  }
+
+  const rawCompatibility = resolveSoulCatCompatibilityByKeys(
+    profileOption.key,
+    selectedOption.key,
+  );
+  if (!rawCompatibility) {
+    return null;
+  }
+
+  const safeScore = Number.isFinite(Number(rawCompatibility.score))
+    ? Math.max(0, Math.min(100, Math.round(rawCompatibility.score)))
+    : 0;
+  const heartFillHeight = Math.round((110 * safeScore) / 100);
+  const compatibilityCopy = buildSoulCatCompatibilityCopy({
+    hasSelectedBreed: true,
+    profileDisplayName,
+    selectedBreedName: selectedOption.name,
+    score: safeScore,
+    levelKey: rawCompatibility.levelKey,
+    levelLabel: rawCompatibility.levelLabel,
+    overlapTags: rawCompatibility.overlapTags,
+    profileTags: rawCompatibility.profile.personalityTags,
+    breedTags: rawCompatibility.breed.breedTags,
+  });
+
+  return {
+    title: compatibilityCopy.title,
+    summary: compatibilityCopy.summary,
+    scoreLabel: compatibilityCopy.scoreLabel,
+    score: safeScore,
+    heartFillHeight,
+    heartFillY: 110 - heartFillHeight,
+    profileDisplayName,
+    profileImageUrl,
+    profileImageAlt,
+    selectedBreedName: selectedOption.name,
+    selectedBreedImageUrl: selectedOption.artworkUrl,
+    selectedBreedImageAlt: selectedOption.artworkAlt || `${selectedOption.name}插画`,
+  };
+});
+
 const isLastQuestion = computed(
   () =>
     questionBank.value.length > 0 &&
@@ -1908,41 +2301,6 @@ const sourceTagStyle = computed(() => {
  */
 const resolvedMainScoreSuffix = computed(
   () => unifiedResult.value?.scoreSuffix ?? "%",
-);
-
-/**
- * 答卷回放默认预览条数。
- * 关键逻辑：移动端优先展示前 3 条，降低长列表首屏压迫感。
- */
-const SUMMARY_PREVIEW_LIMIT = 3;
-
-/**
- * 答卷回放原始行列表。
- * 关键逻辑：统一做数组兜底，避免结果结构异常导致渲染报错。
- */
-const resolvedSummaryLines = computed(() => {
-  const summaryLines = unifiedResult.value?.summaryLines;
-  return Array.isArray(summaryLines) ? summaryLines : [];
-});
-
-/**
- * 当前可见的答卷回放内容。
- * 复杂度评估：O(L)
- * L 为答卷回放行数；默认分支仅切片 3 条，空间复杂度 O(1)。
- */
-const visibleSummaryLines = computed(() => {
-  if (isSummaryExpanded.value) {
-    return resolvedSummaryLines.value;
-  }
-
-  return resolvedSummaryLines.value.slice(0, SUMMARY_PREVIEW_LIMIT);
-});
-
-/**
- * 是否显示答卷回放展开按钮。
- */
-const shouldShowSummaryToggle = computed(
-  () => resolvedSummaryLines.value.length > SUMMARY_PREVIEW_LIMIT,
 );
 
 /**
@@ -2127,9 +2485,13 @@ const isLoveBrainTheme = computed(
 /**
  * 海报图片替代文本。
  */
-const posterImageAltText = computed(() =>
-  isLoveBrainTheme.value ? "恋爱脑指数长图预览" : "浪漫指数海报预览图",
-);
+const posterImageAltText = computed(() => {
+  if (isSoulCatTheme.value) {
+    return "灵魂猫咪小红书分享海报预览图";
+  }
+
+  return isLoveBrainTheme.value ? "恋爱脑指数长图预览" : "浪漫指数海报预览图";
+});
 
 /**
  * 海报容器宽高比：
@@ -2138,7 +2500,16 @@ const posterImageAltText = computed(() =>
  */
 const posterAspectRatio = computed(() => {
   const renderMode = String(unifiedResult.value?.posterModel?.renderMode ?? "");
-  return renderMode === "html-love-brain" ? "1 / 2" : "9 / 16";
+  if (renderMode === "html-love-brain") {
+    return "1 / 2";
+  }
+
+  if (renderMode === "canvas-soul-cat") {
+    // 关键逻辑：灵魂猫咪分享海报固定 3:4，贴合小红书常用竖版分享比例。
+    return "3 / 4";
+  }
+
+  return "9 / 16";
 });
 
 /**
@@ -2278,6 +2649,14 @@ const radarCenterPoint = computed(() => RADAR_CENTER_POINT);
  */
 const shouldShowPosterSection = computed(
   () => stage.value === "result" && Boolean(unifiedResult.value?.posterModel),
+);
+
+/**
+ * 灵魂猫咪分享区显示开关。
+ * 关键逻辑：仅在结果页 + 灵魂猫咪主题 + 海报模型就绪时展示，避免空模块占位。
+ */
+const shouldShowSoulCatSharePosterSection = computed(
+  () => isSoulCatTheme.value && shouldShowPosterSection.value,
 );
 
 /**
@@ -3000,9 +3379,9 @@ async function resetSurveyState() {
   resetPosterState();
   loadedQuestionPool.value = [];
   selectedQuestionBank.value = [];
+  selectedSoulCatBreedKey.value = "";
   coverPointsSnapshot.value = [];
   themeDescriptionSnapshot.value = "";
-  isSummaryExpanded.value = false;
   isCoverActionSubmitting.value = false;
   activeCoverActionKey.value = "";
   coverShowcaseCity.value = null;
@@ -3128,13 +3507,6 @@ function resetPosterState() {
   posterGenerationToken += 1;
   posterPreviewUrl.value = "";
   isGeneratingPoster.value = false;
-}
-
-/**
- * 切换答卷回放展开状态。
- */
-function toggleSummaryExpandState() {
-  isSummaryExpanded.value = !isSummaryExpanded.value;
 }
 
 /**
@@ -3989,9 +4361,272 @@ async function generateRomancePosterDataUrl(posterModel) {
 }
 
 /**
+ * 在指定矩形中按 contain 规则绘制图片。
+ * @param {CanvasRenderingContext2D} context Canvas 绘图上下文。
+ * @param {HTMLImageElement} imageElement 图片元素。
+ * @param {number} boxX 容器左上角 X。
+ * @param {number} boxY 容器左上角 Y。
+ * @param {number} boxWidth 容器宽度。
+ * @param {number} boxHeight 容器高度。
+ */
+function drawImageContainInRect(
+  context,
+  imageElement,
+  boxX,
+  boxY,
+  boxWidth,
+  boxHeight,
+) {
+  const safeBoxWidth = Math.max(1, Number(boxWidth) || 1);
+  const safeBoxHeight = Math.max(1, Number(boxHeight) || 1);
+  const imageWidth = Math.max(1, Number(imageElement?.width) || 1);
+  const imageHeight = Math.max(1, Number(imageElement?.height) || 1);
+
+  const boxAspectRatio = safeBoxWidth / safeBoxHeight;
+  const imageAspectRatio = imageWidth / imageHeight;
+
+  let drawWidth = safeBoxWidth;
+  let drawHeight = safeBoxHeight;
+  let drawX = boxX;
+  let drawY = boxY;
+
+  if (imageAspectRatio > boxAspectRatio) {
+    drawHeight = safeBoxWidth / imageAspectRatio;
+    drawY = boxY + (safeBoxHeight - drawHeight) / 2;
+  } else {
+    drawWidth = safeBoxHeight * imageAspectRatio;
+    drawX = boxX + (safeBoxWidth - drawWidth) / 2;
+  }
+
+  context.drawImage(imageElement, drawX, drawY, drawWidth, drawHeight);
+}
+
+/**
+ * 使用 Canvas 方式生成灵魂猫咪分享海报（3:4）。
+ * 复杂度评估：O(T + C)
+ * T 为一句话文案字符数量，C 为标签数量（固定 <= 4），整体为常量级开销。
+ * @param {object} posterModel 海报模型。
+ * @returns {Promise<string>} PNG DataURL。
+ */
+async function generateSoulCatPosterDataUrl(posterModel) {
+  const posterWidth = 1080;
+  const posterHeight = 1440;
+  const canvas = document.createElement("canvas");
+  canvas.width = posterWidth;
+  canvas.height = posterHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("无法初始化画布");
+  }
+
+  const backgroundGradient = context.createLinearGradient(0, 0, 0, posterHeight);
+  backgroundGradient.addColorStop(0, "#FFEAF2");
+  backgroundGradient.addColorStop(0.56, "#FCEAF6");
+  backgroundGradient.addColorStop(1, "#F7E9FF");
+  context.fillStyle = backgroundGradient;
+  context.fillRect(0, 0, posterWidth, posterHeight);
+
+  // 关键逻辑：叠加柔光层提升视觉层次，避免纯色背景在分享平台被压缩后显得发灰。
+  const topGlow = context.createRadialGradient(
+    posterWidth * 0.18,
+    posterHeight * 0.12,
+    24,
+    posterWidth * 0.18,
+    posterHeight * 0.12,
+    300,
+  );
+  topGlow.addColorStop(0, "rgba(255, 255, 255, 0.88)");
+  topGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
+  context.fillStyle = topGlow;
+  context.fillRect(0, 0, posterWidth, posterHeight);
+
+  const bottomGlow = context.createRadialGradient(
+    posterWidth * 0.78,
+    posterHeight * 0.88,
+    40,
+    posterWidth * 0.78,
+    posterHeight * 0.88,
+    360,
+  );
+  bottomGlow.addColorStop(0, "rgba(255, 206, 226, 0.46)");
+  bottomGlow.addColorStop(1, "rgba(255, 206, 226, 0)");
+  context.fillStyle = bottomGlow;
+  context.fillRect(0, 0, posterWidth, posterHeight);
+
+  context.fillStyle = "rgba(255, 255, 255, 0.93)";
+  fillRoundedRect(context, 72, 72, posterWidth - 144, posterHeight - 144, 42);
+
+  context.textAlign = "left";
+  context.fillStyle = "#BA7D94";
+  context.font = "700 34px 'Noto Sans SC'";
+  context.fillText("SOUL CAT TEST", 126, 156);
+
+  const resolvedMainName = String(posterModel?.mainName ?? "灵魂猫咪").trim() || "灵魂猫咪";
+  const resolvedMainTagline =
+    String(posterModel?.mainTagline ?? "").trim() || "你的专属猫咪结果已出炉";
+  const resolvedScoreLabel = String(posterModel?.scoreLabel ?? "猫咪倾向分").trim();
+  const resolvedScoreValue = Number.isFinite(Number(posterModel?.scoreValue))
+    ? Math.round(Number(posterModel.scoreValue))
+    : 0;
+  const resolvedScoreSuffix = String(posterModel?.scoreSuffix ?? "").trim();
+  const resolvedTagChips = Array.isArray(posterModel?.tagChips)
+    ? posterModel.tagChips
+        .map((tagItem) => String(tagItem ?? "").trim())
+        .filter(Boolean)
+        .slice(0, 4)
+    : [];
+
+  context.fillStyle = "#6F4E5D";
+  context.font = "700 58px 'Noto Serif SC'";
+  context.fillText(resolvedMainName, 126, 236);
+
+  context.fillStyle = "#8D6B79";
+  context.font = "500 30px 'Noto Sans SC'";
+  context.fillText(resolvedMainTagline, 126, 284);
+
+  context.fillStyle = "#9A6D82";
+  context.font = "600 28px 'Noto Sans SC'";
+  context.fillText(
+    `${resolvedScoreLabel} ${resolvedScoreValue}${resolvedScoreSuffix}`,
+    126,
+    328,
+  );
+
+  let chipsCurrentX = 126;
+  let chipsCurrentY = 352;
+  const chipsMaxWidth = posterWidth - 252;
+  const chipsHeight = 44;
+  context.font = "600 22px 'Noto Sans SC'";
+  resolvedTagChips.forEach((tagItem) => {
+    const textWidth = context.measureText(tagItem).width;
+    const chipWidth = Math.ceil(textWidth + 34);
+
+    if (chipsCurrentX + chipWidth > 126 + chipsMaxWidth) {
+      chipsCurrentX = 126;
+      chipsCurrentY += chipsHeight + 10;
+    }
+
+    context.fillStyle = "#FBEAF1";
+    fillRoundedRect(
+      context,
+      chipsCurrentX,
+      chipsCurrentY,
+      chipWidth,
+      chipsHeight,
+      22,
+    );
+    context.fillStyle = "#AA6D84";
+    context.fillText(tagItem, chipsCurrentX + 17, chipsCurrentY + 30);
+    chipsCurrentX += chipWidth + 10;
+  });
+
+  const imageCardTopY = Math.max(430, chipsCurrentY + chipsHeight + 18);
+  const imageCardX = 126;
+  const imageCardY = imageCardTopY;
+  const imageCardWidth = posterWidth - 252;
+  const imageCardHeight = 620;
+
+  context.fillStyle = "#FFF9FC";
+  fillRoundedRect(
+    context,
+    imageCardX,
+    imageCardY,
+    imageCardWidth,
+    imageCardHeight,
+    32,
+  );
+
+  const artworkUrl = String(posterModel?.heroArtworkUrl ?? "").trim();
+  let hasRenderedArtwork = false;
+  if (artworkUrl) {
+    try {
+      const artworkImage = await loadImageByUrl(artworkUrl);
+      const safeRadius = 32;
+
+      context.save();
+      context.beginPath();
+      context.moveTo(imageCardX + safeRadius, imageCardY);
+      context.lineTo(imageCardX + imageCardWidth - safeRadius, imageCardY);
+      context.quadraticCurveTo(
+        imageCardX + imageCardWidth,
+        imageCardY,
+        imageCardX + imageCardWidth,
+        imageCardY + safeRadius,
+      );
+      context.lineTo(
+        imageCardX + imageCardWidth,
+        imageCardY + imageCardHeight - safeRadius,
+      );
+      context.quadraticCurveTo(
+        imageCardX + imageCardWidth,
+        imageCardY + imageCardHeight,
+        imageCardX + imageCardWidth - safeRadius,
+        imageCardY + imageCardHeight,
+      );
+      context.lineTo(imageCardX + safeRadius, imageCardY + imageCardHeight);
+      context.quadraticCurveTo(
+        imageCardX,
+        imageCardY + imageCardHeight,
+        imageCardX,
+        imageCardY + imageCardHeight - safeRadius,
+      );
+      context.lineTo(imageCardX, imageCardY + safeRadius);
+      context.quadraticCurveTo(
+        imageCardX,
+        imageCardY,
+        imageCardX + safeRadius,
+        imageCardY,
+      );
+      context.closePath();
+      context.clip();
+
+      drawImageContainInRect(
+        context,
+        artworkImage,
+        imageCardX,
+        imageCardY,
+        imageCardWidth,
+        imageCardHeight,
+      );
+      context.restore();
+      hasRenderedArtwork = true;
+    } catch {
+      hasRenderedArtwork = false;
+    }
+  }
+
+  if (!hasRenderedArtwork) {
+    context.fillStyle = "#D0A2B3";
+    context.font = "600 30px 'Noto Sans SC'";
+    context.textAlign = "center";
+    context.fillText("猫咪插画加载中…", posterWidth / 2, imageCardY + imageCardHeight / 2);
+    context.textAlign = "left";
+  }
+
+  const resolvedQuote =
+    String(posterModel?.quote ?? "").trim() || "愿你被温柔接住，永远有猫咪般的松弛与偏爱。";
+  const quoteCardY = imageCardY + imageCardHeight + 20;
+  context.fillStyle = "#FFF5FA";
+  fillRoundedRect(context, 126, quoteCardY, posterWidth - 252, 168, 24);
+  context.fillStyle = "#7E5A68";
+  context.font = "700 30px 'Noto Serif SC'";
+  context.fillText("一句话", 154, quoteCardY + 54);
+  context.font = "500 28px 'Noto Sans SC'";
+  drawWrappedText(context, resolvedQuote, 154, quoteCardY + 102, posterWidth - 308, 40, 2);
+
+  context.fillStyle = "#9F7486";
+  context.font = "700 28px 'Noto Sans SC'";
+  context.fillText("晒出你的灵魂猫咪，吸猫运！", 126, posterHeight - 82);
+
+  return canvas.toDataURL("image/png");
+}
+
+/**
  * 统一生成海报：
  * 1. romance 使用 Canvas 雷达图渲染。
  * 2. love-brain 使用 HTML-to-Image 渲染长图。
+ * 3. soul-cat 使用 Canvas 渲染 3:4 分享海报。
  * @returns {Promise<void>} Promise。
  */
 async function generatePosterImage() {
@@ -4014,6 +4649,8 @@ async function generatePosterImage() {
         // 关键逻辑：HTML-to-Image 失败时自动退回 Canvas，保证导图能力稳定可用。
         generatedDataUrl = await generateLoveBrainPosterFallbackDataUrl(posterModel);
       }
+    } else if (renderMode === "canvas-soul-cat") {
+      generatedDataUrl = await generateSoulCatPosterDataUrl(posterModel);
     } else {
       generatedDataUrl = await generateRomancePosterDataUrl(posterModel);
     }
@@ -4058,10 +4695,12 @@ function savePosterImage() {
   const normalizedFilePrefix =
     rawFilePrefix.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/^-+|-+$/g, "") ||
     "survey-result";
+  const fileName = `${normalizedFilePrefix}-${Date.now()}.png`;
 
+  // 关键逻辑：统一回退为原生下载，避免 Safari 系统分享与预览页分支引发空白页问题。
   const downloadLink = document.createElement("a");
   downloadLink.href = posterPreviewUrl.value;
-  downloadLink.download = `${normalizedFilePrefix}-${Date.now()}.png`;
+  downloadLink.download = fileName;
   downloadLink.click();
 }
 
@@ -4081,10 +4720,10 @@ watch(
 /**
  * 监听阶段切换，管理加载文案与封面轮播资源。
  */
-watch(stage, (nextStage, previousStage) => {
-  if (nextStage === "result" && previousStage !== "result") {
-    // 关键逻辑：每次进入结果页都恢复为预览态，默认仅展示 3 条答卷回放。
-    isSummaryExpanded.value = false;
+watch(stage, (nextStage) => {
+  if (nextStage !== "result") {
+    // 关键逻辑：离开结果页即清空已选品种，避免跨轮结果误复用上一次选择。
+    selectedSoulCatBreedKey.value = "";
   }
 
   if (nextStage === "cover") {

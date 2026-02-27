@@ -1842,6 +1842,25 @@ body {
   background: linear-gradient(180deg, #fff, #fdf7fa);
 }
 
+.theme-soul-cat .survey-soul-cat-compat-wrap {
+  border-color: #ebd6df;
+  background: linear-gradient(180deg, #fff, #fdf6fa);
+}
+
+.theme-soul-cat .survey-soul-cat-compat-select {
+  border-color: #e9d2dc;
+  background: linear-gradient(180deg, #fff, #fff8fb);
+}
+
+.theme-soul-cat .survey-soul-cat-compat-avatar {
+  border-color: #e8d0db;
+  background: linear-gradient(180deg, #fff, #fff9fc);
+}
+
+.theme-soul-cat .survey-soul-cat-compat-title {
+  color: #6f4e5d;
+}
+
 /* 关键逻辑：答题卡作为绝对定位参照系，保证头像浮层不参与文档流。 */
 .theme-soul-cat.survey-stage-survey .survey-card {
   position: relative;
@@ -2817,6 +2836,148 @@ body {
 .survey-hero-artwork-caption {
   margin: 8px 2px 0;
   font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.survey-soul-cat-compat-wrap {
+  margin-top: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--detail-border);
+  padding: 12px;
+  background: var(--detail-bg);
+}
+
+.survey-soul-cat-compat-wrap h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.survey-soul-cat-compat-intro {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.survey-soul-cat-compat-label {
+  margin-top: 10px;
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.survey-soul-cat-compat-select {
+  margin-top: 6px;
+  width: 100%;
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--detail-border);
+  padding: 0 10px;
+  font-size: 13px;
+  background: #fff;
+  color: var(--text-main);
+}
+
+.survey-soul-cat-compat-board {
+  margin-top: 12px;
+  display: grid;
+  /* 关键逻辑：中间爱心列使用受控宽度，避免被评分文案撑开导致两侧头像溢出边框。 */
+  grid-template-columns: minmax(0, 1fr) minmax(72px, 24vw) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(6px, 1.8vw, 10px);
+}
+
+.survey-soul-cat-compat-side {
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.survey-soul-cat-compat-avatar {
+  width: clamp(86px, 28vw, 116px);
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  border: 1px solid var(--detail-border);
+  background: #fff;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.survey-soul-cat-compat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.survey-soul-cat-compat-avatar-placeholder {
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
+.survey-soul-cat-compat-side-name {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-main);
+  text-align: center;
+}
+
+.survey-soul-cat-compat-heart {
+  /* 关键逻辑：允许中间列在小屏收缩，避免触发 grid 额外溢出。 */
+  min-width: 0;
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.survey-soul-cat-compat-heart-svg {
+  width: clamp(70px, 20vw, 86px);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 8px 16px rgba(211, 138, 165, 0.24));
+}
+
+.survey-soul-cat-compat-score {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--primary-dark) 90%, #6c4556 10%);
+  text-align: center;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.survey-soul-cat-compat-title {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.survey-soul-cat-compat-copy {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--text-main);
+}
+
+.survey-soul-cat-compat-service-tip {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed color-mix(in srgb, var(--detail-border) 84%, #ffffff 16%);
+  background: #fff;
+  font-size: 11px;
   line-height: 1.55;
   color: var(--text-muted);
 }
@@ -4350,8 +4511,58 @@ body {
   gap: 10px;
 }
 
-.survey-restart-btn {
+.survey-poster-actions-single {
+  grid-template-columns: 1fr;
+}
+
+.survey-share-guide-wrap {
   margin-top: 16px;
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--detail-border);
+  background: var(--detail-bg);
+}
+
+.survey-share-guide-title {
+  margin: 0;
+  font-size: clamp(23px, 5.8vw, 29px);
+  line-height: 1.26;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.survey-share-guide-desc {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.survey-poster-wrap-soul-cat {
+  margin-top: 12px;
+}
+
+.theme-soul-cat .survey-share-guide-wrap {
+  border-color: #e8d0da;
+  background: linear-gradient(130deg, #fff7fb, #fdf0f6);
+}
+
+.theme-soul-cat .survey-share-guide-title {
+  color: #7f5667;
+}
+
+.theme-soul-cat .survey-poster-wrap-soul-cat {
+  border-color: #ead4dd;
+  background: linear-gradient(180deg, #fff, #fdf6fa);
+}
+
+.survey-restart-wrap {
+  /* 关键逻辑：将“再测一次”间距放在结构容器上，避免按钮组件样式覆盖导致间距失效。 */
+  margin-top: 24px;
+}
+
+.survey-restart-btn {
+  margin-top: 0;
 }
 
 .survey-commercial-fixed {
@@ -4607,6 +4818,19 @@ body {
     min-height: 380px;
   }
 
+  .survey-soul-cat-compat-board {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .survey-soul-cat-compat-heart {
+    order: -1;
+  }
+
+  .survey-poster-wrap-soul-cat .survey-poster-actions {
+    grid-template-columns: 1fr;
+  }
+
   .theme-five-elements-city::after {
     font-size: 17px;
     letter-spacing: 0.18em;
@@ -4653,6 +4877,31 @@ body {
 
   .survey-cover-city-name {
     font-size: 13px;
+  }
+}
+
+@media (min-width: 361px) and (max-width: 420px) {
+  /* 关键逻辑：390px 等窄屏下缩小头像/爱心占位，确保整个默契度卡片始终不越界。 */
+  .survey-soul-cat-compat-board {
+    grid-template-columns: minmax(0, 1fr) minmax(64px, 22vw) minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .survey-soul-cat-compat-avatar {
+    width: clamp(72px, 24vw, 100px);
+  }
+
+  .survey-soul-cat-compat-heart-svg {
+    width: clamp(64px, 18vw, 76px);
+  }
+
+  .survey-soul-cat-compat-score {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .survey-poster-wrap-soul-cat .survey-poster-actions {
+    grid-template-columns: 1fr;
   }
 }
 

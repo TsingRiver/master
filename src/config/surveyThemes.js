@@ -2667,6 +2667,32 @@ function buildSoulCatUnifiedResult(analysisResult, sourceType) {
         .filter(Boolean)
         .slice(0, 4)
     : [];
+  const resolvedMainName = String(matchedProfile.name ?? "灵魂猫咪待判定").trim() || "灵魂猫咪待判定";
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [fallbackTagLine].filter(Boolean);
+  const fallbackArtworkKey = String(matchedProfile.key ?? "").trim();
+  const resolvedPosterArtworkUrl = String(heroArtwork?.url ?? "").trim() ||
+    (fallbackArtworkKey ? `/cats/${fallbackArtworkKey}.png` : "");
+  const resolvedPosterQuote =
+    resolvedHealingMessage || resolvedBestLife || resolvedInsight || "愿你被温柔接住，慢慢发光。";
+  /**
+   * 关键逻辑：在统一结果中内置 soul-cat 专属海报模型，
+   * 由页面层自动触发生成，避免主题分叉导致功能散落。
+   */
+  const soulCatPosterModel = {
+    renderMode: "canvas-soul-cat",
+    downloadFilePrefix: "soul-cat-share",
+    mainName: resolvedMainName,
+    mainTagline: fallbackTagLine,
+    scoreLabel: "猫咪倾向分",
+    scoreValue: Number.isFinite(totalScore) ? totalScore : 16,
+    scoreSuffix: "/64",
+    tagChips: resolvedTagChips.slice(0, 4),
+    heroArtworkUrl: resolvedPosterArtworkUrl,
+    quote: resolvedPosterQuote,
+  };
 
   return createUnifiedResult({
     source: sourceType,
@@ -2674,17 +2700,16 @@ function buildSoulCatUnifiedResult(analysisResult, sourceType) {
     scoreLabel: "猫咪倾向分",
     scoreSuffix: "/64",
     main: {
-      name: String(matchedProfile.name ?? "灵魂猫咪待判定"),
+      // 关键逻辑：保留主类型 key，供结果页“铲屎官默契度”等扩展模块做稳定映射。
+      key: String(matchedProfile.key ?? "").trim(),
+      name: resolvedMainName,
       score: Number.isFinite(totalScore) ? totalScore : 16,
       tags: [fallbackTagLine].filter(Boolean),
     },
     heroArtwork,
     highlightCard: resolvedHighlightCard,
     insight: resolvedInsight,
-    tagChips:
-      normalizedTagChips.length > 0
-        ? normalizedTagChips
-        : [fallbackTagLine].filter(Boolean),
+    tagChips: resolvedTagChips,
     topThreeTitle: "你还可能是",
     topThree: topThreeProfiles.map((profileItem) => ({
       name: String(profileItem.name ?? "待判定"),
@@ -2692,22 +2717,6 @@ function buildSoulCatUnifiedResult(analysisResult, sourceType) {
       tags: [String(profileItem.tagLine ?? "").trim()].filter(Boolean),
     })),
     detailSections: [
-      {
-        title: "性格底色",
-        items: [resolvedPersonalityBase],
-      },
-      {
-        title: "下辈子剧本",
-        items: [resolvedNextLifeScript],
-      },
-      {
-        title: "最适合你的生活",
-        items: [resolvedBestLife],
-      },
-      {
-        title: "专属治愈寄语",
-        items: [resolvedHealingMessage],
-      },
       {
         // 关键逻辑：该模块固定使用本地猫语文案，不依赖 AI 结果。
         title: "猫语寄托",
@@ -2717,6 +2726,7 @@ function buildSoulCatUnifiedResult(analysisResult, sourceType) {
     summaryTitle: "本轮作答回放",
     summaryLines,
     restartButtonText: "再测一次",
+    posterModel: soulCatPosterModel,
   });
 }
 
@@ -3676,7 +3686,7 @@ export const SURVEY_THEME_CONFIGS = [
           "从性格、习惯、内心深处，测出你下辈子会投胎成哪只猫咪。治愈又准，快来看看你的猫生剧本。",
         points: [
           "一屏一题，按第一反应作答更准确。",
-          "结果包含：猫咪类型、性格底色、下辈子剧本和治愈寄语。",
+          "结果包含：猫咪类型、结果解读、猫语寄托和分享海报。",
           "完成后可一键重测，看看不同状态下的你。",
         ],
         heroArtwork: {
@@ -3685,7 +3695,8 @@ export const SURVEY_THEME_CONFIGS = [
           maxWidth: 236,
           rotate: {
             enabled: true,
-            random: true,
+            // 关键逻辑：封面猫咪按数组顺序轮换，最后一张后回到第一张。
+            random: false,
             switchIntervalMs: 2100,
             artworks: SOUL_CAT_COVER_ARTWORK_POOL,
           },
