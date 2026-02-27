@@ -430,6 +430,23 @@
             </p>
           </button>
         </div>
+
+        <div class="typeology-poster-entry">
+          <p class="typeology-poster-entry-tip">
+            自动抓取已完成维度，未测试模块会在海报中自动剔除。
+          </p>
+          <p class="typeology-poster-entry-count">
+            已完成 {{ completedTypeCardItems.length }} / {{ TYPEOLOGY_POSTER_GRID_CAPACITY }}
+          </p>
+          <van-button
+            block
+            class="typeology-btn typeology-btn-primary typeology-poster-entry-btn"
+            :disabled="!canGenerateTypeologyPoster"
+            @click="openTypeologyPosterPreview"
+          >
+            生成人格海报
+          </van-button>
+        </div>
       </section>
 
       <section class="typeology-panel typeology-knowledge-panel">
@@ -539,6 +556,70 @@
         </article>
       </section>
     </main>
+
+    <div
+      v-if="isTypeologyPosterPreviewVisible"
+      class="typeology-poster-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="人格海报预览页"
+      @click.self="closeTypeologyPosterPreview"
+    >
+      <section class="typeology-poster-sheet">
+        <header class="typeology-poster-head">
+          <h3>人格海报预览</h3>
+          <button
+            type="button"
+            class="typeology-poster-close-btn"
+            @click="closeTypeologyPosterPreview"
+          >
+            关闭
+          </button>
+        </header>
+
+        <p class="typeology-poster-desc">
+          系统已自动抓取 {{ completedTypeCardItems.length }} 个已测试维度作为默认海报内容。
+        </p>
+
+        <div class="typeology-poster-preview-stage">
+          <img
+            v-if="typeologyPosterHdUrl"
+            :src="typeologyPosterHdUrl"
+            alt="人格图鉴海报预览"
+            loading="lazy"
+          />
+          <div v-else class="typeology-poster-preview-loading">
+            <van-loading
+              v-if="isGeneratingTypeologyPosterHd"
+              :color="accentColor"
+              size="24px"
+            />
+            <span>
+              {{
+                isGeneratingTypeologyPosterHd
+                  ? "正在自动生成高清海报..."
+                  : "预览暂未生成，请关闭后重试"
+              }}
+            </span>
+          </div>
+        </div>
+
+        <div class="typeology-poster-actions">
+          <van-button
+            block
+            class="typeology-btn typeology-btn-primary"
+            :disabled="!typeologyPosterHdUrl"
+            @click="saveTypeologyPosterImage"
+          >
+            保存海报
+          </van-button>
+        </div>
+
+        <p class="typeology-poster-tip">
+          保存按钮将保存至文件，可长按海报保存到相册。
+        </p>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -609,6 +690,61 @@ const TYPEOLOGY_CARD_DEFAULT_ORDER = [
   "disc",
   "attitude-psy",
 ];
+
+/**
+ * 人格海报网格列数。
+ */
+const TYPEOLOGY_POSTER_GRID_COLUMNS = 3;
+
+/**
+ * 人格海报网格行数。
+ */
+const TYPEOLOGY_POSTER_GRID_ROWS = 4;
+
+/**
+ * 人格海报网格容量（固定 4x3）。
+ */
+const TYPEOLOGY_POSTER_GRID_CAPACITY =
+  TYPEOLOGY_POSTER_GRID_COLUMNS * TYPEOLOGY_POSTER_GRID_ROWS;
+
+/**
+ * 预览海报尺寸（3:4）。
+ */
+const TYPEOLOGY_POSTER_PREVIEW_SIZE = {
+  width: 540,
+  height: 720,
+};
+
+/**
+ * 高清海报尺寸（3:4）。
+ */
+const TYPEOLOGY_POSTER_HD_SIZE = {
+  width: 1080,
+  height: 1440,
+};
+
+/**
+ * 人格海报浅绿主题色板。
+ * 关键逻辑：统一“浅绿舒适阅读”视觉语言，避免局部颜色割裂。
+ */
+const TYPEOLOGY_POSTER_THEME_COLORS = {
+  backgroundTop: "#5E5574",
+  backgroundBottom: "#5E5574",
+  titleText: "#FAF8FF",
+  subtitleText: "rgba(243, 238, 255, 0.96)",
+  completedCountText: "rgba(232, 224, 250, 0.92)",
+  cardBackground: "#FFFFFF",
+  valueText: "#5E5574",
+  labelText: "#EDE8F8",
+  footerText: "rgba(240, 233, 252, 0.95)",
+};
+
+/**
+ * 海报底部署名字体栈（手写体优先）：
+ * 关键逻辑：仅使用系统内置字体，不引入额外字体包，按平台自动回退。
+ */
+const TYPEOLOGY_POSTER_FOOTER_HANDWRITING_FONT_FAMILY =
+  '"Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", "KaiTi", "STKaiti", "Kaiti SC", cursive';
 
 /**
  * 九型人格扩展说明：
@@ -1273,6 +1409,22 @@ const showAllSummary = ref(false);
 const isGeneratingAiInsight = ref(false);
 const isAiInsightStreaming = ref(false);
 const aiInsightStreamRawText = ref("");
+
+/**
+ * 人格海报预览层显隐状态。
+ */
+const isTypeologyPosterPreviewVisible = ref(false);
+
+/**
+ * 人格海报高清图加载状态。
+ */
+const isGeneratingTypeologyPosterHd = ref(false);
+
+/**
+ * 人格海报高清图 URL。
+ */
+const typeologyPosterHdUrl = ref("");
+
 /**
  * 答题跳转锁：
  * 关键逻辑：避免用户连续点击导致同一道题触发多次跳转或重复提交。
@@ -1581,6 +1733,60 @@ const typeCardItems = computed(() => {
 });
 
 /**
+ * 规范化海报展示文本。
+ * 复杂度评估：O(L)，L 为文本长度。
+ * @param {string} rawText 原始文本。
+ * @param {number} maxLength 最大字符长度。
+ * @returns {string} 规范化后的文本。
+ */
+function normalizeTypeologyPosterText(rawText, maxLength) {
+  const normalizedText = String(rawText ?? "").replace(/\s+/g, " ").trim();
+  if (!normalizedText) {
+    return "";
+  }
+
+  if (!Number.isFinite(maxLength) || maxLength <= 0) {
+    return normalizedText;
+  }
+
+  return normalizedText.length > maxLength
+    ? `${normalizedText.slice(0, maxLength)}…`
+    : normalizedText;
+}
+
+/**
+ * 人格海报使用的已完成卡片数据（自动剔除待测试）。
+ * 复杂度评估：O(N)，N 为卡片数量（当前固定 12）。
+ */
+const completedTypeCardItems = computed(() =>
+  typeCardItems.value
+    .filter((cardItem) => cardItem.completed)
+    .slice(0, TYPEOLOGY_POSTER_GRID_CAPACITY)
+    .map((cardItem) => ({
+      testKey: cardItem.testKey,
+      label: normalizeTypeologyPosterText(cardItem.testName, 10),
+      value: normalizeTypeologyPosterText(cardItem.displayValue, 10),
+    })),
+);
+
+/**
+ * 是否可生成海报。
+ */
+const canGenerateTypeologyPoster = computed(
+  () => completedTypeCardItems.value.length > 0,
+);
+
+/**
+ * 海报数据签名：
+ * 关键逻辑：用于监听结果变化后自动刷新预览。
+ */
+const typeologyPosterDataSignature = computed(() =>
+  completedTypeCardItems.value
+    .map((item) => `${item.testKey}:${item.label}:${item.value}`)
+    .join("|"),
+);
+
+/**
  * 当前结果摘要展示列表。
  */
 const summaryLinesForView = computed(() => {
@@ -1760,6 +1966,12 @@ let aiInsightPreviewFlushTimer = null;
  * AI 预览待刷新的原始文本。
  */
 let aiInsightPendingPreviewText = "";
+
+/**
+ * 海报生成会话令牌：
+ * 关键逻辑：每次重新生成都会递增令牌，旧任务结果会被丢弃，避免异步回写错位。
+ */
+let typeologyPosterGenerationToken = 0;
 
 /**
  * 清理 AI 预览节流定时器。
@@ -2819,6 +3031,421 @@ function formatTimestamp(timestamp) {
 }
 
 /**
+ * 构建人格海报渲染单元。
+ * 复杂度评估：O(C)，C 为网格容量（固定 12）。
+ * @param {Array<{ label: string, value: string }>} posterItems 已完成的海报数据项。
+ * @returns {Array<{ label: string, value: string }|null>} 固定长度网格单元数组。
+ */
+function buildTypeologyPosterRenderCells(posterItems) {
+  const safePosterItems = Array.isArray(posterItems) ? posterItems : [];
+
+  return Array.from({ length: TYPEOLOGY_POSTER_GRID_CAPACITY }, (_, index) => {
+    const rawCellItem = safePosterItems[index];
+    if (!rawCellItem) {
+      return null;
+    }
+
+    return {
+      label: normalizeTypeologyPosterText(rawCellItem.label, 10),
+      value: normalizeTypeologyPosterText(rawCellItem.value, 10),
+    };
+  });
+}
+
+/**
+ * 判断文本是否包含英文字符。
+ * 复杂度评估：O(L)，L 为文本长度。
+ * @param {string} rawText 原始文本。
+ * @returns {boolean} 是否包含英文字符。
+ */
+function hasTypeologyPosterLatinCharacters(rawText) {
+  return /[A-Za-z]/.test(String(rawText ?? ""));
+}
+
+/**
+ * 根据主结果字符长度选择字号。
+ * @param {string} valueText 主结果文本。
+ * @returns {number} 基础字号（预览尺寸下）。
+ */
+function resolveTypeologyPosterValueFontSize(valueText) {
+  const textLength = String(valueText ?? "").length;
+  if (textLength <= 4) {
+    return 32;
+  }
+  if (textLength <= 6) {
+    return 30;
+  }
+  return 28;
+}
+
+/**
+ * 构建海报主结果字体定义。
+ * @param {number} fontSize 字号。
+ * @param {boolean} useItalic 是否使用斜体。
+ * @returns {string} Canvas font 字符串。
+ */
+function buildTypeologyPosterValueFont(fontSize, useItalic = false) {
+  const italicPrefix = useItalic ? "italic " : "";
+  return `${italicPrefix}700 ${Math.max(1, Math.round(fontSize))}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+}
+
+/**
+ * 计算主结果的自适应字号（防止长文本溢出）。
+ * 关键逻辑：从基础字号逐级收缩，直到文本宽度落入可用区域。
+ * 复杂度评估：O(S * L)，S 为字号迭代次数（上限约 16），L 为文本长度；S 为常量级。
+ * @param {object} params 参数对象。
+ * @param {CanvasRenderingContext2D} params.context Canvas 2D 上下文。
+ * @param {string} params.valueText 主结果文本。
+ * @param {number} params.maxTextWidth 最大可用文本宽度。
+ * @param {number} params.initialFontSize 初始字号。
+ * @param {number} params.minFontSize 最小字号。
+ * @param {boolean} params.preferItalic 是否按斜体测量宽度。
+ * @returns {number} 适配后的字号。
+ */
+function resolveTypeologyPosterFittedValueFontSize({
+  context,
+  valueText,
+  maxTextWidth,
+  initialFontSize,
+  minFontSize,
+  preferItalic,
+}) {
+  const normalizedText = String(valueText ?? "").trim();
+  if (!normalizedText) {
+    return Math.max(1, Math.round(initialFontSize));
+  }
+
+  const safeMaxTextWidth = Math.max(12, Number(maxTextWidth) || 12);
+  let nextFontSize = Math.max(1, Math.round(initialFontSize));
+  const safeMinFontSize = Math.max(1, Math.round(minFontSize));
+
+  while (nextFontSize > safeMinFontSize) {
+    context.font = buildTypeologyPosterValueFont(nextFontSize, preferItalic);
+    const textWidth = context.measureText(normalizedText).width;
+    if (textWidth <= safeMaxTextWidth) {
+      break;
+    }
+    nextFontSize -= 1;
+  }
+
+  return Math.max(safeMinFontSize, nextFontSize);
+}
+
+/**
+ * 绘制圆角矩形路径。
+ * @param {CanvasRenderingContext2D} context Canvas 2D 上下文。
+ * @param {number} x 起点 X。
+ * @param {number} y 起点 Y。
+ * @param {number} width 宽度。
+ * @param {number} height 高度。
+ * @param {number} radius 圆角半径。
+ */
+function drawTypeologyPosterRoundedRectPath(context, x, y, width, height, radius) {
+  const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2));
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+}
+
+/**
+ * 绘制单个网格单元。
+ * @param {object} params 参数对象。
+ * @param {CanvasRenderingContext2D} params.context Canvas 2D 上下文。
+ * @param {{ x: number, y: number, width: number, height: number }} params.cellRect 单元矩形。
+ * @param {{ label: string, value: string }|null} params.cellData 单元数据。
+ * @param {number} params.scaleRatio 缩放倍率（基于预览尺寸）。
+ */
+function drawTypeologyPosterGridCell({
+  context,
+  cellRect,
+  cellData,
+  scaleRatio,
+}) {
+  const { x, y, width, height } = cellRect;
+
+  context.save();
+  if (!cellData) {
+    context.restore();
+    return;
+  }
+
+  const labelText = normalizeTypeologyPosterText(cellData.label, 10);
+  const valueText = normalizeTypeologyPosterText(cellData.value, 10);
+  const centerX = x + width / 2;
+
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+
+  const resultCardInsetX = 8 * scaleRatio;
+  const resultCardInsetTop = 8 * scaleRatio;
+  const resultCardWidth = Math.max(0, width - resultCardInsetX * 2);
+  const resultCardHeight = Math.max(0, height * 0.6);
+  const resultCardX = x + resultCardInsetX;
+  const resultCardY = y + resultCardInsetTop;
+  const resultCardRadius = 8 * scaleRatio;
+  const resultCardBackgroundColor = TYPEOLOGY_POSTER_THEME_COLORS.cardBackground;
+
+  // 关键逻辑：结果卡与标题分离，结果在上、类型在下，提升信息层级。
+  drawTypeologyPosterRoundedRectPath(
+    context,
+    resultCardX,
+    resultCardY,
+    resultCardWidth,
+    resultCardHeight,
+    resultCardRadius,
+  );
+  context.fillStyle = resultCardBackgroundColor;
+  context.fill();
+
+  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.valueText;
+  const baseValueFontSize = resolveTypeologyPosterValueFontSize(valueText) * scaleRatio;
+  const shouldItalicValue = hasTypeologyPosterLatinCharacters(valueText);
+  const fittedValueFontSize = resolveTypeologyPosterFittedValueFontSize({
+    context,
+    valueText,
+    maxTextWidth: resultCardWidth - 18 * scaleRatio,
+    initialFontSize: baseValueFontSize,
+    minFontSize: 18 * scaleRatio,
+    preferItalic: shouldItalicValue,
+  });
+  context.font = buildTypeologyPosterValueFont(fittedValueFontSize, shouldItalicValue);
+  context.fillText(
+    valueText,
+    centerX,
+    resultCardY + resultCardHeight / 2,
+  );
+
+  const labelBaseY = resultCardY + resultCardHeight + 16 * scaleRatio;
+  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.labelText;
+  context.font = `400 ${Math.round(15 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
+  context.fillText(labelText, centerX, labelBaseY);
+  context.restore();
+}
+
+/**
+ * 计算海报需要渲染的网格行数。
+ * 关键逻辑：仅渲染有数据的行，避免出现“第四行空占位”。
+ * 复杂度评估：O(1)。
+ * @param {number} renderItemCount 需要渲染的数据数量。
+ * @returns {number} 实际渲染行数（最少 1 行，最多 4 行）。
+ */
+function resolveTypeologyPosterVisibleRowCount(renderItemCount) {
+  const safeItemCount = Math.max(0, Math.floor(Number(renderItemCount) || 0));
+  if (safeItemCount <= 0) {
+    return 1;
+  }
+
+  return Math.max(
+    1,
+    Math.min(
+      TYPEOLOGY_POSTER_GRID_ROWS,
+      Math.ceil(safeItemCount / TYPEOLOGY_POSTER_GRID_COLUMNS),
+    ),
+  );
+}
+
+/**
+ * 生成人格海报 Data URL。
+ * 关键逻辑：
+ * 1. 固定 3 列，行数按已完成维度动态渲染（最多 4 行）；
+ * 2. 固定深黑底；
+ * 3. 待测试数据不会写入网格内容。
+ * 复杂度评估：O(C)，C 为网格容量（固定 12）。
+ * @param {object} params 参数对象。
+ * @param {Array<{ label: string, value: string }>} params.posterItems 海报数据项。
+ * @param {number} params.width 画布宽度。
+ * @param {number} params.height 画布高度。
+ * @returns {string} PNG Data URL。
+ */
+function generateTypeologyPosterDataUrl({ posterItems, width, height }) {
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("人格海报绘制上下文初始化失败");
+  }
+
+  const scaleRatio = width / TYPEOLOGY_POSTER_PREVIEW_SIZE.width;
+  const renderCells = buildTypeologyPosterRenderCells(posterItems);
+  const renderItemCount = renderCells.filter(Boolean).length;
+  const visibleRowCount = resolveTypeologyPosterVisibleRowCount(renderItemCount);
+
+  const backgroundGradient = context.createLinearGradient(0, 0, 0, height);
+  backgroundGradient.addColorStop(0, TYPEOLOGY_POSTER_THEME_COLORS.backgroundTop);
+  backgroundGradient.addColorStop(1, TYPEOLOGY_POSTER_THEME_COLORS.backgroundBottom);
+  context.fillStyle = backgroundGradient;
+  context.fillRect(0, 0, width, height);
+
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.titleText;
+  context.font = `700 ${Math.round(40 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
+  context.fillText("人格图鉴", width / 2, 58 * scaleRatio);
+
+  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.subtitleText;
+  context.font = `400 ${Math.round(16 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
+  context.fillText("PERSONALITY ATLAS", width / 2, 92 * scaleRatio);
+
+  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.completedCountText;
+  context.font = `400 ${Math.round(14 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
+  context.fillText(
+    `已完成维度 ${posterItems.length}/${TYPEOLOGY_POSTER_GRID_CAPACITY}`,
+    width / 2,
+    118 * scaleRatio,
+  );
+
+  const gridPaddingX = 24 * scaleRatio;
+  const gridTop = 148 * scaleRatio;
+  const gridBottomPadding = 56 * scaleRatio;
+  const gridGap = 2 * scaleRatio;
+  const gridWidth = width - gridPaddingX * 2;
+  const gridHeight = height - gridTop - gridBottomPadding;
+  const rawCellWidth =
+    (gridWidth - gridGap * (TYPEOLOGY_POSTER_GRID_COLUMNS - 1)) /
+    TYPEOLOGY_POSTER_GRID_COLUMNS;
+  const rawCellHeight =
+    (gridHeight - gridGap * (visibleRowCount - 1)) /
+    visibleRowCount;
+  const squareCellSize = Math.min(rawCellWidth, rawCellHeight);
+  const occupiedGridWidth =
+    squareCellSize * TYPEOLOGY_POSTER_GRID_COLUMNS +
+    gridGap * (TYPEOLOGY_POSTER_GRID_COLUMNS - 1);
+  const occupiedGridHeight =
+    squareCellSize * visibleRowCount +
+    gridGap * (visibleRowCount - 1);
+  // 关键逻辑：卡片固定正方形，若宽高方向有余量则在网格区内居中排布。
+  const gridStartX = gridPaddingX + (gridWidth - occupiedGridWidth) / 2;
+  const gridStartY = gridTop + (gridHeight - occupiedGridHeight) / 2;
+
+  for (let rowIndex = 0; rowIndex < visibleRowCount; rowIndex += 1) {
+    for (let columnIndex = 0; columnIndex < TYPEOLOGY_POSTER_GRID_COLUMNS; columnIndex += 1) {
+      const cellIndex = rowIndex * TYPEOLOGY_POSTER_GRID_COLUMNS + columnIndex;
+      if (cellIndex >= renderItemCount) {
+        continue;
+      }
+      drawTypeologyPosterGridCell({
+        context,
+        cellRect: {
+          x: gridStartX + columnIndex * (squareCellSize + gridGap),
+          y: gridStartY + rowIndex * (squareCellSize + gridGap),
+          width: squareCellSize,
+          height: squareCellSize,
+        },
+        cellData: renderCells[cellIndex] ?? null,
+        scaleRatio,
+      });
+    }
+  }
+
+  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.footerText;
+  context.font = `400 ${Math.round(13 * scaleRatio)}px ${TYPEOLOGY_POSTER_FOOTER_HANDWRITING_FONT_FAMILY}`;
+  context.fillText("@湫的答案馆", width / 2, height - 24 * scaleRatio);
+  return canvas.toDataURL("image/png");
+}
+
+/**
+ * 执行海报生成任务。
+ * 关键逻辑：通过令牌规避“后发先至”覆盖问题。
+ * @param {object} params 参数对象。
+ * @param {boolean} params.showSuccessToast 是否展示成功提示。
+ * @returns {Promise<void>} Promise。
+ */
+async function runTypeologyPosterGeneration({ showSuccessToast }) {
+  if (!canGenerateTypeologyPoster.value) {
+    showToast("请先完成至少一个类型测试");
+    return;
+  }
+
+  const currentToken = ++typeologyPosterGenerationToken;
+  isGeneratingTypeologyPosterHd.value = true;
+
+  try {
+    const generatedDataUrl = generateTypeologyPosterDataUrl({
+      posterItems: completedTypeCardItems.value,
+      width: TYPEOLOGY_POSTER_HD_SIZE.width,
+      height: TYPEOLOGY_POSTER_HD_SIZE.height,
+    });
+
+    if (currentToken !== typeologyPosterGenerationToken) {
+      return;
+    }
+
+    typeologyPosterHdUrl.value = generatedDataUrl;
+    if (showSuccessToast) {
+      showToast("高清海报已生成");
+    }
+  } catch {
+    if (currentToken !== typeologyPosterGenerationToken) {
+      return;
+    }
+    showToast("高清海报生成失败，请重试");
+  } finally {
+    if (currentToken !== typeologyPosterGenerationToken) {
+      return;
+    }
+    isGeneratingTypeologyPosterHd.value = false;
+  }
+}
+
+/**
+ * 打开人格海报预览页。
+ */
+function openTypeologyPosterPreview() {
+  if (!canGenerateTypeologyPoster.value) {
+    showToast("请先完成至少一个类型测试");
+    return;
+  }
+
+  isTypeologyPosterPreviewVisible.value = true;
+  typeologyPosterHdUrl.value = "";
+  void runTypeologyPosterGeneration({
+    showSuccessToast: false,
+  });
+}
+
+/**
+ * 关闭人格海报预览页。
+ */
+function closeTypeologyPosterPreview() {
+  isTypeologyPosterPreviewVisible.value = false;
+}
+
+/**
+ * 保存人格海报到本地。
+ */
+function saveTypeologyPosterImage() {
+  if (!typeologyPosterHdUrl.value) {
+    showToast("高清海报仍在生成，请稍候");
+    return;
+  }
+
+  const downloadLink = document.createElement("a");
+  downloadLink.href = typeologyPosterHdUrl.value;
+  downloadLink.download = `typeology-personality-poster-${Date.now()}.png`;
+  downloadLink.click();
+}
+
+/**
+ * 清理海报相关状态。
+ */
+function resetTypeologyPosterState() {
+  typeologyPosterGenerationToken += 1;
+  isTypeologyPosterPreviewVisible.value = false;
+  isGeneratingTypeologyPosterHd.value = false;
+  typeologyPosterHdUrl.value = "";
+}
+
+/**
  * 生成进阶解读。
  */
 async function generateAiInsight() {
@@ -2898,6 +3525,21 @@ watch(stage, (nextStage) => {
 });
 
 /**
+ * 监听海报数据变化并刷新预览。
+ * 关键逻辑：预览页打开期间，若用户新增测试结果，海报会自动更新且重置高清图。
+ */
+watch(typeologyPosterDataSignature, () => {
+  if (!isTypeologyPosterPreviewVisible.value) {
+    return;
+  }
+
+  typeologyPosterHdUrl.value = "";
+  void runTypeologyPosterGeneration({
+    showSuccessToast: false,
+  });
+});
+
+/**
  * 组件挂载后延迟启用重视觉效果。
  */
 onMounted(() => {
@@ -2913,6 +3555,7 @@ onBeforeUnmount(() => {
     persistCurrentTestingProgress();
   }
   cancelActiveAiInsightRequest();
+  resetTypeologyPosterState();
   stopLoadingTicker();
 });
 </script>
@@ -3641,6 +4284,139 @@ onBeforeUnmount(() => {
   margin: 5px 0 0;
   font-size: 11px;
   color: var(--type-accent);
+}
+
+.typeology-poster-entry {
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--type-accent) 42%, var(--type-card-border) 58%);
+  background:
+    linear-gradient(
+      140deg,
+      color-mix(in srgb, var(--type-accent) 16%, transparent),
+      transparent 72%
+    ),
+    var(--type-card-bg);
+  padding: 12px;
+}
+
+.typeology-poster-entry-tip {
+  margin: 0;
+  font-size: 12px;
+  color: var(--type-muted);
+  line-height: 1.6;
+}
+
+.typeology-poster-entry-count {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--type-accent) 84%, #ffffff 16%);
+  font-weight: 700;
+}
+
+.typeology-poster-entry-btn {
+  margin-top: 10px;
+}
+
+.typeology-poster-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 12px;
+  background: rgba(8, 10, 18, 0.68);
+}
+
+.typeology-poster-sheet {
+  width: min(100%, 640px);
+  max-height: min(92vh, 860px);
+  overflow-y: auto;
+  border-radius: 16px;
+  border: 1px solid var(--type-border);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--type-accent) 10%, transparent), transparent 36%),
+    var(--type-surface);
+  box-shadow: var(--type-shadow);
+  padding: 14px;
+}
+
+.typeology-poster-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.typeology-poster-head h3 {
+  margin: 0;
+  font-size: 20px;
+  font-family: "Noto Serif SC", serif;
+}
+
+.typeology-poster-close-btn {
+  border: 1px solid var(--type-chip-border);
+  background: var(--type-chip-bg);
+  color: var(--type-text);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.typeology-poster-desc {
+  margin: 8px 0 0;
+  color: var(--type-muted);
+  font-size: 13px;
+  line-height: 1.58;
+}
+
+.typeology-poster-preview-stage {
+  margin: 12px auto 0;
+  width: min(100%, 360px);
+  aspect-ratio: 3 / 4;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--type-card-border) 72%, #ffffff 28%);
+  background: #0f111a;
+  padding: 8px;
+}
+
+.typeology-poster-preview-stage img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #ff4d4f;
+}
+
+.typeology-poster-preview-loading {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  place-items: center;
+  color: rgba(245, 248, 255, 0.84);
+  font-size: 12px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, rgba(255, 77, 79, 0.12), transparent 52%),
+    #1a1a1a;
+}
+
+.typeology-poster-actions {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.typeology-poster-tip {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--type-muted);
+  line-height: 1.55;
 }
 
 .typeology-knowledge-item {

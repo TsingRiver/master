@@ -1,6 +1,100 @@
 import { DIMENSION_KEYS, DIMENSION_LABELS } from "../constants/dimensions";
 
 /**
+ * 城市优先级分组配置：
+ * 1. 国内版：轻量提高核心大城市命中率（北京/上海/广州/深圳/杭州）。
+ * 2. 国际版：轻量提高热门旅游城市命中率。
+ * 3. 通过“激活阈值 + 基础分门槛 + 加分上限”三重约束，避免压死小众城市结果。
+ */
+const CITY_PRIORITY_GROUPS = Object.freeze([
+  {
+    groupKey: "domestic-core",
+    cityNames: Object.freeze(["北京", "上海", "广州", "深圳", "杭州"]),
+    bonusCap: 8,
+    minBaseScore: 74,
+    activationRatio: 0.56,
+    dimensions: Object.freeze({
+      paceFast: { direction: "high", threshold: 6.8, weight: 1.4 },
+      careerTech: { direction: "high", threshold: 6.8, weight: 1.4 },
+      transitPublic: { direction: "high", threshold: 6.6, weight: 1.3 },
+      budgetHigh: { direction: "high", threshold: 6.2, weight: 1.1 },
+      foodDiversity: { direction: "high", threshold: 6.4, weight: 1.1 },
+      naturePreference: { direction: "low", threshold: 7.2, weight: 0.6 },
+    }),
+    cityOverrides: Object.freeze({
+      上海: { bonusCap: 9, activationRatio: 0.54 },
+      深圳: { minBaseScore: 73 },
+    }),
+  },
+  {
+    groupKey: "global-hot-tourism",
+    cityNames: Object.freeze([
+      "东京",
+      "新加坡",
+      "伦敦",
+      "纽约",
+      "巴黎",
+      "悉尼",
+      "巴塞罗那",
+      "首尔",
+      "曼谷",
+      "迪拜",
+      "里斯本",
+      "洛杉矶",
+    ]),
+    bonusCap: 6,
+    minBaseScore: 71,
+    activationRatio: 0.52,
+    dimensions: Object.freeze({
+      foodDiversity: { direction: "high", threshold: 6.5, weight: 1.3 },
+      transitPublic: { direction: "high", threshold: 6.0, weight: 1.0 },
+      paceFast: { direction: "high", threshold: 5.5, weight: 0.9 },
+      naturePreference: { direction: "high", threshold: 5.5, weight: 0.9 },
+      climateWarm: { direction: "high", threshold: 4.8, weight: 0.8 },
+    }),
+    cityOverrides: Object.freeze({
+      东京: { bonusCap: 7 },
+      巴黎: { bonusCap: 7 },
+    }),
+  },
+]);
+
+/**
+ * 维度权重兜底值：
+ * 未覆盖维度保留低权重，避免“完全不计”带来的极端偏差。
+ */
+const MIN_DIMENSION_WEIGHT = 0.6;
+
+/**
+ * 构建城市优先级查询表：
+ * 将分组配置展开成“城市名 -> 策略配置”的 O(1) 查询结构。
+ * @returns {Record<string, object>} 城市优先级查询映射。
+ */
+function buildCityPriorityLookup() {
+  return CITY_PRIORITY_GROUPS.reduce((lookupMap, groupConfig) => {
+    groupConfig.cityNames.forEach((cityName) => {
+      const cityOverride = groupConfig.cityOverrides?.[cityName] ?? {};
+      lookupMap[cityName] = {
+        groupKey: groupConfig.groupKey,
+        bonusCap: Number(cityOverride.bonusCap ?? groupConfig.bonusCap),
+        minBaseScore: Number(cityOverride.minBaseScore ?? groupConfig.minBaseScore),
+        activationRatio: Number(
+          cityOverride.activationRatio ?? groupConfig.activationRatio,
+        ),
+        dimensions: cityOverride.dimensions ?? groupConfig.dimensions,
+      };
+    });
+
+    return lookupMap;
+  }, {});
+}
+
+/**
+ * 城市优先级配置查询表（只读）。
+ */
+const CITY_PRIORITY_LOOKUP = Object.freeze(buildCityPriorityLookup());
+
+/**
  * 创建零向量：
  * 通过统一初始化函数避免在多个算法函数中重复创建对象结构。
  * @returns {{ [key: string]: number }} 所有维度均为 0 的对象。
@@ -89,7 +183,7 @@ function calculateCityScore(cityProfile, preferenceVector, dimensionWeights) {
 
   DIMENSION_KEYS.forEach((dimensionKey) => {
     // 关键逻辑：维度最小权重设为 0.6，避免低覆盖维度被完全忽略。
-    const weight = Math.max(dimensionWeights[dimensionKey], 0.6);
+    const weight = Math.max(dimensionWeights[dimensionKey], MIN_DIMENSION_WEIGHT);
     const gap = cityProfile[dimensionKey] - preferenceVector[dimensionKey];
     weightedDistanceSquare += weight * gap * gap;
     weightedMaxDistanceSquare += weight * 100;
@@ -99,6 +193,82 @@ function calculateCityScore(cityProfile, preferenceVector, dimensionWeights) {
     Math.sqrt(weightedDistanceSquare) / Math.sqrt(weightedMaxDistanceSquare);
   const score = Math.round((1 - normalizedDistance) * 100);
   return Math.min(100, Math.max(0, score));
+}
+
+/**
+ * 计算城市优先级加分：
+ * 1. 仅在城市命中优先级名单时生效；
+ * 2. 基础分达标且标签匹配率达标才加分；
+ * 3. 加分与基础分/匹配率共同相关，确保“轻推不硬锁”。
+ * @param {object} params 加分参数。
+ * @param {string} params.cityName 城市名。
+ * @param {number} params.baseScore 城市基础分（未加优先级分）。
+ * @param {object} params.cityProfile 城市画像向量。
+ * @param {object} params.preferenceVector 用户偏好向量。
+ * @param {object} params.dimensionWeights 维度权重。
+ * @returns {number} 城市优先级加分。
+ */
+function calculateCityPriorityBonus({
+  cityName,
+  baseScore,
+  cityProfile,
+  preferenceVector,
+  dimensionWeights,
+}) {
+  const cityPriorityConfig = CITY_PRIORITY_LOOKUP[cityName];
+  if (!cityPriorityConfig) {
+    return 0;
+  }
+
+  if (baseScore < cityPriorityConfig.minBaseScore) {
+    return 0;
+  }
+
+  let matchedSignalWeight = 0;
+  let totalSignalWeight = 0;
+
+  Object.entries(cityPriorityConfig.dimensions).forEach(
+    ([dimensionKey, dimensionRule]) => {
+      const dimensionWeight =
+        Math.max(dimensionWeights[dimensionKey], MIN_DIMENSION_WEIGHT) *
+        Number(dimensionRule.weight ?? 1);
+      totalSignalWeight += dimensionWeight;
+
+      const userValue = Number(preferenceVector[dimensionKey] ?? 5);
+      const cityValue = Number(cityProfile[dimensionKey] ?? 5);
+      const threshold = Number(dimensionRule.threshold ?? 5);
+      const direction = String(dimensionRule.direction ?? "high");
+
+      const isDirectionMatched =
+        direction === "low" ? userValue <= threshold : userValue >= threshold;
+      if (!isDirectionMatched) {
+        return;
+      }
+
+      const normalizedGap = Math.min(10, Math.abs(cityValue - userValue)) / 10;
+      const closeness = 1 - normalizedGap;
+      // 关键逻辑：只在“方向匹配 + 城市画像接近”时累计命中权重。
+      matchedSignalWeight += dimensionWeight * closeness;
+    },
+  );
+
+  if (totalSignalWeight <= 0) {
+    return 0;
+  }
+
+  const matchedRatio = matchedSignalWeight / totalSignalWeight;
+  if (matchedRatio < cityPriorityConfig.activationRatio) {
+    return 0;
+  }
+
+  const baseScoreConfidence =
+    (baseScore - cityPriorityConfig.minBaseScore) /
+    (100 - cityPriorityConfig.minBaseScore);
+  const normalizedConfidence = Math.min(1, Math.max(0, baseScoreConfidence));
+  const rawBonus =
+    cityPriorityConfig.bonusCap * matchedRatio * normalizedConfidence;
+  const roundedBonus = Math.round(rawBonus);
+  return Math.min(cityPriorityConfig.bonusCap, Math.max(0, roundedBonus));
 }
 
 /**
@@ -158,7 +328,7 @@ export function buildSummaryLines(answerSummary) {
  * 本地规则城市分析。
  * 复杂度评估：
  * 1. 构建偏好向量：O(Q * D)
- * 2. 城市评分计算：O(C * D)
+ * 2. 城市评分计算（含优先级轻量加分）：O(C * D)
  * 3. 城市排序：O(C log C)
  * 总体复杂度：O(Q * D + C * D + C log C)
  * @param {object} params 分析参数对象。
@@ -176,15 +346,33 @@ export function analyzeCitiesLocally({ questions, answerIds, cities }) {
   );
 
   const scoredCities = cities
-    .map((cityItem) => ({
-      ...cityItem,
-      score: calculateCityScore(
+    .map((cityItem) => {
+      const baseScore = calculateCityScore(
         cityItem.profile,
         preferenceVector,
         dimensionWeights,
-      ),
-    }))
-    .sort((left, right) => right.score - left.score);
+      );
+      const priorityBonus = calculateCityPriorityBonus({
+        cityName: cityItem.name,
+        baseScore,
+        cityProfile: cityItem.profile,
+        preferenceVector,
+        dimensionWeights,
+      });
+      return {
+        ...cityItem,
+        baseScore,
+        priorityBonus,
+        // 关键逻辑：最终分由基础匹配分 + 优先级轻量加分组成，并限制在 0~100。
+        score: Math.min(100, Math.max(0, baseScore + priorityBonus)),
+      };
+    })
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+      return right.baseScore - left.baseScore;
+    });
 
   const topCity = scoredCities[0];
   const topThree = scoredCities.slice(0, 3);
