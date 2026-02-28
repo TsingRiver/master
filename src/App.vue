@@ -1,5 +1,20 @@
 <template>
   <LinkErrorPage v-if="showIncompleteLinkError" />
+  <section v-else-if="showClientLicenseChecking" class="license-guard-loading-shell">
+    <div class="license-guard-loading-card">
+      <p class="license-guard-loading-eyebrow">License Check</p>
+      <h1 class="license-guard-loading-title">正在校验访问权限</h1>
+      <p class="license-guard-loading-text">
+        当前页面需要授权，系统正在检查当前浏览器环境是否已拥有
+        <strong>{{ activeLicenseGateTargetPath }}</strong>
+        的访问权限。
+      </p>
+    </div>
+  </section>
+  <LicenseAccessPage
+    v-else-if="shouldShowLicenseAccessPage"
+    :target-path="activeLicenseGateTargetPath"
+  />
   <ThemeHub
     v-else-if="showPortalHub"
     :theme-configs="themeConfigs"
@@ -37,6 +52,16 @@ import LinkErrorPage from "./components/LinkErrorPage.vue";
 import SurveyEngine from "./components/SurveyEngine.vue";
 import ThemeHub from "./components/ThemeHub.vue";
 import {
+  checkLicenseSession,
+  clearLicenseSessionToken,
+  persistLicenseSessionToken,
+} from "./services/licenseClient";
+import {
+  DEFAULT_LICENSE_SCOPE_PATH,
+  LICENSE_AUTH_ENTRY_PATH,
+  resolveLicenseScopePath,
+} from "./config/licenseAccess";
+import {
   DEFAULT_SURVEY_THEME,
   SURVEY_THEME_CONFIGS,
   hasSurveyThemePath,
@@ -63,6 +88,9 @@ const RomanceStandalone = defineAsyncComponent(
 const SoulAgeStandalone = defineAsyncComponent(
   () => import("./components/SoulAgeStandalone.vue"),
 );
+const LicenseAccessPage = defineAsyncComponent(
+  () => import("./components/LicenseAccessPage.vue"),
+);
 
 /**
  * 当前浏览器路径与查询参数：
@@ -71,6 +99,10 @@ const SoulAgeStandalone = defineAsyncComponent(
 const currentPath = ref("/");
 const currentSearch = ref("");
 const hasInvalidHashLink = ref(false);
+const hasHashRouteEntry = ref(false);
+const clientLicenseGuardReady = ref(false);
+const clientLicenseAccessGranted = ref(false);
+let clientLicenseGuardRunToken = 0;
 
 /**
  * 主题配置列表：
@@ -111,6 +143,81 @@ const showPortalHub = computed(() =>
  */
 const showIncompleteLinkError = computed(
   () => hasInvalidHashLink.value && !showPortalHub.value,
+);
+
+/**
+ * 是否展示统一授权页。
+ */
+const isLicenseAuthPath = computed(
+  () => currentPath.value === LICENSE_AUTH_ENTRY_PATH,
+);
+
+/**
+ * 当前授权页对应的目标业务路径。
+ * 关键逻辑：只接受已注册的授权范围，避免任意 query 参数被当成合法跳转地址。
+ */
+const licenseAuthTargetPath = computed(() => {
+  if (!isLicenseAuthPath.value) {
+    return DEFAULT_LICENSE_SCOPE_PATH;
+  }
+
+  const searchParams = new URLSearchParams(currentSearch.value);
+  const rawTargetPath = String(searchParams.get("target") ?? "").trim();
+  return resolveLicenseScopePath(rawTargetPath) ?? DEFAULT_LICENSE_SCOPE_PATH;
+});
+
+/**
+ * 当前受保护业务路径对应的授权范围。
+ */
+const currentProtectedLicenseScopePath = computed(() => {
+  if (isLicenseAuthPath.value) {
+    return null;
+  }
+
+  return resolveLicenseScopePath(currentPath.value);
+});
+
+/**
+ * 是否需要前端兜底授权守卫。
+ * 关键逻辑：
+ * 1. `vite dev` 本地开发不会执行 Vercel middleware，必须走前端兜底。
+ * 2. `#` hash 路由不会被服务端看到，也必须走前端兜底。
+ */
+const requiresClientLicenseGuard = computed(
+  () =>
+    !showIncompleteLinkError.value &&
+    !isLicenseAuthPath.value &&
+    Boolean(currentProtectedLicenseScopePath.value) &&
+    (import.meta.env.DEV || hasHashRouteEntry.value),
+);
+
+/**
+ * 当前激活的授权目标。
+ * 关键逻辑：授权页与前端兜底守卫共用同一授权组件，统一传递目标范围。
+ */
+const activeLicenseGateTargetPath = computed(() =>
+  isLicenseAuthPath.value
+    ? licenseAuthTargetPath.value
+    : currentProtectedLicenseScopePath.value ?? DEFAULT_LICENSE_SCOPE_PATH,
+);
+
+/**
+ * 是否展示前端授权校验中的加载态。
+ */
+const showClientLicenseChecking = computed(
+  () => requiresClientLicenseGuard.value && !clientLicenseGuardReady.value,
+);
+
+/**
+ * 是否展示授权页。
+ * 关键逻辑：显式 `/auth` 页面和“前端兜底守卫判定未授权”共用同一入口。
+ */
+const shouldShowLicenseAccessPage = computed(
+  () =>
+    isLicenseAuthPath.value ||
+    (requiresClientLicenseGuard.value &&
+      clientLicenseGuardReady.value &&
+      !clientLicenseAccessGranted.value),
 );
 
 /**
@@ -237,12 +344,14 @@ function syncLocationFromBrowser() {
   const parsedHashRoute = parseHashRoute(window.location.hash);
 
   if (parsedHashRoute.hasHashRoute) {
+    hasHashRouteEntry.value = true;
     currentPath.value = parsedHashRoute.path;
     currentSearch.value = parsedHashRoute.search;
     hasInvalidHashLink.value = isInvalidHashRoute(parsedHashRoute);
     return;
   }
 
+  hasHashRouteEntry.value = false;
   currentPath.value = window.location.pathname;
   currentSearch.value = window.location.search;
   hasInvalidHashLink.value = isInvalidPlainEntry(currentPath.value);
@@ -262,11 +371,63 @@ window.addEventListener("hashchange", syncLocationFromBrowser);
 window.addEventListener("popstate", syncLocationFromBrowser);
 
 /**
+ * 前端兜底授权守卫：
+ * 关键逻辑：
+ * 1. 本地开发与 hash 路由时，服务端 middleware 无法可靠拦截，需在客户端补一次授权校验。
+ * 2. 若已有有效 Cookie，则直接放行并刷新本地 Cookie 生命周期。
+ * 3. 若无效或缺失，则切到统一授权页组件。
+ * 复杂度评估：O(1)
+ * 单次仅发起一次固定接口校验请求（或在无 Cookie 时常量级返回）。
+ */
+watch(
+  [requiresClientLicenseGuard, currentProtectedLicenseScopePath],
+  async ([shouldGuard, scopePath]) => {
+    const currentRunToken = clientLicenseGuardRunToken + 1;
+    clientLicenseGuardRunToken = currentRunToken;
+
+    if (!shouldGuard || !scopePath) {
+      clientLicenseGuardReady.value = true;
+      clientLicenseAccessGranted.value = true;
+      return;
+    }
+
+    clientLicenseGuardReady.value = false;
+
+    try {
+      const validationResult = await checkLicenseSession(scopePath);
+      if (currentRunToken !== clientLicenseGuardRunToken) {
+        return;
+      }
+
+      if (validationResult.valid) {
+        persistLicenseSessionToken(validationResult.sessionToken);
+        clientLicenseAccessGranted.value = true;
+      } else {
+        clearLicenseSessionToken();
+        clientLicenseAccessGranted.value = false;
+      }
+    } catch {
+      if (currentRunToken !== clientLicenseGuardRunToken) {
+        return;
+      }
+
+      clearLicenseSessionToken();
+      clientLicenseAccessGranted.value = false;
+    } finally {
+      if (currentRunToken === clientLicenseGuardRunToken) {
+        clientLicenseGuardReady.value = true;
+      }
+    }
+  },
+  { immediate: true },
+);
+
+/**
  * 路径变化时同步页面 Meta 信息。
  */
 watch(
-  [showIncompleteLinkError, showPortalHub, activeThemeConfig],
-  ([isInvalidLinkPage, isHubPage, themeConfig]) => {
+  [showIncompleteLinkError, isLicenseAuthPath, showPortalHub, activeThemeConfig],
+  ([isInvalidLinkPage, isAuthPage, isHubPage, themeConfig]) => {
     if (isInvalidLinkPage) {
       document.title = "链接错误";
       const invalidLinkDescriptionMeta = document.querySelector(
@@ -276,6 +437,18 @@ watch(
         invalidLinkDescriptionMeta.setAttribute(
           "content",
           "当前访问链接不完整，请完整复制整个链接后重新访问。",
+        );
+      }
+      return;
+    }
+
+    if (isAuthPage) {
+      document.title = "授权验证";
+      const authDescriptionMeta = document.querySelector('meta[name="description"]');
+      if (authDescriptionMeta) {
+        authDescriptionMeta.setAttribute(
+          "content",
+          "请输入授权码以访问当前问卷页面。",
         );
       }
       return;
@@ -317,3 +490,64 @@ onBeforeUnmount(() => {
   window.removeEventListener("popstate", syncLocationFromBrowser);
 });
 </script>
+
+<style scoped>
+.license-guard-loading-shell {
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at top left, rgba(128, 90, 213, 0.2), transparent 42%),
+    radial-gradient(circle at bottom right, rgba(94, 85, 116, 0.24), transparent 40%),
+    linear-gradient(180deg, #f7f5fb 0%, #ede9f7 100%);
+}
+
+.license-guard-loading-card {
+  width: min(100%, 460px);
+  padding: 28px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(94, 85, 116, 0.14);
+  box-shadow: 0 28px 60px rgba(94, 85, 116, 0.14);
+  display: grid;
+  gap: 12px;
+}
+
+.license-guard-loading-eyebrow {
+  margin: 0;
+  color: #7c6f99;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.license-guard-loading-title {
+  margin: 0;
+  color: #2f2a3b;
+  font-size: 28px;
+  line-height: 1.3;
+}
+
+.license-guard-loading-text {
+  margin: 0;
+  color: #615a73;
+  line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .license-guard-loading-shell {
+    padding: 16px;
+  }
+
+  .license-guard-loading-card {
+    padding: 22px;
+    border-radius: 20px;
+  }
+
+  .license-guard-loading-title {
+    font-size: 24px;
+  }
+}
+</style>
