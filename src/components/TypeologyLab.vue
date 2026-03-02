@@ -423,7 +423,15 @@
             :class="{ 'is-complete': cardItem.completed }"
             @click="handleCardClick(cardItem.testKey)"
           >
-            <p class="typeology-card-value">{{ cardItem.displayValue }}</p>
+            <p
+              class="typeology-card-value"
+              :class="{
+                'is-enneagram-full':
+                  cardItem.testKey === 'enneagram' && cardItem.displayValue.includes('/'),
+              }"
+            >
+              {{ cardItem.displayValue }}
+            </p>
             <p class="typeology-card-label">{{ cardItem.testName }}</p>
             <p class="typeology-card-status">
               {{ cardItem.completed ? "查看详情" : "去测试" }}
@@ -809,6 +817,11 @@ function resolveTypeologyPosterThemeColors(testKey) {
  */
 const TYPEOLOGY_POSTER_FOOTER_HANDWRITING_FONT_FAMILY =
   '"Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", "KaiTi", "STKaiti", "Kaiti SC", cursive';
+
+/**
+ * 人格海报单元主结果最大换行数。
+ */
+const TYPEOLOGY_POSTER_VALUE_MAX_LINES = 2;
 
 /**
  * 九型人格扩展说明：
@@ -1753,6 +1766,67 @@ const progressColor = computed(
 const progressTrackColor = computed(() => "rgba(255, 255, 255, 0.18)");
 
 /**
+ * 卡片展示值最大字符数。
+ */
+const TYPEOLOGY_CARD_DISPLAY_VALUE_MAX_LENGTH = 8;
+
+/**
+ * 从缓存结果中解析卡片展示值。
+ * 关键逻辑：
+ * 1. 优先使用主结果标签（label），避免展示内部编码（如 dnd-ne / i-growth）。
+ * 2. 九型人格优先展示完整结构（如 1w9 125 SP/SO），信息更完整。
+ * 3. 兼容历史缓存：若旧 displayValue 为代码，自动回退到可读标签。
+ * @param {object|null|undefined} cachedResult 单测缓存结果。
+ * @returns {string} 卡片展示文本。
+ */
+function resolveTypeologyCardDisplayValue(cachedResult) {
+  const normalizedTestKey = String(cachedResult?.testKey ?? "").trim();
+  const normalizedDisplayValue = String(cachedResult?.displayValue ?? "").trim();
+  const normalizedMainLabel = String(cachedResult?.mainResult?.label ?? "").trim();
+  const normalizedMainKey = String(cachedResult?.mainResult?.key ?? "").trim();
+
+  if (normalizedTestKey === "enneagram") {
+    const enneagramSourceText = `${normalizedMainLabel} ${normalizedDisplayValue}`.trim();
+    const fullEnneagramMatch = enneagramSourceText.match(
+      /(\d+)w(\d+)\s+(\d{3})\s+([a-z]{2})\/([a-z]{2})/i,
+    );
+    if (fullEnneagramMatch) {
+      // 关键逻辑：九型卡片优先展示完整结构（主型+三型+本能），如“1w9 125 SP/SO”。
+      return `${fullEnneagramMatch[1]}w${fullEnneagramMatch[2]} ${fullEnneagramMatch[3]} ${fullEnneagramMatch[4].toUpperCase()}/${fullEnneagramMatch[5].toUpperCase()}`;
+    }
+
+    const wingMatch = enneagramSourceText.match(/\d+w\d+/i);
+    if (wingMatch?.[0]) {
+      return wingMatch[0].toLowerCase();
+    }
+  }
+
+  const normalizedLabelPrimary = normalizedMainLabel.includes("·")
+    ? normalizedMainLabel.split("·")[0].trim()
+    : normalizedMainLabel;
+  if (normalizedLabelPrimary) {
+    return normalizedLabelPrimary.slice(0, TYPEOLOGY_CARD_DISPLAY_VALUE_MAX_LENGTH);
+  }
+
+  const legacyCodePattern = /^[a-z][a-z0-9-]{1,20}$/i;
+  if (normalizedDisplayValue && !legacyCodePattern.test(normalizedDisplayValue)) {
+    return normalizedDisplayValue.slice(0, TYPEOLOGY_CARD_DISPLAY_VALUE_MAX_LENGTH);
+  }
+
+  if (normalizedMainKey) {
+    return normalizedMainKey
+      .toUpperCase()
+      .slice(0, TYPEOLOGY_CARD_DISPLAY_VALUE_MAX_LENGTH);
+  }
+
+  if (normalizedDisplayValue) {
+    return normalizedDisplayValue.slice(0, TYPEOLOGY_CARD_DISPLAY_VALUE_MAX_LENGTH);
+  }
+
+  return "待测试";
+}
+
+/**
  * 卡片列表渲染数据。
  * 复杂度评估：O(N)，N 为测试类型数量（当前固定 12）。
  */
@@ -1781,7 +1855,7 @@ const typeCardItems = computed(() => {
       testKey: testItem.key,
       testName: testItem.name,
       completed: Boolean(cachedResult),
-      displayValue: cachedResult?.displayValue ?? "待测试",
+      displayValue: resolveTypeologyCardDisplayValue(cachedResult),
     };
 
     if (normalizedCardItem.completed) {
@@ -1800,7 +1874,7 @@ const typeCardItems = computed(() => {
  * 规范化海报展示文本。
  * 复杂度评估：O(L)，L 为文本长度。
  * @param {string} rawText 原始文本。
- * @param {number} maxLength 最大字符长度。
+ * @param {number} [maxLength] 最大字符长度；未传入或<=0时不截断。
  * @returns {string} 规范化后的文本。
  */
 function normalizeTypeologyPosterText(rawText, maxLength) {
@@ -1829,7 +1903,8 @@ const completedTypeCardItems = computed(() =>
     .map((cardItem) => ({
       testKey: cardItem.testKey,
       label: normalizeTypeologyPosterText(cardItem.testName, 10),
-      value: normalizeTypeologyPosterText(cardItem.displayValue, 10),
+      // 关键逻辑：值文本保留完整内容，交给海报绘制阶段按宽度自动换行。
+      value: normalizeTypeologyPosterText(cardItem.displayValue),
     })),
 );
 
@@ -3111,7 +3186,8 @@ function buildTypeologyPosterRenderCells(posterItems) {
 
     return {
       label: normalizeTypeologyPosterText(rawCellItem.label, 10),
-      value: normalizeTypeologyPosterText(rawCellItem.value, 10),
+      // 关键逻辑：保留完整值文本，避免九型等多段结构在数据层提前截断。
+      value: normalizeTypeologyPosterText(rawCellItem.value),
     };
   });
 }
@@ -3150,49 +3226,150 @@ function resolveTypeologyPosterValueFontSize(valueText) {
  */
 function buildTypeologyPosterValueFont(fontSize, useItalic = false) {
   const italicPrefix = useItalic ? "italic " : "";
-  return `${italicPrefix}700 ${Math.max(1, Math.round(fontSize))}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+  return `${italicPrefix}700 ${Math.max(1, Math.round(fontSize))}px "PingFang SC", "Microsoft YaHei", sans-serif`;
 }
 
 /**
- * 计算主结果的自适应字号（防止长文本溢出）。
- * 关键逻辑：从基础字号逐级收缩，直到文本宽度落入可用区域。
- * 复杂度评估：O(S * L)，S 为字号迭代次数（上限约 16），L 为文本长度；S 为常量级。
+ * 按当前字号将海报主结果文本切分为多行（不做截断）。
+ * 关键逻辑：按字符级测量宽度，兼容中文无空格文本。
+ * 复杂度评估：O(L)，L 为文本长度。
  * @param {object} params 参数对象。
  * @param {CanvasRenderingContext2D} params.context Canvas 2D 上下文。
  * @param {string} params.valueText 主结果文本。
  * @param {number} params.maxTextWidth 最大可用文本宽度。
+ * @returns {string[]} 分行结果（不含空行）。
+ */
+function splitTypeologyPosterValueTextLines({ context, valueText, maxTextWidth }) {
+  const normalizedText = String(valueText ?? "").trim();
+  if (!normalizedText) {
+    return [];
+  }
+
+  const safeMaxTextWidth = Math.max(12, Number(maxTextWidth) || 12);
+  const rawLines = [];
+  let currentLineText = "";
+
+  for (const character of normalizedText) {
+    const nextLineText = `${currentLineText}${character}`;
+    if (!currentLineText || context.measureText(nextLineText).width <= safeMaxTextWidth) {
+      currentLineText = nextLineText;
+      continue;
+    }
+    rawLines.push(currentLineText);
+    // 关键逻辑：新行首字符若为空格则跳过，避免英文断行出现“行首空白”。
+    currentLineText = character === " " ? "" : character;
+  }
+
+  if (currentLineText) {
+    rawLines.push(currentLineText);
+  }
+
+  return rawLines;
+}
+
+/**
+ * 将分行结果限制到最大行数，并在最后一行按需补省略号。
+ * 关键逻辑：仅在真实超出行数时省略，常规文本完整展示。
+ * 复杂度评估：O(L)，L 为最后一行文本长度。
+ * @param {object} params 参数对象。
+ * @param {CanvasRenderingContext2D} params.context Canvas 2D 上下文。
+ * @param {string[]} params.textLines 原始分行结果。
+ * @param {number} params.maxLines 允许的最大行数。
+ * @param {number} params.maxTextWidth 最大可用文本宽度。
+ * @returns {string[]} 限制后的分行结果。
+ */
+function clampTypeologyPosterValueLines({
+  context,
+  textLines,
+  maxLines,
+  maxTextWidth,
+}) {
+  const normalizedLines = Array.isArray(textLines) ? textLines.filter(Boolean) : [];
+  const safeMaxLines = Math.max(1, Math.floor(Number(maxLines) || 1));
+  const safeMaxTextWidth = Math.max(12, Number(maxTextWidth) || 12);
+
+  if (normalizedLines.length <= safeMaxLines) {
+    return normalizedLines;
+  }
+
+  const truncatedLines = normalizedLines.slice(0, safeMaxLines);
+  let lastLineText = truncatedLines[safeMaxLines - 1] ?? "";
+  // 关键逻辑：反向裁剪直到“末尾省略号”也能落入可用宽度。
+  while (lastLineText && context.measureText(`${lastLineText}…`).width > safeMaxTextWidth) {
+    lastLineText = lastLineText.slice(0, -1);
+  }
+  truncatedLines[safeMaxLines - 1] = lastLineText ? `${lastLineText}…` : "…";
+  return truncatedLines;
+}
+
+/**
+ * 计算主结果的“字号 + 分行”布局。
+ * 关键逻辑：优先保证可读字号，并在最大行数内自动换行；仅在超限时降级省略。
+ * 复杂度评估：O(S * L)，S 为字号迭代次数（常量级），L 为文本长度。
+ * @param {object} params 参数对象。
+ * @param {CanvasRenderingContext2D} params.context Canvas 2D 上下文。
+ * @param {string} params.valueText 主结果文本。
+ * @param {number} params.maxTextWidth 最大可用文本宽度。
+ * @param {number} params.maxLines 最大行数。
  * @param {number} params.initialFontSize 初始字号。
  * @param {number} params.minFontSize 最小字号。
  * @param {boolean} params.preferItalic 是否按斜体测量宽度。
- * @returns {number} 适配后的字号。
+ * @returns {{ fontSize: number, lines: string[] }} 布局结果。
  */
-function resolveTypeologyPosterFittedValueFontSize({
+function resolveTypeologyPosterFittedValueLayout({
   context,
   valueText,
   maxTextWidth,
+  maxLines,
   initialFontSize,
   minFontSize,
   preferItalic,
 }) {
   const normalizedText = String(valueText ?? "").trim();
-  if (!normalizedText) {
-    return Math.max(1, Math.round(initialFontSize));
-  }
-
-  const safeMaxTextWidth = Math.max(12, Number(maxTextWidth) || 12);
-  let nextFontSize = Math.max(1, Math.round(initialFontSize));
+  const safeInitialFontSize = Math.max(1, Math.round(initialFontSize));
   const safeMinFontSize = Math.max(1, Math.round(minFontSize));
+  const safeMaxLines = Math.max(1, Math.floor(Number(maxLines) || 1));
 
-  while (nextFontSize > safeMinFontSize) {
-    context.font = buildTypeologyPosterValueFont(nextFontSize, preferItalic);
-    const textWidth = context.measureText(normalizedText).width;
-    if (textWidth <= safeMaxTextWidth) {
-      break;
-    }
-    nextFontSize -= 1;
+  if (!normalizedText) {
+    return {
+      fontSize: safeInitialFontSize,
+      lines: [],
+    };
   }
 
-  return Math.max(safeMinFontSize, nextFontSize);
+  let candidateFontSize = safeInitialFontSize;
+  while (candidateFontSize >= safeMinFontSize) {
+    context.font = buildTypeologyPosterValueFont(candidateFontSize, preferItalic);
+    const measuredLines = splitTypeologyPosterValueTextLines({
+      context,
+      valueText: normalizedText,
+      maxTextWidth,
+    });
+    if (measuredLines.length <= safeMaxLines) {
+      return {
+        fontSize: candidateFontSize,
+        lines: measuredLines,
+      };
+    }
+    candidateFontSize -= 1;
+  }
+
+  context.font = buildTypeologyPosterValueFont(safeMinFontSize, preferItalic);
+  const measuredLines = splitTypeologyPosterValueTextLines({
+    context,
+    valueText: normalizedText,
+    maxTextWidth,
+  });
+  const clampedLines = clampTypeologyPosterValueLines({
+    context,
+    textLines: measuredLines,
+    maxLines: safeMaxLines,
+    maxTextWidth,
+  });
+  return {
+    fontSize: safeMinFontSize,
+    lines: clampedLines,
+  };
 }
 
 /**
@@ -3244,7 +3421,7 @@ function drawTypeologyPosterGridCell({
   }
 
   const labelText = normalizeTypeologyPosterText(cellData.label, 10);
-  const valueText = normalizeTypeologyPosterText(cellData.value, 10);
+  const valueText = normalizeTypeologyPosterText(cellData.value);
   const centerX = x + width / 2;
 
   context.textAlign = "center";
@@ -3274,24 +3451,31 @@ function drawTypeologyPosterGridCell({
   context.fillStyle = themeColors.valueText;
   const baseValueFontSize = resolveTypeologyPosterValueFontSize(valueText) * scaleRatio;
   const shouldItalicValue = hasTypeologyPosterLatinCharacters(valueText);
-  const fittedValueFontSize = resolveTypeologyPosterFittedValueFontSize({
+  const fittedValueLayout = resolveTypeologyPosterFittedValueLayout({
     context,
     valueText,
     maxTextWidth: resultCardWidth - 18 * scaleRatio,
+    maxLines: TYPEOLOGY_POSTER_VALUE_MAX_LINES,
     initialFontSize: baseValueFontSize,
     minFontSize: 18 * scaleRatio,
     preferItalic: shouldItalicValue,
   });
-  context.font = buildTypeologyPosterValueFont(fittedValueFontSize, shouldItalicValue);
-  context.fillText(
-    valueText,
-    centerX,
-    resultCardY + resultCardHeight / 2,
+  context.font = buildTypeologyPosterValueFont(
+    fittedValueLayout.fontSize,
+    shouldItalicValue,
   );
+  const valueLineHeight = Math.max(1, Math.round(fittedValueLayout.fontSize * 1.2));
+  const valueBlockHeight = valueLineHeight * fittedValueLayout.lines.length;
+  const valueFirstLineCenterY =
+    resultCardY + (resultCardHeight - valueBlockHeight) / 2 + valueLineHeight / 2;
+  fittedValueLayout.lines.forEach((lineText, lineIndex) => {
+    // 关键逻辑：多行文本整体垂直居中，保证视觉重心稳定。
+    context.fillText(lineText, centerX, valueFirstLineCenterY + lineIndex * valueLineHeight);
+  });
 
   const labelBaseY = resultCardY + resultCardHeight + 16 * scaleRatio;
   context.fillStyle = themeColors.labelText;
-  context.font = `400 ${Math.round(15 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
+  context.font = `400 ${Math.round(15 * scaleRatio)}px "Times New Roman", "Source Han Serif SC", serif`;
   context.fillText(labelText, centerX, labelBaseY);
   context.restore();
 }
@@ -3363,15 +3547,15 @@ function generateTypeologyPosterDataUrl({
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = resolvedThemeColors.titleText;
-  context.font = `700 ${Math.round(40 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
+  context.font = `700 ${Math.round(40 * scaleRatio)}px "Times New Roman", "Source Han Serif SC", serif`;
   context.fillText("人格图鉴", width / 2, 58 * scaleRatio);
 
   context.fillStyle = resolvedThemeColors.subtitleText;
-  context.font = `400 ${Math.round(16 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
+  context.font = `400 ${Math.round(16 * scaleRatio)}px "Times New Roman", "Source Han Serif SC", serif`;
   context.fillText("PERSONALITY ATLAS", width / 2, 92 * scaleRatio);
 
   context.fillStyle = resolvedThemeColors.completedCountText;
-  context.font = `400 ${Math.round(14 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
+  context.font = `400 ${Math.round(14 * scaleRatio)}px "Times New Roman", "Source Han Serif SC", serif`;
   context.fillText(
     `已完成维度 ${posterItems.length}/${TYPEOLOGY_POSTER_GRID_CAPACITY}`,
     width / 2,
@@ -3764,7 +3948,7 @@ onBeforeUnmount(() => {
   margin: 10px 0 8px;
   font-size: clamp(26px, 7vw, 38px);
   line-height: 1.24;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .typeology-desc {
@@ -3801,7 +3985,7 @@ onBeforeUnmount(() => {
   margin: 0;
   color: #fff;
   font-size: 18px;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
   font-weight: 700;
 }
 
@@ -3856,7 +4040,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 21px;
   line-height: 1.3;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .typeology-start-title-wrap p {
@@ -3906,7 +4090,7 @@ onBeforeUnmount(() => {
   margin: 12px 0 6px;
   font-size: 22px;
   line-height: 1.35;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .typeology-question-context {
@@ -4057,7 +4241,7 @@ onBeforeUnmount(() => {
   margin: 7px 0 4px;
   font-size: 30px;
   line-height: 1.2;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .typeology-result-prefix {
@@ -4308,7 +4492,7 @@ onBeforeUnmount(() => {
 .typeology-module-head h2 {
   margin: 0;
   font-size: 20px;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .typeology-module-head p {
@@ -4347,7 +4531,14 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 22px;
   line-height: 1.18;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
+}
+
+.typeology-card-value.is-enneagram-full {
+  font-size: 17px;
+  line-height: 1.3;
+  letter-spacing: 0.2px;
+  word-break: break-word;
 }
 
 .typeology-card-label {
@@ -4428,7 +4619,7 @@ onBeforeUnmount(() => {
 .typeology-poster-head h3 {
   margin: 0;
   font-size: 20px;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .typeology-poster-close-btn {

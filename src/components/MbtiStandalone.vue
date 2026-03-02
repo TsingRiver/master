@@ -778,7 +778,7 @@ onBeforeUnmount(() => {
   margin: 10px 0 8px;
   font-size: clamp(27px, 7.2vw, 38px);
   line-height: 1.24;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .mbti-desc {
@@ -801,7 +801,7 @@ onBeforeUnmount(() => {
 .mbti-version-panel h2 {
   margin: 0;
   font-size: 24px;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .mbti-version-panel p {
@@ -840,7 +840,7 @@ onBeforeUnmount(() => {
   display: block;
   font-size: 20px;
   line-height: 1.2;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .mbti-version-button span {
@@ -867,7 +867,7 @@ onBeforeUnmount(() => {
   margin: 0 0 8px;
   font-size: clamp(22px, 6vw, 30px);
   line-height: 1.34;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .mbti-question-desc {
@@ -961,7 +961,7 @@ onBeforeUnmount(() => {
   font-size: clamp(36px, 11vw, 52px);
   line-height: 1.1;
   letter-spacing: 0.03em;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .mbti-main-score {
@@ -1022,7 +1022,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: clamp(16px, 5vw, 28px);
   line-height: 1.16;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
   font-weight: 700;
   word-break: break-word;
 }

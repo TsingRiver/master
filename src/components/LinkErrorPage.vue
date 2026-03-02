@@ -51,7 +51,7 @@
   color: #45271a;
   line-height: 1.32;
   font-size: clamp(26px, 7vw, 36px);
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .link-error-message {

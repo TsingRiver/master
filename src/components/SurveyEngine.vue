@@ -3913,7 +3913,7 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
   });
 
   context.fillStyle = "rgba(255, 245, 250, 0.95)";
-  context.font = "600 26px 'Noto Sans SC'";
+  context.font = "600 26px 'PingFang SC'";
   context.textAlign = "center";
   items.forEach((item, axisIndex) => {
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
@@ -3978,38 +3978,38 @@ function buildLoveBrainPosterHtml(posterModel) {
       radial-gradient(circle at 12% 10%, rgba(255,255,255,0.22), transparent 34%),
       radial-gradient(circle at 88% 16%, rgba(123,208,255,0.25), transparent 30%),
       linear-gradient(155deg, #0f1a3f 0%, #1b2861 45%, #3b2a65 100%);
-      color:#f7fbff;font-family:'Noto Sans SC',sans-serif;">
+      color:#f7fbff;font-family:'PingFang SC',sans-serif;">
       <div style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;background:rgba(147,220,255,0.22);border:1px solid rgba(181,229,255,0.4);font-size:18px;letter-spacing:0.08em;font-weight:700;">LOVE BRAIN · 1314</div>
-      <h1 style="margin:22px 0 10px;font-size:64px;line-height:1.18;font-family:'Noto Serif SC',serif;">你的脑子里全是水还是野菜？</h1>
+      <h1 style="margin:22px 0 10px;font-size:64px;line-height:1.18;font-family:'Source Han Serif SC',serif;">你的脑子里全是水还是野菜？</h1>
       <p style="margin:0;font-size:28px;line-height:1.6;color:#d4e8ff;">心理学内核 + 互联网梗文化，给你一份可转发的恋爱脑体检结果。</p>
 
       <section style="margin-top:30px;padding:24px;border-radius:24px;background:rgba(4,10,35,0.45);border:1px solid rgba(137,193,255,0.34);">
         <p style="margin:0;font-size:22px;color:#9ad1ff;letter-spacing:0.06em;">恋爱脑指数</p>
         <div style="margin-top:12px;display:flex;align-items:flex-end;gap:14px;">
-          <span style="font-size:120px;line-height:1;font-family:'Noto Serif SC',serif;color:#ffffff;font-weight:700;">${escapeHtmlText(posterModel.indexScore)}</span>
+          <span style="font-size:120px;line-height:1;font-family:'Source Han Serif SC',serif;color:#ffffff;font-weight:700;">${escapeHtmlText(posterModel.indexScore)}</span>
           <span style="font-size:36px;line-height:1.2;color:#c5e4ff;padding-bottom:14px;">/140</span>
         </div>
-        <p style="margin:14px 0 0;font-size:40px;line-height:1.35;font-family:'Noto Serif SC',serif;color:#ffd6e6;">${escapeHtmlText(posterModel.levelName)}</p>
+        <p style="margin:14px 0 0;font-size:40px;line-height:1.35;font-family:'Source Han Serif SC',serif;color:#ffd6e6;">${escapeHtmlText(posterModel.levelName)}</p>
         <p style="margin:8px 0 0;font-size:28px;color:#cde6ff;">${escapeHtmlText(posterModel.levelTitle)} · ${escapeHtmlText(posterModel.coreTag)}</p>
       </section>
 
       <section style="margin-top:24px;padding:24px;border-radius:22px;background:rgba(255,255,255,0.12);border:1px solid rgba(205,230,255,0.4);">
-        <h2 style="margin:0 0 12px;font-size:34px;font-family:'Noto Serif SC',serif;">扎心分析</h2>
+        <h2 style="margin:0 0 12px;font-size:34px;font-family:'Source Han Serif SC',serif;">扎心分析</h2>
         <p style="margin:0;font-size:25px;line-height:1.7;color:#eef6ff;">${escapeHtmlText(posterModel.piercingLine)}</p>
       </section>
 
       <section style="margin-top:24px;display:grid;gap:12px;">
-        <h2 style="margin:0;font-size:34px;font-family:'Noto Serif SC',serif;">状态分布</h2>
+        <h2 style="margin:0;font-size:34px;font-family:'Source Han Serif SC',serif;">状态分布</h2>
         ${stageRows}
       </section>
 
       <section style="margin-top:24px;">
-        <h2 style="margin:0 0 12px;font-size:34px;font-family:'Noto Serif SC',serif;">最容易上头的场景 Top 3</h2>
+        <h2 style="margin:0 0 12px;font-size:34px;font-family:'Source Han Serif SC',serif;">最容易上头的场景 Top 3</h2>
         <ul style="margin:0;padding:0;display:grid;gap:10px;">${topRiskRows}</ul>
       </section>
 
       <section style="margin-top:24px;padding:24px;border-radius:22px;background:rgba(255, 236, 246, 0.14);border:1px solid rgba(255, 206, 226, 0.42);">
-        <h2 style="margin:0 0 10px;font-size:34px;font-family:'Noto Serif SC',serif;color:#ffdceb;">结论</h2>
+        <h2 style="margin:0 0 10px;font-size:34px;font-family:'Source Han Serif SC',serif;color:#ffdceb;">结论</h2>
         <p style="margin:0;font-size:23px;line-height:1.7;color:#fbefff;">${escapeHtmlText(posterModel.narrative)}</p>
       </section>
 
@@ -4110,32 +4110,32 @@ async function generateLoveBrainPosterFallbackDataUrl(posterModel) {
   fillRoundedRect(context, 72, 82, posterWidth - 144, posterHeight - 164, 40);
 
   context.fillStyle = "#375EA5";
-  context.font = "700 34px 'Noto Sans SC'";
+  context.font = "700 34px 'PingFang SC'";
   context.textAlign = "left";
   context.fillText("LOVE BRAIN · 1314", 132, 168);
 
   context.fillStyle = "#1C2E54";
-  context.font = "700 58px 'Noto Serif SC'";
+  context.font = "700 58px 'Source Han Serif SC'";
   context.fillText("恋爱脑指数报告", 132, 248);
 
   context.fillStyle = "#49659B";
-  context.font = "500 32px 'Noto Sans SC'";
+  context.font = "500 32px 'PingFang SC'";
   context.fillText("你的脑子里全是水还是野菜？", 132, 310);
 
   context.fillStyle = "#203F77";
-  context.font = "700 128px 'Noto Serif SC'";
+  context.font = "700 128px 'Source Han Serif SC'";
   context.fillText(`${posterModel.indexScore ?? 0}`, 132, 454);
 
   context.fillStyle = "#4D689D";
-  context.font = "500 38px 'Noto Sans SC'";
+  context.font = "500 38px 'PingFang SC'";
   context.fillText("/140", 412, 454);
 
   context.fillStyle = "#2C3D73";
-  context.font = "700 48px 'Noto Serif SC'";
+  context.font = "700 48px 'Source Han Serif SC'";
   context.fillText(String(posterModel.levelName ?? ""), 132, 536);
 
   context.fillStyle = "#405487";
-  context.font = "500 34px 'Noto Sans SC'";
+  context.font = "500 34px 'PingFang SC'";
   context.fillText(
     `${String(posterModel.levelTitle ?? "")} · ${String(posterModel.coreTag ?? "")}`,
     132,
@@ -4145,9 +4145,9 @@ async function generateLoveBrainPosterFallbackDataUrl(posterModel) {
   context.fillStyle = "#EEF4FF";
   fillRoundedRect(context, 132, 652, posterWidth - 264, 218, 22);
   context.fillStyle = "#2C4279";
-  context.font = "700 36px 'Noto Serif SC'";
+  context.font = "700 36px 'Source Han Serif SC'";
   context.fillText("扎心分析", 166, 724);
-  context.font = "500 30px 'Noto Sans SC'";
+  context.font = "500 30px 'PingFang SC'";
   drawWrappedText(
     context,
     String(posterModel.piercingLine ?? ""),
@@ -4159,7 +4159,7 @@ async function generateLoveBrainPosterFallbackDataUrl(posterModel) {
   );
 
   context.fillStyle = "#2D426E";
-  context.font = "700 36px 'Noto Serif SC'";
+  context.font = "700 36px 'Source Han Serif SC'";
   context.fillText("最容易上头的场景 Top 3", 132, 964);
 
   const topRiskItems = Array.isArray(posterModel.topRiskScenarios)
@@ -4171,11 +4171,11 @@ async function generateLoveBrainPosterFallbackDataUrl(posterModel) {
     fillRoundedRect(context, 132, cardTopY, posterWidth - 264, 156, 18);
 
     context.fillStyle = "#355188";
-    context.font = "700 30px 'Noto Sans SC'";
+    context.font = "700 30px 'PingFang SC'";
     context.fillText(`${index + 1}. ${String(item.name ?? "")}`, 162, cardTopY + 56);
 
     context.fillStyle = "#E56D95";
-    context.font = "700 30px 'Noto Sans SC'";
+    context.font = "700 30px 'PingFang SC'";
     context.textAlign = "right";
     context.fillText(
       `${Number(item.score ?? 0)}%`,
@@ -4185,7 +4185,7 @@ async function generateLoveBrainPosterFallbackDataUrl(posterModel) {
     context.textAlign = "left";
 
     context.fillStyle = "#6079AC";
-    context.font = "500 26px 'Noto Sans SC'";
+    context.font = "500 26px 'PingFang SC'";
     drawWrappedText(
       context,
       String(item.optionLabel ?? ""),
@@ -4198,9 +4198,9 @@ async function generateLoveBrainPosterFallbackDataUrl(posterModel) {
   });
 
   context.fillStyle = "#39558D";
-  context.font = "700 36px 'Noto Serif SC'";
+  context.font = "700 36px 'Source Han Serif SC'";
   context.fillText("结论", 132, 1602);
-  context.font = "500 28px 'Noto Sans SC'";
+  context.font = "500 28px 'PingFang SC'";
   drawWrappedText(
     context,
     String(posterModel.narrative ?? ""),
@@ -4212,7 +4212,7 @@ async function generateLoveBrainPosterFallbackDataUrl(posterModel) {
   );
 
   context.fillStyle = "#526DA6";
-  context.font = "500 24px 'Noto Sans SC'";
+  context.font = "500 24px 'PingFang SC'";
   context.fillText(
     `生成时间 ${new Date().toLocaleString("zh-CN", { hour12: false })}`,
     132,
@@ -4279,24 +4279,24 @@ async function generateRomancePosterDataUrl(posterModel) {
   fillRoundedRect(context, 84, 88, posterWidth - 168, posterHeight - 176, 42);
 
   context.fillStyle = visualStyle.accentSoft;
-  context.font = "600 34px 'Noto Sans SC'";
+  context.font = "600 34px 'PingFang SC'";
   context.textAlign = "left";
   context.fillText("ROMANCE DNA TEST", 136, 174);
 
   context.fillStyle = "#3B2B54";
-  context.font = "700 58px 'Noto Serif SC'";
+  context.font = "700 58px 'Source Han Serif SC'";
   context.fillText("《你认为最浪漫的事》", 136, 258);
 
   context.fillStyle = "#5C4B78";
-  context.font = "500 34px 'Noto Sans SC'";
+  context.font = "500 34px 'PingFang SC'";
   context.fillText("你的浪漫指数", 136, 324);
 
   context.fillStyle = visualStyle.accent;
-  context.font = "700 124px 'Noto Serif SC'";
+  context.font = "700 124px 'Source Han Serif SC'";
   context.fillText(`${posterModel.romanceIndex ?? 0}%`, 136, 448);
 
   context.fillStyle = "#3F335E";
-  context.font = "700 50px 'Noto Serif SC'";
+  context.font = "700 50px 'Source Han Serif SC'";
   context.fillText(String(posterModel.title ?? ""), 136, 526);
 
   drawRadarOnPoster(
@@ -4308,7 +4308,7 @@ async function generateRomancePosterDataUrl(posterModel) {
   );
 
   context.fillStyle = "#574870";
-  context.font = "500 30px 'Noto Sans SC'";
+  context.font = "500 30px 'PingFang SC'";
   const quoteBottomY = drawWrappedText(
     context,
     String(posterModel.quote ?? ""),
@@ -4325,7 +4325,7 @@ async function generateRomancePosterDataUrl(posterModel) {
   const ctaBaseY = quoteBottomY + 86;
 
   context.fillStyle = "#6B5A86";
-  context.font = "500 28px 'Noto Sans SC'";
+  context.font = "500 28px 'PingFang SC'";
   context.fillText(
     "长按保存图片，分享你的浪漫指数",
     136,
@@ -4335,7 +4335,7 @@ async function generateRomancePosterDataUrl(posterModel) {
   let easterEggBottomY = ctaBaseY;
   if (easterEggText) {
     context.fillStyle = "#7C6D9C";
-    context.font = "500 24px 'Noto Sans SC'";
+    context.font = "500 24px 'PingFang SC'";
     // 关键逻辑：彩蛋文案长度可能变化，使用自动换行避免越界。
     easterEggBottomY = drawWrappedText(
       context,
@@ -4350,7 +4350,7 @@ async function generateRomancePosterDataUrl(posterModel) {
 
   const generatedTimeY = Math.max(posterHeight - 156, easterEggBottomY + 58);
   context.fillStyle = "rgba(88, 71, 118, 0.74)";
-  context.font = "500 24px 'Noto Sans SC'";
+  context.font = "500 24px 'PingFang SC'";
   context.fillText(
     `生成时间 ${new Date().toLocaleString("zh-CN", { hour12: false })}`,
     136,
@@ -4459,7 +4459,7 @@ async function generateSoulCatPosterDataUrl(posterModel) {
 
   context.textAlign = "left";
   context.fillStyle = "#BA7D94";
-  context.font = "700 34px 'Noto Sans SC'";
+  context.font = "700 34px 'PingFang SC'";
   context.fillText("SOUL CAT TEST", 126, 156);
 
   const resolvedMainName = String(posterModel?.mainName ?? "灵魂猫咪").trim() || "灵魂猫咪";
@@ -4478,15 +4478,15 @@ async function generateSoulCatPosterDataUrl(posterModel) {
     : [];
 
   context.fillStyle = "#6F4E5D";
-  context.font = "700 58px 'Noto Serif SC'";
+  context.font = "700 58px 'Source Han Serif SC'";
   context.fillText(resolvedMainName, 126, 236);
 
   context.fillStyle = "#8D6B79";
-  context.font = "500 30px 'Noto Sans SC'";
+  context.font = "500 30px 'PingFang SC'";
   context.fillText(resolvedMainTagline, 126, 284);
 
   context.fillStyle = "#9A6D82";
-  context.font = "600 28px 'Noto Sans SC'";
+  context.font = "600 28px 'PingFang SC'";
   context.fillText(
     `${resolvedScoreLabel} ${resolvedScoreValue}${resolvedScoreSuffix}`,
     126,
@@ -4497,7 +4497,7 @@ async function generateSoulCatPosterDataUrl(posterModel) {
   let chipsCurrentY = 352;
   const chipsMaxWidth = posterWidth - 252;
   const chipsHeight = 44;
-  context.font = "600 22px 'Noto Sans SC'";
+  context.font = "600 22px 'PingFang SC'";
   resolvedTagChips.forEach((tagItem) => {
     const textWidth = context.measureText(tagItem).width;
     const chipWidth = Math.ceil(textWidth + 34);
@@ -4598,7 +4598,7 @@ async function generateSoulCatPosterDataUrl(posterModel) {
 
   if (!hasRenderedArtwork) {
     context.fillStyle = "#D0A2B3";
-    context.font = "600 30px 'Noto Sans SC'";
+    context.font = "600 30px 'PingFang SC'";
     context.textAlign = "center";
     context.fillText("猫咪插画加载中…", posterWidth / 2, imageCardY + imageCardHeight / 2);
     context.textAlign = "left";
@@ -4610,13 +4610,13 @@ async function generateSoulCatPosterDataUrl(posterModel) {
   context.fillStyle = "#FFF5FA";
   fillRoundedRect(context, 126, quoteCardY, posterWidth - 252, 168, 24);
   context.fillStyle = "#7E5A68";
-  context.font = "700 30px 'Noto Serif SC'";
+  context.font = "700 30px 'Source Han Serif SC'";
   context.fillText("一句话", 154, quoteCardY + 54);
-  context.font = "500 28px 'Noto Sans SC'";
+  context.font = "500 28px 'PingFang SC'";
   drawWrappedText(context, resolvedQuote, 154, quoteCardY + 102, posterWidth - 308, 40, 2);
 
   context.fillStyle = "#9F7486";
-  context.font = "700 28px 'Noto Sans SC'";
+  context.font = "700 28px 'PingFang SC'";
   context.fillText("晒出你的灵魂猫咪，吸猫运！", 126, posterHeight - 82);
 
   return canvas.toDataURL("image/png");

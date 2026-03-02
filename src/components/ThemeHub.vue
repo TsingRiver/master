@@ -144,7 +144,7 @@ const resolvedThemeDescriptionMap = computed(() => {
   margin: 10px 0 8px;
   font-size: clamp(28px, 7.6vw, 40px);
   line-height: 1.22;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
   color: #223552;
 }
 
@@ -194,7 +194,7 @@ const resolvedThemeDescriptionMap = computed(() => {
   font-size: 20px;
   line-height: 1.32;
   color: #1f3555;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .hub-card-desc {

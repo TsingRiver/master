@@ -599,16 +599,20 @@ function analyzeEnneagramTypeology({
 function resolveDisplayValue(label, key) {
   const normalizedLabel = String(label ?? "").trim();
   const normalizedKey = String(key ?? "").trim().toUpperCase();
+  // 关键逻辑：卡片展示优先使用“结果标签”而非内部 key，避免出现 dnd-ne / i-growth 等技术编码。
+  const normalizedLabelPrimary = normalizedLabel.includes("·")
+    ? normalizedLabel.split("·")[0].trim()
+    : normalizedLabel;
 
-  if (normalizedLabel.includes("·")) {
-    return normalizedLabel.split("·")[0].trim().slice(0, 8);
+  if (normalizedLabelPrimary) {
+    return normalizedLabelPrimary.slice(0, 8);
   }
 
   if (normalizedKey.length >= 2 && normalizedKey.length <= 8) {
     return normalizedKey;
   }
 
-  return normalizedLabel.slice(0, 8) || "未完成";
+  return normalizedLabelPrimary.slice(0, 8) || "未完成";
 }
 
 /**

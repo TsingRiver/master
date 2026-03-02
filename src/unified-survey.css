@@ -1,6 +1,6 @@
 :root {
-  --survey-font-body: "Noto Sans SC", sans-serif;
-  --survey-font-title: "Noto Serif SC", serif;
+  --survey-font-body: "PingFang SC", sans-serif;
+  --survey-font-title: "Source Han Serif SC", serif;
 }
 
 * {
@@ -102,7 +102,7 @@ body {
   --detail-bg: linear-gradient(180deg, #ffffff, #f6fbf8);
   --highlight-border: #d7ece2;
   --highlight-bg: #eef8f3;
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 .theme-city.theme-city-international {
@@ -164,7 +164,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fffcf6, #f7f2e9);
   --highlight-border: #d8cbb6;
   --highlight-bg: linear-gradient(180deg, #fff8ed, #f3efe6);
-  --title-font: "ZCOOL XiaoWei", "Noto Serif SC", serif;
+  --title-font: "STKaiti", "Source Han Serif SC", serif;
 }
 
 .theme-fortune {
@@ -187,7 +187,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #fff6ea);
   --highlight-border: #f0cfaf;
   --highlight-bg: #fff1e2;
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 .theme-ancient {
@@ -270,7 +270,7 @@ body {
     0 26px 48px rgba(86, 53, 29, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.74);
   --ancient-header-bg-start: rgba(255, 250, 239, 0.86);
   --ancient-header-bg-end: rgba(247, 229, 200, 0.54);
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 .theme-talent {
@@ -293,7 +293,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #f5fbfb);
   --highlight-border: #cceeed;
   --highlight-bg: linear-gradient(180deg, #f3fffd, #fff8ef);
-  --title-font: "ZCOOL XiaoWei", serif;
+  --title-font: "STKaiti", serif;
 }
 
 .theme-benefactor {
@@ -316,7 +316,7 @@ body {
   --detail-bg: linear-gradient(180deg, #ffffff, #f7f8ff);
   --highlight-border: #e4d6f6;
   --highlight-bg: linear-gradient(180deg, #f6f7ff, #fff3f8);
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 /*
@@ -406,7 +406,7 @@ body {
     var(--runtime-highlight-bg-start, #f6f8ff),
     var(--runtime-highlight-bg-end, #fdeff5)
   );
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 .theme-color-2026,
@@ -444,7 +444,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #f8f3ff);
   --highlight-border: #ead6ee;
   --highlight-bg: linear-gradient(180deg, #fff8fb, #f5f0ff);
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 .theme-soul-cat {
@@ -467,7 +467,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #fdf7fa);
   --highlight-border: #efd7e0;
   --highlight-bg: linear-gradient(180deg, #fff9fb, #f7f2ff);
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 .theme-love-brain {
@@ -490,7 +490,7 @@ body {
   --detail-bg: linear-gradient(180deg, #ffffff, #f3f7ff);
   --highlight-border: #d7e0ff;
   --highlight-bg: linear-gradient(180deg, #f2f8ff, #fff0f6);
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 .theme-romance {
@@ -513,7 +513,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #f8f3ff);
   --highlight-border: #ead6ee;
   --highlight-bg: linear-gradient(180deg, #fff8fb, #f6f0ff);
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 /* 关键逻辑：恋爱脑判定卡片文案长度波动较大，固定单列可避免 3 列拥挤导致换行错位。 */
@@ -556,7 +556,7 @@ body {
   --detail-bg: linear-gradient(180deg, #1c1e32, #20223a);
   --highlight-border: #4a4a73;
   --highlight-bg: linear-gradient(180deg, #252847, #2a2643);
-  --title-font: "Noto Serif SC", serif;
+  --title-font: "Source Han Serif SC", serif;
 }
 
 /* 主题背景差异化：
@@ -1319,7 +1319,7 @@ body {
 }
 
 .theme-ancient .survey-cover-title-emphasis {
-  font-family: "Ma Shan Zheng", "ZCOOL XiaoWei", "Noto Serif SC", serif;
+  font-family: "KaiTi", "STKaiti", "Source Han Serif SC", serif;
   font-size: clamp(34px, 10.6vw, 48px);
   line-height: 1.06;
   color: color-mix(in srgb, var(--text-main) 92%, #000000 8%);

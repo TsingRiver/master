@@ -1834,7 +1834,7 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
   });
 
   context.fillStyle = "rgba(255, 245, 250, 0.95)";
-  context.font = "600 26px 'Noto Sans SC'";
+  context.font = "600 26px 'PingFang SC'";
   context.textAlign = "center";
   items.forEach((item, axisIndex) => {
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
@@ -1909,24 +1909,24 @@ async function generateRomancePoster() {
     fillRoundedRect(context, 84, 88, posterWidth - 168, posterHeight - 176, 42);
 
     context.fillStyle = visualStyle.accentSoft;
-    context.font = "600 34px 'Noto Sans SC'";
+    context.font = "600 34px 'PingFang SC'";
     context.textAlign = "left";
     context.fillText("ROMANCE DESTINY TEST", 136, 174);
 
     context.fillStyle = "#3B2B54";
-    context.font = "700 58px 'Noto Serif SC'";
+    context.font = "700 58px 'Source Han Serif SC'";
     context.fillText("浪漫封顶值报告", 136, 258);
 
     context.fillStyle = "#5C4B78";
-    context.font = "500 34px 'Noto Sans SC'";
+    context.font = "500 34px 'PingFang SC'";
     context.fillText("你的浪漫指数", 136, 324);
 
     context.fillStyle = visualStyle.accent;
-    context.font = "700 124px 'Noto Serif SC'";
+    context.font = "700 124px 'Source Han Serif SC'";
     context.fillText(`${posterModel.romanceIndex ?? 0}%`, 136, 448);
 
     context.fillStyle = "#3F335E";
-    context.font = "700 50px 'Noto Serif SC'";
+    context.font = "700 50px 'Source Han Serif SC'";
     context.fillText(String(posterModel.title ?? ""), 136, 526);
 
     drawRadarOnPoster(
@@ -1938,7 +1938,7 @@ async function generateRomancePoster() {
     );
 
     context.fillStyle = "#574870";
-    context.font = "500 30px 'Noto Sans SC'";
+    context.font = "500 30px 'PingFang SC'";
     const quoteBottomY = drawWrappedText(
       context,
       String(posterModel.quote ?? ""),
@@ -1955,7 +1955,7 @@ async function generateRomancePoster() {
     const ctaBaseY = quoteBottomY + 86;
 
     context.fillStyle = "#6B5A86";
-    context.font = "500 28px 'Noto Sans SC'";
+    context.font = "500 28px 'PingFang SC'";
     context.fillText(
       "长按保存图片，分享你的浪漫封顶值",
       136,
@@ -1965,7 +1965,7 @@ async function generateRomancePoster() {
     let easterEggBottomY = ctaBaseY;
     if (easterEggText) {
       context.fillStyle = "#7C6D9C";
-      context.font = "500 24px 'Noto Sans SC'";
+      context.font = "500 24px 'PingFang SC'";
       easterEggBottomY = drawWrappedText(
         context,
         easterEggText,
@@ -1979,7 +1979,7 @@ async function generateRomancePoster() {
 
     const generatedTimeY = Math.max(posterHeight - 156, easterEggBottomY + 58);
     context.fillStyle = "rgba(88, 71, 118, 0.74)";
-    context.font = "500 24px 'Noto Sans SC'";
+    context.font = "500 24px 'PingFang SC'";
     context.fillText(
       `生成时间 ${new Date().toLocaleString("zh-CN", { hour12: false })}`,
       136,
@@ -2117,7 +2117,7 @@ onBeforeUnmount(() => {
     radial-gradient(circle at 12% 10%, rgba(255, 195, 220, 0.42), transparent 44%),
     radial-gradient(circle at 86% 22%, rgba(190, 191, 255, 0.38), transparent 43%),
     linear-gradient(155deg, #fff7fa, #f8f2ff 45%, #eef5ff);
-  font-family: "Noto Sans SC", "PingFang SC", sans-serif;
+  font-family: "PingFang SC", sans-serif;
 }
 
 .romancex-grid-noise {
@@ -2212,7 +2212,7 @@ onBeforeUnmount(() => {
   margin: 9px 0 8px;
   font-size: clamp(29px, 8vw, 42px);
   line-height: 1.2;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
   color: #3b2757;
 }
 
@@ -2258,7 +2258,7 @@ onBeforeUnmount(() => {
   font-size: clamp(22px, 6vw, 30px);
   line-height: 1.35;
   color: #3b2856;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .romancex-cover-intro {
@@ -2373,7 +2373,7 @@ onBeforeUnmount(() => {
   font-size: clamp(21px, 5.6vw, 29px);
   line-height: 1.34;
   color: #3d2958;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .romancex-question-desc {
@@ -2494,7 +2494,7 @@ onBeforeUnmount(() => {
   font-size: clamp(34px, 10.2vw, 50px);
   line-height: 1.1;
   color: #3a2856;
-  font-family: "Noto Serif SC", serif;
+  font-family: "Source Han Serif SC", serif;
 }
 
 .romancex-main-score {

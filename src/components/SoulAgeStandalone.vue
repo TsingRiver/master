@@ -999,12 +999,12 @@ async function generatePosterDataUrl() {
   fillRoundedRect(context, 70, 70, posterWidth - 140, posterHeight - 140, 42);
 
   context.fillStyle = "#5A4B3E";
-  context.font = "700 58px 'Noto Serif SC', serif";
+  context.font = "700 58px 'Source Han Serif SC', serif";
   context.textAlign = "left";
   context.fillText("你的灵魂，藏着几岁的自己？", 120, 200);
 
   context.fillStyle = "#C19A6B";
-  context.font = "700 176px 'Noto Serif SC', serif";
+  context.font = "700 176px 'Source Han Serif SC', serif";
   context.fillText(String(resultData.soulAge), 120, 408);
 
   context.fillStyle = "#5A4B3E";
@@ -1027,7 +1027,7 @@ async function generatePosterDataUrl() {
   );
 
   context.fillStyle = "#5A4B3E";
-  context.font = "700 44px 'Noto Serif SC', serif";
+  context.font = "700 44px 'Source Han Serif SC', serif";
   context.fillText("核心关键词", 120, 1120);
 
   context.font = "600 38px 'PingFang SC', sans-serif";
@@ -1245,7 +1245,7 @@ onBeforeUnmount(() => {
 
 .soul-cover-title {
   margin: 18px 0 10px;
-  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: "Source Han Serif SC", "Songti SC", serif;
   font-size: clamp(28px, 5.1vw, 36px);
   line-height: 1.35;
   color: var(--soul-text-main);
@@ -1381,7 +1381,7 @@ onBeforeUnmount(() => {
   font-size: clamp(18px, 3.2vw, 20px);
   line-height: 1.5;
   text-align: center;
-  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: "Source Han Serif SC", "Songti SC", serif;
 }
 
 .soul-option-list {
@@ -1484,7 +1484,7 @@ onBeforeUnmount(() => {
   font-size: clamp(48px, 8vw, 60px);
   font-weight: 800;
   text-shadow: 0 0 10px rgba(193, 154, 107, 0.3);
-  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: "Source Han Serif SC", "Songti SC", serif;
 }
 
 .soul-result-age-tag {
@@ -1531,7 +1531,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 18px;
   color: var(--soul-text-main);
-  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  font-family: "Source Han Serif SC", "Songti SC", serif;
   display: flex;
   align-items: center;
   justify-content: space-between;

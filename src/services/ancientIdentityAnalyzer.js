@@ -1077,15 +1077,15 @@ function buildIdentityArtworkDataUrl(identityItem, lineLabel) {
       <rect x="28" y="24" width="1184" height="712" rx="34" fill="url(#glow)"/>
       <rect x="52" y="48" width="1136" height="664" rx="26" stroke="${styleTokens.lineColor}" stroke-opacity="0.58" stroke-width="2.4" stroke-dasharray="9 8"/>
 
-      <text x="110" y="164" fill="${styleTokens.lineColor}" fill-opacity="0.9" font-size="42" font-family="Noto Serif SC" letter-spacing="5">${safeLineLabel} · 终极身份</text>
-      <text x="110" y="286" fill="white" font-size="98" font-weight="700" font-family="Noto Serif SC">${safeIdentityName}</text>
-      <text x="110" y="372" fill="${styleTokens.lineColor}" font-size="44" font-family="Noto Sans SC">${safeCoreTag}</text>
+      <text x="110" y="164" fill="${styleTokens.lineColor}" fill-opacity="0.9" font-size="42" font-family="Source Han Serif SC" letter-spacing="5">${safeLineLabel} · 终极身份</text>
+      <text x="110" y="286" fill="white" font-size="98" font-weight="700" font-family="Source Han Serif SC">${safeIdentityName}</text>
+      <text x="110" y="372" fill="${styleTokens.lineColor}" font-size="44" font-family="PingFang SC">${safeCoreTag}</text>
 
       <circle cx="1006" cy="548" r="118" fill="rgba(255,255,255,0.08)"/>
       <circle cx="1006" cy="548" r="118" stroke="${styleTokens.lineColor}" stroke-opacity="0.42" stroke-width="2"/>
-      <text x="960" y="574" fill="${styleTokens.lineColor}" font-size="112" font-family="Noto Serif SC">${safeGlyph}</text>
+      <text x="960" y="574" fill="${styleTokens.lineColor}" font-size="112" font-family="Source Han Serif SC">${safeGlyph}</text>
 
-      <text x="110" y="622" fill="rgba(255,255,255,0.84)" font-size="34" font-family="Noto Sans SC">古风江湖人格画像 · 可保存分享</text>
+      <text x="110" y="622" fill="rgba(255,255,255,0.84)" font-size="34" font-family="PingFang SC">古风江湖人格画像 · 可保存分享</text>
     </svg>
   `;
 
