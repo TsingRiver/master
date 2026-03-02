@@ -3897,7 +3897,7 @@ async function generateLoveAttachmentPosterDataUrl(posterModel) {
   context.font = "700 32px 'PingFang SC'";
   context.fillText("你的浪漫指数", leftX, 305);
 
-  context.fillStyle = "#FFCBE2"; // 浅粉红大字
+  context.fillStyle = "#E88BAE"; // 珊瑚粉紫，比原来的浅粉更鲜明
   context.font = "900 130px 'Source Han Serif SC', 'PingFang SC'";
   context.fillText(`${romanceIndexValue}%`, leftX - 10, 440);
 
