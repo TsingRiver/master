@@ -170,9 +170,10 @@ function buildUserPrompt(payload) {
     "请基于答卷输出恋爱依恋结果报告。",
     "必须只输出 JSON，不要输出任何额外说明。",
     "写作约束：",
-    "1. 原生家庭画像必须以“家庭成员与互动模式”为主体（如父母/照料者/家人）。",
-    "2. 不要把原生家庭画像写成纯“你如何如何”的自我感受总结。",
-    "3. familyPortraitPoints 至少 2 条要明确出现家庭角色或家庭互动场景。",
+    "1. loveBaseColor 必须是 2 句话，讲清这个人是什么类型的恋人，要生动有画面感。",
+    "2. bestMatch 和 avoidType 各 1 句，点到为止不用展开。",
+    "3. loveAdvice 只 1 句，要戳心但不长。",
+    "4. radarScores 每项 0-10 分整数，允许出现 0-2 的低分；若不确定可不填。",
     "字段规范：",
     JSON.stringify(
       {
@@ -185,14 +186,18 @@ function buildUserPrompt(payload) {
           { key: "avoidant", score: 0 },
           { key: "fearful", score: 0 },
         ],
-        familyPortraitPoints: ["画像点1", "画像点2", "画像点3", "画像点4"],
-        whyPatternPoints: ["机制点1", "机制点2", "机制点3", "机制点4"],
-        familyPortrait: "可选补充长文，120字以内",
-        whyPattern: "可选补充长文，120字以内",
-        insight: "综合说明，180字以内",
-        strengths: ["优势1", "优势2", "优势3", "优势4", "优势5"],
-        risks: ["风险1", "风险2", "风险3", "风险4", "风险5"],
-        actions: ["建议1", "建议2", "建议3", "建议4", "建议5"],
+        insight: "综合说明，100字以内",
+        loveBaseColor: "你的恋爱底色，2句话，60字以内",
+        bestMatch: "最适合你的恋人类型，1句话，30字以内",
+        avoidType: "千万别碰的类型，1句话，30字以内",
+        loveAdvice: "一句恋爱忠告，20字以内",
+        radarScores: {
+          initiative: "恋爱主动度0-10",
+          charm: "主动魅力0-10",
+          attachment: "依恋指数0-10",
+          emotionTension: "情绪张力0-10",
+          exclusivePreference: "专属偏爱0-10",
+        },
       },
       null,
       2,
@@ -253,10 +258,42 @@ function normalizeDistributionPercent(distributionList) {
 }
 
 /**
+ * 限制雷达分值到 [0, 10]。
+ * @param {unknown} val 原始值。
+ * @returns {number} 合法分值。
+ */
+function clampRadarScore(val) {
+  const num = Math.round(Number(val) || 0);
+  return Math.max(0, Math.min(10, num));
+}
+
+/**
+ * 归一化雷达分值对象。
+ * 关键逻辑：不做人为“高光保底”，保留低分区间用于真实反差表达。
+ * @param {unknown} raw AI 输出的 radarScores。
+ * @param {object} fallbackScores 兜底分值。
+ * @returns {{ initiative: number, charm: number, attachment: number, emotionTension: number, exclusivePreference: number }} 归一化分值。
+ */
+function normalizeRadarScores(raw, fallbackScores) {
+  const keys = ["initiative", "charm", "attachment", "emotionTension", "exclusivePreference"];
+  const source = raw && typeof raw === "object" ? raw : {};
+  const result = {};
+
+  keys.forEach((key) => {
+    const aiVal = Number(source[key]);
+    result[key] = Number.isFinite(aiVal) && aiVal >= 0 && aiVal <= 10
+      ? clampRadarScore(aiVal)
+      : (fallbackScores[key] ?? 5);
+  });
+
+  return result;
+}
+
+/**
  * 标准化 AI 返回结果。
  * @param {object|null} aiData AI 输出。
  * @param {object} payload 请求负载。
- * @returns {{ mainType: object, oneLineSummary: string, tags: Array<string>, distribution: Array<object>, familyPortrait: string, whyPattern: string, familyPortraitPoints: Array<string>, whyPatternPoints: Array<string>, insight: string, strengths: Array<string>, risks: Array<string>, actions: Array<string> }} 标准化结果。
+ * @returns {object} 标准化结果。
  */
 function normalizeAiResult(aiData, payload) {
   const localDistribution = Array.isArray(payload.localDistribution)
@@ -279,62 +316,18 @@ function normalizeAiResult(aiData, payload) {
     oneLineSummary: fallbackTypeEntry?.summary ?? "你的依恋模式具有可调整空间，关系质量可以通过练习持续优化。",
     tags: fallbackTypeEntry?.tags ?? ["关系修复", "情绪觉察", "边界沟通"],
     distribution: localDistribution,
-    familyPortrait:
-      fallbackTypeEntry?.familyPortrait ??
-      "你的原生家庭中，至少有一位关键照料者在情绪回应上形成了稳定脚本：可能是可接近、也可能是缺席或波动。这种家庭互动模式会影响你在亲密关系里的安全感建立方式。",
-    whyPattern:
-      fallbackTypeEntry?.whyPattern ??
-      "当关系触发不确定感时，你会使用熟悉的保护策略。这些策略曾经帮助过你，但在当前关系中可能需要升级。",
-    familyPortraitPoints:
-      fallbackTypeEntry?.familyPortraitPoints ??
-      splitTextToPoints(
-        fallbackTypeEntry?.familyPortrait,
-        [
-          "家里至少有一位关键照料者的回应方式，塑造了你对亲密的初始预期。",
-          "家庭如何处理冲突与情绪，会直接影响你后来表达需求的方式。",
-          "如果家庭里常见冷处理或失联，你会更快启动关系警觉与自保。",
-          "当家庭给过稳定承接，你更容易形成“冲突可修复”的关系信念。",
-        ],
-        5,
-      ),
-    whyPatternPoints:
-      fallbackTypeEntry?.whyPatternPoints ??
-      splitTextToPoints(
-        fallbackTypeEntry?.whyPattern,
-        [
-          "关系触发点会激活你最熟悉的保护机制。",
-          "你的情绪反应速度往往快于理性判断速度。",
-          "当焦虑上升时，旧模式会被自动调用。",
-          "通过新沟通动作重复练习，模式可以被更新。",
-        ],
-        5,
-      ),
-    insight:
-      "结果不是给你贴标签，而是帮助你理解自己的触发点与修复路径，让关系更稳定。",
-    strengths:
-      fallbackTypeEntry?.strengths ?? [
-        "有关系投入意愿",
-        "对关系变化有感知",
-        "具备调整可能性",
-        "对亲密议题有自我反思能力",
-        "愿意为关系质量投入行动",
-      ],
-    risks:
-      fallbackTypeEntry?.risks ?? [
-        "高压时容易回到旧模式",
-        "未表达需求会累积误解",
-        "关系触发点管理不足",
-        "在情绪高峰做终局判断",
-        "修复动作频率不足",
-      ],
-    actions:
-      fallbackTypeEntry?.actions ?? [
-        "先表达事实再表达情绪",
-        "把需求说具体",
-        "建立固定修复节奏",
-        "给冲突设置回聊时间点",
-        "每周做一次关系复盘",
-      ],
+    insight: "结果不是给你贴标签，而是帮助你理解自己的触发点与修复路径，让关系更稳定。",
+    loveBaseColor: payload.localLoveBaseColor ?? "你是一个有独特恋爱节奏的人。你值得被用对的方式爱着。",
+    bestMatch: payload.localBestMatch ?? "能理解你节奏、不强迫改变的「同频共振型」。",
+    avoidType: payload.localAvoidType ?? "完全忽视你情绪、只关注自己节奏的「情感盲区型」。",
+    loveAdvice: payload.localLoveAdvice ?? "先爱好自己，才能好好爱人。",
+    radarScores: payload.localRadarScores ?? {
+      initiative: 5,
+      charm: 5,
+      attachment: 5,
+      emotionTension: 5,
+      exclusivePreference: 5,
+    },
   };
 
   if (!aiData || typeof aiData !== "object") {
@@ -380,52 +373,29 @@ function normalizeAiResult(aiData, payload) {
         : fallbackTypeInfo?.summary ?? fallbackResult.oneLineSummary,
     tags: normalizeTags(aiData.tags, fallbackTypeInfo?.tags ?? fallbackResult.tags),
     distribution: normalizedDistribution,
-    familyPortrait: normalizeFamilyPortraitText(
-      aiData.familyPortrait,
-      fallbackTypeInfo?.familyPortrait ?? fallbackResult.familyPortrait,
-    ),
-    whyPattern:
-      typeof aiData.whyPattern === "string" && aiData.whyPattern.trim()
-        ? aiData.whyPattern.trim()
-        : fallbackTypeInfo?.whyPattern ?? fallbackResult.whyPattern,
-    familyPortraitPoints: normalizeFamilyPortraitPoints(
-      aiData.familyPortraitPoints,
-      fallbackTypeInfo?.familyPortraitPoints ??
-        splitTextToPoints(
-          aiData.familyPortrait,
-          fallbackResult.familyPortraitPoints,
-          5,
-        ),
-      5,
-    ),
-    whyPatternPoints: normalizeStringList(
-      aiData.whyPatternPoints,
-      fallbackTypeInfo?.whyPatternPoints ??
-        splitTextToPoints(
-          aiData.whyPattern,
-          fallbackResult.whyPatternPoints,
-          5,
-        ),
-      5,
-    ),
     insight:
       typeof aiData.insight === "string" && aiData.insight.trim()
         ? aiData.insight.trim()
         : fallbackResult.insight,
-    strengths: normalizeStringList(
-      aiData.strengths,
-      fallbackTypeInfo?.strengths ?? fallbackResult.strengths,
-      5,
-    ),
-    risks: normalizeStringList(
-      aiData.risks,
-      fallbackTypeInfo?.risks ?? fallbackResult.risks,
-      5,
-    ),
-    actions: normalizeStringList(
-      aiData.actions,
-      fallbackTypeInfo?.actions ?? fallbackResult.actions,
-      5,
+    loveBaseColor:
+      typeof aiData.loveBaseColor === "string" && aiData.loveBaseColor.trim()
+        ? aiData.loveBaseColor.trim()
+        : fallbackResult.loveBaseColor,
+    bestMatch:
+      typeof aiData.bestMatch === "string" && aiData.bestMatch.trim()
+        ? aiData.bestMatch.trim()
+        : fallbackResult.bestMatch,
+    avoidType:
+      typeof aiData.avoidType === "string" && aiData.avoidType.trim()
+        ? aiData.avoidType.trim()
+        : fallbackResult.avoidType,
+    loveAdvice:
+      typeof aiData.loveAdvice === "string" && aiData.loveAdvice.trim()
+        ? aiData.loveAdvice.trim()
+        : fallbackResult.loveAdvice,
+    radarScores: normalizeRadarScores(
+      aiData.radarScores,
+      fallbackResult.radarScores,
     ),
   };
 }

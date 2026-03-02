@@ -386,15 +386,20 @@
             </div>
           </div>
 
-          <div class="survey-source-wrap">
+          <!-- <div class="survey-source-wrap">
             <van-tag :color="sourceTagStyle.color" :text-color="sourceTagStyle.textColor" round>
               {{ sourceTagStyle.label }}
             </van-tag>
-          </div>
+          </div> -->
 
           <p class="survey-result-prefix">{{ unifiedResult.prefixLabel }}</p>
           <div class="survey-main-title-row">
-            <h2 class="survey-main-title">{{ unifiedResult.main.name }}</h2>
+            <h2 class="survey-main-title">
+              <span class="survey-main-title-primary">{{ resolvedMainPrimaryTitle }}</span>
+              <span v-if="resolvedMainSecondaryTitle" class="survey-main-title-secondary">
+                {{ resolvedMainSecondaryTitle }}
+              </span>
+            </h2>
             <span
               v-if="isFiveElementsCityTheme && fiveElementResultIconKey"
               class="survey-five-result-icon"
@@ -608,12 +613,52 @@
                   :style="{ background: item.color || activeCheckedColor }"
                 ></span>
                 <span class="survey-radar-name">{{ item.label || item.name }}</span>
-                <span class="survey-radar-score">{{ item.score }}%</span>
+                <span class="survey-radar-score">{{ item.score }}{{ radarScoreSuffix }}</span>
               </li>
             </ul>
           </div>
 
-          <div class="survey-top-wrap">
+          <!-- 恋爱底色模块 -->
+          <div
+            v-if="unifiedResult.loveBaseColor"
+            class="survey-love-section survey-love-basecolor"
+          >
+            <h3>💗 你的恋爱底色</h3>
+            <p class="survey-love-basecolor-text">
+              {{ unifiedResult.loveBaseColor }}
+            </p>
+          </div>
+
+          <!-- 最适配 & 避雷模块 -->
+          <div
+            v-if="unifiedResult.matchAndAvoid"
+            class="survey-love-section survey-love-match-avoid"
+          >
+            <h3>🎯 最适配 & 避雷</h3>
+            <div class="survey-love-match-avoid-grid">
+              <div class="survey-love-match-item survey-love-match-best">
+                <span class="survey-love-match-label">✅ 最适合你的恋人</span>
+                <p>{{ unifiedResult.matchAndAvoid.bestMatch }}</p>
+              </div>
+              <div class="survey-love-match-item survey-love-match-bad">
+                <span class="survey-love-match-label">🚫 千万别碰的类型</span>
+                <p>{{ unifiedResult.matchAndAvoid.avoidType }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 一句恋爱忠告 -->
+          <div
+            v-if="unifiedResult.loveAdvice"
+            class="survey-love-section survey-love-advice"
+          >
+            <h3>💌 一句恋爱忠告</h3>
+            <p class="survey-love-advice-text">
+              「{{ unifiedResult.loveAdvice }}」
+            </p>
+          </div>
+
+          <div v-if="unifiedResult.topThree?.length" class="survey-top-wrap">
             <h3>{{ unifiedResult.topThreeTitle }}</h3>
             <ul class="survey-top-list">
               <li
@@ -2304,6 +2349,28 @@ const resolvedMainScoreSuffix = computed(
 );
 
 /**
+ * 主结果主标题文案。
+ * 关键逻辑：优先使用结构化字段，未配置时回退到原始名称，保证历史主题兼容。
+ * 复杂度评估：O(L)，L 为标题文本长度。
+ */
+const resolvedMainPrimaryTitle = computed(() => {
+  const structuredName = String(unifiedResult.value?.main?.name ?? "").trim();
+  if (structuredName) {
+    return structuredName;
+  }
+  return "结果生成中";
+});
+
+/**
+ * 主结果副标题文案（用于次类型等信息）。
+ * 关键逻辑：仅在主题显式提供 secondaryName 时渲染，避免对其它主题产生视觉噪音。
+ * 复杂度评估：O(L)，L 为副标题文本长度。
+ */
+const resolvedMainSecondaryTitle = computed(() =>
+  String(unifiedResult.value?.main?.secondaryName ?? "").trim(),
+);
+
+/**
  * 是否为城市主题。
  */
 const isCityTheme = computed(() => props.themeConfig.key === "city");
@@ -2504,6 +2571,11 @@ const posterAspectRatio = computed(() => {
     return "1 / 2";
   }
 
+  if (renderMode === "html-love-attachment") {
+    // 关键逻辑：恋爱心理海报固定 9:16，预览占位必须同比例避免裁切。
+    return "9 / 16";
+  }
+
   if (renderMode === "canvas-soul-cat") {
     // 关键逻辑：灵魂猫咪分享海报固定 3:4，贴合小红书常用竖版分享比例。
     return "3 / 4";
@@ -2642,6 +2714,20 @@ const radarChartViewBox = computed(
   () => `0 0 ${RADAR_VIEWBOX_SIZE} ${RADAR_VIEWBOX_SIZE}`,
 );
 const radarCenterPoint = computed(() => RADAR_CENTER_POINT);
+
+/**
+ * 雷达图满分值（默认 100，恋爱雷达为 10）。
+ */
+const radarMaxScore = computed(
+  () => Number(unifiedResult.value?.radarChart?.maxScore) || 100,
+);
+
+/**
+ * 雷达图分值后缀（满分 10 显示 "/10"，满分 100 显示 "%"）。
+ */
+const radarScoreSuffix = computed(
+  () => radarMaxScore.value <= 10 ? '/10' : '%',
+);
 
 /**
  * 海报生成开关：
@@ -3086,7 +3172,9 @@ function normalizeScoreRatio(score, options = {}) {
     return 0;
   }
 
-  const baseRatio = Math.max(0, Math.min(1, safeScore / 100));
+  // 支持 maxScore 动态满分（默认 100，恋爱雷达为 10）
+  const maxScoreValue = Number(options?.maxScore) || 100;
+  const baseRatio = Math.max(0, Math.min(1, safeScore / maxScoreValue));
   const isAdaptiveEnabled = Boolean(options?.enableAdaptive);
   if (!isAdaptiveEnabled) {
     return baseRatio;
@@ -3161,6 +3249,7 @@ const radarAxisPoints = computed(() => {
       normalizeScoreRatio(item.score, {
         enableAdaptive: isAdaptiveRadarEnabled,
         scoreList,
+        maxScore: radarMaxScore.value,
       }),
     );
     const labelPoint = resolveRadarPoint(angleRadians, 1.2);
@@ -3723,8 +3812,225 @@ async function handleDestinyGateBeforeSubmit() {
       return false;
     }
   }
-
   return true;
+}
+
+/**
+ * 解析恋爱海报的“浪漫指数”百分比。
+ * 关键逻辑：优先使用结构化 score；若缺失则回退雷达均值（10 分制转百分制）。
+ * 复杂度评估：O(N)，N 为雷达维度数（当前固定 5）。
+ * @param {object} posterModel 海报模型。
+ * @returns {number} 百分比整数（0~100）。
+ */
+function resolveLoveAttachmentPosterRomanceIndex(posterModel) {
+  const directScore = Number(posterModel?.romanceIndexScore);
+  if (Number.isFinite(directScore)) {
+    return Math.max(0, Math.min(100, Math.round(directScore)));
+  }
+
+  const radarItems = Array.isArray(posterModel?.radarItems)
+    ? posterModel.radarItems
+    : [];
+  const scoreList = radarItems
+    .map((item) => Number(item?.score ?? 0))
+    .filter((scoreItem) => Number.isFinite(scoreItem));
+  if (scoreList.length === 0) {
+    return 0;
+  }
+  const averageScore = scoreList.reduce((sum, scoreItem) => sum + scoreItem, 0) / scoreList.length;
+  return Math.max(0, Math.min(100, Math.round(averageScore * 10)));
+}
+
+/**
+ * 生成恋爱心理海报（Canvas 渲染）。
+ * 主视觉为参考图的白紫调设计，清晰显示雷达图，不重叠。
+ * 内容包含：英文标题 + 中文标题 + 浪漫指数 + 主/次级类型 + 纯雷达图 + 忠告 + 面板底部。
+ * @param {object} posterModel 海报模型。
+ * @returns {Promise<string>} 图片 DataURL。
+ */
+async function generateLoveAttachmentPosterDataUrl(posterModel) {
+  const posterWidth = 1080;
+  const posterHeight = 1920; // 改回 9:16 长图比例
+  const canvas = document.createElement("canvas");
+  canvas.width = posterWidth;
+  canvas.height = posterHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("无法初始化画布");
+  }
+
+  const englishHeading = String(posterModel?.englishTitle ?? "ROMANCE DNA TEST").trim() || "ROMANCE DNA TEST";
+  const chineseHeading = String(posterModel?.chineseTitle ?? "《恋爱心理画像》").trim() || "《你认为最浪漫的事》";
+  const primaryType = String(posterModel?.title ?? "").trim() || "恋爱人格待解锁";
+  const secondaryType = String(posterModel?.secondaryTitle ?? "").trim();
+  const loveAdvice = String(posterModel?.loveAdvice ?? "").trim() || "先表达需求，再表达情绪，爱会更稳。";
+  const romanceIndexValue = resolveLoveAttachmentPosterRomanceIndex(posterModel);
+  const safeWatermark = String(posterModel?.watermark ?? "@湫的答案馆").trim() || "@湫的答案馆";
+
+  // 1. 背景渐变，与参考图一致的神秘淡淡紫灰，稍微加深
+  const backgroundGradient = context.createLinearGradient(0, 0, 0, posterHeight);
+  backgroundGradient.addColorStop(0, "#766591"); // 顶部深一点的紫灰
+  backgroundGradient.addColorStop(0.5, "#82719D"); 
+  backgroundGradient.addColorStop(1, "#9483B1");
+  context.fillStyle = backgroundGradient;
+  context.fillRect(0, 0, posterWidth, posterHeight);
+
+  // 2. 白色内卡背景
+  context.fillStyle = "#F8F6F8";
+  fillRoundedRect(context, 84, 84, posterWidth - 168, posterHeight - 168, 40);
+
+  const leftX = 136;
+
+  // 3. 顶部文本排版
+  context.textAlign = "left";
+  
+  context.fillStyle = "#D6BdfD"; // 浅紫英文
+  context.font = "700 30px 'PingFang SC'";
+  context.fillText(englishHeading, leftX, 155);
+
+  context.fillStyle = "#463E56"; // 深紫近黑标题
+  context.font = "900 58px 'Source Han Serif SC', 'PingFang SC'";
+  context.fillText(chineseHeading, leftX, 240);
+
+  context.fillStyle = "#5E5669"; // 灰紫
+  context.font = "700 32px 'PingFang SC'";
+  context.fillText("你的浪漫指数", leftX, 305);
+
+  context.fillStyle = "#FFCBE2"; // 浅粉红大字
+  context.font = "900 130px 'Source Han Serif SC', 'PingFang SC'";
+  context.fillText(`${romanceIndexValue}%`, leftX - 10, 440);
+
+  // 主次修饰：例如“回避依恋型·冷暖切换型”
+  context.fillStyle = "#463E56"; // 深紫
+  context.font = "900 46px 'PingFang SC'";
+  let combinedType = primaryType;
+  if (secondaryType) {
+    combinedType = `${primaryType} · ${secondaryType}`;
+  }
+  // 如果太长可以换行，这里简单截断并使用自带换行绘制
+  drawWrappedText(context, combinedType, leftX, 520, posterWidth - 272, 60, 2);
+
+  // 4. 中间核心视觉：纯雷达图
+  const radarCenterY = 980;
+  const radarRadius = 220; // 缩小雷达图
+  
+  // 画出带背景色及清晰网格线的雷达图底座
+  drawRadarOnPoster(
+    context,
+    posterModel?.radarItems ?? [],
+    posterWidth / 2,
+    radarCenterY,
+    radarRadius,
+    10,
+    {
+      gridStroke: "rgba(140, 130, 160, 0.7)", // 加深网格线颜色和透明度
+      axisStroke: "rgba(140, 130, 160, 0.65)", // 轴线也加深
+      polygonFill: "rgba(235, 230, 240, 0.5)", // 给雷达整体底座增加浅紫色填充框以凸显区域
+      polygonStroke: "transparent",
+      pointFallbackFill: "#FFB2CC",
+      pointRadius: 8,
+      labelFill: "transparent", // 隐藏原有绘制组件的文字，下面自己重写以控制颜色距离字号
+      labelFont: "700 32px 'PingFang SC'", // 下面覆盖时用大一号的
+      labelRadiusRatio: 1.4, // 拉大文字到雷达图的间距
+      gridLineWidth: 3,
+      polygonLineWidth: 0,
+    }
+  );
+
+  // （覆盖重写）绘制数据多边形、端点和文本标签
+  const items = Array.isArray(posterModel?.radarItems) ? posterModel.radarItems : [];
+  const axisCount = items.length;
+  if (axisCount >= 3) {
+    // 强制重绘用户的得分多边形
+    context.beginPath();
+    context.fillStyle = "rgba(255, 120, 160, 0.25)";
+    context.strokeStyle = "rgba(255, 120, 160, 0.9)";
+    context.lineWidth = 3;
+    const scoreList = items
+      .map((item) => Number(item?.score ?? 0))
+      .filter((scoreValue) => Number.isFinite(scoreValue) && scoreValue >= 0);
+      
+    items.forEach((item, axisIndex) => {
+        const ratio = normalizeScoreRatio(item.score, {
+          enableAdaptive: isFiveElementsCityTheme.value,
+          scoreList,
+          maxScore: 10,
+        });
+        const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
+        const pointX = posterWidth / 2 + Math.cos(angleRadians) * radarRadius * ratio;
+        const pointY = radarCenterY + Math.sin(angleRadians) * radarRadius * ratio;
+        
+        if (axisIndex === 0) {
+          context.moveTo(pointX, pointY);
+        } else {
+          context.lineTo(pointX, pointY);
+        }
+    });
+    context.closePath();
+    context.fill();
+    context.stroke();
+
+    items.forEach((item, axisIndex) => {
+        const ratio = normalizeScoreRatio(item.score, {
+          enableAdaptive: isFiveElementsCityTheme.value,
+          scoreList,
+          maxScore: 10,
+        });
+        const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
+        const pointX = posterWidth / 2 + Math.cos(angleRadians) * radarRadius * ratio;
+        const pointY = radarCenterY + Math.sin(angleRadians) * radarRadius * ratio;
+        context.beginPath();
+        context.arc(pointX, pointY, 8, 0, Math.PI * 2);
+        context.fillStyle = item.color || "#FFB2CC";
+        context.fill();
+    });
+
+    // 绘制标签文本：调大字号，拉大距离（1.4 倍半径），使用深色防止白底看不清
+    context.textAlign = "center";
+    context.fillStyle = "#73648E"; // 稍深一点的紫灰，白底上辨识度好
+    context.font = "700 32px 'PingFang SC'";
+    items.forEach((item, axisIndex) => {
+        const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
+        const labelX = posterWidth / 2 + Math.cos(angleRadians) * radarRadius * 1.4;
+        const labelY = radarCenterY + Math.sin(angleRadians) * radarRadius * 1.4;
+        // 把原来白色的字用底色擦掉，或者直接画在更外侧
+        context.fillText(String(item.label || item.name || ""), labelX, labelY);
+    });
+  }
+
+  // 5. 下部信息：恋爱忠告 和 分享文案
+  let bottomY = 1380;
+  context.textAlign = "left";
+  
+  if (loveAdvice) {
+    context.fillStyle = "#5E5669";
+    context.font = "700 32px 'PingFang SC'";
+    context.fillText("一句话忠告", leftX, bottomY);
+    
+    bottomY += 60;
+    context.fillStyle = "#463E56";
+    context.font = "500 28px 'PingFang SC'";
+    bottomY = drawWrappedText(context, `「${loveAdvice}」`, leftX, bottomY, posterWidth - 272, 46, 3);
+  }
+
+  // 补空隙
+  bottomY += 80;
+
+  context.fillStyle = "#5E5669"; // 灰紫
+  context.font = "600 30px 'PingFang SC'";
+  context.fillText("欢迎分享你的浪漫指数～", leftX, bottomY);
+
+  // 6. 底部品牌标识及时间
+  context.fillStyle = "#8E889A"; // 更浅灰紫
+  context.font = "500 30px 'PingFang SC'";
+  context.fillText(
+    `生成时间 ${new Date().toLocaleString("zh-CN", { hour12: false })}  ${safeWatermark}`,
+    leftX,
+    posterHeight - 120,
+  );
+
+  return canvas.toDataURL("image/png");
 }
 
 /**
@@ -3827,17 +4133,34 @@ function fillRoundedRect(context, x, y, width, height, radius) {
 
 /**
  * 绘制海报中的雷达图。
+ * 支持通过第 7 个可选参数 options 覆盖默认的网格线、轴线、多边形、标签等样式。
  * @param {CanvasRenderingContext2D} context Canvas 绘图上下文。
  * @param {Array<object>} radarItems 雷达维度数据。
  * @param {number} centerX 圆心 X。
  * @param {number} centerY 圆心 Y。
  * @param {number} radius 雷达半径。
+ * @param {number} maxScore 最大分值。
+ * @param {object} [options] 可选样式配置对象。
  */
-function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
+function drawRadarOnPoster(context, radarItems, centerX, centerY, radius, maxScore, options) {
   const items = Array.isArray(radarItems) ? radarItems : [];
   if (items.length < 3) {
     return;
   }
+
+  // 解构可选配置，提供合理默认值
+  const opts = options || {};
+  const gridStroke = opts.gridStroke || "rgba(255, 255, 255, 0.28)";
+  const axisStroke = opts.axisStroke || gridStroke;
+  const gridLineWidth = opts.gridLineWidth || 2;
+  const polygonFill = opts.polygonFill || "rgba(255, 228, 242, 0.36)";
+  const polygonStroke = opts.polygonStroke || "rgba(255, 246, 250, 0.95)";
+  const polygonLineWidth = opts.polygonLineWidth ?? 3;
+  const pointRadius = opts.pointRadius || 6;
+  const pointFallbackFill = opts.pointFallbackFill || "#FFDCE9";
+  const labelFill = opts.labelFill || "rgba(255, 245, 250, 0.95)";
+  const labelFont = opts.labelFont || "600 26px 'PingFang SC'";
+  const labelRadiusRatio = opts.labelRadiusRatio || 1.28;
 
   const axisCount = items.length;
   const gridLevels = [0.25, 0.5, 0.75, 1];
@@ -3847,8 +4170,10 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
     .filter((scoreValue) => Number.isFinite(scoreValue) && scoreValue >= 0);
 
   context.save();
-  context.strokeStyle = "rgba(255, 255, 255, 0.28)";
-  context.lineWidth = 2;
+
+  // 绘制网格线（同心多边形）
+  context.strokeStyle = gridStroke;
+  context.lineWidth = gridLineWidth;
 
   gridLevels.forEach((gridLevel) => {
     context.beginPath();
@@ -3866,6 +4191,8 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
     context.stroke();
   });
 
+  // 绘制轴线（从中心到顶点）
+  context.strokeStyle = axisStroke;
   items.forEach((_, axisIndex) => {
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
     const pointX = centerX + Math.cos(angleRadians) * radius;
@@ -3876,11 +4203,13 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
     context.stroke();
   });
 
+  // 绘制得分多边形
   context.beginPath();
   items.forEach((item, axisIndex) => {
     const ratio = normalizeScoreRatio(item.score, {
       enableAdaptive: isAdaptiveRadarEnabled,
       scoreList,
+      maxScore: maxScore || 100,
     });
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
     const pointX = centerX + Math.cos(angleRadians) * radius * ratio;
@@ -3892,33 +4221,38 @@ function drawRadarOnPoster(context, radarItems, centerX, centerY, radius) {
     }
   });
   context.closePath();
-  context.fillStyle = "rgba(255, 228, 242, 0.36)";
-  context.strokeStyle = "rgba(255, 246, 250, 0.95)";
-  context.lineWidth = 3;
+  context.fillStyle = polygonFill;
+  context.strokeStyle = polygonStroke;
+  context.lineWidth = polygonLineWidth;
   context.fill();
-  context.stroke();
+  if (polygonLineWidth > 0) {
+    context.stroke();
+  }
 
+  // 绘制数据端点
   items.forEach((item, axisIndex) => {
     const ratio = normalizeScoreRatio(item.score, {
       enableAdaptive: isAdaptiveRadarEnabled,
       scoreList,
+      maxScore: maxScore || 100,
     });
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
     const pointX = centerX + Math.cos(angleRadians) * radius * ratio;
     const pointY = centerY + Math.sin(angleRadians) * radius * ratio;
     context.beginPath();
-    context.arc(pointX, pointY, 6, 0, Math.PI * 2);
-    context.fillStyle = item.color || "#FFDCE9";
+    context.arc(pointX, pointY, pointRadius, 0, Math.PI * 2);
+    context.fillStyle = item.color || pointFallbackFill;
     context.fill();
   });
 
-  context.fillStyle = "rgba(255, 245, 250, 0.95)";
-  context.font = "600 26px 'PingFang SC'";
+  // 绘制维度标签
+  context.fillStyle = labelFill;
+  context.font = labelFont;
   context.textAlign = "center";
   items.forEach((item, axisIndex) => {
     const angleRadians = -Math.PI / 2 + (Math.PI * 2 * axisIndex) / axisCount;
-    const labelX = centerX + Math.cos(angleRadians) * radius * 1.28;
-    const labelY = centerY + Math.sin(angleRadians) * radius * 1.28;
+    const labelX = centerX + Math.cos(angleRadians) * radius * labelRadiusRatio;
+    const labelY = centerY + Math.sin(angleRadians) * radius * labelRadiusRatio;
     context.fillText(String(item.label || item.name || ""), labelX, labelY);
   });
 
@@ -4649,6 +4983,8 @@ async function generatePosterImage() {
         // 关键逻辑：HTML-to-Image 失败时自动退回 Canvas，保证导图能力稳定可用。
         generatedDataUrl = await generateLoveBrainPosterFallbackDataUrl(posterModel);
       }
+    } else if (renderMode === "html-love-attachment") {
+      generatedDataUrl = await generateLoveAttachmentPosterDataUrl(posterModel);
     } else if (renderMode === "canvas-soul-cat") {
       generatedDataUrl = await generateSoulCatPosterDataUrl(posterModel);
     } else {

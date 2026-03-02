@@ -104,7 +104,7 @@ const SOUL_CAT_COVER_ARTWORK_POOL = Object.freeze(buildSoulCatCoverArtworkPool()
  * @param {string} payload.prefixLabel 主结果前缀文案。
  * @param {string} payload.scoreLabel 分值文案。
  * @param {string} [payload.scoreSuffix="%"] 主结果分值后缀。
- * @param {{ name: string, score: number, tags?: Array<string> }} payload.main 主结果对象。
+ * @param {{ name: string, score: number, tags?: Array<string>, secondaryName?: string }} payload.main 主结果对象。
  * @param {{ url: string, alt: string, caption?: string } | null} [payload.heroArtwork] 主视觉插画（可选）。
  * @param {{ title: string, content: string }} payload.highlightCard 高亮卡片。
  * @param {string} payload.insight 解释文案。
@@ -2037,13 +2037,6 @@ function buildLoveAttachmentDeepPayload(localResult) {
     name: profileItem.name,
     summary: profileItem.summary,
     tags: profileItem.tags,
-    familyPortrait: profileItem.familyPortrait,
-    whyPattern: profileItem.whyPattern,
-    familyPortraitPoints: profileItem.familyPortraitPoints,
-    whyPatternPoints: profileItem.whyPatternPoints,
-    strengths: profileItem.strengths,
-    risks: profileItem.risks,
-    actions: profileItem.actions,
   }));
 
   return {
@@ -2052,6 +2045,12 @@ function buildLoveAttachmentDeepPayload(localResult) {
     localMainType: localResult.topType,
     localSubtypeProfile: localResult.subtypeProfile,
     summaryLines: localResult.summaryLines,
+    // 本地兜底值，供 AI 分析器兜底
+    localLoveBaseColor: localResult.loveBaseColor,
+    localBestMatch: localResult.bestMatch,
+    localAvoidType: localResult.avoidType,
+    localLoveAdvice: localResult.loveAdvice,
+    localRadarScores: localResult.radarScores,
   };
 }
 
@@ -2074,23 +2073,10 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
     buildFallbackAttachmentSubtypeProfile(
       sortedDistribution.length > 0 ? sortedDistribution : localResult.distribution,
     );
-
-  // 关键逻辑：优先使用 AI 返回的结构化要点，缺失时再回退到单段文本，保证展示密度与兼容性。
-  const familyPortraitItems =
-    Array.isArray(deepResult.familyPortraitPoints) &&
-    deepResult.familyPortraitPoints.length > 0
-      ? deepResult.familyPortraitPoints
-      : deepResult.familyPortrait
-        ? [deepResult.familyPortrait]
-        : ["暂无"];
-
-  // 关键逻辑：保持“机制解释”模块与“画像模块”同样的多条目策略，避免结果过于简短。
-  const whyPatternItems =
-    Array.isArray(deepResult.whyPatternPoints) && deepResult.whyPatternPoints.length > 0
-      ? deepResult.whyPatternPoints
-      : deepResult.whyPattern
-        ? [deepResult.whyPattern]
-        : ["暂无"];
+  // 关键逻辑：结果页副标题优先展示“12 个细分次型名”，仅在缺失时回退到次高主类型名。
+  const resolvedSubtypeName = String(
+    subtypeProfile.subtypeName || subtypeProfile.secondaryTypeName || "",
+  ).trim();
 
   // 关键逻辑：把细分亚型标签并入标签区，增强可读性和结果辨识度。
   const mergedTagChips = normalizeLoveTagChips([
@@ -2098,19 +2084,32 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
     ...(deepResult.tags ?? []),
   ]);
 
+  // 关键逻辑：雷达分值强制优先使用本地答卷算法，确保“同答案同结果”且可复现。
+  // AI 分值仅作为兼容兜底，不参与主路径，避免出现“文本模型拉高分”现象。
+  const radarScores = localResult.radarScores ?? deepResult.radarScores ?? {};
+  const radarItems = [
+    { key: "initiative", label: "恋爱主动度", score: radarScores.initiative ?? 5, color: "#FF6B8A" },
+    { key: "charm", label: "主动魅力", score: radarScores.charm ?? 5, color: "#FFB347" },
+    { key: "attachment", label: "依恋指数", score: radarScores.attachment ?? 5, color: "#7EC8E3" },
+    { key: "emotionTension", label: "情绪张力", score: radarScores.emotionTension ?? 5, color: "#9B8EC5" },
+    { key: "exclusivePreference", label: "专属偏爱", score: radarScores.exclusivePreference ?? 5, color: "#82D9A5" },
+  ];
+
   return createUnifiedResult({
     source: "deep",
     prefixLabel: "你的恋爱心理画像",
     scoreLabel: "主类型匹配度",
     main: {
-      name: subtypeProfile.signature,
+      // 关键逻辑：主结果仅展示“主类型”，次类型改为独立字段供 UI 换行渲染。
+      name: subtypeProfile.coreTypeName,
+      secondaryName: resolvedSubtypeName,
       score: mainType.score,
     },
     highlightCard: {
       title: "一句话概述",
       content: deepResult.oneLineSummary,
     },
-    insight: `${subtypeProfile.subtypeBrief} ${deepResult.insight}`.trim(),
+    insight: (deepResult.insight || subtypeProfile.subtypeBrief || '').trim(),
     tagChips: mergedTagChips,
     distributionChart: {
       title: "类型分布",
@@ -2121,40 +2120,39 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
         color: item.color,
       })),
     },
-    typeCard: {
-      title: "恋爱心理卡片",
-      items: [
-        { label: "核心类型", value: subtypeProfile.coreTypeName },
-        { label: "细分亚型", value: subtypeProfile.subtypeName },
-        { label: "次类型", value: subtypeProfile.secondaryTypeName },
-        {
-          label: "倾向强度",
-          value: `${subtypeProfile.intensityLabel}（主次差值 ${subtypeProfile.tendencyGap}%）`,
-        },
-      ],
+    // 恋爱能力雷达图（5 维度，满分 10 分）
+    radarChart: {
+      title: "恋爱能力雷达",
+      items: radarItems,
+      maxScore: 10,
     },
-    topThreeTitle: "Top 3 类型倾向",
-    topThree: sortedDistribution.slice(0, 3).map((item) => ({
-      name: item.name,
-      score: item.score,
-    })),
-    detailSections: [
-      {
-        title: "细分亚型说明",
-        items: [
-          `${subtypeProfile.subtypeName}：${subtypeProfile.subtypeBrief}`,
-          `你的次类型为${subtypeProfile.secondaryTypeName}，说明在部分关系场景会出现复合倾向。`,
-        ],
-      },
-      { title: "原生家庭画像", items: familyPortraitItems },
-      { title: "为什么会这样", items: whyPatternItems },
-      { title: "你的关系优势", items: deepResult.strengths },
-      { title: "高风险触发点", items: deepResult.risks },
-      { title: "关系升级建议", items: deepResult.actions },
-    ],
+    // 恋爱底色（2 句话）
+    loveBaseColor: deepResult.loveBaseColor ?? localResult.loveBaseColor,
+    // 最适配 & 避雷
+    matchAndAvoid: {
+      bestMatch: deepResult.bestMatch ?? localResult.bestMatch,
+      avoidType: deepResult.avoidType ?? localResult.avoidType,
+    },
+    // 一句恋爱忠告
+    loveAdvice: deepResult.loveAdvice ?? localResult.loveAdvice,
+    // 去除旧的 detailSections（细分亚型说明/原生家庭画像/为什么会这样/关系优势/高风险触发点/关系升级建议）
+    detailSections: [],
     summaryTitle: "答卷摘要",
     summaryLines: localResult.summaryLines,
     restartButtonText: "重新测试",
+    // 结果图保存所需数据
+    posterModel: {
+      renderMode: "html-love-attachment",
+      // 关键逻辑：海报主标题与结果页保持一致，展示主类型；细分次型单独作为副标题。
+      title: subtypeProfile.coreTypeName,
+      secondaryTitle: resolvedSubtypeName,
+      tagLine: deepResult.oneLineSummary ?? subtypeProfile.subtypeBrief,
+      radarItems,
+      loveBaseColor: deepResult.loveBaseColor ?? localResult.loveBaseColor,
+      bestMatch: deepResult.bestMatch ?? localResult.bestMatch,
+      loveAdvice: deepResult.loveAdvice ?? localResult.loveAdvice,
+      watermark: "@湫的答案馆",
+    },
   });
 }
 
@@ -2166,42 +2164,39 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
 function buildLoveAttachmentLocalUnifiedResult(localResult) {
   const topType = localResult.topType;
   const topTypeProfile = localResult.profileMap[topType.key] ?? {};
-  const secondaryType = localResult.distribution[1] ?? null;
   const subtypeProfile =
     localResult.subtypeProfile ??
     buildFallbackAttachmentSubtypeProfile(localResult.distribution);
+  // 关键逻辑：结果页副标题优先展示“12 个细分次型名”，仅在缺失时回退到次高主类型名。
+  const resolvedSubtypeName = String(
+    subtypeProfile.subtypeName || subtypeProfile.secondaryTypeName || "",
+  ).trim();
 
-  // 关键逻辑：本地兜底也保持多条目展示，避免在 AI 不可用时信息密度明显下降。
-  const familyPortraitItems =
-    Array.isArray(topTypeProfile.familyPortraitPoints) &&
-    topTypeProfile.familyPortraitPoints.length > 0
-      ? topTypeProfile.familyPortraitPoints
-      : topTypeProfile.familyPortrait
-        ? [topTypeProfile.familyPortrait]
-        : ["暂无"];
-
-  // 关键逻辑：机制说明模块使用与画像模块一致的兜底策略，保证展示结构稳定。
-  const whyPatternItems =
-    Array.isArray(topTypeProfile.whyPatternPoints) &&
-    topTypeProfile.whyPatternPoints.length > 0
-      ? topTypeProfile.whyPatternPoints
-      : topTypeProfile.whyPattern
-        ? [topTypeProfile.whyPattern]
-        : ["暂无"];
+  // 恋爱能力雷达：使用本地推导分值
+  const radarScores = localResult.radarScores ?? {};
+  const radarItems = [
+    { key: "initiative", label: "恋爱主动度", score: radarScores.initiative ?? 5, color: "#FF6B8A" },
+    { key: "charm", label: "主动魅力", score: radarScores.charm ?? 5, color: "#FFB347" },
+    { key: "attachment", label: "依恋指数", score: radarScores.attachment ?? 5, color: "#7EC8E3" },
+    { key: "emotionTension", label: "情绪张力", score: radarScores.emotionTension ?? 5, color: "#9B8EC5" },
+    { key: "exclusivePreference", label: "专属偏爱", score: radarScores.exclusivePreference ?? 5, color: "#82D9A5" },
+  ];
 
   return createUnifiedResult({
     source: "local",
     prefixLabel: "你的恋爱心理画像",
     scoreLabel: "主类型匹配度",
     main: {
-      name: subtypeProfile.signature,
+      // 关键逻辑：主结果仅展示“主类型”，次类型改为独立字段供 UI 换行渲染。
+      name: subtypeProfile.coreTypeName,
+      secondaryName: resolvedSubtypeName,
       score: topType.score,
     },
     highlightCard: {
       title: "一句话概述",
       content: topTypeProfile.summary ?? localResult.localNarrative,
     },
-    insight: `${subtypeProfile.subtypeBrief} ${localResult.localNarrative}`.trim(),
+    insight: (subtypeProfile.subtypeBrief || '').trim(),
     tagChips: normalizeLoveTagChips([
       subtypeProfile.subtypeTag,
       ...(topTypeProfile.tags ?? []),
@@ -2215,40 +2210,39 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
         color: item.color,
       })),
     },
-    typeCard: {
-      title: "恋爱心理卡片",
-      items: [
-        { label: "核心类型", value: subtypeProfile.coreTypeName },
-        { label: "细分亚型", value: subtypeProfile.subtypeName },
-        { label: "次类型", value: secondaryType?.name ?? subtypeProfile.secondaryTypeName ?? "暂无" },
-        {
-          label: "倾向强度",
-          value: `${subtypeProfile.intensityLabel}（主次差值 ${subtypeProfile.tendencyGap}%）`,
-        },
-      ],
+    // 恋爱能力雷达图（5 维度，满分 10 分）
+    radarChart: {
+      title: "恋爱能力雷达",
+      items: radarItems,
+      maxScore: 10,
     },
-    topThreeTitle: "Top 3 类型倾向",
-    topThree: localResult.topThree.map((item) => ({
-      name: item.name,
-      score: item.score,
-    })),
-    detailSections: [
-      {
-        title: "细分亚型说明",
-        items: [
-          `${subtypeProfile.subtypeName}：${subtypeProfile.subtypeBrief}`,
-          `你的次类型为${subtypeProfile.secondaryTypeName}，在高压场景可能会放大该倾向。`,
-        ],
-      },
-      { title: "原生家庭画像", items: familyPortraitItems },
-      { title: "为什么会这样", items: whyPatternItems },
-      { title: "你的关系优势", items: topTypeProfile.strengths ?? [] },
-      { title: "高风险触发点", items: topTypeProfile.risks ?? [] },
-      { title: "关系升级建议", items: topTypeProfile.actions ?? [] },
-    ],
+    // 恋爱底色（2 句话）
+    loveBaseColor: localResult.loveBaseColor,
+    // 最适配 & 避雷
+    matchAndAvoid: {
+      bestMatch: localResult.bestMatch,
+      avoidType: localResult.avoidType,
+    },
+    // 一句恋爱忠告
+    loveAdvice: localResult.loveAdvice,
+    // 去除旧的 detailSections
+    detailSections: [],
     summaryTitle: "答卷摘要",
     summaryLines: localResult.summaryLines,
     restartButtonText: "重新测试",
+    // 结果图保存所需数据
+    posterModel: {
+      renderMode: "html-love-attachment",
+      // 关键逻辑：海报主标题与结果页保持一致，展示主类型；细分次型单独作为副标题。
+      title: subtypeProfile.coreTypeName,
+      secondaryTitle: resolvedSubtypeName,
+      tagLine: topTypeProfile.summary ?? subtypeProfile.subtypeBrief,
+      radarItems,
+      loveBaseColor: localResult.loveBaseColor,
+      bestMatch: localResult.bestMatch,
+      loveAdvice: localResult.loveAdvice,
+      watermark: "@湫的答案馆",
+    },
   });
 }
 
@@ -3587,6 +3581,8 @@ export const SURVEY_THEME_CONFIGS = [
         return LOVE_ATTACHMENT_QUESTION_BANK;
       },
       questionSelection: { minCount: 15, maxCount: 15 },
+      // 关键逻辑：/love 启用“点击选项自动下一题”，并由 SurveyEngine 隐藏“下一题”按钮。
+      autoAdvanceOnSelect: true,
       // 关键逻辑：恋爱心理测试启用封面页，进入题目前先建立测试预期，降低“开局即答题”的压迫感。
       cover: {
         enabled: true,

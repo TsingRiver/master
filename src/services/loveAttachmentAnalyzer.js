@@ -54,7 +54,14 @@ const ATTACHMENT_PROFILE_MAP = {
     name: "焦虑依恋型",
     color: "#F3A45A",
     summary: "你很重视关系连接，但在不确定时容易放大担忧并寻求高频确认。",
-    tags: ["高敏感", "怕失去", "确认需求", "情绪投入高", "关系警觉高", "反复确认"],
+    tags: [
+      "高敏感",
+      "怕失去",
+      "确认需求",
+      "情绪投入高",
+      "关系警觉高",
+      "反复确认",
+    ],
     familyPortrait:
       "家里可能出现过“回应忽近忽远”的照料模式：有时很亲近，有时突然冷下来。你需要靠表现、懂事或反复确认，才能换来稳定关注，这会让你对关系温度变化异常敏感。",
     familyPortraitPoints: [
@@ -200,81 +207,81 @@ const ATTACHMENT_SUBTYPE_MAP = {
   secure: {
     anxious: {
       key: "secure-empathic",
-      name: "共情守护型",
-      tag: "稳中带敏",
-      brief: "你整体稳定，同时对关系细节敏感，擅长在照顾与边界间找平衡。",
+      name: "暖心守护神",
+      tag: "暖心守护神",
+      brief: "温柔到骨子里，还能接住所有小情绪。",
     },
     avoidant: {
       key: "secure-boundary",
-      name: "边界稳健型",
-      tag: "稳定独立",
-      brief: "你重视亲密也重视空间，关系推进更看重节奏与实际行动的一致性。",
+      name: "自在分寸感",
+      tag: "自在分寸感",
+      brief: "爱得亲密，也给足彼此呼吸的空间。",
     },
     fearful: {
       key: "secure-growth",
-      name: "修复成长型",
-      tag: "修复驱动",
-      brief: "你能在波动里回到理性协商，愿意通过复盘和修复提升关系质量。",
+      name: "关系修复机",
+      tag: "关系修复机",
+      brief: "吵架不冷战，越闹反而越恩爱。",
     },
   },
   anxious: {
     secure: {
       key: "anxious-warm",
-      name: "投入共情型",
-      tag: "高投入高感知",
-      brief: "你情感投入度高、愿意靠近，若获得稳定反馈，关系表现会非常正向。",
+      name: "恋爱脑本脑",
+      tag: "恋爱脑本脑",
+      brief: "只要被偏爱，能把真心掏到底。",
     },
     fearful: {
       key: "anxious-alert",
-      name: "高敏守望型",
-      tag: "高警觉",
-      brief: "你对关系温度变化很敏锐，容易先预判风险，需要更稳定的安全锚点。",
+      name: "细节捕手",
+      tag: "细节捕手",
+      brief: "对方的情绪变化，逃不过你的眼睛。",
     },
     avoidant: {
       key: "anxious-pullpush",
-      name: "追退拉扯型",
-      tag: "拉扯循环",
-      brief: "你一方面想要确认连接，一方面又怕受伤，容易出现“靠近-担忧-后撤”。",
+      name: "患得患失精",
+      tag: "患得患失精",
+      brief: "想贴贴又怕烦，拉扯到自己内耗。",
     },
   },
   avoidant: {
     secure: {
       key: "avoidant-rational",
-      name: "理性边界型",
-      tag: "独立理性",
-      brief: "你擅长保持冷静和独立，在关系里更偏向先处理事实再处理情绪。",
+      name: "高冷行动派",
+      tag: "高冷行动派",
+      brief: "嘴上不说爱，行动全是偏爱。",
     },
     fearful: {
       key: "avoidant-guarded",
-      name: "防御观察型",
-      tag: "防御先行",
-      brief: "你在高压场景会优先自保，情绪暴露阈值高，需要更温和的信任建立路径。",
+      name: "心墙搭建师",
+      tag: "心墙搭建师",
+      brief: "不是不爱，是不敢轻易打开心。",
     },
     anxious: {
       key: "avoidant-coldwarm",
-      name: "冷暖切换型",
-      tag: "外冷内敏",
-      brief: "你表面克制、内在敏感，关系里常通过“保持距离”来维持掌控感。",
+      name: "嘴硬心软怪",
+      tag: "嘴硬心软怪",
+      brief: "表面冷若冰霜，内心慌得一批。",
     },
   },
   fearful: {
     anxious: {
       key: "fearful-turbulent",
-      name: "情绪湍流型",
-      tag: "靠近又担忧",
-      brief: "你既强烈渴望连接又担心受伤，情绪波动常与关系不确定感绑定出现。",
+      name: "缺爱小哭包",
+      tag: "缺爱小哭包",
+      brief: "想要被抱紧，又怕抱太紧会失去。",
     },
     avoidant: {
       key: "fearful-defensive",
-      name: "矛盾防御型",
-      tag: "想靠近又逃离",
-      brief: "你在亲密中更容易启动双重防御，常在表达与撤离之间快速切换。",
+      name: "逃跑小能手",
+      tag: "逃跑小能手",
+      brief: "刚靠近就想逃，自己跟自己较劲。",
     },
     secure: {
       key: "fearful-healing",
-      name: "重建安全型",
-      tag: "修复式成长",
-      brief: "你有明显的自我觉察和修复意愿，稳定关系节奏后改善速度通常很快。",
+      name: "自愈小太阳",
+      tag: "自愈小太阳",
+      brief: "遇到对的人，慢慢把不安都抚平。",
     },
   },
 };
@@ -288,6 +295,197 @@ const ATTACHMENT_SUBTYPE_DEFAULT_MAP = {
   avoidant: ATTACHMENT_SUBTYPE_MAP.avoidant.secure,
   fearful: ATTACHMENT_SUBTYPE_MAP.fearful.anxious,
 };
+
+/**
+ * 恋爱底色兜底文案（按主类型映射，2 句话描述恋人特质）。
+ */
+const LOVE_BASE_COLOR_MAP = {
+  secure:
+    "你是那种让人安心的恋人，稳定但不乏味。你用行动证明爱，也懂得给彼此呼吸的空间。",
+  anxious:
+    "你是全情投入的恋人，爱起来不留余地。你对感情高度敏感，回应慢一拍就能让你想很多。",
+  avoidant:
+    "你是独立酷飒的恋人，靠近不容易但值得。你用自己的方式爱，只是不太习惯把心摊开。",
+  fearful:
+    "你是矛盾又深情的恋人，想靠近又怕受伤。你的爱像潮汐，涨落之间藏着最真实的渴望。",
+};
+
+/**
+ * 最适配恋人类型兜底文案（按主类型映射）。
+ */
+const BEST_MATCH_MAP = {
+  secure: "能跟你一起成长、不搞消失也不搞控制的「默契同行者」。",
+  anxious: "情绪稳定、主动给反馈、让你不用猜的「安全感发射器」。",
+  avoidant: "不粘人、有自己世界、但关键时刻会靠过来的「平行宇宙搭子」。",
+  fearful: "有耐心、不轻易放手、能接住你反复拉扯的「定海神针型」。",
+};
+
+/**
+ * 避雷恋人类型兜底文案（按主类型映射）。
+ */
+const AVOID_TYPE_MAP = {
+  secure: "忽冷忽热、情绪全靠你兜底的「情绪黑洞型」。",
+  anxious: "已读不回、从不主动、让你反复自我怀疑的「人间蒸发型」。",
+  avoidant: "查岗式关心、每天要报备、让你窒息的「贴身监控型」。",
+  fearful: "说走就走、毫无预兆断联的「情感闪退型」。",
+};
+
+/**
+ * 恋爱忠告兜底文案（按主类型映射）。
+ */
+const LOVE_ADVICE_MAP = {
+  secure: "别因为你扛得住，就忘了自己也需要被心疼。",
+  anxious: "你值得被坚定选择，而不是被反复试探后才确认。",
+  avoidant: "偶尔让人靠近，不会让你变弱，只会让你被看见。",
+  fearful: "先停下来拉扯，问自己一句：你真正害怕的到底是什么？",
+};
+
+/**
+ * 恋爱能力雷达维度配置（5 维度，满分 10 分）。
+ */
+const LOVE_RADAR_DIMENSIONS = [
+  { key: "initiative", label: "恋爱主动度", pairLabel: "主动追人 / 被动等待" },
+  { key: "charm", label: "主动魅力", pairLabel: "很需要陪伴 / 独立不粘人" },
+  { key: "attachment", label: "依恋指数", pairLabel: "直球表达 / 闷在心里" },
+  {
+    key: "emotionTension",
+    label: "情绪张力",
+    pairLabel: "注重仪式感 / 务实过日子",
+  },
+  {
+    key: "exclusivePreference",
+    label: "专属偏爱",
+    pairLabel: "爱吃醋 / 很信任对方",
+  },
+];
+
+/**
+ * 雷达维度权重矩阵（正负向并存）：
+ * 关键逻辑：同一题答案会同时对不同维度产生“加分 + 减分”影响，避免纯叠加导致分数虚高。
+ * 权重含义：
+ * - 正值：推动维度得分上升。
+ * - 负值：拉低维度得分，形成可争议的低分区间。
+ */
+const LOVE_RADAR_WEIGHT_MATRIX = {
+  initiative: { secure: -0.25, anxious: 1.0, avoidant: -1.15, fearful: 0.45 },
+  // 参数校准：降低 charm 维度的负向惩罚强度，避免系统性偏低。
+  charm: { secure: 1.0, anxious: -0.6, avoidant: 0.55, fearful: -0.4 },
+  // 参数校准：attachment 稍降正负极值，保留争议但减少极端扎堆。
+  attachment: { secure: -0.35, anxious: 0.9, avoidant: -0.95, fearful: 0.65 },
+  // 参数校准：emotionTension 下调 fearful 正向推动，修复此前整体偏高问题。
+  emotionTension: { secure: -0.7, anxious: 0.4, avoidant: -0.3, fearful: 0.75 },
+  // 参数校准：exclusivePreference 降低 anxious/fearful 增益，拉回中位分布。
+  exclusivePreference: { secure: -0.75, anxious: 0.65, avoidant: -0.45, fearful: 0.55 },
+};
+
+/**
+ * 将雷达分值限制在 [0, 10]。
+ * @param {number} score 原始分值。
+ * @returns {number} 合法分值（整数）。
+ */
+function clampLoveRadarScore(score) {
+  if (!Number.isFinite(score)) {
+    return 5;
+  }
+  return Math.max(0, Math.min(10, Math.round(score)));
+}
+
+/**
+ * 将标准化信号映射为 0~10 雷达分值。
+ * 关键逻辑：
+ * 1. 先用高斜率 tanh 做极化放大，让强倾向更容易拉开差距。
+ * 2. 再对“混合拉扯态”（|signal| 小）施加惩罚，避免中间态普遍高分。
+ * 3. 最后给“高确定态”（|signal| 大）少量奖励，形成更有争议性的分布。
+ * @param {number} normalizedSignal 标准化信号，理论区间 [-1, 1]。
+ * @returns {number} 0~10 分值。
+ */
+function convertRadarSignalToScore(normalizedSignal) {
+  const safeSignal = Number.isFinite(normalizedSignal) ? normalizedSignal : 0;
+  const clampedSignal = Math.max(-1, Math.min(1, safeSignal));
+  const signalStrength = Math.abs(clampedSignal);
+
+  // 关键逻辑：提高斜率，让正负倾向在 0~10 区间内更快“分层”。
+  // 参数校准：轻度降斜率，降低极端分布密度，保留争议性但避免过度两极化。
+  const contrastSignal = Math.tanh(clampedSignal * 2.35);
+  const baseScore = ((contrastSignal + 1) * 10) / 2;
+
+  // 关键逻辑：答案越拉扯（越接近 0），惩罚越高，压低“平庸高分”。
+  const controversyPenalty = Math.pow(1 - signalStrength, 1.25) * 1.45;
+  // 关键逻辑：答案越稳定（越接近 ±1），奖励越高，强化“高低两极”。
+  const certaintyBonus = Math.pow(signalStrength, 1.35) * 0.5;
+
+  return clampLoveRadarScore(baseScore - controversyPenalty + certaintyBonus);
+}
+
+/**
+ * 将答卷摘要转为 0-10 分的恋爱能力雷达分值。
+ * 推导逻辑：
+ * 1. 按题遍历已选答案向量（每道题都会参与计算）。
+ * 2. 用“维度权重矩阵”累积正负贡献，形成加减分对冲。
+ * 3. 用实际贡献绝对值做归一化，消除题量和权重波动带来的尺度偏差。
+ * 4. 用非线性映射输出 0-10 分值，允许出现 0-2 的低分区间。
+ * 复杂度评估：O(Q * K * D)，Q=题量，K=向量键数量（固定 4），D=雷达维度数（固定 5）。
+ *
+ * @param {Array<object>} answerSummary 结构化答卷摘要。
+ * @returns {{ initiative: number, charm: number, attachment: number, emotionTension: number, exclusivePreference: number }} 雷达分值。
+ */
+function buildLoveRadarScores(answerSummary) {
+  const signalMap = {
+    initiative: 0,
+    charm: 0,
+    attachment: 0,
+    emotionTension: 0,
+    exclusivePreference: 0,
+  };
+  const amplitudeMap = {
+    initiative: 0,
+    charm: 0,
+    attachment: 0,
+    emotionTension: 0,
+    exclusivePreference: 0,
+  };
+
+  (Array.isArray(answerSummary) ? answerSummary : []).forEach((summaryItem) => {
+    const questionWeight = Number(summaryItem?.weight ?? 1);
+    const vectorEntries = Object.entries(summaryItem?.vector ?? {});
+
+    vectorEntries.forEach(([typeKey, rawTypeValue]) => {
+      if (!ATTACHMENT_TYPE_KEYS.includes(typeKey)) {
+        return;
+      }
+
+      const safeTypeValue = Number(rawTypeValue ?? 0);
+      if (!Number.isFinite(safeTypeValue) || safeTypeValue === 0) {
+        return;
+      }
+
+      LOVE_RADAR_DIMENSIONS.forEach(({ key: dimensionKey }) => {
+        const typeWeight = Number(
+          LOVE_RADAR_WEIGHT_MATRIX[dimensionKey]?.[typeKey] ?? 0,
+        );
+        if (typeWeight === 0) {
+          return;
+        }
+
+        // 关键逻辑：同一答案对维度既可能加分也可能减分，形成真实拉扯。
+        const weightedContribution =
+          safeTypeValue * questionWeight * typeWeight;
+        signalMap[dimensionKey] += weightedContribution;
+        amplitudeMap[dimensionKey] += Math.abs(weightedContribution);
+      });
+    });
+  });
+
+  const radarScores = {};
+  LOVE_RADAR_DIMENSIONS.forEach(({ key: dimensionKey }) => {
+    const totalAmplitude = amplitudeMap[dimensionKey];
+    const normalizedSignal =
+      totalAmplitude > 0 ? signalMap[dimensionKey] / totalAmplitude : 0;
+    radarScores[dimensionKey] = convertRadarSignalToScore(normalizedSignal);
+  });
+
+  return radarScores;
+}
 
 /**
  * 创建零分值映射。
@@ -357,19 +555,21 @@ function buildRawScoreMap(questions, answerIds) {
 
     const questionWeight = Number(questionItem.weight ?? 1);
 
-    Object.entries(selectedOption.vector ?? {}).forEach(([vectorKey, rawValue]) => {
-      if (typeof rawScoreMap[vectorKey] !== "number") {
-        return;
-      }
+    Object.entries(selectedOption.vector ?? {}).forEach(
+      ([vectorKey, rawValue]) => {
+        if (typeof rawScoreMap[vectorKey] !== "number") {
+          return;
+        }
 
-      const safeValue = Number(rawValue ?? 0);
-      if (!Number.isFinite(safeValue)) {
-        return;
-      }
+        const safeValue = Number(rawValue ?? 0);
+        if (!Number.isFinite(safeValue)) {
+          return;
+        }
 
-      // 关键逻辑：选项向量分值乘以题目权重，保持重点题影响力。
-      rawScoreMap[vectorKey] += safeValue * questionWeight;
-    });
+        // 关键逻辑：选项向量分值乘以题目权重，保持重点题影响力。
+        rawScoreMap[vectorKey] += safeValue * questionWeight;
+      },
+    );
   });
 
   return rawScoreMap;
@@ -480,8 +680,8 @@ export function deriveAttachmentSubtypeProfile(distribution) {
   const secondaryType = safeDistribution[1] ?? {
     key: topType.key === "secure" ? "anxious" : "secure",
     name:
-      ATTACHMENT_PROFILE_MAP[topType.key === "secure" ? "anxious" : "secure"]?.name ??
-      ATTACHMENT_PROFILE_MAP.anxious.name,
+      ATTACHMENT_PROFILE_MAP[topType.key === "secure" ? "anxious" : "secure"]
+        ?.name ?? ATTACHMENT_PROFILE_MAP.anxious.name,
     score: 0,
   };
 
@@ -495,7 +695,8 @@ export function deriveAttachmentSubtypeProfile(distribution) {
 
   return {
     coreTypeKey: topType.key,
-    coreTypeName: topType.name || ATTACHMENT_PROFILE_MAP[topType.key]?.name || "安全依恋型",
+    coreTypeName:
+      topType.name || ATTACHMENT_PROFILE_MAP[topType.key]?.name || "安全依恋型",
     secondaryTypeKey: secondaryType.key,
     secondaryTypeName:
       secondaryType.name ||
@@ -519,7 +720,8 @@ export function deriveAttachmentSubtypeProfile(distribution) {
  * @returns {string} 本地说明。
  */
 function buildLocalNarrative(topType, subtypeProfile) {
-  const profile = ATTACHMENT_PROFILE_MAP[topType.key] ?? ATTACHMENT_PROFILE_MAP.secure;
+  const profile =
+    ATTACHMENT_PROFILE_MAP[topType.key] ?? ATTACHMENT_PROFILE_MAP.secure;
   const subtypeSummary = subtypeProfile?.subtypeBrief
     ? `细分结果为「${subtypeProfile.subtypeName}」，${subtypeProfile.subtypeBrief}`
     : "";
@@ -533,8 +735,9 @@ function buildLocalNarrative(topType, subtypeProfile) {
  * 1. 原始分值累加：O(Q * K)
  * 2. 类型分布排序：O(T log T)
  * 3. 亚型推导：O(T)
- * 总体复杂度：O(Q * K + T log T)
- * 其中 Q 为题量（固定 15），K=4，T=4。
+ * 4. 雷达分值推导（正负向加减分）：O(Q * K * D)
+ * 总体复杂度：O(Q * K * D + T log T)
+ * 其中 Q 为题量（固定 15），K=4，D=5，T=4。
  * @param {object} params 参数对象。
  * @param {Array<object>} params.questions 本轮题目。
  * @param {Array<string|null>} params.answerIds 用户答案。
@@ -546,6 +749,8 @@ export function analyzeLoveAttachmentLocally({ questions, answerIds }) {
   const rawScoreMap = buildRawScoreMap(questions, answerIds);
   const distribution = buildDistribution(rawScoreMap);
   const subtypeProfile = deriveAttachmentSubtypeProfile(distribution);
+  // 关键逻辑：雷达分值严格按“每题答案向量 + 正负权重”计算，不使用 AI 估算值。
+  const radarScores = buildLoveRadarScores(answerSummary);
 
   const topType = distribution[0] ?? {
     key: "secure",
@@ -554,6 +759,8 @@ export function analyzeLoveAttachmentLocally({ questions, answerIds }) {
     score: 0,
     rawScore: 0,
   };
+
+  const mainKey = topType.key;
 
   return {
     topType,
@@ -565,5 +772,15 @@ export function analyzeLoveAttachmentLocally({ questions, answerIds }) {
     localNarrative: buildLocalNarrative(topType, subtypeProfile),
     subtypeProfile,
     profileMap: ATTACHMENT_PROFILE_MAP,
+    // 新增：恋爱能力雷达分值（5 维度，0-10 分，可出现低分）
+    radarScores,
+    // 新增：恋爱底色文案（2 句话）
+    loveBaseColor: LOVE_BASE_COLOR_MAP[mainKey] ?? LOVE_BASE_COLOR_MAP.secure,
+    // 新增：最适配恋人文案
+    bestMatch: BEST_MATCH_MAP[mainKey] ?? BEST_MATCH_MAP.secure,
+    // 新增：避雷类型文案
+    avoidType: AVOID_TYPE_MAP[mainKey] ?? AVOID_TYPE_MAP.secure,
+    // 新增：一句恋爱忠告
+    loveAdvice: LOVE_ADVICE_MAP[mainKey] ?? LOVE_ADVICE_MAP.secure,
   };
 }

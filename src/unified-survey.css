@@ -2761,6 +2761,20 @@ body {
   letter-spacing: 0.02em;
 }
 
+.survey-main-title-primary {
+  display: block;
+}
+
+.survey-main-title-secondary {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(20px, 4.2vw, 21px);
+  line-height: 1.28;
+  font-weight: 600;
+  opacity: 0.82;
+  letter-spacing: 0.01em;
+}
+
 .survey-five-result-icon {
   --five-icon-bg-start: #f5ecdc;
   --five-icon-bg-end: #dfd1b9;
@@ -3194,6 +3208,116 @@ body {
   font-size: 12px;
   font-weight: 700;
   color: var(--primary-dark);
+}
+
+/* 恋爱底色 / 适配避雷 / 忠告 模块共用容器样式 */
+.survey-love-section {
+  margin-top: 16px;
+  border-radius: 14px;
+  padding: 14px;
+  border: 1px solid var(--detail-border);
+  background: var(--detail-bg);
+}
+
+.survey-love-section h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 恋爱底色模块 */
+.survey-love-basecolor {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 240, 245, 0.95),
+    rgba(255, 248, 250, 0.92) 55%,
+    rgba(252, 240, 255, 0.9)
+  );
+  border-color: color-mix(in srgb, #ff8fb1 36%, #ffffff 64%);
+}
+
+.survey-love-basecolor-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.72;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+/* 适配避雷模块 */
+.survey-love-match-avoid {
+  background: linear-gradient(
+    135deg,
+    rgba(240, 248, 255, 0.95),
+    rgba(248, 245, 255, 0.92) 55%,
+    rgba(255, 248, 240, 0.9)
+  );
+  border-color: color-mix(in srgb, #7eb8e3 36%, #ffffff 64%);
+}
+
+.survey-love-match-avoid-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.survey-love-match-item {
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--detail-border);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.survey-love-match-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.survey-love-match-best .survey-love-match-label {
+  color: #2e8b57;
+}
+
+.survey-love-match-bad .survey-love-match-label {
+  color: #cc5c5c;
+}
+
+.survey-love-match-item p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.62;
+  color: var(--text-main);
+}
+
+/* 恋爱忠告模块 */
+.survey-love-advice {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 250, 240, 0.96),
+    rgba(255, 245, 248, 0.94) 55%,
+    rgba(248, 240, 255, 0.92)
+  );
+  border-color: color-mix(in srgb, #e8a87c 36%, #ffffff 64%);
+  text-align: center;
+}
+
+.survey-love-advice-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.72;
+  font-weight: 600;
+  color: var(--primary-dark);
+  letter-spacing: 0.02em;
+}
+
+.theme-mbti .survey-love-section {
+  background: rgba(20, 22, 34, 0.88);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-mbti .survey-love-match-item {
+  background: rgba(30, 33, 48, 0.9);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .theme-mbti .survey-type-card-item {
