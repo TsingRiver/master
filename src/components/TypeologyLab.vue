@@ -724,10 +724,10 @@ const TYPEOLOGY_POSTER_HD_SIZE = {
 };
 
 /**
- * 人格海报浅绿主题色板。
- * 关键逻辑：统一“浅绿舒适阅读”视觉语言，避免局部颜色割裂。
+ * 人格海报默认色板（紫色系）：
+ * 关键逻辑：MBTI 与九型人格沿用当前线上主色，保证已有分享素材视觉一致。
  */
-const TYPEOLOGY_POSTER_THEME_COLORS = {
+const TYPEOLOGY_POSTER_DEFAULT_THEME_COLORS = Object.freeze({
   backgroundTop: "#5E5574",
   backgroundBottom: "#5E5574",
   titleText: "#FAF8FF",
@@ -737,7 +737,71 @@ const TYPEOLOGY_POSTER_THEME_COLORS = {
   valueText: "#5E5574",
   labelText: "#EDE8F8",
   footerText: "rgba(240, 233, 252, 0.95)",
-};
+});
+
+/**
+ * 人格海报按主题映射的色相（Hue）：
+ * 关键逻辑：只改变色相，不改变明暗层级，确保可读性与布局对比关系稳定。
+ */
+const TYPEOLOGY_POSTER_THEME_HUE_MAP = Object.freeze({
+  "social-persona": 152,
+  "ideal-match": 24,
+  "jung-classic": 186,
+  disc: 30,
+  "attitude-psy": 266,
+  temperament: 338,
+  "big-five": 204,
+  "dnd-alignment": 264,
+  attachment: 220,
+  holland: 146,
+});
+
+/**
+ * 人格海报动态主题默认色相（蓝紫系）。
+ */
+const TYPEOLOGY_POSTER_DEFAULT_HUE = 246;
+
+/**
+ * 根据色相构建海报主题色板。
+ * 关键逻辑：L（明度）与 alpha 维持与默认色板同层级，仅替换色相实现“同明暗换色”。
+ * @param {number} hue 色相值（0~360）。
+ * @returns {object} 海报主题色对象。
+ */
+function buildTypeologyPosterThemeColorsByHue(hue) {
+  const normalizedHue = Number.isFinite(Number(hue))
+    ? ((Math.round(Number(hue)) % 360) + 360) % 360
+    : TYPEOLOGY_POSTER_DEFAULT_HUE;
+
+  return {
+    backgroundTop: `hsl(${normalizedHue} 15% 39%)`,
+    backgroundBottom: `hsl(${normalizedHue} 15% 39%)`,
+    titleText: `hsl(${normalizedHue} 58% 98%)`,
+    subtitleText: `hsl(${normalizedHue} 44% 95% / 0.96)`,
+    completedCountText: `hsl(${normalizedHue} 41% 92% / 0.92)`,
+    cardBackground: "#FFFFFF",
+    valueText: `hsl(${normalizedHue} 15% 39%)`,
+    labelText: `hsl(${normalizedHue} 39% 94%)`,
+    footerText: `hsl(${normalizedHue} 40% 93% / 0.95)`,
+  };
+}
+
+/**
+ * 按测试主题解析海报色板。
+ * @param {string} testKey 测试主题 key。
+ * @returns {object} 海报主题色对象。
+ */
+function resolveTypeologyPosterThemeColors(testKey) {
+  const normalizedTestKey = String(testKey ?? "").trim();
+  // 关键逻辑：MBTI 与九型人格继续使用线上既有紫色系，避免视觉突变。
+  if (normalizedTestKey === "mbti" || normalizedTestKey === "enneagram") {
+    return TYPEOLOGY_POSTER_DEFAULT_THEME_COLORS;
+  }
+
+  const mappedHue = TYPEOLOGY_POSTER_THEME_HUE_MAP[normalizedTestKey];
+  return buildTypeologyPosterThemeColorsByHue(
+    Number.isFinite(mappedHue) ? mappedHue : TYPEOLOGY_POSTER_DEFAULT_HUE,
+  );
+}
 
 /**
  * 海报底部署名字体栈（手写体优先）：
@@ -3161,12 +3225,14 @@ function drawTypeologyPosterRoundedRectPath(context, x, y, width, height, radius
  * @param {CanvasRenderingContext2D} params.context Canvas 2D 上下文。
  * @param {{ x: number, y: number, width: number, height: number }} params.cellRect 单元矩形。
  * @param {{ label: string, value: string }|null} params.cellData 单元数据。
+ * @param {object} params.themeColors 海报主题色板。
  * @param {number} params.scaleRatio 缩放倍率（基于预览尺寸）。
  */
 function drawTypeologyPosterGridCell({
   context,
   cellRect,
   cellData,
+  themeColors,
   scaleRatio,
 }) {
   const { x, y, width, height } = cellRect;
@@ -3191,7 +3257,7 @@ function drawTypeologyPosterGridCell({
   const resultCardX = x + resultCardInsetX;
   const resultCardY = y + resultCardInsetTop;
   const resultCardRadius = 8 * scaleRatio;
-  const resultCardBackgroundColor = TYPEOLOGY_POSTER_THEME_COLORS.cardBackground;
+  const resultCardBackgroundColor = themeColors.cardBackground;
 
   // 关键逻辑：结果卡与标题分离，结果在上、类型在下，提升信息层级。
   drawTypeologyPosterRoundedRectPath(
@@ -3205,7 +3271,7 @@ function drawTypeologyPosterGridCell({
   context.fillStyle = resultCardBackgroundColor;
   context.fill();
 
-  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.valueText;
+  context.fillStyle = themeColors.valueText;
   const baseValueFontSize = resolveTypeologyPosterValueFontSize(valueText) * scaleRatio;
   const shouldItalicValue = hasTypeologyPosterLatinCharacters(valueText);
   const fittedValueFontSize = resolveTypeologyPosterFittedValueFontSize({
@@ -3224,7 +3290,7 @@ function drawTypeologyPosterGridCell({
   );
 
   const labelBaseY = resultCardY + resultCardHeight + 16 * scaleRatio;
-  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.labelText;
+  context.fillStyle = themeColors.labelText;
   context.font = `400 ${Math.round(15 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
   context.fillText(labelText, centerX, labelBaseY);
   context.restore();
@@ -3256,16 +3322,22 @@ function resolveTypeologyPosterVisibleRowCount(renderItemCount) {
  * 生成人格海报 Data URL。
  * 关键逻辑：
  * 1. 固定 3 列，行数按已完成维度动态渲染（最多 4 行）；
- * 2. 固定深黑底；
+ * 2. 背景按主题色板渐变渲染（同明暗层级，仅换色相）；
  * 3. 待测试数据不会写入网格内容。
  * 复杂度评估：O(C)，C 为网格容量（固定 12）。
  * @param {object} params 参数对象。
  * @param {Array<{ label: string, value: string }>} params.posterItems 海报数据项。
+ * @param {object} params.themeColors 海报主题色板。
  * @param {number} params.width 画布宽度。
  * @param {number} params.height 画布高度。
  * @returns {string} PNG Data URL。
  */
-function generateTypeologyPosterDataUrl({ posterItems, width, height }) {
+function generateTypeologyPosterDataUrl({
+  posterItems,
+  themeColors,
+  width,
+  height,
+}) {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -3279,24 +3351,26 @@ function generateTypeologyPosterDataUrl({ posterItems, width, height }) {
   const renderCells = buildTypeologyPosterRenderCells(posterItems);
   const renderItemCount = renderCells.filter(Boolean).length;
   const visibleRowCount = resolveTypeologyPosterVisibleRowCount(renderItemCount);
+  const resolvedThemeColors =
+    themeColors ?? TYPEOLOGY_POSTER_DEFAULT_THEME_COLORS;
 
   const backgroundGradient = context.createLinearGradient(0, 0, 0, height);
-  backgroundGradient.addColorStop(0, TYPEOLOGY_POSTER_THEME_COLORS.backgroundTop);
-  backgroundGradient.addColorStop(1, TYPEOLOGY_POSTER_THEME_COLORS.backgroundBottom);
+  backgroundGradient.addColorStop(0, resolvedThemeColors.backgroundTop);
+  backgroundGradient.addColorStop(1, resolvedThemeColors.backgroundBottom);
   context.fillStyle = backgroundGradient;
   context.fillRect(0, 0, width, height);
 
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.titleText;
+  context.fillStyle = resolvedThemeColors.titleText;
   context.font = `700 ${Math.round(40 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
   context.fillText("人格图鉴", width / 2, 58 * scaleRatio);
 
-  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.subtitleText;
+  context.fillStyle = resolvedThemeColors.subtitleText;
   context.font = `400 ${Math.round(16 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
   context.fillText("PERSONALITY ATLAS", width / 2, 92 * scaleRatio);
 
-  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.completedCountText;
+  context.fillStyle = resolvedThemeColors.completedCountText;
   context.font = `400 ${Math.round(14 * scaleRatio)}px "Times New Roman", "Noto Serif SC", serif`;
   context.fillText(
     `已完成维度 ${posterItems.length}/${TYPEOLOGY_POSTER_GRID_CAPACITY}`,
@@ -3342,12 +3416,13 @@ function generateTypeologyPosterDataUrl({ posterItems, width, height }) {
           height: squareCellSize,
         },
         cellData: renderCells[cellIndex] ?? null,
+        themeColors: resolvedThemeColors,
         scaleRatio,
       });
     }
   }
 
-  context.fillStyle = TYPEOLOGY_POSTER_THEME_COLORS.footerText;
+  context.fillStyle = resolvedThemeColors.footerText;
   context.font = `400 ${Math.round(13 * scaleRatio)}px ${TYPEOLOGY_POSTER_FOOTER_HANDWRITING_FONT_FAMILY}`;
   context.fillText("@湫的答案馆", width / 2, height - 24 * scaleRatio);
   return canvas.toDataURL("image/png");
@@ -3372,6 +3447,7 @@ async function runTypeologyPosterGeneration({ showSuccessToast }) {
   try {
     const generatedDataUrl = generateTypeologyPosterDataUrl({
       posterItems: completedTypeCardItems.value,
+      themeColors: resolveTypeologyPosterThemeColors(activeTestKey.value),
       width: TYPEOLOGY_POSTER_HD_SIZE.width,
       height: TYPEOLOGY_POSTER_HD_SIZE.height,
     });
