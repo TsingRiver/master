@@ -42,6 +42,17 @@
         <button class="soul-btn soul-btn-primary soul-cover-start-btn" type="button" @click="startSurvey">
           开始测试 →
         </button>
+
+        <!-- 来唠两句入口 -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
+        </div>
       </section>
 
       <section v-else-if="stage === 'survey' && currentQuestion" class="soul-survey">
@@ -87,6 +98,17 @@
           </button>
           <p class="soul-auto-next-tip">点击选项后将自动进入下一题</p>
         </footer>
+
+        <!-- 来唠两句入口 -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
+        </div>
       </section>
 
       <section v-else-if="stage === 'submitting'" class="soul-submitting-card" role="status" aria-live="polite">
@@ -298,6 +320,17 @@
             重新测试
           </button>
           <p v-if="interactionFeedback" class="soul-interaction-feedback">{{ interactionFeedback }}</p>
+
+          <!-- 来唠两句入口 -->
+          <div class="survey-feedback-entry">
+            <a
+              class="survey-feedback-link"
+              href="javascript:void(0)"
+              @click="isSuggestionVisible = true"
+            >
+              💬 来唠两句
+            </a>
+          </div>
         </footer>
 
         <section class="soul-poster-preview-block">
@@ -320,14 +353,31 @@
       </section>
     </main>
   </div>
+
+  <!-- 评价弹窗 -->
+  <Like
+    :visible="isLikeVisible"
+    :module-path="feedbackModulePath"
+    @close="isLikeVisible = false"
+  />
+
+  <!-- 建议弹窗 -->
+  <Suggestion
+    :visible="isSuggestionVisible"
+    :module-path="feedbackModulePath"
+    @close="isSuggestionVisible = false"
+  />
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { SOUL_AGE_QUESTION_BANK } from "../data/soulAgeQuestionBank";
 import { analyzeSoulAgeLocally } from "../services/soulAgeAnalyzer";
 import { analyzeSoulAgeWithAI } from "../services/soulAgeAiAnalyzer";
 import { selectRandomQuestionsWithoutRepeat } from "../utils/randomQuestionSelector";
+import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger";
+import Like from "./Like.vue";
+import Suggestion from "./Suggestion.vue";
 
 /**
  * 组件参数定义。
@@ -355,6 +405,40 @@ const props = defineProps({
  * 4. result：结果页。
  */
 const stage = ref("cover");
+
+/**
+ * 评价弹窗状态。
+ */
+const isLikeVisible = ref(false);
+const isSuggestionVisible = ref(false);
+
+/**
+ * 当前测试模块的反馈路径。
+ */
+const feedbackModulePath = computed(() => {
+  const routePaths = props.themeConfig?.routePaths;
+  return Array.isArray(routePaths) && routePaths.length > 0
+    ? routePaths[0]
+    : "/soul-age";
+});
+
+/**
+ * 监听 stage 变化，进入结果页时触发评价弹窗。
+ */
+watch(
+  () => stage.value,
+  (nextStage) => {
+    if (nextStage === "result") {
+      const themeKey = String(props.themeConfig?.key ?? "").trim() || "soul-age";
+      if (shouldShowFeedback(themeKey)) {
+        markFeedbackShown(themeKey);
+        setTimeout(() => {
+          isLikeVisible.value = true;
+        }, 1500);
+      }
+    }
+  },
+);
 
 /**
  * 首屏视觉增强开关：

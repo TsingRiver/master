@@ -218,6 +218,17 @@
             {{ coverConfig.socialProof }}
           </p>
         </div>
+
+        <!-- 来唠两句入口 -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
+        </div>
       </section>
 
       <section v-else-if="stage === 'survey' && currentQuestion" class="survey-card survey-question-card card-in">
@@ -333,6 +344,17 @@
           >
             {{ isLastQuestion ? themeConfig.theme.submitButtonText : themeConfig.theme.nextButtonText }}
           </van-button>
+        </div>
+
+        <!-- 来唠两句入口 -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
         </div>
       </section>
 
@@ -936,6 +958,17 @@
               {{ unifiedResult.restartButtonText }}
             </van-button>
           </div>
+
+          <!-- 来唠两句入口 -->
+          <div class="survey-feedback-entry">
+            <a
+              class="survey-feedback-link"
+              href="javascript:void(0)"
+              @click="isSuggestionVisible = true"
+            >
+              💬 来唠两句
+            </a>
+          </div>
         </div>
       </section>
     </main>
@@ -954,6 +987,20 @@
         {{ commercialCtaText }}
       </a>
     </div> -->
+
+    <!-- 评价弹窗 -->
+    <Like
+      :visible="isLikeVisible"
+      :module-path="feedbackModulePath"
+      @close="isLikeVisible = false"
+    />
+
+    <!-- 建议弹窗 -->
+    <Suggestion
+      :visible="isSuggestionVisible"
+      :module-path="feedbackModulePath"
+      @close="isSuggestionVisible = false"
+    />
   </div>
 </template>
 
@@ -968,6 +1015,9 @@ import {
   selectRandomQuestionsWithoutRepeat,
   selectRandomQuestionsWithDimensionCoverage,
 } from "../utils/randomQuestionSelector";
+import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger";
+import Like from "./Like.vue";
+import Suggestion from "./Suggestion.vue";
 
 /**
  * 组件参数：
@@ -1009,6 +1059,23 @@ const loadedQuestionPool = ref([]);
 const questionPoolLoadError = ref("");
 const coverPointsSnapshot = ref([]);
 const themeDescriptionSnapshot = ref("");
+
+/**
+ * 评价弹窗状态。
+ */
+const isLikeVisible = ref(false);
+const isSuggestionVisible = ref(false);
+
+/**
+ * 当前测试模块的反馈路径。
+ * 关键逻辑：从 themeConfig 的 routePaths[0] 取得，用于提交反馈时记录用户访问的模块。
+ */
+const feedbackModulePath = computed(() => {
+  const routePaths = props.themeConfig?.routePaths;
+  return Array.isArray(routePaths) && routePaths.length > 0
+    ? routePaths[0]
+    : "/";
+});
 /**
  * 灵魂猫咪“铲屎官默契度”选中品种 key。
  * 关键逻辑：默认空值表示“未选择品种”，用于触发通用提示文案。
@@ -5087,6 +5154,20 @@ watch(stage, (nextStage) => {
   }
 
   stopLoadingMessageTicker();
+
+  /**
+   * 进入结果页时触发评价弹窗：
+   * 关键逻辑：延迟 1.5s 弹出，等待结果页渲染完成后再轻提示，避免与结果动画冲突。
+   */
+  if (nextStage === "result") {
+    const themeKey = String(props.themeConfig?.key ?? "").trim();
+    if (themeKey && shouldShowFeedback(themeKey)) {
+      markFeedbackShown(themeKey);
+      setTimeout(() => {
+        isLikeVisible.value = true;
+      }, 1500);
+    }
+  }
 });
 
 /**

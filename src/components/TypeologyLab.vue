@@ -71,6 +71,17 @@
         >
           开始 {{ activeTestConfig.name }}
         </van-button>
+
+        <!-- 来唠两句入口 (封面页) -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
+        </div>
       </section>
 
       <section
@@ -407,6 +418,17 @@
             返回测试面板
           </van-button>
         </div>
+
+        <!-- 我有意见入口 -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 我有意见
+          </a>
+        </div>
       </section>
 
       <section class="typeology-panel typeology-card-panel">
@@ -630,6 +652,20 @@
       </section>
     </div>
   </div>
+
+  <!-- 评价弹窗 -->
+  <Like
+    :visible="isLikeVisible"
+    module-path="/mbti"
+    @close="isLikeVisible = false"
+  />
+
+  <!-- 建议弹窗 -->
+  <Suggestion
+    :visible="isSuggestionVisible"
+    module-path="/mbti"
+    @close="isSuggestionVisible = false"
+  />
 </template>
 
 <script setup>
@@ -654,6 +690,9 @@ import {
   saveTypeologyProgressCache,
   upsertTypeologyCachedResult,
 } from "../services/typeologyStorage";
+import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger";
+import Like from "./Like.vue";
+import Suggestion from "./Suggestion.vue";
 
 /**
  * 摘要默认预览条数。
@@ -899,6 +938,27 @@ function resolveTypeologyPosterThemeColors(testKey) {
  */
 const TYPEOLOGY_POSTER_FOOTER_HANDWRITING_FONT_FAMILY =
   '"Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", "KaiTi", "STKaiti", "Kaiti SC", cursive';
+
+/**
+ * 海报无衬线字体栈：
+ * 关键逻辑：优先命中 ZeoSeven 在线思源黑体，未命中时回退到系统中文无衬线。
+ */
+const TYPEOLOGY_POSTER_SANS_FONT_FAMILY =
+  '"SF Pro Text", "SF Pro Display", "Helvetica Neue", "Arial", "Noto Sans CJK SC", "Noto Sans CJK", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif';
+
+/**
+ * 海报衬线字体栈：
+ * 关键逻辑：优先命中 ZeoSeven 在线思源宋体，避免 iOS 退回到默认 Times 字形。
+ */
+const TYPEOLOGY_POSTER_SERIF_FONT_FAMILY =
+  '"Georgia", "Times New Roman", "Noto Serif CJK SC", "Noto Serif CJK", "Songti SC", "STSong", "Source Han Serif SC", serif';
+
+/**
+ * 海报英文优先衬线字体栈：
+ * 关键逻辑：英文字母优先保留 Times 风格，中文仍回退到思源宋体系。
+ */
+const TYPEOLOGY_POSTER_LATIN_SERIF_FONT_FAMILY =
+  '"Times New Roman", "Noto Serif CJK SC", "Noto Serif CJK", "Songti SC", "STSong", serif';
 
 /**
  * 人格海报单元主结果最大换行数。
@@ -1550,6 +1610,13 @@ const props = defineProps({
  * 当前测试状态。
  */
 const stage = ref(STAGE_HOME);
+
+/**
+ * 评价弹窗状态。
+ * 关键逻辑：MBTI 只在第一次完整出结果后提示，之后不再主动弹出。
+ */
+const isLikeVisible = ref(false);
+const isSuggestionVisible = ref(false);
 
 /**
  * 首屏视觉增强开关：
@@ -3329,7 +3396,7 @@ function resolveTypeologyPosterValueFontSize(valueText) {
  */
 function buildTypeologyPosterValueFont(fontSize, useItalic = false) {
   const italicPrefix = useItalic ? "italic " : "";
-  return `${italicPrefix}700 ${Math.max(1, Math.round(fontSize))}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+  return `${italicPrefix}700 ${Math.max(1, Math.round(fontSize))}px ${TYPEOLOGY_POSTER_SANS_FONT_FAMILY}`;
 }
 
 /**
@@ -3578,7 +3645,7 @@ function drawTypeologyPosterGridCell({
 
   const labelBaseY = resultCardY + resultCardHeight + 16 * scaleRatio;
   context.fillStyle = themeColors.labelText;
-  context.font = `400 ${Math.round(15 * scaleRatio)}px "Times New Roman", "Source Han Serif SC", serif`;
+  context.font = `400 ${Math.round(15 * scaleRatio)}px ${TYPEOLOGY_POSTER_LATIN_SERIF_FONT_FAMILY}`;
   context.fillText(labelText, centerX, labelBaseY);
   context.restore();
 }
@@ -3650,15 +3717,15 @@ function generateTypeologyPosterDataUrl({
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = resolvedThemeColors.titleText;
-  context.font = `700 ${Math.round(40 * scaleRatio)}px "Times New Roman", "Source Han Serif SC", serif`;
+  context.font = `700 ${Math.round(40 * scaleRatio)}px ${TYPEOLOGY_POSTER_SERIF_FONT_FAMILY}`;
   context.fillText("人格图鉴", width / 2, 58 * scaleRatio);
 
   context.fillStyle = resolvedThemeColors.subtitleText;
-  context.font = `400 ${Math.round(16 * scaleRatio)}px "Times New Roman", "Source Han Serif SC", serif`;
+  context.font = `400 ${Math.round(16 * scaleRatio)}px ${TYPEOLOGY_POSTER_LATIN_SERIF_FONT_FAMILY}`;
   context.fillText("PERSONALITY ATLAS", width / 2, 92 * scaleRatio);
 
   context.fillStyle = resolvedThemeColors.completedCountText;
-  context.font = `400 ${Math.round(14 * scaleRatio)}px "Times New Roman", "Source Han Serif SC", serif`;
+  context.font = `400 ${Math.round(14 * scaleRatio)}px ${TYPEOLOGY_POSTER_SERIF_FONT_FAMILY}`;
   context.fillText(
     `已完成维度 ${posterItems.length}/${TYPEOLOGY_POSTER_GRID_CAPACITY}`,
     width / 2,
@@ -3885,6 +3952,19 @@ watch(stage, (nextStage) => {
   }
 
   stopLoadingTicker();
+
+  /**
+   * MBTI 特殊逻辑：首次完整出结果后延迟弹出评价，之后不再弹出。
+   * 关键逻辑：用 "mbti" 作为缓存 key，所有子类型共享同一评价状态。
+   */
+  if (nextStage === STAGE_DETAIL) {
+    if (shouldShowFeedback("mbti")) {
+      markFeedbackShown("mbti");
+      setTimeout(() => {
+        isLikeVisible.value = true;
+      }, 1500);
+    }
+  }
 });
 
 /**
@@ -3943,10 +4023,35 @@ onBeforeUnmount(() => {
   --type-secondary-btn-bg: color-mix(in srgb, var(--type-accent) 24%, var(--type-card-bg) 76%);
   --type-secondary-btn-text: var(--type-text);
   --type-secondary-btn-border: transparent;
+  /* 字体栈策略：
+   * 关键逻辑：优先命中 ZeoSeven 在线思源字体，规避 iOS 上 Source Han 不存在导致的衬线回退。 */
+  --type-font-body:
+    "SF Pro Text",
+    "SF Pro Display",
+    "Helvetica Neue",
+    "Arial",
+    "Noto Sans CJK SC",
+    "Noto Sans CJK",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  --type-font-title:
+    "Georgia",
+    "Times New Roman",
+    "Noto Serif CJK SC",
+    "Noto Serif CJK",
+    "Songti SC",
+    "STSong",
+    "Source Han Serif SC",
+    serif;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
   color: var(--type-text);
+  font-family: var(--type-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   padding: 18px 12px 34px;
   background: var(--type-bg);
 }
@@ -4051,7 +4156,7 @@ onBeforeUnmount(() => {
   margin: 10px 0 8px;
   font-size: clamp(26px, 7vw, 38px);
   line-height: 1.24;
-  font-family: "Source Han Serif SC", serif;
+  font-family: var(--type-font-title);
 }
 
 .typeology-desc {
@@ -4088,7 +4193,7 @@ onBeforeUnmount(() => {
   margin: 0;
   color: #fff;
   font-size: 18px;
-  font-family: "Source Han Serif SC", serif;
+  font-family: var(--type-font-title);
   font-weight: 700;
 }
 
@@ -4143,7 +4248,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 21px;
   line-height: 1.3;
-  font-family: "Source Han Serif SC", serif;
+  font-family: var(--type-font-title);
 }
 
 .typeology-start-title-wrap p {
@@ -4193,7 +4298,7 @@ onBeforeUnmount(() => {
   margin: 12px 0 6px;
   font-size: 22px;
   line-height: 1.35;
-  font-family: "Source Han Serif SC", serif;
+  font-family: var(--type-font-title);
 }
 
 .typeology-question-context {
@@ -4369,7 +4474,7 @@ onBeforeUnmount(() => {
   margin: 7px 0 4px;
   font-size: 30px;
   line-height: 1.2;
-  font-family: "Source Han Serif SC", serif;
+  font-family: var(--type-font-title);
 }
 
 .typeology-result-prefix {
@@ -4620,7 +4725,7 @@ onBeforeUnmount(() => {
 .typeology-module-head h2 {
   margin: 0;
   font-size: 20px;
-  font-family: "Source Han Serif SC", serif;
+  font-family: var(--type-font-title);
 }
 
 .typeology-module-head p {
@@ -4659,7 +4764,7 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 22px;
   line-height: 1.18;
-  font-family: "Source Han Serif SC", serif;
+  font-family: var(--type-font-title);
 }
 
 .typeology-card-value.is-enneagram-full {
@@ -4747,7 +4852,7 @@ onBeforeUnmount(() => {
 .typeology-poster-head h3 {
   margin: 0;
   font-size: 20px;
-  font-family: "Source Han Serif SC", serif;
+  font-family: var(--type-font-title);
 }
 
 .typeology-poster-close-btn {

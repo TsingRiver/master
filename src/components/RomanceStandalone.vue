@@ -93,6 +93,17 @@
           </van-button>
           <p class="romancex-cover-tip">预计耗时 2-3 分钟</p>
         </div>
+
+        <!-- 来唠两句入口 -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
+        </div>
       </section>
 
       <section v-else-if="stage === 'survey' && currentQuestion" class="romancex-panel romancex-question-panel">
@@ -172,6 +183,17 @@
             上一题
           </van-button>
           <p class="romancex-auto-next-tip">点击选项自动进入下一题</p>
+        </div>
+
+        <!-- 来唠两句入口 -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
         </div>
       </section>
 
@@ -354,6 +376,17 @@
         >
           {{ unifiedResult.restartButtonText }}
         </van-button>
+
+        <!-- 来唠两句入口 -->
+        <div class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
+        </div>
       </section>
     </main>
 
@@ -366,6 +399,20 @@
       返回主题中心
     </a>
   </div>
+
+  <!-- 评价弹窗 -->
+  <Like
+    :visible="isLikeVisible"
+    :module-path="feedbackModulePath"
+    @close="isLikeVisible = false"
+  />
+
+  <!-- 建议弹窗 -->
+  <Suggestion
+    :visible="isSuggestionVisible"
+    :module-path="feedbackModulePath"
+    @close="isSuggestionVisible = false"
+  />
 </template>
 
 <script setup>
@@ -375,6 +422,9 @@ import {
   selectRandomQuestionsWithoutRepeat,
   selectRandomQuestionsWithDimensionCoverage,
 } from "../utils/randomQuestionSelector";
+import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger";
+import Like from "./Like.vue";
+import Suggestion from "./Suggestion.vue";
 
 /**
  * 深度分析策略常量：
@@ -455,6 +505,22 @@ const props = defineProps({
  * 页面阶段状态。
  */
 const stage = ref("loading");
+
+/**
+ * 评价弹窗状态。
+ */
+const isLikeVisible = ref(false);
+const isSuggestionVisible = ref(false);
+
+/**
+ * 当前测试模块的反馈路径。
+ */
+const feedbackModulePath = computed(() => {
+  const routePaths = props.themeConfig?.routePaths;
+  return Array.isArray(routePaths) && routePaths.length > 0
+    ? routePaths[0]
+    : "/romance";
+});
 
 /**
  * 首屏视觉增强开关：
@@ -2063,6 +2129,19 @@ watch(stage, (nextStage) => {
   }
 
   stopLoadingMessageTicker();
+
+  /**
+   * 进入结果页时触发评价弹窗。
+   */
+  if (nextStage === "result") {
+    const themeKey = String(props.themeConfig?.key ?? "").trim();
+    if (themeKey && shouldShowFeedback(themeKey)) {
+      markFeedbackShown(themeKey);
+      setTimeout(() => {
+        isLikeVisible.value = true;
+      }, 1500);
+    }
+  }
 });
 
 /**

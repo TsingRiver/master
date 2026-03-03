@@ -141,4 +141,16 @@ export default defineConfig({
       },
     },
   },
+  /**
+   * 开发服务器配置：
+   * 1. 代理 `/api` 路由至本地 Node.js 后端（默认 3001 端口），解决本地跨域及 404 问题。
+   */
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://47.98.142.11",
+        changeOrigin: true,
+      },
+    },
+  },
 });

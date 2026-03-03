@@ -1,6 +1,34 @@
 :root {
-  --survey-font-body: "PingFang SC", sans-serif;
-  --survey-font-title: "Source Han Serif SC", serif;
+  /* 字体栈策略：
+   * 关键逻辑：优先命中 ZeoSeven 在线思源字体，未命中时回退到各平台系统中文字体。 */
+  --survey-font-body:
+    "SF Pro Text",
+    "SF Pro Display",
+    "Helvetica Neue",
+    "Arial",
+    "Noto Sans CJK SC",
+    "Noto Sans CJK",
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  --survey-font-title:
+    "Georgia",
+    "Times New Roman",
+    "Noto Serif CJK SC",
+    "Noto Serif CJK",
+    "Songti SC",
+    "STSong",
+    "Source Han Serif SC",
+    serif;
+  --survey-font-title-kaiti:
+    "STKaiti",
+    "Kaiti SC",
+    "KaiTi",
+    "Noto Serif CJK SC",
+    "Noto Serif CJK",
+    "Songti SC",
+    serif;
 }
 
 * {
@@ -102,7 +130,7 @@ body {
   --detail-bg: linear-gradient(180deg, #ffffff, #f6fbf8);
   --highlight-border: #d7ece2;
   --highlight-bg: #eef8f3;
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 .theme-city.theme-city-international {
@@ -164,7 +192,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fffcf6, #f7f2e9);
   --highlight-border: #d8cbb6;
   --highlight-bg: linear-gradient(180deg, #fff8ed, #f3efe6);
-  --title-font: "STKaiti", "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title-kaiti);
 }
 
 .theme-fortune {
@@ -187,7 +215,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #fff6ea);
   --highlight-border: #f0cfaf;
   --highlight-bg: #fff1e2;
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 .theme-ancient {
@@ -270,7 +298,7 @@ body {
     0 26px 48px rgba(86, 53, 29, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.74);
   --ancient-header-bg-start: rgba(255, 250, 239, 0.86);
   --ancient-header-bg-end: rgba(247, 229, 200, 0.54);
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 .theme-talent {
@@ -293,7 +321,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #f5fbfb);
   --highlight-border: #cceeed;
   --highlight-bg: linear-gradient(180deg, #f3fffd, #fff8ef);
-  --title-font: "STKaiti", serif;
+  --title-font: var(--survey-font-title-kaiti);
 }
 
 .theme-benefactor {
@@ -316,7 +344,7 @@ body {
   --detail-bg: linear-gradient(180deg, #ffffff, #f7f8ff);
   --highlight-border: #e4d6f6;
   --highlight-bg: linear-gradient(180deg, #f6f7ff, #fff3f8);
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 /*
@@ -406,7 +434,7 @@ body {
     var(--runtime-highlight-bg-start, #f6f8ff),
     var(--runtime-highlight-bg-end, #fdeff5)
   );
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 .theme-color-2026,
@@ -444,7 +472,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #f8f3ff);
   --highlight-border: #ead6ee;
   --highlight-bg: linear-gradient(180deg, #fff8fb, #f5f0ff);
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 .theme-soul-cat {
@@ -467,7 +495,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #fdf7fa);
   --highlight-border: #efd7e0;
   --highlight-bg: linear-gradient(180deg, #fff9fb, #f7f2ff);
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 .theme-love-brain {
@@ -490,7 +518,7 @@ body {
   --detail-bg: linear-gradient(180deg, #ffffff, #f3f7ff);
   --highlight-border: #d7e0ff;
   --highlight-bg: linear-gradient(180deg, #f2f8ff, #fff0f6);
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 .theme-romance {
@@ -513,7 +541,7 @@ body {
   --detail-bg: linear-gradient(180deg, #fff, #f8f3ff);
   --highlight-border: #ead6ee;
   --highlight-bg: linear-gradient(180deg, #fff8fb, #f6f0ff);
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 /* 关键逻辑：恋爱脑判定卡片文案长度波动较大，固定单列可避免 3 列拥挤导致换行错位。 */
@@ -556,7 +584,7 @@ body {
   --detail-bg: linear-gradient(180deg, #1c1e32, #20223a);
   --highlight-border: #4a4a73;
   --highlight-bg: linear-gradient(180deg, #252847, #2a2643);
-  --title-font: "Source Han Serif SC", serif;
+  --title-font: var(--survey-font-title);
 }
 
 /* 主题背景差异化：
@@ -1319,7 +1347,7 @@ body {
 }
 
 .theme-ancient .survey-cover-title-emphasis {
-  font-family: "KaiTi", "STKaiti", "Source Han Serif SC", serif;
+  font-family: "KaiTi", "STKaiti", "Kaiti SC", "Noto Serif CJK SC", "Noto Serif CJK", "Songti SC", serif;
   font-size: clamp(34px, 10.6vw, 48px);
   line-height: 1.06;
   color: color-mix(in srgb, var(--text-main) 92%, #000000 8%);
@@ -4704,6 +4732,30 @@ body {
 
 .survey-restart-btn {
   margin-top: 0;
+}
+
+/* 关键逻辑："我有意见"入口使用超链接样式，低调可发现，不抢占结果页视觉焦点。 */
+.survey-feedback-entry {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.survey-feedback-link {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--text-muted);
+  padding-bottom: 1px;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.survey-feedback-link:hover {
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .survey-commercial-fixed {

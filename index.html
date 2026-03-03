@@ -17,7 +17,46 @@
       }
     </style>
     <!-- 字体策略：
-      关键逻辑：移除第三方远程字库依赖，统一回退到系统内置中文字体栈，降低版权与网络不确定性。 -->
+      关键逻辑：通过 ZeoSeven FontsAPI 在线分发思源字体，兼顾国内访问速度与商用授权清晰度。 -->
+    <link rel="dns-prefetch" href="//fontsapi.zeoseven.com" />
+    <link rel="preconnect" href="https://fontsapi.zeoseven.com" crossorigin />
+    <!-- 字体非阻塞策略：
+      关键逻辑：
+      1. 先 preload 建立高优先级下载；
+      2. 再用 media=print + onload 切换为 all，避免阻塞首屏渲染；
+      3. noscript 兜底保证禁用 JS 场景仍可加载字体。 -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fontsapi.zeoseven.com/69/main/result.css"
+    />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fontsapi.zeoseven.com/285/main/result.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fontsapi.zeoseven.com/69/main/result.css"
+      media="print"
+      onload="this.media='all'"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fontsapi.zeoseven.com/285/main/result.css"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fontsapi.zeoseven.com/69/main/result.css"
+      />
+      <link
+        rel="stylesheet"
+        href="https://fontsapi.zeoseven.com/285/main/result.css"
+      />
+    </noscript>
     <script>
       /**
        * 前端资源加载自愈：
