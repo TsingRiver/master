@@ -264,7 +264,7 @@
           </ul>
         </div>
 
-        <div class="typeology-detail-section">
+        <div v-if="shouldShowAnswerSummary" class="typeology-detail-section">
           <h3>
             答卷摘要 {{ showAllSummary ? "" : `（前 ${SUMMARY_PREVIEW_LIMIT} 条）` }}
           </h3>
@@ -748,50 +748,133 @@ const TYPEOLOGY_POSTER_DEFAULT_THEME_COLORS = Object.freeze({
 });
 
 /**
- * 人格海报按主题映射的色相（Hue）：
- * 关键逻辑：只改变色相，不改变明暗层级，确保可读性与布局对比关系稳定。
+ * 人格海报按主题映射的手工调配色板：
+ * 关键逻辑：每个主题手工调色，保证在不同色相下海报背景都足够鲜明好看。
+ *   - backgroundTop/Bottom 使用渐变，让海报有纵深层次。
+ *   - 卡片内文字颜色与背景同色系但明度更高，保持一体感和可读性。
  */
-const TYPEOLOGY_POSTER_THEME_HUE_MAP = Object.freeze({
-  "social-persona": 152,
-  "ideal-match": 24,
-  "jung-classic": 186,
-  disc: 30,
-  "attitude-psy": 266,
-  temperament: 338,
-  "big-five": 204,
-  "dnd-alignment": 264,
-  attachment: 220,
-  holland: 146,
-});
-
-/**
- * 人格海报动态主题默认色相（蓝紫系）。
- */
-const TYPEOLOGY_POSTER_DEFAULT_HUE = 246;
-
-/**
- * 根据色相构建海报主题色板。
- * 关键逻辑：L（明度）与 alpha 维持与默认色板同层级，仅替换色相实现“同明暗换色”。
- * @param {number} hue 色相值（0~360）。
- * @returns {object} 海报主题色对象。
- */
-function buildTypeologyPosterThemeColorsByHue(hue) {
-  const normalizedHue = Number.isFinite(Number(hue))
-    ? ((Math.round(Number(hue)) % 360) + 360) % 360
-    : TYPEOLOGY_POSTER_DEFAULT_HUE;
-
-  return {
-    backgroundTop: `hsl(${normalizedHue} 15% 39%)`,
-    backgroundBottom: `hsl(${normalizedHue} 15% 39%)`,
-    titleText: `hsl(${normalizedHue} 58% 98%)`,
-    subtitleText: `hsl(${normalizedHue} 44% 95% / 0.96)`,
-    completedCountText: `hsl(${normalizedHue} 41% 92% / 0.92)`,
+const TYPEOLOGY_POSTER_THEME_PALETTE_MAP = Object.freeze({
+  // 社交人格 — 翡翠绿
+  "social-persona": {
+    backgroundTop: "#3A6B5C",
+    backgroundBottom: "#4E8B78",
+    titleText: "#F0FFF8",
+    subtitleText: "rgba(230, 255, 244, 0.96)",
+    completedCountText: "rgba(220, 248, 236, 0.92)",
     cardBackground: "#FFFFFF",
-    valueText: `hsl(${normalizedHue} 15% 39%)`,
-    labelText: `hsl(${normalizedHue} 39% 94%)`,
-    footerText: `hsl(${normalizedHue} 40% 93% / 0.95)`,
-  };
-}
+    valueText: "#3A6B5C",
+    labelText: "#D6F0E4",
+    footerText: "rgba(220, 245, 234, 0.95)",
+  },
+  // 理想匹配 — 暖橘珊瑚
+  "ideal-match": {
+    backgroundTop: "#9B5B3A",
+    backgroundBottom: "#C0785A",
+    titleText: "#FFF8F2",
+    subtitleText: "rgba(255, 240, 228, 0.96)",
+    completedCountText: "rgba(250, 232, 218, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#8B5133",
+    labelText: "#F5DFD0",
+    footerText: "rgba(248, 230, 216, 0.95)",
+  },
+  // 荣格经典 — 深青蓝
+  "jung-classic": {
+    backgroundTop: "#2E5F6F",
+    backgroundBottom: "#477F8E",
+    titleText: "#F0FAFC",
+    subtitleText: "rgba(224, 246, 252, 0.96)",
+    completedCountText: "rgba(212, 240, 248, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#2E5F6F",
+    labelText: "#CEEAF2",
+    footerText: "rgba(218, 242, 250, 0.95)",
+  },
+  // DISC — 琥珀金
+  disc: {
+    backgroundTop: "#8B6930",
+    backgroundBottom: "#A98548",
+    titleText: "#FFFBF0",
+    subtitleText: "rgba(255, 248, 228, 0.96)",
+    completedCountText: "rgba(250, 240, 215, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#7A5D2A",
+    labelText: "#F0E2C4",
+    footerText: "rgba(245, 235, 210, 0.95)",
+  },
+  // 态度心理 — 薰衣草紫
+  "attitude-psy": {
+    backgroundTop: "#624A84",
+    backgroundBottom: "#7E64A0",
+    titleText: "#FAF4FF",
+    subtitleText: "rgba(242, 232, 255, 0.96)",
+    completedCountText: "rgba(234, 222, 252, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#624A84",
+    labelText: "#E6D8F5",
+    footerText: "rgba(236, 226, 250, 0.95)",
+  },
+  // 气质类型 — 玫瑰粉
+  temperament: {
+    backgroundTop: "#8B4A60",
+    backgroundBottom: "#A9647C",
+    titleText: "#FFF4F8",
+    subtitleText: "rgba(255, 234, 242, 0.96)",
+    completedCountText: "rgba(250, 224, 236, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#7E4458",
+    labelText: "#F3D6E2",
+    footerText: "rgba(248, 228, 238, 0.95)",
+  },
+  // 大五人格 — 钴蓝
+  "big-five": {
+    backgroundTop: "#395F8A",
+    backgroundBottom: "#5078A5",
+    titleText: "#F2F8FF",
+    subtitleText: "rgba(228, 242, 255, 0.96)",
+    completedCountText: "rgba(216, 236, 255, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#395F8A",
+    labelText: "#D0E2F5",
+    footerText: "rgba(222, 238, 255, 0.95)",
+  },
+  // DnD 阵营 — 暗紫
+  "dnd-alignment": {
+    backgroundTop: "#504078",
+    backgroundBottom: "#6A5895",
+    titleText: "#F8F4FF",
+    subtitleText: "rgba(240, 232, 255, 0.96)",
+    completedCountText: "rgba(232, 222, 252, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#504078",
+    labelText: "#E0D4F2",
+    footerText: "rgba(234, 225, 250, 0.95)",
+  },
+  // 依恋类型 — 湖蓝
+  attachment: {
+    backgroundTop: "#2D5A78",
+    backgroundBottom: "#457596",
+    titleText: "#F0F8FC",
+    subtitleText: "rgba(224, 244, 255, 0.96)",
+    completedCountText: "rgba(212, 236, 252, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#2D5A78",
+    labelText: "#C8E2F0",
+    footerText: "rgba(218, 240, 252, 0.95)",
+  },
+  // 霍兰德 — 森林绿
+  holland: {
+    backgroundTop: "#3D6E50",
+    backgroundBottom: "#548A68",
+    titleText: "#F2FFF6",
+    subtitleText: "rgba(230, 252, 238, 0.96)",
+    completedCountText: "rgba(220, 245, 230, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#3D6E50",
+    labelText: "#D2ECDD",
+    footerText: "rgba(224, 248, 234, 0.95)",
+  },
+});
 
 /**
  * 按测试主题解析海报色板。
@@ -805,10 +888,8 @@ function resolveTypeologyPosterThemeColors(testKey) {
     return TYPEOLOGY_POSTER_DEFAULT_THEME_COLORS;
   }
 
-  const mappedHue = TYPEOLOGY_POSTER_THEME_HUE_MAP[normalizedTestKey];
-  return buildTypeologyPosterThemeColorsByHue(
-    Number.isFinite(mappedHue) ? mappedHue : TYPEOLOGY_POSTER_DEFAULT_HUE,
-  );
+  // 关键逻辑：优先从手工色板表取；找不到则回退默认紫色系。
+  return TYPEOLOGY_POSTER_THEME_PALETTE_MAP[normalizedTestKey] ?? TYPEOLOGY_POSTER_DEFAULT_THEME_COLORS;
 }
 
 /**
@@ -1934,6 +2015,15 @@ const summaryLinesForView = computed(() => {
     ? fullSummaryLines
     : fullSummaryLines.slice(0, SUMMARY_PREVIEW_LIMIT);
 });
+
+/**
+ * 是否展示“答卷摘要”模块。
+ * 关键逻辑：MBTI 结果页隐藏摘要列表，其他类型学测试维持原有展示。
+ * 复杂度评估：O(1)。
+ */
+const shouldShowAnswerSummary = computed(
+  () => activeTestConfig.value?.key !== "mbti",
+);
 
 /**
  * AI 流式预览文本：

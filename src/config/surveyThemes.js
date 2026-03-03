@@ -2856,7 +2856,8 @@ export const SURVEY_THEME_CONFIGS = [
           },
         ],
       },
-      questionSelection: { minCount: 10, maxCount: 15 },
+      // 关键逻辑：国内版与国际版共用随机抽题区间，每次测试随机抽取 15-20 道题。
+      questionSelection: { minCount: 15, maxCount: 20 },
       // 关键逻辑：启用“选择即下一题”，并在 UI 侧隐藏“下一步”按钮。
       autoAdvanceOnSelect: true,
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
@@ -2881,6 +2882,15 @@ export const SURVEY_THEME_CONFIGS = [
           questions: selectedQuestions,
           answerIds,
           cities: activeCityPool,
+          scoringConfig: {
+            // 关键逻辑：启用先验均衡，抵消题库结构导致的“天然热门城市”偏置。
+            enablePriorEqualization: true,
+            // 关键逻辑：关闭城市预设加权，让最终结果主要由用户答案驱动。
+            enablePriorityBonus: false,
+            // 关键逻辑：先验校准采样次数，兼顾稳定性与端侧性能。
+            priorCalibrationSampleSize: 96,
+            priorEqualizationStrength: 1,
+          },
         });
       },
       buildDeepPayload: buildCityDeepPayload,

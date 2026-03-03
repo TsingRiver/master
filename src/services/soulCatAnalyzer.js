@@ -1,14 +1,16 @@
-import { resolveSoulCatArtworkByKey } from "../constants/soulCatArtwork";
+import { resolveSoulCatArtworkByKey } from "../constants/soulCatArtwork.js";
 
 /**
  * 灵魂猫咪评分区间配置：
- * 关键逻辑：严格按产品规则映射总分区间，避免类型漂移。
+ * 关键逻辑：
+ * 1. 保持“总分越高，类型序号越靠后”的单调映射，结果仍由用户作答决定；
+ * 2. 区间使用随机基线分位校准，降低中位区间过度拥挤导致的类型极端偏斜。
  */
-const SOUL_CAT_PROFILE_RULES = [
+export const SOUL_CAT_PROFILE_RULES = [
   {
     key: "ragdoll",
     minScore: 16,
-    maxScore: 23,
+    maxScore: 34,
     name: "布偶猫・温柔天使",
     tagLine: "被爱包围的小温柔",
     personalityBase:
@@ -21,8 +23,8 @@ const SOUL_CAT_PROFILE_RULES = [
   },
   {
     key: "british-shorthair",
-    minScore: 24,
-    maxScore: 31,
+    minScore: 35,
+    maxScore: 36,
     name: "英短猫・安稳佛系",
     tagLine: "淡定通透的小福气",
     personalityBase:
@@ -35,8 +37,8 @@ const SOUL_CAT_PROFILE_RULES = [
   },
   {
     key: "american-shorthair",
-    minScore: 32,
-    maxScore: 39,
+    minScore: 37,
+    maxScore: 38,
     name: "美短猫・元气机灵",
     tagLine: "永远好奇的小太阳",
     personalityBase:
@@ -49,8 +51,8 @@ const SOUL_CAT_PROFILE_RULES = [
   },
   {
     key: "siamese",
-    minScore: 40,
-    maxScore: 45,
+    minScore: 39,
+    maxScore: 39,
     name: "暹罗猫・粘人忠诚",
     tagLine: "认定了就不放手",
     personalityBase:
@@ -63,8 +65,8 @@ const SOUL_CAT_PROFILE_RULES = [
   },
   {
     key: "persian",
-    minScore: 46,
-    maxScore: 50,
+    minScore: 40,
+    maxScore: 40,
     name: "波斯猫・优雅贵气",
     tagLine: "自带气质的小贵族",
     personalityBase:
@@ -77,8 +79,8 @@ const SOUL_CAT_PROFILE_RULES = [
   },
   {
     key: "maine-coon",
-    minScore: 51,
-    maxScore: 55,
+    minScore: 41,
+    maxScore: 41,
     name: "缅因猫・温柔巨人",
     tagLine: "外冷内热的守护者",
     personalityBase:
@@ -91,8 +93,8 @@ const SOUL_CAT_PROFILE_RULES = [
   },
   {
     key: "devon-rex",
-    minScore: 56,
-    maxScore: 59,
+    minScore: 42,
+    maxScore: 43,
     name: "德文卷毛猫・精灵古怪",
     tagLine: "古灵精怪的小调皮",
     personalityBase:
@@ -105,8 +107,8 @@ const SOUL_CAT_PROFILE_RULES = [
   },
   {
     key: "orange-cat",
-    minScore: 60,
-    maxScore: 62,
+    minScore: 44,
+    maxScore: 45,
     name: "橘猫・治愈吃货",
     tagLine: "没心没肺小幸福",
     personalityBase:
@@ -119,7 +121,7 @@ const SOUL_CAT_PROFILE_RULES = [
   },
   {
     key: "native-cat",
-    minScore: 63,
+    minScore: 46,
     maxScore: 64,
     name: "狸花猫・自由灵魂",
     tagLine: "不讨好、不依附，只忠于自己",
@@ -163,76 +165,181 @@ function toSafeNumber(value) {
 }
 
 /**
+ * 评分选项池（用于构建随机基线分布）。
+ */
+const SOUL_CAT_OPTION_SCORE_VALUES = Object.freeze([1, 2, 3, 4]);
+
+/**
+ * 分值分布缓存：
+ * key 为题量，value 为分值概率与累计概率映射。
+ */
+const SOUL_CAT_SCORE_DISTRIBUTION_CACHE = new Map();
+
+/**
+ * 基于题量构建总分概率分布（随机基线）。
+ * 关键逻辑：使用动态规划精确计算“各总分出现概率”，避免模拟误差。
+ * 复杂度评估：O(Q * S * O)。
+ * Q 为题量，S 为可达总分状态数，O 为选项分值数量（固定 4）。
+ * @param {number} questionCount 题目数量。
+ * @returns {{ probabilityByScoreMap: Map<number, number>, cdfBeforeByScoreMap: Map<number, number> }} 概率映射。
+ */
+function buildSoulCatScoreDistribution(questionCount) {
+  const safeQuestionCount = Math.max(1, Math.floor(questionCount || 0));
+  let sumCountMap = new Map([[0, 1]]);
+
+  for (let questionIndex = 0; questionIndex < safeQuestionCount; questionIndex += 1) {
+    const nextSumCountMap = new Map();
+    sumCountMap.forEach((countValue, scoreSum) => {
+      SOUL_CAT_OPTION_SCORE_VALUES.forEach((optionScore) => {
+        const nextScoreSum = scoreSum + optionScore;
+        const previousCount = nextSumCountMap.get(nextScoreSum) ?? 0;
+        nextSumCountMap.set(nextScoreSum, previousCount + countValue);
+      });
+    });
+    sumCountMap = nextSumCountMap;
+  }
+
+  const totalCombinationCount = Math.pow(
+    SOUL_CAT_OPTION_SCORE_VALUES.length,
+    safeQuestionCount,
+  );
+  const sortedScoreList = Array.from(sumCountMap.keys()).sort((leftScore, rightScore) =>
+    leftScore - rightScore,
+  );
+  const probabilityByScoreMap = new Map();
+  const cdfBeforeByScoreMap = new Map();
+  let cumulativeProbability = 0;
+
+  sortedScoreList.forEach((scoreValue) => {
+    const probability = (sumCountMap.get(scoreValue) ?? 0) / totalCombinationCount;
+    cdfBeforeByScoreMap.set(scoreValue, cumulativeProbability);
+    probabilityByScoreMap.set(scoreValue, probability);
+    cumulativeProbability += probability;
+  });
+
+  return {
+    probabilityByScoreMap,
+    cdfBeforeByScoreMap,
+  };
+}
+
+/**
+ * 获取题量对应的随机基线分布（带缓存）。
+ * 复杂度评估：缓存命中 O(1)，首次构建见 `buildSoulCatScoreDistribution`。
+ * @param {number} questionCount 题目数量。
+ * @returns {{ probabilityByScoreMap: Map<number, number>, cdfBeforeByScoreMap: Map<number, number> }} 分布映射。
+ */
+function getSoulCatScoreDistribution(questionCount) {
+  const safeQuestionCount = Math.max(1, Math.floor(questionCount || 0));
+  if (!SOUL_CAT_SCORE_DISTRIBUTION_CACHE.has(safeQuestionCount)) {
+    SOUL_CAT_SCORE_DISTRIBUTION_CACHE.set(
+      safeQuestionCount,
+      buildSoulCatScoreDistribution(safeQuestionCount),
+    );
+  }
+  return SOUL_CAT_SCORE_DISTRIBUTION_CACHE.get(safeQuestionCount);
+}
+
+/**
+ * 基于答卷内容计算稳定选择器（0~1）。
+ * 关键逻辑：同一份答卷始终得到同一选择器，保证结果可复现且不依赖运行时随机数。
+ * 复杂度评估：O(Q * L)，Q 为题量，L 为平均 optionId 长度。
+ * @param {Array<object>} answerSummary 结构化答卷摘要。
+ * @returns {number} 稳定选择器。
+ */
+function resolveStableSelector(answerSummary) {
+  let hashValue = 2166136261;
+
+  answerSummary.forEach((summaryItem, index) => {
+    const tokenText = `${index}:${summaryItem.optionId ?? "none"}:${summaryItem.score}`;
+    for (let charIndex = 0; charIndex < tokenText.length; charIndex += 1) {
+      hashValue ^= tokenText.charCodeAt(charIndex);
+      hashValue = Math.imul(hashValue, 16777619);
+    }
+  });
+
+  return (hashValue >>> 0) / 4294967296;
+}
+
+/**
  * 计算总分。
- * 复杂度评估：O(Q)
- * Q 为题目数量（固定 16），仅做单次线性扫描。
- * @param {Array<object>} questions 本轮题目。
- * @param {Array<string|null>} answerIds 用户答案列表。
+ * 复杂度评估：O(Q)，Q 为题量（当前固定 16）。
+ * @param {Array<object>} answerSummary 结构化答卷摘要。
  * @returns {number} 总分值（16~64）。
  */
-function calculateTotalScore(questions, answerIds) {
-  const rawTotal = questions.reduce((sumValue, questionItem, questionIndex) => {
-    const selectedOption = questionItem.options.find(
-      (optionItem) => optionItem.id === answerIds[questionIndex],
-    );
-    const optionScore = toSafeNumber(selectedOption?.score);
-    return sumValue + optionScore;
-  }, 0);
-
-  const clampedScore = Math.max(SCORE_RANGE.min, Math.min(SCORE_RANGE.max, rawTotal));
+function calculateTotalScore(answerSummary) {
+  const rawTotalScore = answerSummary.reduce(
+    (sumValue, summaryItem) => sumValue + toSafeNumber(summaryItem?.score),
+    0,
+  );
+  const clampedScore = Math.max(SCORE_RANGE.min, Math.min(SCORE_RANGE.max, rawTotalScore));
   return Math.round(clampedScore);
 }
 
 /**
- * 根据总分映射主类型。
- * @param {number} totalScore 总分值。
- * @returns {object} 匹配的类型规则。
+ * 根据总分 + 答卷细节映射主类型。
+ * 关键逻辑：
+ * 1. 总分先确定概率质量位置；
+ * 2. 同分人群再用“稳定选择器”做细粒度分流，缓解中心分值拥挤。
+ * @param {object} params 参数对象。
+ * @param {number} params.totalScore 总分值。
+ * @param {Array<object>} params.answerSummary 结构化答卷摘要。
+ * @returns {{ matchedProfile: object, profileIndex: number, quantile: number }} 主类型映射结果。
  */
-function resolvePrimaryProfile(totalScore) {
-  return (
-    SOUL_CAT_PROFILE_RULES.find(
-      (profileItem) =>
-        totalScore >= profileItem.minScore && totalScore <= profileItem.maxScore,
-    ) ?? SOUL_CAT_PROFILE_RULES[0]
+function resolvePrimaryProfile({ totalScore, answerSummary }) {
+  const profileCount = SOUL_CAT_PROFILE_RULES.length;
+  const distribution = getSoulCatScoreDistribution(answerSummary.length);
+  const probability = distribution.probabilityByScoreMap.get(totalScore) ?? 0;
+  const cdfBefore = distribution.cdfBeforeByScoreMap.get(totalScore) ?? 0;
+  const stableSelector = resolveStableSelector(answerSummary);
+  const rawQuantile = cdfBefore + stableSelector * probability;
+  const normalizedQuantile = Math.max(0, Math.min(0.999999999, rawQuantile));
+  const profileIndex = Math.min(
+    profileCount - 1,
+    Math.floor(normalizedQuantile * profileCount),
   );
+
+  return {
+    matchedProfile: SOUL_CAT_PROFILE_RULES[profileIndex],
+    profileIndex,
+    quantile: normalizedQuantile,
+  };
 }
 
 /**
  * 计算类型匹配度。
- * @param {number} totalScore 总分值。
- * @param {object} profileItem 类型规则。
+ * @param {number} quantile 当前答卷分位值（0~1）。
+ * @param {number} profileIndex 类型索引。
  * @returns {number} 匹配度百分比（0~100）。
  */
-function calculateProfileMatchScore(totalScore, profileItem) {
-  const isInRange =
-    totalScore >= profileItem.minScore && totalScore <= profileItem.maxScore;
-  if (isInRange) {
-    return 100;
-  }
-
-  const distanceToRange =
-    totalScore < profileItem.minScore
-      ? profileItem.minScore - totalScore
-      : totalScore - profileItem.maxScore;
-
-  // 关键逻辑：每偏离 1 分衰减 12%，用于突出区间匹配的明显差异。
-  return Math.max(0, Math.min(100, 100 - distanceToRange * 12));
+function calculateProfileMatchScore(quantile, profileIndex) {
+  const profileCount = SOUL_CAT_PROFILE_RULES.length;
+  const profileCenter = (profileIndex + 0.5) / profileCount;
+  const normalizedDistance = Math.abs(quantile - profileCenter) * profileCount;
+  return Math.max(0, Math.min(100, Math.round((1 - normalizedDistance) * 100)));
 }
 
 /**
  * 生成 Top 3 候选类型。
- * 复杂度评估：O(P log P)
- * P 为类型数量（固定 9），排序开销为常量级。
- * @param {number} totalScore 总分值。
+ * 复杂度评估：O(P log P)，P 为类型数量（固定 9）。
+ * @param {object} params 参数对象。
+ * @param {number} params.quantile 当前答卷分位值。
+ * @param {string} params.matchedProfileKey 主类型 key。
  * @returns {Array<{ key: string, name: string, score: number, tagLine: string }>} Top3 候选。
  */
-function buildTopThreeProfiles(totalScore) {
-  return SOUL_CAT_PROFILE_RULES.map((profileItem) => ({
-    key: profileItem.key,
-    name: profileItem.name,
-    score: calculateProfileMatchScore(totalScore, profileItem),
-    tagLine: profileItem.tagLine,
-  }))
+function buildTopThreeProfiles({ quantile, matchedProfileKey }) {
+  return SOUL_CAT_PROFILE_RULES.map((profileItem, profileIndex) => {
+    const scoreValue =
+      profileItem.key === matchedProfileKey
+        ? 100
+        : calculateProfileMatchScore(quantile, profileIndex);
+    return {
+      key: profileItem.key,
+      name: profileItem.name,
+      score: scoreValue,
+      tagLine: profileItem.tagLine,
+    };
+  })
     .sort((leftItem, rightItem) => rightItem.score - leftItem.score)
     .slice(0, 3);
 }
@@ -339,10 +446,17 @@ export function analyzeSoulCatLocally({ questions, answerIds }) {
   const safeQuestions = Array.isArray(questions) ? questions : [];
   const safeAnswerIds = Array.isArray(answerIds) ? answerIds : [];
 
-  const totalScore = calculateTotalScore(safeQuestions, safeAnswerIds);
-  const matchedProfile = resolvePrimaryProfile(totalScore);
-  const topThreeProfiles = buildTopThreeProfiles(totalScore);
   const answerSummary = buildAnswerSummary(safeQuestions, safeAnswerIds);
+  const totalScore = calculateTotalScore(answerSummary);
+  const primaryProfileResult = resolvePrimaryProfile({
+    totalScore,
+    answerSummary,
+  });
+  const matchedProfile = primaryProfileResult.matchedProfile;
+  const topThreeProfiles = buildTopThreeProfiles({
+    quantile: primaryProfileResult.quantile,
+    matchedProfileKey: matchedProfile.key,
+  });
   const summaryLines = buildSummaryLines(answerSummary);
 
   const artworkAsset = resolveSoulCatArtworkByKey(matchedProfile.key);
