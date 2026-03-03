@@ -10,6 +10,7 @@ import {
   Tag,
 } from "vant";
 import { injectSpeedInsights } from "@vercel/speed-insights";
+import Clarity from "microsoft-clarity";
 import App from "./App.vue";
 import "./unified-survey.css";
 import "vant/es/button/style";
@@ -234,3 +235,29 @@ if (typeof window.__ASKING_ON_APP_BOOT__ === "function") {
 }
 // 关键逻辑：Speed Insights 为可选增强能力，采用空闲调度避免阻塞首屏渲染。
 scheduleSpeedInsightsSetup();
+
+/**
+ * 初始化 Microsoft Clarity 行为分析：
+ * 关键逻辑：
+ * 1. 仅在生产环境启用，开发模式跳过以避免本地调试产生噪音数据。
+ * 2. 采用空闲调度，降低首屏主线程竞争。
+ * 3. 项目 ID 通过环境变量 VITE_CLARITY_PROJECT_ID 配置，未配置时静默跳过。
+ */
+function scheduleClaritySetup() {
+  const clarityProjectId = String(import.meta.env.VITE_CLARITY_PROJECT_ID ?? "").trim();
+  if (import.meta.env.DEV || !clarityProjectId) {
+    return;
+  }
+
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(() => {
+      Clarity.init(clarityProjectId);
+    });
+    return;
+  }
+
+  window.setTimeout(() => {
+    Clarity.init(clarityProjectId);
+  }, 0);
+}
+scheduleClaritySetup();
