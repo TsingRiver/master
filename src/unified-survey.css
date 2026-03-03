@@ -1735,10 +1735,6 @@ body {
   color: #635847 !important;
 }
 
-.theme-five-elements-city .survey-home-action-btn {
-  border-style: solid !important;
-}
-
 .theme-five-elements-city .survey-result-card {
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
@@ -2494,14 +2490,35 @@ body {
   grid-template-columns: 1fr;
 }
 
-.survey-home-action-wrap {
-  margin-top: 16px;
+/* 关键逻辑：答题卡片需 relative 定位，作为右上角退出按钮绝对定位的锚点。 */
+.survey-question-card {
+  position: relative;
 }
 
-.survey-home-action-btn {
-  min-height: 38px;
-  font-size: 13px !important;
-  border-style: dashed !important;
+/* 返回首页按钮：绝对定位到右上角，避免与上一题/下一题按钮相邻导致误触。 */
+.survey-question-quit-btn {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  z-index: 2;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in srgb, #e25c5c 32%, var(--option-border) 68%);
+  border-radius: 999px;
+  background: color-mix(in srgb, #e25c5c 6%, var(--card-bg, #fff) 94%);
+  color: color-mix(in srgb, #c0392b 52%, var(--text-main) 48%);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    opacity 200ms ease,
+    background 200ms ease;
+}
+
+.survey-question-quit-btn:active {
+  opacity: 0.72;
+  background: color-mix(in srgb, #e25c5c 12%, var(--card-bg, #fff) 88%);
 }
 
 .survey-btn {

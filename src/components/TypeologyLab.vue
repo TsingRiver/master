@@ -77,6 +77,15 @@
         v-if="stage === STAGE_TESTING && currentQuestion"
         class="typeology-panel typeology-question-panel"
       >
+        <!-- 退出本轮作答按钮：绝对定位到右上角，避免误触 -->
+        <button
+          type="button"
+          class="typeology-question-quit-btn"
+          @click="confirmQuitCurrentTest"
+        >
+          退出本轮
+        </button>
+
         <div class="typeology-progress-meta">
           <span>{{ runningModeLabel }} · {{ progressLabel }}</span>
           <span>{{ progressPercent }}%</span>
@@ -141,14 +150,6 @@
             上一题
           </van-button>
         </div>
-
-        <van-button
-          block
-          class="typeology-btn typeology-btn-ghost typeology-question-quit-btn"
-          @click="quitCurrentTest"
-        >
-          退出本轮作答
-        </van-button>
       </section>
 
       <section
@@ -2955,9 +2956,21 @@ async function confirmBeforeSwitchTest(nextTestKey) {
 }
 
 /**
- * 退出当前测试。
+ * 退出当前测试（二次确认后执行）。
+ * 关键逻辑：通过 showConfirmDialog 弹窗拦截误触，用户确认后才清理会话数据并返回首页。
  */
-function quitCurrentTest() {
+async function confirmQuitCurrentTest() {
+  try {
+    await showConfirmDialog({
+      title: "确认退出本轮作答？",
+      message: "退出后当前作答进度将根据答题数量决定是否保存。",
+      confirmButtonText: "确认退出",
+      cancelButtonText: "继续答题",
+    });
+  } catch {
+    // 关键逻辑：用户点击「继续答题」或关闭弹窗，不做任何处理。
+    return;
+  }
   const hasPersistedProgress = persistCurrentTestingProgress();
   resetTestingSessionState();
   stage.value = STAGE_HOME;
@@ -4300,8 +4313,33 @@ onBeforeUnmount(() => {
   color: color-mix(in srgb, var(--type-text) 88%, var(--type-muted) 12%) !important;
 }
 
+/* 关键逻辑：答题面板需 relative 定位，作为退出按钮绝对定位的锚点。 */
+.typeology-question-panel {
+  position: relative;
+}
+
+/* 退出本轮按钮：绝对定位到右上角，避免与上一题按钮相邻导致误触。 */
 .typeology-question-quit-btn {
-  margin-top: 12px;
+  position: absolute;
+  top: 8px;
+  right: 60px;
+  z-index: 2;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in srgb, #e25c5c 32%, var(--type-muted) 68%);
+  border-radius: 999px;
+  background: color-mix(in srgb, #e25c5c 6%, var(--type-card-bg) 94%);
+  color: color-mix(in srgb, #c0392b 52%, var(--type-text) 48%);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: opacity 200ms ease, background 200ms ease;
+}
+
+.typeology-question-quit-btn:active {
+  opacity: 0.72;
+  background: color-mix(in srgb, #e25c5c 12%, var(--type-card-bg) 88%);
 }
 
 .typeology-ai-generate-btn {

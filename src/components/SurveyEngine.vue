@@ -220,7 +220,16 @@
         </div>
       </section>
 
-      <section v-else-if="stage === 'survey' && currentQuestion" class="survey-card card-in">
+      <section v-else-if="stage === 'survey' && currentQuestion" class="survey-card survey-question-card card-in">
+        <!-- 返回首页按钮：绝对定位到右上角，避免误触 -->
+        <button
+          type="button"
+          class="survey-question-quit-btn"
+          @click="confirmGoHomeFromSurvey"
+        >
+          返回首页
+        </button>
+
         <template v-if="isRomanceTheme">
           <div
             class="survey-romance-progress-wrap"
@@ -323,15 +332,6 @@
             @click="goNext"
           >
             {{ isLastQuestion ? themeConfig.theme.submitButtonText : themeConfig.theme.nextButtonText }}
-          </van-button>
-        </div>
-        <div class="survey-home-action-wrap">
-          <van-button
-            block
-            class="survey-btn survey-btn-secondary survey-home-action-btn"
-            @click="goHomeFromSurvey"
-          >
-            返回首页
           </van-button>
         </div>
       </section>
@@ -959,7 +959,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { showToast } from "vant";
+import { showConfirmDialog, showToast } from "vant";
 import {
   buildSoulCatBreedOptionList,
   resolveSoulCatCompatibilityByKeys,
@@ -5332,6 +5332,25 @@ async function goNext() {
 function restart() {
   // 关键逻辑：重测流程包含异步题库加载，显式忽略 Promise 即可。
   void resetSurveyState();
+}
+
+/**
+ * 答题阶段返回首页（二次确认后执行）。
+ * 关键逻辑：通过 showConfirmDialog 弹窗拦截误触，用户确认后才执行返回首页操作。
+ */
+async function confirmGoHomeFromSurvey() {
+  try {
+    await showConfirmDialog({
+      title: "确认返回首页？",
+      message: "返回首页后当前答题进度将不会保存。",
+      confirmButtonText: "确认返回",
+      cancelButtonText: "继续答题",
+    });
+  } catch {
+    // 关键逻辑：用户点击「继续答题」或关闭弹窗，不做任何处理。
+    return;
+  }
+  goHomeFromSurvey();
 }
 
 /**
