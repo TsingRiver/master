@@ -1,0 +1,40 @@
+name: 🚀 自动构建并部署到 1Panel
+
+# 触发条件：当代码推送到 main 分支时自动执行
+on:
+  push:
+    branches:
+      - main # ⚠️如果你的主分支叫 master，请把这里改成 master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest # 使用 GitHub 提供的免费服务器
+
+    steps:
+      # 1. 获取最新代码
+      - name: 📦 获取代码
+        uses: actions/checkout@v4
+
+      # 2. 配置 Node.js 环境
+      - name: ⚙️ 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24" # 建议改成你本地开发时实际使用的 Node 版本，比如 18 或 20
+
+      # 3. 安装依赖并打包项目
+      - name: 🛠️ 安装依赖并打包
+        run: |
+          npm install
+          npm run build
+          # 注意：这里默认你的 Vue 项目打包产出目录是 dist。如果是其他名字请修改下面的 source 路径。
+
+      # 4. 将打包好的 dist 目录传送到服务器
+      - name: 📂 部署到服务器
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          source: "askingbuild/" # 要上传的本地打包文件夹
+          target: ${{ secrets.TARGET_DIR }} # 对应你在 GitHub 配置的 1Panel 目录
+          strip_components: 1 # 剥离外层 dist 文件夹，直接把里面的静态文件铺平放到网站根目录
