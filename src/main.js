@@ -10,7 +10,6 @@ import {
   Tag,
 } from "vant";
 import { injectSpeedInsights } from "@vercel/speed-insights";
-import Clarity from "microsoft-clarity";
 import App from "./App.vue";
 import "./unified-survey.css";
 import "vant/es/button/style";
@@ -242,6 +241,7 @@ scheduleSpeedInsightsSetup();
  * 1. 仅在生产环境启用，开发模式跳过以避免本地调试产生噪音数据。
  * 2. 采用空闲调度，降低首屏主线程竞争。
  * 3. 项目 ID 通过环境变量 VITE_CLARITY_PROJECT_ID 配置，未配置时静默跳过。
+ * 4. 使用原生 script 注入方式（Clarity 官方推荐），避免 npm 包与 Vite 的兼容问题。
  */
 function scheduleClaritySetup() {
   const clarityProjectId = String(import.meta.env.VITE_CLARITY_PROJECT_ID ?? "").trim();
@@ -249,15 +249,29 @@ function scheduleClaritySetup() {
     return;
   }
 
+  /**
+   * 注入 Clarity 追踪脚本：
+   * 关键逻辑：等效于 Clarity 官方提供的嵌入代码片段，仅动态化了项目 ID。
+   */
+  const injectClarityScript = () => {
+    /* eslint-disable */
+    (function (c, l, a, r, i, t, y) {
+      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
+      t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+      y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+    })(window, document, "clarity", "script", clarityProjectId);
+    /* eslint-enable */
+  };
+
   if (typeof window.requestIdleCallback === "function") {
     window.requestIdleCallback(() => {
-      Clarity.init(clarityProjectId);
+      injectClarityScript();
     });
     return;
   }
 
   window.setTimeout(() => {
-    Clarity.init(clarityProjectId);
+    injectClarityScript();
   }, 0);
 }
 scheduleClaritySetup();
