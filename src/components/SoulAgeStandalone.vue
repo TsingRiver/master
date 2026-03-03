@@ -44,7 +44,7 @@
         </button>
 
         <!-- 来唠两句入口 -->
-        <div class="survey-feedback-entry">
+        <div v-if="enableActiveFeedback" class="survey-feedback-entry">
           <a
             class="survey-feedback-link"
             href="javascript:void(0)"
@@ -100,7 +100,7 @@
         </footer>
 
         <!-- 来唠两句入口 -->
-        <div class="survey-feedback-entry">
+        <div v-if="enableActiveFeedback" class="survey-feedback-entry">
           <a
             class="survey-feedback-link"
             href="javascript:void(0)"
@@ -322,7 +322,7 @@
           <p v-if="interactionFeedback" class="soul-interaction-feedback">{{ interactionFeedback }}</p>
 
           <!-- 来唠两句入口 -->
-          <div class="survey-feedback-entry">
+          <div v-if="enableActiveFeedback" class="survey-feedback-entry">
             <a
               class="survey-feedback-link"
               href="javascript:void(0)"
@@ -378,6 +378,8 @@ import { selectRandomQuestionsWithoutRepeat } from "../utils/randomQuestionSelec
 import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger";
 import Like from "./Like.vue";
 import Suggestion from "./Suggestion.vue";
+
+const enableActiveFeedback = import.meta.env.VITE_ENABLE_ACTIVE_FEEDBACK !== 'false';
 
 /**
  * 组件参数定义。

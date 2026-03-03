@@ -1,7 +1,7 @@
 <template>
   <!-- 关键逻辑：全屏半透明遮罩 + 居中卡片，点击遮罩关闭 -->
-  <Transition name="suggestion-fade">
-    <div v-if="visible" class="suggestion-overlay" @click.self="handleClose">
+  <Transition name="suggestion-fade" @after-leave="onAfterLeave">
+    <div v-if="enableActiveFeedback && visible" class="suggestion-overlay" @click.self="handleClose">
       <div class="suggestion-card">
         <!-- 关闭按钮 -->
         <button class="suggestion-close-btn" @click="handleClose" aria-label="关闭">×</button>
@@ -78,6 +78,9 @@ const props = defineProps({
   /** 当前测试模块路径 */
   modulePath: { type: String, default: "" },
 });
+
+// 从环境变量读取全局开关（默认为打开，除非显式配置为 false）
+const enableActiveFeedback = import.meta.env.VITE_ENABLE_ACTIVE_FEEDBACK !== 'false';
 
 const emit = defineEmits(["close"]);
 

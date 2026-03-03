@@ -220,7 +220,7 @@
         </div>
 
         <!-- 来唠两句入口 -->
-        <div class="survey-feedback-entry">
+        <div v-if="enableActiveFeedback" class="survey-feedback-entry">
           <a
             class="survey-feedback-link"
             href="javascript:void(0)"
@@ -347,7 +347,7 @@
         </div>
 
         <!-- 来唠两句入口 -->
-        <div class="survey-feedback-entry">
+        <div v-if="enableActiveFeedback" class="survey-feedback-entry">
           <a
             class="survey-feedback-link"
             href="javascript:void(0)"
@@ -960,7 +960,7 @@
           </div>
 
           <!-- 来唠两句入口 -->
-          <div class="survey-feedback-entry">
+          <div v-if="enableActiveFeedback" class="survey-feedback-entry">
             <a
               class="survey-feedback-link"
               href="javascript:void(0)"
@@ -1066,10 +1066,7 @@ const themeDescriptionSnapshot = ref("");
 const isLikeVisible = ref(false);
 const isSuggestionVisible = ref(false);
 
-/**
- * 当前测试模块的反馈路径。
- * 关键逻辑：从 themeConfig 的 routePaths[0] 取得，用于提交反馈时记录用户访问的模块。
- */
+const enableActiveFeedback = import.meta.env.VITE_ENABLE_ACTIVE_FEEDBACK !== 'false';
 const feedbackModulePath = computed(() => {
   const routePaths = props.themeConfig?.routePaths;
   return Array.isArray(routePaths) && routePaths.length > 0

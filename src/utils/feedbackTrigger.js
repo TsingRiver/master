@@ -24,6 +24,11 @@ function buildStorageKey(themeKey) {
  * @returns {boolean} 是否应弹出。
  */
 export function shouldShowFeedback(themeKey) {
+  // 当被动配置明确关闭时（'false' 表示禁用被动意见反馈弹窗）
+  if (import.meta.env.VITE_ENABLE_PASSIVE_FEEDBACK === 'false') {
+    return false;
+  }
+
   const storageKey = buildStorageKey(themeKey);
 
   try {

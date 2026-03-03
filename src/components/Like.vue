@@ -1,6 +1,6 @@
 <template>
-  <Transition name="like-fade">
-    <div v-if="visible" class="like-overlay" @click.self="handleClose">
+  <Transition name="like-fade" @after-leave="onAfterLeave">
+    <div v-if="enablePassiveFeedback && visible" class="like-overlay" @click.self="handleClose">
       
       <!-- 带有原版烟花动画的评价形态 -->
       <div v-if="!resultMessage" class="like-dislike-container">
@@ -56,11 +56,15 @@
 <script setup>
 import { ref, watch, onBeforeUnmount } from "vue";
 import { submitFeedback } from "../utils/feedbackTrigger";
+import { closeToast, showLoadingToast, showToast } from "vant";
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   modulePath: { type: String, default: "" },
 });
+
+// 从环境变量读取全局开关（默认为打开，除非显式配置为 false）
+const enablePassiveFeedback = import.meta.env.VITE_ENABLE_PASSIVE_FEEDBACK !== 'false';
 
 const emit = defineEmits(["close"]);
 

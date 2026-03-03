@@ -73,7 +73,7 @@
         </van-button>
 
         <!-- 来唠两句入口 (封面页) -->
-        <div class="survey-feedback-entry">
+        <div v-if="enableActiveFeedback" class="survey-feedback-entry">
           <a
             class="survey-feedback-link"
             href="javascript:void(0)"
@@ -419,8 +419,8 @@
           </van-button>
         </div>
 
-        <!-- 我有意见入口 -->
-        <div class="survey-feedback-entry">
+        <!-- 来唠两句入口 -->
+        <div v-if="enableActiveFeedback" class="survey-feedback-entry">
           <a
             class="survey-feedback-link"
             href="javascript:void(0)"
@@ -693,6 +693,9 @@ import {
 import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger";
 import Like from "./Like.vue";
 import Suggestion from "./Suggestion.vue";
+
+/** 全局配置：意见反馈功能开关 */
+const enableActiveFeedback = import.meta.env.VITE_ENABLE_ACTIVE_FEEDBACK !== 'false';
 
 /**
  * 摘要默认预览条数。
