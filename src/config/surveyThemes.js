@@ -95,7 +95,9 @@ const CITY_MATCH_REASON_FALLBACK_LINES = [
  * 灵魂猫咪封面轮播素材池：
  * 关键逻辑：封面和结果页共用同一份“key=文件名”素材定义，避免配置漂移。
  */
-const SOUL_CAT_COVER_ARTWORK_POOL = Object.freeze(buildSoulCatCoverArtworkPool());
+const SOUL_CAT_COVER_ARTWORK_POOL = Object.freeze(
+  buildSoulCatCoverArtworkPool(),
+);
 
 /**
  * 创建标准化结果对象。
@@ -169,7 +171,9 @@ function resolveCityDisplayItem(cityItem, cityLookupMap) {
 
   return {
     name: cityName || "未匹配城市",
-    score: Number.isFinite(scoreValue) ? Math.max(0, Math.round(scoreValue)) : 0,
+    score: Number.isFinite(scoreValue)
+      ? Math.max(0, Math.round(scoreValue))
+      : 0,
     tags: normalizeCityTagList(cityItem?.tags ?? lookupCity?.tags),
   };
 }
@@ -181,7 +185,11 @@ function resolveCityDisplayItem(cityItem, cityLookupMap) {
  * @param {Array<object>} fallbackTopThree 兜底 Top3 列表。
  * @returns {Array<{ name: string, score: number, tags: Array<string> }>} 展示 Top3。
  */
-function resolveCityTopThreeDisplay(topThreeList, cityLookupMap, fallbackTopThree) {
+function resolveCityTopThreeDisplay(
+  topThreeList,
+  cityLookupMap,
+  fallbackTopThree,
+) {
   const primaryList =
     Array.isArray(topThreeList) && topThreeList.length > 0
       ? topThreeList
@@ -208,12 +216,14 @@ function resolveCityTopThreeDisplay(topThreeList, cityLookupMap, fallbackTopThre
     appendCityItem(cityItem);
   });
 
-  (Array.isArray(fallbackTopThree) ? fallbackTopThree : []).forEach((cityItem) => {
-    if (resolvedTopThree.length >= 3) {
-      return;
-    }
-    appendCityItem(cityItem);
-  });
+  (Array.isArray(fallbackTopThree) ? fallbackTopThree : []).forEach(
+    (cityItem) => {
+      if (resolvedTopThree.length >= 3) {
+        return;
+      }
+      appendCityItem(cityItem);
+    },
+  );
 
   return resolvedTopThree.slice(0, 3);
 }
@@ -272,9 +282,8 @@ function buildCityDeepPayload(localResult) {
     ? localResult.candidateCities
     : [];
   // 关键逻辑：优先使用本地模型排序结果并裁剪 TopK，保证精度与性能平衡。
-  const selectedCandidates = (rankedCandidates.length
-    ? rankedCandidates
-    : fallbackCandidates
+  const selectedCandidates = (
+    rankedCandidates.length ? rankedCandidates : fallbackCandidates
   )
     .slice(0, CITY_DEEP_CANDIDATE_TOP_K)
     .map((item) => ({
@@ -307,7 +316,10 @@ function buildCityDeepPayload(localResult) {
  */
 function buildCityDeepUnifiedResult(deepResult, localResult) {
   const cityLookupMap = buildCityLookupMap(localResult);
-  const resolvedMainCity = resolveCityDisplayItem(deepResult.topCity, cityLookupMap);
+  const resolvedMainCity = resolveCityDisplayItem(
+    deepResult.topCity,
+    cityLookupMap,
+  );
   const resolvedTopThree = resolveCityTopThreeDisplay(
     deepResult.topThree,
     cityLookupMap,
@@ -350,7 +362,10 @@ function buildCityDeepUnifiedResult(deepResult, localResult) {
  */
 function buildCityLocalUnifiedResult(localResult) {
   const cityLookupMap = buildCityLookupMap(localResult);
-  const resolvedMainCity = resolveCityDisplayItem(localResult.topCity, cityLookupMap);
+  const resolvedMainCity = resolveCityDisplayItem(
+    localResult.topCity,
+    cityLookupMap,
+  );
   const resolvedTopThree = resolveCityTopThreeDisplay(
     localResult.topThree,
     cityLookupMap,
@@ -428,7 +443,9 @@ function buildFiveElementsCityUnifiedResult(result, sourceType) {
   const elementDistribution = Array.isArray(result?.elementDistribution)
     ? result.elementDistribution
     : [];
-  const summaryLines = Array.isArray(result?.summaryLines) ? result.summaryLines : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
   const energyLines = Array.isArray(result?.energyInterpretationLines)
     ? result.energyInterpretationLines
     : [];
@@ -439,7 +456,8 @@ function buildFiveElementsCityUnifiedResult(result, sourceType) {
     ? result.typeCardItems
     : [];
 
-  const mainName = String(coreProfile?.displayName ?? "").trim() || "五行待校准";
+  const mainName =
+    String(coreProfile?.displayName ?? "").trim() || "五行待校准";
   const mainScore = Number.isFinite(Number(coreProfile?.topPercentage))
     ? Math.max(0, Math.round(Number(coreProfile.topPercentage)))
     : 0;
@@ -454,10 +472,17 @@ function buildFiveElementsCityUnifiedResult(result, sourceType) {
   const topCityReason =
     String(topCity?.reasonText ?? "").trim() ||
     "你的能量特征与该城市生活气韵更容易形成长期同频。";
-  const customHighlightCardTitle = String(result?.highlightCard?.title ?? "").trim();
-  const customHighlightCardContent = String(result?.highlightCard?.content ?? "").trim();
+  const customHighlightCardTitle = String(
+    result?.highlightCard?.title ?? "",
+  ).trim();
+  const customHighlightCardContent = String(
+    result?.highlightCard?.content ?? "",
+  ).trim();
   // 关键逻辑：把“首选城市”塞进首屏主标签，确保用户不下滑也能看到最终推荐城市。
-  const mainTags = [`首选城市 ${topCityName} · ${topCityScore}%`, ...coreTags].slice(0, 3);
+  const mainTags = [
+    `首选城市 ${topCityName} · ${topCityScore}%`,
+    ...coreTags,
+  ].slice(0, 3);
 
   const resolvedTopThree = topThree.map((cityItem) => {
     const cityCoreLabels = Array.isArray(cityItem?.coreElementLabels)
@@ -523,9 +548,9 @@ function buildFiveElementsCityUnifiedResult(result, sourceType) {
     insight:
       String(result?.insight ?? "").trim() ||
       `${topCityName}与当前能量结构匹配度较高，建议先进行短期试居再做长期决策。`,
-    tagChips: distributionItems.slice(0, 3).map(
-      (item) => `${item.name} ${item.score}%`,
-    ),
+    tagChips: distributionItems
+      .slice(0, 3)
+      .map((item) => `${item.name} ${item.score}%`),
     // 关键逻辑：五行主题图谱改为雷达图展示，条形分布图显式置空，避免重复展示同一数据。
     distributionChart: { title: "", items: [] },
     radarChart: {
@@ -551,10 +576,7 @@ function buildFiveElementsCityUnifiedResult(result, sourceType) {
       },
       {
         title: "城市匹配原因",
-        items:
-          cityReasonLines.length > 0
-            ? cityReasonLines
-            : [topCityReason],
+        items: cityReasonLines.length > 0 ? cityReasonLines : [topCityReason],
       },
       {
         title: "城市适配亮点",
@@ -590,21 +612,22 @@ function buildFiveElementsCityDeepUnifiedResult(deepResult, localResult) {
     topThree:
       Array.isArray(deepResult?.topThree) && deepResult.topThree.length > 0
         ? deepResult.topThree
-        : localResult?.topThree ?? [],
+        : (localResult?.topThree ?? []),
     cityReasonLines:
       Array.isArray(deepResult?.cityReasonLines) &&
       deepResult.cityReasonLines.length > 0
         ? deepResult.cityReasonLines
-        : localResult?.cityReasonLines ?? [],
+        : (localResult?.cityReasonLines ?? []),
     energyInterpretationLines:
       Array.isArray(deepResult?.energyInterpretationLines) &&
       deepResult.energyInterpretationLines.length > 0
         ? deepResult.energyInterpretationLines
-        : localResult?.energyInterpretationLines ?? [],
+        : (localResult?.energyInterpretationLines ?? []),
     typeCardItems:
-      Array.isArray(deepResult?.typeCardItems) && deepResult.typeCardItems.length > 0
+      Array.isArray(deepResult?.typeCardItems) &&
+      deepResult.typeCardItems.length > 0
         ? deepResult.typeCardItems
-        : localResult?.typeCardItems ?? [],
+        : (localResult?.typeCardItems ?? []),
   };
 
   return buildFiveElementsCityUnifiedResult(mergedResult, "deep");
@@ -793,10 +816,7 @@ function buildAncientDeepUnifiedResult(deepResult, localResult) {
     detailSections: [
       {
         title: "专属金句 / 台词",
-        items: [
-          ...(identityModules.quoteLines ?? []),
-          deepResult.identitySeal,
-        ]
+        items: [...(identityModules.quoteLines ?? []), deepResult.identitySeal]
           .map((item) => String(item ?? "").trim())
           .filter(Boolean)
           .slice(0, 3),
@@ -821,7 +841,11 @@ function buildAncientDeepUnifiedResult(deepResult, localResult) {
       },
       {
         title: "AI 深层解读",
-        items: [deepResult.insight, ...(deepResult.growthActions ?? []), ...(deepResult.avoidSignals ?? [])]
+        items: [
+          deepResult.insight,
+          ...(deepResult.growthActions ?? []),
+          ...(deepResult.avoidSignals ?? []),
+        ]
           .map((item) => String(item ?? "").trim())
           .filter(Boolean)
           .slice(0, 3),
@@ -1129,8 +1153,9 @@ function buildBenefactorDeepUnifiedResult(deepResult, localResult) {
   const localFallback = buildBenefactorLocalFallback(localResult);
   const topDistribution = (localResult.scoredSigns ?? []).slice(0, 6);
   const mainSignSupportStyle =
-    localResult.scoredSigns?.find((item) => item.sign === deepResult.mainSign?.name)
-      ?.supportStyle ?? localResult.topSign.supportStyle;
+    localResult.scoredSigns?.find(
+      (item) => item.sign === deepResult.mainSign?.name,
+    )?.supportStyle ?? localResult.topSign.supportStyle;
 
   const encounterScenes = deepResult.encounterScenes?.length
     ? deepResult.encounterScenes
@@ -1162,7 +1187,9 @@ function buildBenefactorDeepUnifiedResult(deepResult, localResult) {
   const avoidSignals = deepResult.avoidSignals?.length
     ? deepResult.avoidSignals
     : localFallback.avoidSignals;
-  const tagChips = deepResult.tags?.length ? deepResult.tags : localFallback.tagChips;
+  const tagChips = deepResult.tags?.length
+    ? deepResult.tags
+    : localFallback.tagChips;
 
   const encounterSceneParagraph = buildParagraphFromItems(
     encounterScenes,
@@ -1230,7 +1257,10 @@ function buildBenefactorDeepUnifiedResult(deepResult, localResult) {
         },
         {
           label: "沟通关键词",
-          value: pickFirstAvailableText(communicationTips, "目标清晰、请求具体"),
+          value: pickFirstAvailableText(
+            communicationTips,
+            "目标清晰、请求具体",
+          ),
         },
       ],
     },
@@ -1702,14 +1732,17 @@ function buildRomanceEasterEggText(answerCount) {
  */
 function resolveRomanceAnswerCount(localResult) {
   const answeredBySummary = Array.isArray(localResult.answerSummary)
-    ? localResult.answerSummary.filter((summaryItem) => Boolean(summaryItem.optionId))
-        .length
+    ? localResult.answerSummary.filter((summaryItem) =>
+        Boolean(summaryItem.optionId),
+      ).length
     : 0;
   if (answeredBySummary > 0) {
     return answeredBySummary;
   }
 
-  return Array.isArray(localResult.summaryLines) ? localResult.summaryLines.length : 0;
+  return Array.isArray(localResult.summaryLines)
+    ? localResult.summaryLines.length
+    : 0;
 }
 
 /**
@@ -1776,7 +1809,8 @@ function buildRomanceBriefInsight({
 function buildRomanceDeepUnifiedResult(deepResult, localResult) {
   const tierConfig = deepResult.tierConfig ?? localResult.tierConfig;
   const destinyGate = deepResult.destinyGate ?? localResult.destinyGate ?? {};
-  const destinyOutcome = deepResult.destinyOutcome ?? localResult.destinyOutcome ?? {};
+  const destinyOutcome =
+    deepResult.destinyOutcome ?? localResult.destinyOutcome ?? {};
   const isUnlockedOutcome = destinyOutcome.key === "unlocked";
   const easterEggText = buildRomanceEasterEggText(
     resolveRomanceAnswerCount(localResult),
@@ -1816,12 +1850,10 @@ function buildRomanceDeepUnifiedResult(deepResult, localResult) {
     prefixLabel: "你的浪漫指数",
     scoreLabel: "浪漫指数",
     main: mainProfile,
-    highlightCard:
-      deepResult.highlightCard ??
-      {
-        title: "浪漫称号解析",
-        content: tierConfig.insight,
-      },
+    highlightCard: deepResult.highlightCard ?? {
+      title: "浪漫称号解析",
+      content: tierConfig.insight,
+    },
     // 关键逻辑：顶部 insight 使用“短结论”，避免与“深度解析”模块内容重复。
     insight: briefInsightText,
     easterEggText,
@@ -1984,9 +2016,7 @@ function sanitizeLoveTagLabel(tag) {
  * @returns {Array<string>} 清洗后的标签列表。
  */
 function normalizeLoveTagChips(tags) {
-  const normalizedList = tags
-    .map(sanitizeLoveTagLabel)
-    .filter(Boolean);
+  const normalizedList = tags.map(sanitizeLoveTagLabel).filter(Boolean);
 
   return [...new Set(normalizedList)].slice(0, 8);
 }
@@ -1999,17 +2029,26 @@ function normalizeLoveTagChips(tags) {
  */
 function buildFallbackAttachmentSubtypeProfile(distribution) {
   const sortedDistribution = Array.isArray(distribution)
-    ? [...distribution].sort((leftItem, rightItem) => Number(rightItem?.score ?? 0) - Number(leftItem?.score ?? 0))
+    ? [...distribution].sort(
+        (leftItem, rightItem) =>
+          Number(rightItem?.score ?? 0) - Number(leftItem?.score ?? 0),
+      )
     : [];
 
   const mainType = sortedDistribution[0] ?? {};
   const secondaryType = sortedDistribution[1] ?? {};
   const tendencyGap = Math.max(
     0,
-    Math.round(Number(mainType?.score ?? 0) - Number(secondaryType?.score ?? 0)),
+    Math.round(
+      Number(mainType?.score ?? 0) - Number(secondaryType?.score ?? 0),
+    ),
   );
   const intensityLabel =
-    tendencyGap >= 30 ? "高确定性" : tendencyGap >= 15 ? "中等确定性" : "混合波动";
+    tendencyGap >= 30
+      ? "高确定性"
+      : tendencyGap >= 15
+        ? "中等确定性"
+        : "混合波动";
 
   const mainTypeName = String(mainType?.name ?? "").trim() || "待判定";
   const secondaryTypeName = String(secondaryType?.name ?? "").trim() || "暂无";
@@ -2071,7 +2110,9 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
     deepResult.subtypeProfile ??
     localResult.subtypeProfile ??
     buildFallbackAttachmentSubtypeProfile(
-      sortedDistribution.length > 0 ? sortedDistribution : localResult.distribution,
+      sortedDistribution.length > 0
+        ? sortedDistribution
+        : localResult.distribution,
     );
   // 关键逻辑：结果页副标题优先展示“12 个细分次型名”，仅在缺失时回退到次高主类型名。
   const resolvedSubtypeName = String(
@@ -2088,11 +2129,36 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
   // AI 分值仅作为兼容兜底，不参与主路径，避免出现“文本模型拉高分”现象。
   const radarScores = localResult.radarScores ?? deepResult.radarScores ?? {};
   const radarItems = [
-    { key: "initiative", label: "恋爱主动度", score: radarScores.initiative ?? 5, color: "#FF6B8A" },
-    { key: "charm", label: "主动魅力", score: radarScores.charm ?? 5, color: "#FFB347" },
-    { key: "attachment", label: "依恋指数", score: radarScores.attachment ?? 5, color: "#7EC8E3" },
-    { key: "emotionTension", label: "情绪张力", score: radarScores.emotionTension ?? 5, color: "#9B8EC5" },
-    { key: "exclusivePreference", label: "专属偏爱", score: radarScores.exclusivePreference ?? 5, color: "#82D9A5" },
+    {
+      key: "initiative",
+      label: "恋爱主动度",
+      score: radarScores.initiative ?? 5,
+      color: "#FF6B8A",
+    },
+    {
+      key: "charm",
+      label: "主动魅力",
+      score: radarScores.charm ?? 5,
+      color: "#FFB347",
+    },
+    {
+      key: "attachment",
+      label: "依恋指数",
+      score: radarScores.attachment ?? 5,
+      color: "#7EC8E3",
+    },
+    {
+      key: "emotionTension",
+      label: "情绪张力",
+      score: radarScores.emotionTension ?? 5,
+      color: "#9B8EC5",
+    },
+    {
+      key: "exclusivePreference",
+      label: "专属偏爱",
+      score: radarScores.exclusivePreference ?? 5,
+      color: "#82D9A5",
+    },
   ];
 
   return createUnifiedResult({
@@ -2109,7 +2175,7 @@ function buildLoveAttachmentDeepUnifiedResult(deepResult, localResult) {
       title: "一句话概述",
       content: deepResult.oneLineSummary,
     },
-    insight: (deepResult.insight || subtypeProfile.subtypeBrief || '').trim(),
+    insight: (deepResult.insight || subtypeProfile.subtypeBrief || "").trim(),
     tagChips: mergedTagChips,
     distributionChart: {
       title: "类型分布",
@@ -2175,11 +2241,36 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
   // 恋爱能力雷达：使用本地推导分值
   const radarScores = localResult.radarScores ?? {};
   const radarItems = [
-    { key: "initiative", label: "恋爱主动度", score: radarScores.initiative ?? 5, color: "#FF6B8A" },
-    { key: "charm", label: "主动魅力", score: radarScores.charm ?? 5, color: "#FFB347" },
-    { key: "attachment", label: "依恋指数", score: radarScores.attachment ?? 5, color: "#7EC8E3" },
-    { key: "emotionTension", label: "情绪张力", score: radarScores.emotionTension ?? 5, color: "#9B8EC5" },
-    { key: "exclusivePreference", label: "专属偏爱", score: radarScores.exclusivePreference ?? 5, color: "#82D9A5" },
+    {
+      key: "initiative",
+      label: "恋爱主动度",
+      score: radarScores.initiative ?? 5,
+      color: "#FF6B8A",
+    },
+    {
+      key: "charm",
+      label: "主动魅力",
+      score: radarScores.charm ?? 5,
+      color: "#FFB347",
+    },
+    {
+      key: "attachment",
+      label: "依恋指数",
+      score: radarScores.attachment ?? 5,
+      color: "#7EC8E3",
+    },
+    {
+      key: "emotionTension",
+      label: "情绪张力",
+      score: radarScores.emotionTension ?? 5,
+      color: "#9B8EC5",
+    },
+    {
+      key: "exclusivePreference",
+      label: "专属偏爱",
+      score: radarScores.exclusivePreference ?? 5,
+      color: "#82D9A5",
+    },
   ];
 
   return createUnifiedResult({
@@ -2196,7 +2287,7 @@ function buildLoveAttachmentLocalUnifiedResult(localResult) {
       title: "一句话概述",
       content: topTypeProfile.summary ?? localResult.localNarrative,
     },
-    insight: (subtypeProfile.subtypeBrief || '').trim(),
+    insight: (subtypeProfile.subtypeBrief || "").trim(),
     tagChips: normalizeLoveTagChips([
       subtypeProfile.subtypeTag,
       ...(topTypeProfile.tags ?? []),
@@ -2359,7 +2450,9 @@ function pickRandomSingleItem(sourceItems, fallbackValue) {
   }
 
   const randomIndex = Math.floor(Math.random() * sourceItems.length);
-  return String(sourceItems[randomIndex] ?? fallbackValue).trim() || fallbackValue;
+  return (
+    String(sourceItems[randomIndex] ?? fallbackValue).trim() || fallbackValue
+  );
 }
 
 /**
@@ -2411,8 +2504,12 @@ function buildLoveBrainUnifiedResult(result, sourceType) {
     ? result.topRiskScenarios
     : [];
   const actionTips = Array.isArray(result.actionTips) ? result.actionTips : [];
-  const summaryLines = Array.isArray(result.summaryLines) ? result.summaryLines : [];
-  const insightText = String(result.localNarrative ?? result.insight ?? "").trim();
+  const summaryLines = Array.isArray(result.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result.localNarrative ?? result.insight ?? "",
+  ).trim();
 
   const normalizedHighlightCard =
     result.highlightCard && typeof result.highlightCard === "object"
@@ -2422,15 +2519,10 @@ function buildLoveBrainUnifiedResult(result, sourceType) {
         }
       : null;
 
-  const fallbackTagChips = [
-    levelRule.title,
-    levelRule.coreTag,
-  ].filter(Boolean);
+  const fallbackTagChips = [levelRule.title, levelRule.coreTag].filter(Boolean);
   const normalizedTagChips =
     Array.isArray(result.tagChips) && result.tagChips.length > 0
-      ? result.tagChips
-          .map((item) => String(item ?? "").trim())
-          .filter(Boolean)
+      ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
       : fallbackTagChips;
 
   /**
@@ -2438,12 +2530,15 @@ function buildLoveBrainUnifiedResult(result, sourceType) {
    * 1. 不展示题量，改为“情绪主轴 + 高风险场景”。
    * 2. 便于用户快速理解“为什么是这个等级”。
    */
-  const dominantStageItem = [...stageDistribution]
-    .sort((leftItem, rightItem) => Number(rightItem.score ?? 0) - Number(leftItem.score ?? 0))[0];
+  const dominantStageItem = [...stageDistribution].sort(
+    (leftItem, rightItem) =>
+      Number(rightItem.score ?? 0) - Number(leftItem.score ?? 0),
+  )[0];
   const dominantStageText = dominantStageItem?.name
     ? `${dominantStageItem.name}信号 ${Number(dominantStageItem.score ?? 0)}%`
     : "信号采样中";
-  const topRiskScenarioName = String(topRiskScenarios[0]?.name ?? "").trim() || "关系边界波动";
+  const topRiskScenarioName =
+    String(topRiskScenarios[0]?.name ?? "").trim() || "关系边界波动";
 
   const defaultDetailSections = [
     {
@@ -2454,7 +2549,9 @@ function buildLoveBrainUnifiedResult(result, sourceType) {
       title: "重点场景复盘",
       items:
         topRiskScenarios.length > 0
-          ? topRiskScenarios.map((item) => `${item.name} -> ${item.optionLabel}`)
+          ? topRiskScenarios.map(
+              (item) => `${item.name} -> ${item.optionLabel}`,
+            )
           : ["你当前在关键触发场景更容易把短期情绪当作长期关系结论。"],
     },
     {
@@ -2476,7 +2573,9 @@ function buildLoveBrainUnifiedResult(result, sourceType) {
                 .filter(Boolean)
             : [],
         }))
-        .filter((sectionItem) => sectionItem.title && sectionItem.items.length > 0)
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
     : [];
   const resolvedDetailSections =
     normalizedDetailSections.length > 0
@@ -2519,7 +2618,8 @@ function buildLoveBrainUnifiedResult(result, sourceType) {
       score: Number(item.score ?? 0),
     })),
     detailSections: resolvedDetailSections,
-    summaryTitle: String(result.summaryTitle ?? "答卷回放").trim() || "答卷回放",
+    summaryTitle:
+      String(result.summaryTitle ?? "答卷回放").trim() || "答卷回放",
     summaryLines,
     restartButtonText: "再测一次恋爱脑指数",
     posterModel: {
@@ -2528,8 +2628,7 @@ function buildLoveBrainUnifiedResult(result, sourceType) {
       levelName: levelRule.levelName ?? "恋爱脑待判定",
       levelTitle: levelRule.title ?? "待判定",
       coreTag: levelRule.coreTag ?? "稳定观测中",
-      piercingLine:
-        levelRule.piercingLine ?? "稳定观测中，建议稍后重试。",
+      piercingLine: levelRule.piercingLine ?? "稳定观测中，建议稍后重试。",
       narrative:
         String(result.posterModel?.narrative ?? "").trim() ||
         insightText ||
@@ -2619,7 +2718,8 @@ function buildSoulCatUnifiedResult(analysisResult, sourceType) {
     ? analysisResult.summaryLines
     : [];
   const heroArtwork =
-    analysisResult?.heroArtwork && typeof analysisResult.heroArtwork === "object"
+    analysisResult?.heroArtwork &&
+    typeof analysisResult.heroArtwork === "object"
       ? analysisResult.heroArtwork
       : null;
   const fallbackTagLine = String(matchedProfile.tagLine ?? "").trim();
@@ -2627,7 +2727,8 @@ function buildSoulCatUnifiedResult(analysisResult, sourceType) {
   const resolvedHighlightCard =
     highlightCardFromResult && typeof highlightCardFromResult === "object"
       ? {
-          title: String(highlightCardFromResult.title ?? "").trim() || "猫咪标签",
+          title:
+            String(highlightCardFromResult.title ?? "").trim() || "猫咪标签",
           content:
             String(highlightCardFromResult.content ?? "").trim() ||
             fallbackTagLine ||
@@ -2637,21 +2738,24 @@ function buildSoulCatUnifiedResult(analysisResult, sourceType) {
           title: "猫咪标签",
           content: fallbackTagLine || "正在匹配你的猫咪标签",
         };
-  const resolvedPersonalityBase = String(
-    analysisResult?.personalityBase ?? matchedProfile.personalityBase ?? "",
-  ).trim() || "你有柔软而稳定的内心力量。";
-  const resolvedNextLifeScript = String(
-    analysisResult?.nextLifeScript ?? matchedProfile.nextLifeScript ?? "",
-  ).trim() || "你会拥有更被偏爱的生活体验。";
-  const resolvedBestLife = String(
-    analysisResult?.bestLife ?? matchedProfile.bestLife ?? "",
-  ).trim() || "稳定、松弛、被理解，就是你最舒服的状态。";
-  const resolvedHealingMessage = String(
-    analysisResult?.healingMessage ?? matchedProfile.healingMessage ?? "",
-  ).trim() || "愿你被温柔接住，慢慢发光。";
-  const resolvedCatLanguageWish = String(
-    analysisResult?.catLanguageWish ?? "",
-  ).trim() || "喵喵喵，喵喵喵喵！";
+  const resolvedPersonalityBase =
+    String(
+      analysisResult?.personalityBase ?? matchedProfile.personalityBase ?? "",
+    ).trim() || "你有柔软而稳定的内心力量。";
+  const resolvedNextLifeScript =
+    String(
+      analysisResult?.nextLifeScript ?? matchedProfile.nextLifeScript ?? "",
+    ).trim() || "你会拥有更被偏爱的生活体验。";
+  const resolvedBestLife =
+    String(analysisResult?.bestLife ?? matchedProfile.bestLife ?? "").trim() ||
+    "稳定、松弛、被理解，就是你最舒服的状态。";
+  const resolvedHealingMessage =
+    String(
+      analysisResult?.healingMessage ?? matchedProfile.healingMessage ?? "",
+    ).trim() || "愿你被温柔接住，慢慢发光。";
+  const resolvedCatLanguageWish =
+    String(analysisResult?.catLanguageWish ?? "").trim() ||
+    "喵喵喵，喵喵喵喵！";
   const resolvedInsight = String(
     analysisResult?.insight ?? analysisResult?.localNarrative ?? "",
   ).trim();
@@ -2661,16 +2765,21 @@ function buildSoulCatUnifiedResult(analysisResult, sourceType) {
         .filter(Boolean)
         .slice(0, 4)
     : [];
-  const resolvedMainName = String(matchedProfile.name ?? "灵魂猫咪待判定").trim() || "灵魂猫咪待判定";
+  const resolvedMainName =
+    String(matchedProfile.name ?? "灵魂猫咪待判定").trim() || "灵魂猫咪待判定";
   const resolvedTagChips =
     normalizedTagChips.length > 0
       ? normalizedTagChips
       : [fallbackTagLine].filter(Boolean);
   const fallbackArtworkKey = String(matchedProfile.key ?? "").trim();
-  const resolvedPosterArtworkUrl = String(heroArtwork?.url ?? "").trim() ||
+  const resolvedPosterArtworkUrl =
+    String(heroArtwork?.url ?? "").trim() ||
     (fallbackArtworkKey ? `/cats/${fallbackArtworkKey}.png` : "");
   const resolvedPosterQuote =
-    resolvedHealingMessage || resolvedBestLife || resolvedInsight || "愿你被温柔接住，慢慢发光。";
+    resolvedHealingMessage ||
+    resolvedBestLife ||
+    resolvedInsight ||
+    "愿你被温柔接住，慢慢发光。";
   /**
    * 关键逻辑：在统一结果中内置 soul-cat 专属海报模型，
    * 由页面层自动触发生成，避免主题分叉导致功能散落。
@@ -2765,14 +2874,14 @@ export const SURVEY_THEME_CONFIGS = [
     key: "city",
     routePaths: ["/", "/index.html", "/city", "/city.html"],
     pageMeta: {
-      title: "最适合居住城市测试（国内版/国际版）",
+      title: "寻找你的灵魂城市（国内版/国际版）",
       description:
         "先选择国内版或国际版题库，再基于生活偏好匹配最适合长期居住的城市。",
     },
     theme: {
       className: "theme-city",
       badge: "CITY MATCH",
-      title: "最适合居住城市测试",
+      title: "寻找你的灵魂城市",
       description:
         "先选择国内版或国际版测试，再根据生活偏好输出城市匹配结果与建议。",
       progressColor: "linear-gradient(90deg, #0f8a63, #43b78b)",
@@ -2806,7 +2915,7 @@ export const SURVEY_THEME_CONFIGS = [
       cover: {
         enabled: true,
         kicker: "城市版本选择",
-        titleEmphasis: "居住城市测试",
+        titleEmphasis: "寻找你的灵魂城市",
         titleMain: "先选版本，再开始答题",
         promoTag: "双版本独立题库",
         intro:
@@ -2848,9 +2957,8 @@ export const SURVEY_THEME_CONFIGS = [
             type: "secondary",
             description: "热门国际城市覆盖，适合跨国定居方向筛选。",
             loadQuestions: async () => {
-              const { GLOBAL_CITY_QUESTION_BANK } = await import(
-                "../data/globalCityQuestionBank"
-              );
+              const { GLOBAL_CITY_QUESTION_BANK } =
+                await import("../data/globalCityQuestionBank");
               return GLOBAL_CITY_QUESTION_BANK;
             },
           },
@@ -2861,8 +2969,11 @@ export const SURVEY_THEME_CONFIGS = [
       // 关键逻辑：启用“选择即下一题”，并在 UI 侧隐藏“下一步”按钮。
       autoAdvanceOnSelect: true,
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const [{ analyzeCitiesLocally }, { CITY_PROFILES }, { GLOBAL_CITY_PROFILES }] =
-          await Promise.all([
+        const [
+          { analyzeCitiesLocally },
+          { CITY_PROFILES },
+          { GLOBAL_CITY_PROFILES },
+        ] = await Promise.all([
           import("../services/localAnalyzer"),
           import("../data/cityProfiles"),
           import("../data/globalCityProfiles"),
@@ -2947,9 +3058,8 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { FIVE_ELEMENTS_CITY_QUESTION_BANK } = await import(
-          "../data/fiveElementsQuestionBank"
-        );
+        const { FIVE_ELEMENTS_CITY_QUESTION_BANK } =
+          await import("../data/fiveElementsQuestionBank");
         return FIVE_ELEMENTS_CITY_QUESTION_BANK;
       },
       questionSelection: {
@@ -2977,9 +3087,8 @@ export const SURVEY_THEME_CONFIGS = [
         tip: "测试结果仅供趣味参考",
       },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeFiveElementsCityLocally } = await import(
-          "../services/fiveElementsCityAnalyzer"
-        );
+        const { analyzeFiveElementsCityLocally } =
+          await import("../services/fiveElementsCityAnalyzer");
         return analyzeFiveElementsCityLocally({
           questions: selectedQuestions,
           answerIds,
@@ -2987,9 +3096,8 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildFiveElementsCityDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeFiveElementsCityWithAI } = await import(
-          "../services/fiveElementsCityAiAnalyzer"
-        );
+        const { analyzeFiveElementsCityWithAI } =
+          await import("../services/fiveElementsCityAiAnalyzer");
         return analyzeFiveElementsCityWithAI(payload, { timeoutMs: 26000 });
       },
       buildDeepUnifiedResult: buildFiveElementsCityDeepUnifiedResult,
@@ -2999,7 +3107,12 @@ export const SURVEY_THEME_CONFIGS = [
   },
   {
     key: "fortune",
-    routePaths: ["/fortune", "/fortune.html", "/fortune-2026", "/fortune-2026.html"],
+    routePaths: [
+      "/fortune",
+      "/fortune.html",
+      "/fortune-2026",
+      "/fortune-2026.html",
+    ],
     pageMeta: {
       title: "测你 2026 年的转运关键词",
       description: "通过日常生活场景答卷，生成你的 2026 关键词提示。",
@@ -3035,16 +3148,14 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { FORTUNE_2026_QUESTION_BANK } = await import(
-          "../data/fortune2026QuestionBank"
-        );
+        const { FORTUNE_2026_QUESTION_BANK } =
+          await import("../data/fortune2026QuestionBank");
         return FORTUNE_2026_QUESTION_BANK;
       },
       questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeFortune2026Locally } = await import(
-          "../services/fortune2026Analyzer"
-        );
+        const { analyzeFortune2026Locally } =
+          await import("../services/fortune2026Analyzer");
         return analyzeFortune2026Locally({
           questions: selectedQuestions,
           answerIds,
@@ -3052,9 +3163,8 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildFortuneDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeFortune2026WithAI } = await import(
-          "../services/fortune2026AiAnalyzer"
-        );
+        const { analyzeFortune2026WithAI } =
+          await import("../services/fortune2026AiAnalyzer");
         return analyzeFortune2026WithAI(payload, { timeoutMs: 26000 });
       },
       buildDeepUnifiedResult: buildFortuneDeepUnifiedResult,
@@ -3100,9 +3210,8 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { ANCIENT_IDENTITY_QUESTION_BANK } = await import(
-          "../data/ancientIdentityQuestionBank"
-        );
+        const { ANCIENT_IDENTITY_QUESTION_BANK } =
+          await import("../data/ancientIdentityQuestionBank");
         return ANCIENT_IDENTITY_QUESTION_BANK;
       },
       questionSelection: { minCount: 30, maxCount: 30 },
@@ -3128,9 +3237,8 @@ export const SURVEY_THEME_CONFIGS = [
         tip: "预计耗时 3-4 分钟",
       },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeAncientIdentityLocally } = await import(
-          "../services/ancientIdentityAnalyzer"
-        );
+        const { analyzeAncientIdentityLocally } =
+          await import("../services/ancientIdentityAnalyzer");
         return analyzeAncientIdentityLocally({
           questions: selectedQuestions,
           answerIds,
@@ -3138,10 +3246,11 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildAncientDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeAncientIdentityWithDeepInsight } = await import(
-          "../services/ancientIdentityAiAnalyzer"
-        );
-        return analyzeAncientIdentityWithDeepInsight(payload, { timeoutMs: 26000 });
+        const { analyzeAncientIdentityWithDeepInsight } =
+          await import("../services/ancientIdentityAiAnalyzer");
+        return analyzeAncientIdentityWithDeepInsight(payload, {
+          timeoutMs: 26000,
+        });
       },
       buildDeepUnifiedResult: buildAncientDeepUnifiedResult,
       buildLocalUnifiedResult: buildAncientLocalUnifiedResult,
@@ -3186,16 +3295,14 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { HIDDEN_TALENT_QUESTION_BANK } = await import(
-          "../data/hiddenTalentQuestionBank"
-        );
+        const { HIDDEN_TALENT_QUESTION_BANK } =
+          await import("../data/hiddenTalentQuestionBank");
         return HIDDEN_TALENT_QUESTION_BANK;
       },
       questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeHiddenTalentLocally } = await import(
-          "../services/hiddenTalentAnalyzer"
-        );
+        const { analyzeHiddenTalentLocally } =
+          await import("../services/hiddenTalentAnalyzer");
         return analyzeHiddenTalentLocally({
           questions: selectedQuestions,
           answerIds,
@@ -3203,10 +3310,11 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildTalentDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeHiddenTalentWithDeepInsight } = await import(
-          "../services/hiddenTalentAiAnalyzer"
-        );
-        return analyzeHiddenTalentWithDeepInsight(payload, { timeoutMs: 26000 });
+        const { analyzeHiddenTalentWithDeepInsight } =
+          await import("../services/hiddenTalentAiAnalyzer");
+        return analyzeHiddenTalentWithDeepInsight(payload, {
+          timeoutMs: 26000,
+        });
       },
       buildDeepUnifiedResult: buildTalentDeepUnifiedResult,
       buildLocalUnifiedResult: buildTalentLocalUnifiedResult,
@@ -3215,12 +3323,7 @@ export const SURVEY_THEME_CONFIGS = [
   },
   {
     key: "benefactor",
-    routePaths: [
-      "/benefactor",
-      "/benefactor.html",
-      "/helper-star",
-      "/helper",
-    ],
+    routePaths: ["/benefactor", "/benefactor.html", "/helper-star", "/helper"],
     pageMeta: {
       title: "测试2026你的贵人星座",
       description: "通过日常选择匹配你在 2026 年最容易遇到的贵人星座类型。",
@@ -3229,7 +3332,8 @@ export const SURVEY_THEME_CONFIGS = [
       className: "theme-benefactor",
       badge: "BENEFACTOR STAR",
       title: "测试2026你的贵人星座",
-      description: "从日常反应里匹配最契合你的贵人星座，并给出可执行的协作提示。",
+      description:
+        "从日常反应里匹配最契合你的贵人星座，并给出可执行的协作提示。",
       progressColor: "linear-gradient(90deg, #5a6bff, #ff8aa0)",
       progressTrackColor: "rgba(75, 87, 149, 0.2)",
       checkedColor: "#5a6bff",
@@ -3256,16 +3360,14 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { BENEFACTOR_2026_QUESTION_BANK } = await import(
-          "../data/benefactor2026QuestionBank"
-        );
+        const { BENEFACTOR_2026_QUESTION_BANK } =
+          await import("../data/benefactor2026QuestionBank");
         return BENEFACTOR_2026_QUESTION_BANK;
       },
       questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeBenefactor2026Locally } = await import(
-          "../services/benefactor2026Analyzer"
-        );
+        const { analyzeBenefactor2026Locally } =
+          await import("../services/benefactor2026Analyzer");
         return analyzeBenefactor2026Locally({
           questions: selectedQuestions,
           answerIds,
@@ -3273,9 +3375,8 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildBenefactorDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeBenefactor2026WithAI } = await import(
-          "../services/benefactor2026AiAnalyzer"
-        );
+        const { analyzeBenefactor2026WithAI } =
+          await import("../services/benefactor2026AiAnalyzer");
         return analyzeBenefactor2026WithAI(payload, { timeoutMs: 26000 });
       },
       buildDeepUnifiedResult: buildBenefactorDeepUnifiedResult,
@@ -3324,16 +3425,14 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { COLOR_2026_QUESTION_BANK } = await import(
-          "../data/color2026QuestionBank"
-        );
+        const { COLOR_2026_QUESTION_BANK } =
+          await import("../data/color2026QuestionBank");
         return COLOR_2026_QUESTION_BANK;
       },
       questionSelection: { minCount: 10, maxCount: 15 },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeColor2026Locally } = await import(
-          "../services/color2026Analyzer"
-        );
+        const { analyzeColor2026Locally } =
+          await import("../services/color2026Analyzer");
         return analyzeColor2026Locally({
           questions: selectedQuestions,
           answerIds,
@@ -3341,9 +3440,8 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildColorThemeDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeColor2026WithAI } = await import(
-          "../services/color2026AiAnalyzer"
-        );
+        const { analyzeColor2026WithAI } =
+          await import("../services/color2026AiAnalyzer");
         return analyzeColor2026WithAI(payload, { timeoutMs: 26000 });
       },
       buildDeepUnifiedResult: buildColorThemeDeepUnifiedResult,
@@ -3363,8 +3461,7 @@ export const SURVEY_THEME_CONFIGS = [
       className: "theme-romance",
       badge: "ROMANCE DNA",
       title: "测测你的「浪漫封顶值」",
-      description:
-        "警告：只有极少数人能触发最终隐藏关卡。",
+      description: "警告：只有极少数人能触发最终隐藏关卡。",
       participantCountLabel: "已有 12,764 人参与测试",
       progressColor: "linear-gradient(90deg, #d97899, #8b78d9)",
       progressTrackColor: "rgba(133, 101, 160, 0.2)",
@@ -3392,9 +3489,8 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { ROMANCE_QUESTION_BANK } = await import(
-          "../data/romanceQuestionBank"
-        );
+        const { ROMANCE_QUESTION_BANK } =
+          await import("../data/romanceQuestionBank");
         return ROMANCE_QUESTION_BANK;
       },
       // 关键逻辑：宿命模式固定先出 13 题，Q13 通过后才动态解锁 Q14。
@@ -3413,10 +3509,7 @@ export const SURVEY_THEME_CONFIGS = [
         // 关键逻辑：遗憾结局遮罩停留时长（毫秒），适当延长情绪落点。
         lockHoldDurationMs: 2100,
         unlockQuestionId: "romance-final-chance",
-        processingLines: [
-          "检测到过量的浪漫因子...",
-          "正在尝试突破宿命...",
-        ],
+        processingLines: ["检测到过量的浪漫因子...", "正在尝试突破宿命..."],
         unlockLine: "你的坚定，为你赢得了第 14 次机会。",
         lockLines: [
           "有时候，遗憾也是一种美。",
@@ -3425,9 +3518,8 @@ export const SURVEY_THEME_CONFIGS = [
         ],
       },
       evaluateGatekeeper: async (selectedQuestions, answerIds, gateConfig) => {
-        const { evaluateRomanceDestinyGate } = await import(
-          "../services/romanceAnalyzer"
-        );
+        const { evaluateRomanceDestinyGate } =
+          await import("../services/romanceAnalyzer");
         return evaluateRomanceDestinyGate({
           questions: selectedQuestions,
           answerIds,
@@ -3436,9 +3528,8 @@ export const SURVEY_THEME_CONFIGS = [
         });
       },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeRomanceLocally } = await import(
-          "../services/romanceAnalyzer"
-        );
+        const { analyzeRomanceLocally } =
+          await import("../services/romanceAnalyzer");
         return analyzeRomanceLocally({
           questions: selectedQuestions,
           answerIds,
@@ -3448,9 +3539,8 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildRomanceDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeRomanceWithAI } = await import(
-          "../services/romanceInsightAnalyzer"
-        );
+        const { analyzeRomanceWithAI } =
+          await import("../services/romanceInsightAnalyzer");
         return analyzeRomanceWithAI(payload, { timeoutMs: 28000 });
       },
       buildDeepUnifiedResult: buildRomanceDeepUnifiedResult,
@@ -3503,9 +3593,8 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { LOVE_BRAIN_QUESTION_BANK } = await import(
-          "../data/loveBrainQuestionBank"
-        );
+        const { LOVE_BRAIN_QUESTION_BANK } =
+          await import("../data/loveBrainQuestionBank");
         return LOVE_BRAIN_QUESTION_BANK;
       },
       // 关键逻辑：保持“1314”暗示语义，每轮在 13~14 题间随机抽取。
@@ -3525,9 +3614,8 @@ export const SURVEY_THEME_CONFIGS = [
         tip: "预计耗时 2-3 分钟",
       },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeLoveBrainLocally } = await import(
-          "../services/loveBrainAnalyzer"
-        );
+        const { analyzeLoveBrainLocally } =
+          await import("../services/loveBrainAnalyzer");
         return analyzeLoveBrainLocally({
           questions: selectedQuestions,
           answerIds,
@@ -3535,9 +3623,8 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildLoveBrainDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeLoveBrainWithAI } = await import(
-          "../services/loveBrainAiAnalyzer"
-        );
+        const { analyzeLoveBrainWithAI } =
+          await import("../services/loveBrainAiAnalyzer");
         return analyzeLoveBrainWithAI(payload, { timeoutMs: 28000 });
       },
       buildDeepUnifiedResult: buildLoveBrainDeepUnifiedResult,
@@ -3585,9 +3672,8 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { LOVE_ATTACHMENT_QUESTION_BANK } = await import(
-          "../data/loveAttachmentQuestionBank"
-        );
+        const { LOVE_ATTACHMENT_QUESTION_BANK } =
+          await import("../data/loveAttachmentQuestionBank");
         return LOVE_ATTACHMENT_QUESTION_BANK;
       },
       questionSelection: { minCount: 15, maxCount: 15 },
@@ -3609,9 +3695,8 @@ export const SURVEY_THEME_CONFIGS = [
         tip: "预计耗时 3-4 分钟",
       },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeLoveAttachmentLocally } = await import(
-          "../services/loveAttachmentAnalyzer"
-        );
+        const { analyzeLoveAttachmentLocally } =
+          await import("../services/loveAttachmentAnalyzer");
         return analyzeLoveAttachmentLocally({
           questions: selectedQuestions,
           answerIds,
@@ -3619,9 +3704,8 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildLoveAttachmentDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeLoveAttachmentWithAI } = await import(
-          "../services/loveAttachmentAiAnalyzer"
-        );
+        const { analyzeLoveAttachmentWithAI } =
+          await import("../services/loveAttachmentAiAnalyzer");
         return analyzeLoveAttachmentWithAI(payload, { timeoutMs: 30000 });
       },
       buildDeepUnifiedResult: buildLoveAttachmentDeepUnifiedResult,
@@ -3640,8 +3724,7 @@ export const SURVEY_THEME_CONFIGS = [
     ],
     pageMeta: {
       title: "灵魂猫咪测试｜你是什么神仙小猫咪？",
-      description:
-        "16 题快速测试，解锁你的专属猫生剧本与治愈寄语。",
+      description: "16 题快速测试，解锁你的专属猫生剧本与治愈寄语。",
     },
     theme: {
       className: "theme-soul-cat",
@@ -3673,9 +3756,8 @@ export const SURVEY_THEME_CONFIGS = [
     },
     survey: {
       questions: async () => {
-        const { SOUL_CAT_QUESTION_BANK } = await import(
-          "../data/soulCatQuestionBank"
-        );
+        const { SOUL_CAT_QUESTION_BANK } =
+          await import("../data/soulCatQuestionBank");
         return SOUL_CAT_QUESTION_BANK;
       },
       questionSelection: { minCount: 16, maxCount: 16 },
@@ -3711,9 +3793,8 @@ export const SURVEY_THEME_CONFIGS = [
         tip: "共16题 · 约1分钟",
       },
       runLocalAnalysis: async (selectedQuestions, answerIds) => {
-        const { analyzeSoulCatLocally } = await import(
-          "../services/soulCatAnalyzer"
-        );
+        const { analyzeSoulCatLocally } =
+          await import("../services/soulCatAnalyzer");
         return analyzeSoulCatLocally({
           questions: selectedQuestions,
           answerIds,
@@ -3721,9 +3802,8 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepPayload: buildSoulCatDeepPayload,
       runDeepAnalysis: async (payload) => {
-        const { analyzeSoulCatWithAI } = await import(
-          "../services/soulCatAiAnalyzer"
-        );
+        const { analyzeSoulCatWithAI } =
+          await import("../services/soulCatAiAnalyzer");
         return analyzeSoulCatWithAI(payload, { timeoutMs: 22000 });
       },
       buildDeepUnifiedResult: buildSoulCatDeepUnifiedResult,
