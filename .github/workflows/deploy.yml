@@ -34,7 +34,7 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          key: ${{ secrets.SERVER_PRIVATE_KEY }}
           source: "askingbuild/" # 要上传的本地打包文件夹
           target: ${{ secrets.TARGET_DIR }} # 对应你在 GitHub 配置的 1Panel 目录
           strip_components: 1 # 剥离外层 dist 文件夹，直接把里面的静态文件铺平放到网站根目录
