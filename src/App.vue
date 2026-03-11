@@ -216,12 +216,7 @@ function isInvalidHashRoute(parsedHashRoute) {
     return false;
   }
 
-  // 关键逻辑：根路径 hash（如 "#/"）代表未携带具体主题路径，按无效链接处理。
-  if (parsedHashRoute.path === "/") {
-    return true;
-  }
-
-  // 关键逻辑：命中任一已注册主题路径则视为有效。
+  // 关键逻辑：命中任一已注册主题路径则视为有效，包含 "#/" 这种默认主题入口。
   if (hasSurveyThemePath(parsedHashRoute.path)) {
     return false;
   }
@@ -243,8 +238,8 @@ function isInvalidHashRoute(parsedHashRoute) {
 function isInvalidPlainEntry(pathname) {
   const normalizedPathname = String(pathname ?? "").toLowerCase();
 
-  // 关键逻辑：裸域名入口（"/" 或 "/index.html"）视为不完整链接，统一提示完整复制。
-  return normalizedPathname === "/" || normalizedPathname === "/index.html";
+  // 关键逻辑：已注册主题路径（包含 "/" 默认页）直接放行，未知路径才进入错误页。
+  return !hasSurveyThemePath(normalizedPathname);
 }
 
 /**

@@ -2872,7 +2872,7 @@ function buildSoulCatLocalUnifiedResult(localResult) {
 export const SURVEY_THEME_CONFIGS = [
   {
     key: "city",
-    routePaths: ["/", "/index.html", "/city", "/city.html"],
+    routePaths: ["/city", "/city.html"],
     pageMeta: {
       title: "寻找你的灵魂城市（国内版/国际版）",
       description:
@@ -3862,7 +3862,7 @@ export const SURVEY_THEME_CONFIGS = [
   },
   {
     key: "mbti",
-    routePaths: ["/mbti", "/mbti16", "/mbti.html"],
+    routePaths: ["/mbti", "/mbti16", "/mbti.html", "/", "/index.html"],
     pageMeta: {
       title: "类型学卡片中心",
       description:
@@ -3938,10 +3938,10 @@ const PATH_THEME_MAP = SURVEY_THEME_CONFIGS.reduce((accumulator, config) => {
 }, new Map());
 
 /**
- * 默认主题配置（城市测试）。
+ * 默认主题配置（类型学卡片中心）。
  */
 export const DEFAULT_SURVEY_THEME =
-  SURVEY_THEME_CONFIGS.find((item) => item.key === "city") ??
+  SURVEY_THEME_CONFIGS.find((item) => item.key === "mbti") ??
   SURVEY_THEME_CONFIGS[0];
 
 /**
