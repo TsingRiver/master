@@ -1,38 +1,57 @@
 <template>
-  <LinkErrorPage v-if="showIncompleteLinkError" />
-  <ThemeHub
-    v-else-if="showPortalHub"
-    :theme-configs="themeConfigs"
-    :build-theme-href="buildThemeHref"
-  />
-  <TypeologyLab
-    v-else-if="isTypeologyLabTheme"
-    :theme-config="activeThemeConfig"
-    :portal-mode="portalSession"
-    :portal-home-href="portalHubHref"
-  />
-  <RomanceStandalone
-    v-else-if="isRomanceStandaloneTheme"
-    :theme-config="activeThemeConfig"
-    :portal-mode="portalSession"
-    :portal-home-href="portalHubHref"
-  />
-  <SoulAgeStandalone
-    v-else-if="isSoulAgeStandaloneTheme"
-    :theme-config="activeThemeConfig"
-    :portal-mode="portalSession"
-    :portal-home-href="portalHubHref"
-  />
-  <SurveyEngine
-    v-else
-    :theme-config="activeThemeConfig"
-    :portal-mode="portalSession"
-    :portal-home-href="portalHubHref"
-  /> 
+  <div class="app-root">
+    <LinkErrorPage v-if="showIncompleteLinkError" />
+    <ThemeHub
+      v-else-if="showPortalHub"
+      :theme-configs="themeConfigs"
+      :build-theme-href="buildThemeHref"
+    />
+    <TypeologyLab
+      v-else-if="isTypeologyLabTheme"
+      :theme-config="activeThemeConfig"
+      :portal-mode="portalSession"
+      :portal-home-href="portalHubHref"
+    />
+    <RomanceStandalone
+      v-else-if="isRomanceStandaloneTheme"
+      :theme-config="activeThemeConfig"
+      :portal-mode="portalSession"
+      :portal-home-href="portalHubHref"
+    />
+    <SoulAgeStandalone
+      v-else-if="isSoulAgeStandaloneTheme"
+      :theme-config="activeThemeConfig"
+      :portal-mode="portalSession"
+      :portal-home-href="portalHubHref"
+    />
+    <SurveyEngine
+      v-else
+      :theme-config="activeThemeConfig"
+      :portal-mode="portalSession"
+      :portal-home-href="portalHubHref"
+    />
+
+    <!-- 工信部 ICP 备案号，所有页面底部居中展示 -->
+    <footer class="icp-footer">
+      <a
+        href="https://beian.miit.gov.cn/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        浙ICP备2026013019号
+      </a>
+    </footer>
+  </div>
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from "vue";
+import {
+  computed,
+  defineAsyncComponent,
+  onBeforeUnmount,
+  ref,
+  watch,
+} from "vue";
 import LinkErrorPage from "./components/LinkErrorPage.vue";
 import SurveyEngine from "./components/SurveyEngine.vue";
 import ThemeHub from "./components/ThemeHub.vue";
@@ -317,3 +336,32 @@ onBeforeUnmount(() => {
   window.removeEventListener("popstate", syncLocationFromBrowser);
 });
 </script>
+
+<style scoped>
+/* 根容器：确保子组件不受包裹影响 */
+.app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 工信部 ICP 备案号底部栏 */
+.icp-footer {
+  text-align: center;
+  padding: 12px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  background: transparent;
+}
+
+.icp-footer a {
+  color: rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.icp-footer a:hover {
+  color: rgba(0, 0, 0, 0.6);
+  text-decoration: underline;
+}
+</style>
