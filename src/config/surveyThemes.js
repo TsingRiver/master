@@ -3862,7 +3862,7 @@ export const SURVEY_THEME_CONFIGS = [
   },
   {
     key: "mbti",
-    routePaths: ["/mbti", "/mbti16", "/mbti.html", "/", "/index.html"],
+    routePaths: ["/mbti", "/mbti16", "/mbti.html"],
     pageMeta: {
       title: "类型学卡片中心",
       description:

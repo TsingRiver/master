@@ -31,15 +31,33 @@
       :portal-home-href="portalHubHref"
     />
 
-    <!-- 工信部 ICP 备案号，所有页面底部居中展示 -->
+    <!-- 底部备案信息：同时展示工信部 ICP 与公安备案，统一保留全站底部入口。 -->
     <footer class="icp-footer">
-      <a
-        href="https://beian.miit.gov.cn/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        浙ICP备2026013019号
-      </a>
+      <div class="icp-footer-inner">
+        <a
+          class="icp-footer-link"
+          href="https://beian.miit.gov.cn/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          浙ICP备2026013019号
+        </a>
+        <span class="icp-footer-divider" aria-hidden="true"></span>
+        <a
+          class="icp-footer-link icp-footer-link-police"
+          href="https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img
+            class="icp-footer-icon"
+            src="/beian.png"
+            alt=""
+            aria-hidden="true"
+          >
+          浙公网安备33010902004517号
+        </a>
+      </div>
     </footer>
   </div>
 </template>
@@ -216,7 +234,7 @@ function isInvalidHashRoute(parsedHashRoute) {
     return false;
   }
 
-  // 关键逻辑：命中任一已注册主题路径则视为有效，包含 "#/" 这种默认主题入口。
+  // 关键逻辑：仅命中已注册主题路径时视为有效，例如 "#/mbti"。
   if (hasSurveyThemePath(parsedHashRoute.path)) {
     return false;
   }
@@ -238,7 +256,7 @@ function isInvalidHashRoute(parsedHashRoute) {
 function isInvalidPlainEntry(pathname) {
   const normalizedPathname = String(pathname ?? "").toLowerCase();
 
-  // 关键逻辑：已注册主题路径（包含 "/" 默认页）直接放行，未知路径才进入错误页。
+  // 关键逻辑：仅放行已注册主题路径，例如 "/mbti"；裸域名 "/" 与未知路径均进入错误页。
   return !hasSurveyThemePath(normalizedPathname);
 }
 
@@ -340,23 +358,94 @@ onBeforeUnmount(() => {
   min-height: 100vh;
 }
 
-/* 工信部 ICP 备案号底部栏 */
+/* 全站备案信息底栏：
+ * 关键逻辑：使用半透明胶囊容器统一承载双备案链接，兼容深浅背景并提升移动端可读性。
+ */
 .icp-footer {
-  text-align: center;
-  padding: 12px 16px;
-  font-size: 12px;
-  line-height: 1.5;
-  background: transparent;
+  display: flex;
+  justify-content: center;
+  padding: 14px 16px 22px;
 }
 
-.icp-footer a {
-  color: rgba(0, 0, 0, 0.35);
+.icp-footer-inner {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  max-width: min(92vw, 720px);
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background:
+    linear-gradient(135deg, rgba(12, 18, 28, 0.76), rgba(28, 38, 54, 0.58));
+  box-shadow:
+    0 10px 30px rgba(6, 10, 18, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px) saturate(135%);
+}
+
+.icp-footer-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: rgba(248, 250, 252, 0.86);
   text-decoration: none;
-  transition: color 0.2s ease;
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
 }
 
-.icp-footer a:hover {
-  color: rgba(0, 0, 0, 0.6);
-  text-decoration: underline;
+.icp-footer-link:hover {
+  color: #ffffff;
+  opacity: 1;
+}
+
+.icp-footer-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18));
+}
+
+.icp-footer-divider {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+@media (max-width: 640px) {
+  .icp-footer {
+    padding: 12px 12px 18px;
+  }
+
+  .icp-footer-inner {
+    width: 100%;
+    border-radius: 22px;
+    padding: 10px 14px;
+    gap: 6px 10px;
+  }
+
+  .icp-footer-link {
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+  }
+
+  .icp-footer-icon {
+    width: 15px;
+    height: 15px;
+    flex-basis: 15px;
+  }
+
+  .icp-footer-divider {
+    display: none;
+  }
 }
 </style>
