@@ -1216,6 +1216,7 @@ function restartSurvey() {
   posterPreviewUrl.value = "";
   interactionFeedback.value = "";
   activeRadarDimensionKey.value = "rationality";
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /**

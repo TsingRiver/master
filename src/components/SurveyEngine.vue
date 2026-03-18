@@ -5410,6 +5410,7 @@ async function goNext() {
 function restart() {
   // 关键逻辑：重测流程包含异步题库加载，显式忽略 Promise 即可。
   void resetSurveyState();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /**

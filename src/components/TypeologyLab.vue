@@ -3305,6 +3305,7 @@ function restartCurrentType() {
   answers.value = [];
   currentQuestionIndex.value = 0;
   showAllSummary.value = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /**
