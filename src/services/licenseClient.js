@@ -1,4 +1,5 @@
 import {
+  LICENSE_DEVICE_COOKIE_NAME,
   LICENSE_SESSION_COOKIE_NAME,
   LICENSE_AUTH_ENTRY_PATH,
 } from "../config/licenseAccess";
@@ -7,6 +8,12 @@ import {
  * 浏览器端设备标识存储键。
  */
 const LICENSE_DEVICE_STORAGE_KEY = "asking-license-device-id";
+
+/**
+ * 浏览器环境标识 Cookie 默认有效期（365 天）。
+ * 关键逻辑：deviceId 需要跨 session 持久化，避免同一浏览器环境因为短期 Cookie 失效被误判成新环境。
+ */
+const DEFAULT_LICENSE_DEVICE_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 /**
  * Cookie 默认有效期（30 天）。
@@ -57,6 +64,50 @@ function readCookieValue(cookieName) {
 }
 
 /**
+ * 安全读取 localStorage 中的浏览器环境标识。
+ * @returns {string} 已缓存的浏览器环境 ID。
+ */
+function readStoredLicenseDeviceId() {
+  try {
+    return String(window.localStorage.getItem(LICENSE_DEVICE_STORAGE_KEY) ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * 安全写入 localStorage 中的浏览器环境标识。
+ * @param {string} deviceId 浏览器环境 ID。
+ */
+function persistStoredLicenseDeviceId(deviceId) {
+  try {
+    window.localStorage.setItem(LICENSE_DEVICE_STORAGE_KEY, deviceId);
+  } catch {
+    // 关键逻辑：localStorage 被禁用时退化为仅 Cookie 持久化，避免直接阻断授权流程。
+  }
+}
+
+/**
+ * 持久化浏览器环境标识 Cookie。
+ * @param {string} deviceId 浏览器环境 ID。
+ * @param {number} [maxAgeSeconds=DEFAULT_LICENSE_DEVICE_COOKIE_MAX_AGE_SECONDS] Cookie 生命周期。
+ */
+function persistLicenseDeviceCookie(
+  deviceId,
+  maxAgeSeconds = DEFAULT_LICENSE_DEVICE_COOKIE_MAX_AGE_SECONDS,
+) {
+  const normalizedDeviceId = String(deviceId ?? "").trim();
+  if (!normalizedDeviceId) {
+    return;
+  }
+
+  const secureSegment = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie =
+    `${LICENSE_DEVICE_COOKIE_NAME}=${encodeURIComponent(normalizedDeviceId)}; ` +
+    `Path=/; Max-Age=${Math.max(0, Math.floor(maxAgeSeconds))}; SameSite=Lax${secureSegment}`;
+}
+
+/**
  * 生成浏览器环境标识。
  * @returns {string} 浏览器环境 ID。
  */
@@ -74,15 +125,23 @@ function createBrowserDeviceId() {
  * @returns {string} 稳定 deviceId。
  */
 export function readOrCreateLicenseDeviceId() {
-  const cachedDeviceId = String(
-    window.localStorage.getItem(LICENSE_DEVICE_STORAGE_KEY) ?? "",
-  ).trim();
-  if (cachedDeviceId) {
-    return cachedDeviceId;
+  const cachedStorageDeviceId = readStoredLicenseDeviceId();
+  const cachedCookieDeviceId = readCookieValue(LICENSE_DEVICE_COOKIE_NAME);
+  const resolvedCachedDeviceId = cachedStorageDeviceId || cachedCookieDeviceId;
+
+  if (resolvedCachedDeviceId) {
+    if (!cachedStorageDeviceId) {
+      persistStoredLicenseDeviceId(resolvedCachedDeviceId);
+    }
+    if (cachedCookieDeviceId !== resolvedCachedDeviceId) {
+      persistLicenseDeviceCookie(resolvedCachedDeviceId);
+    }
+    return resolvedCachedDeviceId;
   }
 
   const nextDeviceId = createBrowserDeviceId();
-  window.localStorage.setItem(LICENSE_DEVICE_STORAGE_KEY, nextDeviceId);
+  persistStoredLicenseDeviceId(nextDeviceId);
+  persistLicenseDeviceCookie(nextDeviceId);
   return nextDeviceId;
 }
 
@@ -204,6 +263,7 @@ export async function checkLicenseSession(targetPath) {
   return requestLicenseApi("/api/license/check", {
     sessionToken,
     targetPath,
+    deviceId: readOrCreateLicenseDeviceId(),
   });
 }
 

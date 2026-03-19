@@ -40,8 +40,8 @@
       </p>
 
       <p class="license-auth-tip">
-        授权成功后将绑定当前 IP 环境并记录使用次数；<br />同一授权码默认可在同
-        IP 环境下激活 2 次，超出次数或切换网络环境后会被拒绝。
+        授权成功后将绑定当前浏览器环境；<br />同一授权码默认最多可绑定 2 个浏览
+        器环境，超出名额后会被拒绝。
       </p>
     </div>
   </section>
@@ -104,16 +104,16 @@ function resolveErrorMessage(errorCode) {
       "未配置授权服务地址，请先补充 VITE_LICENSE_API_BASE_URL。",
     LICENSE_CODE_NOT_FOUND: "授权码不存在，请检查后重试。",
     LICENSE_CODE_DISABLED: "该授权码已停用，请联系管理员。",
-    LICENSE_IP_MISMATCH: "该授权码已绑定其他网络环境，当前 IP 无法使用。",
     LICENSE_USAGE_LIMIT_REACHED:
-      "该授权码在当前 IP 环境下的可用次数已用完，请联系管理员重置次数。",
+      "该授权码可绑定的浏览器环境名额已用完，请联系管理员增加名额。",
     DEVICE_ID_REQUIRED: "当前浏览器环境标识异常，请刷新后重试。",
+    DEVICE_MISMATCH: "当前浏览器环境与授权会话不一致，请重新输入授权码。",
+    DEVICE_NOT_BOUND: "当前浏览器环境尚未绑定到该授权码，请重新输入授权码。",
     UNSUPPORTED_SCOPE_PATH: "当前页面不在授权范围内，请联系管理员。",
     INVALID_SESSION: "会话已失效，请重新输入授权码。",
     LICENSE_INACTIVE: "该授权码已失效，请联系管理员。",
     SCOPE_NOT_GRANTED:
       "该授权码尚未获得当前页面的访问权限，请输入授权码继续授权。",
-    IP_MISMATCH: "当前访问网络环境与授权记录不一致，请在原 IP 环境下使用。",
     SESSION_MISSING: "",
   };
 
@@ -135,7 +135,9 @@ async function tryRestoreSession() {
   try {
     const validationResult = await checkLicenseSession(props.targetPath);
     if (validationResult.valid) {
-      persistLicenseSessionToken(validationResult.sessionToken);
+      if (validationResult.sessionToken) {
+        persistLicenseSessionToken(validationResult.sessionToken);
+      }
       navigateToTarget();
       return;
     }

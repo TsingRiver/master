@@ -1,5 +1,6 @@
 import {
   LICENSE_AUTH_ENTRY_PATH,
+  LICENSE_DEVICE_COOKIE_NAME,
   LICENSE_SESSION_COOKIE_NAME,
   isLicenseProtectedPath,
   isLicensePublicPath,
@@ -158,7 +159,7 @@ function buildAuthRedirectUrl(requestUrl, scopePath) {
 
 /**
  * 调用后端进行二次会话校验。
- * 关键逻辑：本地验签只负责快速过滤明显非法 token；真正的停用状态和设备绑定仍以后端数据库为准。
+ * 关键逻辑：本地验签只负责快速过滤明显非法 token；真正的停用状态和浏览器环境绑定仍以后端数据库为准。
  * @param {Request} request 当前浏览器请求。
  * @param {string} sessionToken 当前会话 token。
  * @param {string} scopePath 当前目标授权范围。
@@ -172,16 +173,19 @@ async function verifySessionWithBackend(request, sessionToken, scopePath) {
   }
 
   try {
+    const deviceId = readCookieValue(
+      request.headers.get("cookie"),
+      LICENSE_DEVICE_COOKIE_NAME,
+    );
     const response = await fetch(`${apiBaseUrl}/api/license/check`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // 关键逻辑：middleware 代发请求时显式透传原始客户端 IP，确保后端仍按真实用户 IP 校验环境绑定。
-        "X-Forwarded-For": String(request.headers.get("x-forwarded-for") ?? "").trim(),
       },
       body: JSON.stringify({
         sessionToken,
         targetPath: scopePath,
+        deviceId,
       }),
       cache: "no-store",
     });

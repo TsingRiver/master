@@ -445,7 +445,9 @@ watch(
       }
 
       if (validationResult.valid) {
-        persistLicenseSessionToken(validationResult.sessionToken);
+        if (validationResult.sessionToken) {
+          persistLicenseSessionToken(validationResult.sessionToken);
+        }
         clientLicenseAccessGranted.value = true;
       } else {
         clearLicenseSessionToken();

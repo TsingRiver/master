@@ -5,6 +5,12 @@
 export const LICENSE_SESSION_COOKIE_NAME = "asking_license_session";
 
 /**
+ * 浏览器环境标识 Cookie 名称：
+ * 关键逻辑：与 localStorage 中的 deviceId 保持同值，便于 middleware 在服务端识别当前浏览器环境。
+ */
+export const LICENSE_DEVICE_COOKIE_NAME = "asking_license_device_id";
+
+/**
  * 统一授权入口路径。
  */
 export const LICENSE_AUTH_ENTRY_PATH = "/auth";
