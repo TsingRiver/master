@@ -35,6 +35,10 @@
       "destination": "/assets/:path*"
     },
     {
+      "source": "/api/:match*",
+      "destination": "http://47.98.142.11:3001/api/:match*"
+    },
+    {
       "source": "/(.*\\..*)",
       "destination": "/$1"
     },
