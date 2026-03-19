@@ -28,12 +28,8 @@ function normalizeApiBaseUrl(rawBaseUrl) {
  * @returns {string} 授权服务基础地址。
  */
 function resolveLicenseApiBaseUrl() {
-  const baseUrl = normalizeApiBaseUrl(import.meta.env.VITE_LICENSE_API_BASE_URL);
-  if (!baseUrl) {
-    throw new Error("LICENSE_API_BASE_URL_MISSING");
-  }
-
-  return baseUrl;
+  // 允许环境变量留空或未配置，此时将返回空字符串，通过当前域名同源的相对路径调用以配合反向代理
+  return normalizeApiBaseUrl(import.meta.env.VITE_LICENSE_API_BASE_URL ?? "");
 }
 
 /**
