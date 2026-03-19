@@ -354,6 +354,10 @@ function isInvalidHashRoute(parsedHashRoute) {
     return false;
   }
 
+  if (parsedHashRoute.path === LICENSE_AUTH_ENTRY_PATH) {
+    return false;
+  }
+
   // 关键逻辑：仅命中已注册主题路径时视为有效，例如 "#/mbti"。
   if (hasSurveyThemePath(parsedHashRoute.path)) {
     return false;
@@ -375,6 +379,10 @@ function isInvalidHashRoute(parsedHashRoute) {
  */
 function isInvalidPlainEntry(pathname) {
   const normalizedPathname = String(pathname ?? "").toLowerCase();
+
+  if (normalizedPathname === LICENSE_AUTH_ENTRY_PATH) {
+    return false;
+  }
 
   // 关键逻辑：仅放行已注册主题路径，例如 "/mbti"；裸域名 "/" 与未知路径均进入错误页。
   return !hasSurveyThemePath(normalizedPathname);
