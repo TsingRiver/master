@@ -68,6 +68,17 @@ export function getTypeologyCachedResult(testKey) {
 }
 
 /**
+ * 清空全部类型学结果缓存。
+ */
+export function clearTypeologyResultCache() {
+  try {
+    window.localStorage.removeItem(TYPEOLOGY_RESULT_CACHE_KEY);
+  } catch {
+    // 关键逻辑：删除失败时静默降级，避免清空按钮反向阻断页面主流程。
+  }
+}
+
+/**
  * 更新单个测试缓存并持久化。
  * @param {string} testKey 测试键。
  * @param {object} resultPayload 结果对象。
@@ -151,5 +162,31 @@ export function removeTypeologyProgressCache(testKey) {
     window.localStorage.removeItem(buildTypeologyProgressCacheKey(normalizedTestKey));
   } catch {
     // 关键逻辑：删除失败不影响业务流程。
+  }
+}
+
+/**
+ * 清空全部类型学进度缓存。
+ * 复杂度评估：O(K)
+ * K 为 localStorage 键数量；当前仅遍历浏览器本地键集合，实际开销较小。
+ */
+export function clearAllTypeologyProgressCache() {
+  try {
+    const removableKeyList = [];
+
+    for (let keyIndex = 0; keyIndex < window.localStorage.length; keyIndex += 1) {
+      const storageKey = String(window.localStorage.key(keyIndex) ?? "");
+      if (!storageKey.startsWith(TYPEOLOGY_PROGRESS_CACHE_KEY_PREFIX)) {
+        continue;
+      }
+
+      removableKeyList.push(storageKey);
+    }
+
+    removableKeyList.forEach((storageKey) => {
+      window.localStorage.removeItem(storageKey);
+    });
+  } catch {
+    // 关键逻辑：浏览器禁用存储或删除失败时静默降级，避免影响主流程。
   }
 }

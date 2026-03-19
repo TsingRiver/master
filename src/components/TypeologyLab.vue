@@ -486,6 +486,19 @@
             生成人格海报
           </van-button>
         </div>
+
+        <div
+          v-if="completedTypeCardItems.length > 0"
+          class="typeology-card-panel-actions"
+        >
+          <van-button
+            block
+            class="typeology-btn typeology-btn-danger"
+            @click="confirmClearTypeologyResults"
+          >
+            清空测试结果
+          </van-button>
+        </div>
       </section>
 
       <section class="typeology-panel typeology-knowledge-panel">
@@ -831,6 +844,8 @@ import {
   resolveTypeologyFoundationMbti,
 } from "../services/typeologyProfileEngine";
 import {
+  clearAllTypeologyProgressCache,
+  clearTypeologyResultCache,
   loadTypeologyResultCache,
   loadTypeologyProgressCache,
   removeTypeologyProgressCache,
@@ -2978,6 +2993,39 @@ function clearTypeologyProgressByTestKey(testKey) {
 }
 
 /**
+ * 清空全部类型学结果与进度缓存。
+ * 关键逻辑：一次性清理结果、进度、AI 侧写与海报状态，避免页面出现“数据已删但派生视图仍残留”的脏状态。
+ * @returns {Promise<void>} 清理完成。
+ */
+async function confirmClearTypeologyResults() {
+  try {
+    await showConfirmDialog({
+      title: "确认清空全部测试结果？",
+      message:
+        "将清空 MBTI 主题下所有类型学结果、答题进度、AI 解读与海报缓存，该操作不可恢复。",
+      confirmButtonText: "确认清空",
+      cancelButtonText: "取消",
+      closeOnClickOverlay: true,
+    });
+  } catch {
+    // 关键逻辑：用户取消时保持当前所有结果与作答现场不变。
+    return;
+  }
+
+  cancelActiveAiInsightRequest();
+  resetTestingSessionState();
+  clearTypeologyResultCache();
+  clearAllTypeologyProgressCache();
+  resultCache.value = {};
+  currentResult.value = null;
+  stage.value = STAGE_HOME;
+  resetTypeologyProfileAiInsightState();
+  resetTypeologyPosterState();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  showToast("已清空全部类型学测试结果");
+}
+
+/**
  * 按缓存中的题目 ID 恢复题目列表。
  * @param {string} testKey 测试键。
  * @param {Array<string>} questionIdList 题目 ID 列表。
@@ -4722,6 +4770,12 @@ onBeforeUnmount(() => {
   color: color-mix(in srgb, var(--type-text) 88%, var(--type-muted) 12%) !important;
 }
 
+.typeology-btn-danger {
+  border: 1px solid color-mix(in srgb, #d65c5c 26%, var(--type-card-border) 74%) !important;
+  background: color-mix(in srgb, #d65c5c 10%, var(--type-card-bg) 90%) !important;
+  color: color-mix(in srgb, #b94141 64%, var(--type-text) 36%) !important;
+}
+
 /* 关键逻辑：答题面板需 relative 定位，作为退出按钮绝对定位的锚点。 */
 .typeology-question-panel {
   position: relative;
@@ -5170,6 +5224,10 @@ onBeforeUnmount(() => {
 
 .typeology-poster-entry-btn {
   margin-top: 10px;
+}
+
+.typeology-card-panel-actions {
+  margin-top: 12px;
 }
 
 .typeology-poster-overlay {
