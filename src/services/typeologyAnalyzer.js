@@ -1,5 +1,6 @@
 import { analyzeMbtiLocally } from "./mbtiAnalyzer";
 import { getTypeologyQuestionPool } from "../data/typeologyCatalog";
+import { applyTypeologySoftIntervention } from "./typeologyProfileEngine";
 
 /**
  * 限制百分比分值到 [0, 100]。
@@ -638,13 +639,17 @@ function buildGenericNarrative({ testName, mainResult, topThree }) {
  * 计算通用测试分值榜。
  * 复杂度评估：
  * 1. 累加答案向量：O(Q * K)，Q 为题量，K 为每题向量键数量（通常很小）。
- * 2. 排序：O(R log R)，R 为结果类型数量。
+ * 2. 柔性干预：O(R * O)，R 为命中规则数，O 为规则影响的结果数；均为固定小常数。
+ * 3. 排序：O(R log R)，R 为结果类型数量。
  * @param {Array<object>} selectedQuestions 本轮题目。
  * @param {Array<string|null>} answerIds 用户答案。
  * @param {Array<object>} outcomes 结果候选列表。
- * @returns {Array<object>} 排序后的分值榜。
+ * @param {object} [options] 可选参数。
+ * @param {string} [options.testKey] 当前测试键。
+ * @param {string} [options.baseMbti] 基石 MBTI 类型码。
+ * @returns {{ scoreBoard: Array<object>, softInterventionMeta: object }} 排序后的分值榜与柔性干预元数据。
  */
-function buildGenericScoreBoard(selectedQuestions, answerIds, outcomes) {
+function buildGenericScoreBoard(selectedQuestions, answerIds, outcomes, options = {}) {
   const rawScoreMap = outcomes.reduce((accumulator, outcomeItem) => {
     accumulator[outcomeItem.key] = 0;
     return accumulator;
@@ -672,19 +677,28 @@ function buildGenericScoreBoard(selectedQuestions, answerIds, outcomes) {
     });
   });
 
+  const softInterventionResult = applyTypeologySoftIntervention({
+    baseMbti: options.baseMbti,
+    currentTestKey: options.testKey,
+    rawScoreMap,
+  });
+  const adjustedScoreMap = softInterventionResult.adjustedScoreMap;
   const topRawScore = Math.max(
     1,
-    ...Object.values(rawScoreMap).map((scoreItem) => Number(scoreItem) || 0),
+    ...Object.values(adjustedScoreMap).map((scoreItem) => Number(scoreItem) || 0),
   );
 
-  return outcomes
+  const scoreBoard = outcomes
     .map((outcomeItem) => {
-      const rawScore = Number(rawScoreMap[outcomeItem.key] ?? 0);
+      const baseRawScore = Number(rawScoreMap[outcomeItem.key] ?? 0);
+      const adjustedRawScore = Number(adjustedScoreMap[outcomeItem.key] ?? 0);
       return {
         key: outcomeItem.key,
         label: outcomeItem.label,
-        rawScore,
-        score: clampPercentage((rawScore / topRawScore) * 100),
+        baseRawScore,
+        rawScore: adjustedRawScore,
+        interventionDelta: adjustedRawScore - baseRawScore,
+        score: clampPercentage((adjustedRawScore / topRawScore) * 100),
         summary: outcomeItem.summary,
         tags: outcomeItem.tags ?? [],
         actions: outcomeItem.actions ?? [],
@@ -703,6 +717,11 @@ function buildGenericScoreBoard(selectedQuestions, answerIds, outcomes) {
 
       return String(leftItem.key).localeCompare(String(rightItem.key), "zh-Hans-CN");
     });
+
+  return {
+    scoreBoard,
+    softInterventionMeta: softInterventionResult.meta,
+  };
 }
 
 /**
@@ -783,6 +802,7 @@ function analyzeMbtiAsTypeology({
  * @param {Array<object>} params.selectedQuestions 本轮题目。
  * @param {Array<string|null>} params.answerIds 用户答案。
  * @param {object} params.modeConfig 模式配置。
+ * @param {string} [params.baseMbti] 基石 MBTI 类型码。
  * @returns {object} 统一本地结果。
  */
 function analyzeGenericTypeology({
@@ -790,11 +810,16 @@ function analyzeGenericTypeology({
   selectedQuestions,
   answerIds,
   modeConfig,
+  baseMbti,
 }) {
-  const scoreBoard = buildGenericScoreBoard(
+  const { scoreBoard, softInterventionMeta } = buildGenericScoreBoard(
     selectedQuestions,
     answerIds,
     testConfig.outcomes ?? [],
+    {
+      testKey: testConfig?.key,
+      baseMbti,
+    },
   );
 
   const mainRank = scoreBoard[0];
@@ -846,6 +871,7 @@ function analyzeGenericTypeology({
     }),
     detailTags: mainResult.tags,
     detailActions: mainResult.actions,
+    softInterventionMeta,
   };
 }
 
@@ -856,6 +882,7 @@ function analyzeGenericTypeology({
  * @param {Array<object>} params.selectedQuestions 本轮题目。
  * @param {Array<string|null>} params.answerIds 用户答案。
  * @param {object} params.modeConfig 模式配置。
+ * @param {string} [params.baseMbti] 基石 MBTI 类型码。
  * @returns {object} 统一本地结果。
  */
 export function analyzeTypeologyLocally({
@@ -863,6 +890,7 @@ export function analyzeTypeologyLocally({
   selectedQuestions,
   answerIds,
   modeConfig,
+  baseMbti,
 }) {
   if (testConfig?.key === "mbti") {
     return analyzeMbtiAsTypeology({
@@ -878,5 +906,6 @@ export function analyzeTypeologyLocally({
     selectedQuestions,
     answerIds,
     modeConfig,
+    baseMbti,
   });
 }

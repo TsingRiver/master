@@ -197,26 +197,6 @@
           </ul>
         </div>
 
-        <div class="mbti-detail-wrap">
-          <h3>答卷摘要 {{ showAllSummary ? '' : '（前12条）' }}</h3>
-          <ul class="mbti-bullet-list">
-            <li
-              v-for="(line, lineIndex) in summaryLinesForView"
-              :key="`summary-${lineIndex}`"
-            >
-              {{ line }}
-            </li>
-          </ul>
-          <button
-            v-if="resultModel.summaryLines.length > SUMMARY_PREVIEW_LIMIT"
-            type="button"
-            class="mbti-summary-toggle"
-            @click="toggleSummary"
-          >
-            {{ showAllSummary ? '收起摘要' : '展开全部摘要' }}
-          </button>
-        </div>
-
         <van-button
           block
           class="mbti-btn mbti-btn-primary mbti-restart-btn"
@@ -248,11 +228,6 @@ import {
 } from "../data/mbtiQuestionBank";
 import { analyzeMbtiLocally } from "../services/mbtiAnalyzer";
 import { analyzeMbtiWithDeepInsight } from "../services/mbtiAiAnalyzer";
-
-/**
- * 摘要默认预览条数。
- */
-const SUMMARY_PREVIEW_LIMIT = 12;
 
 /**
  * MBTI 默认加载文案。
@@ -305,7 +280,6 @@ const questionBank = ref([]);
 const answers = ref([]);
 const currentQuestionIndex = ref(0);
 const resultModel = ref(null);
-const showAllSummary = ref(false);
 
 /**
  * 加载文案轮播状态。
@@ -427,17 +401,6 @@ const sourceTagStyle = computed(() => {
 });
 
 /**
- * 摘要展示列表。
- */
-const summaryLinesForView = computed(() => {
-  const fullSummaryLines = resultModel.value?.summaryLines ?? [];
-
-  return showAllSummary.value
-    ? fullSummaryLines
-    : fullSummaryLines.slice(0, SUMMARY_PREVIEW_LIMIT);
-});
-
-/**
  * 构建 MBTI 深度分析请求负载。
  * @param {object} localResult 本地分析结果。
  * @returns {{ summaryLines: Array<string>, axisScores: object, typeCandidates: Array<object>, localTopThree: Array<object>, localResult: object }} 深度分析负载。
@@ -465,7 +428,7 @@ function buildMbtiDeepPayload(localResult) {
  * 构建深度结果展示模型。
  * @param {object} deepResult 深度分析结果。
  * @param {object} localResult 本地分析结果。
- * @returns {{ source: string, main: object, profileTitle: string, insight: string, typeCard: object, topThree: Array<object>, axisSummaryLines: Array<string>, growthActions: Array<string>, blindSpots: Array<string>, summaryLines: Array<string> }} 页面结果模型。
+ * @returns {{ source: string, main: object, profileTitle: string, insight: string, typeCard: object, topThree: Array<object>, axisSummaryLines: Array<string>, growthActions: Array<string>, blindSpots: Array<string> }} 页面结果模型。
  */
 function buildDeepResultModel(deepResult, localResult) {
   return {
@@ -478,14 +441,13 @@ function buildDeepResultModel(deepResult, localResult) {
     axisSummaryLines: localResult.axisSummaryLines,
     growthActions: deepResult.growthActions,
     blindSpots: deepResult.blindSpots,
-    summaryLines: localResult.summaryLines,
   };
 }
 
 /**
  * 构建本地兜底结果展示模型。
  * @param {object} localResult 本地分析结果。
- * @returns {{ source: string, main: object, profileTitle: string, insight: string, typeCard: object, topThree: Array<object>, axisSummaryLines: Array<string>, growthActions: Array<string>, blindSpots: Array<string>, summaryLines: Array<string> }} 页面结果模型。
+ * @returns {{ source: string, main: object, profileTitle: string, insight: string, typeCard: object, topThree: Array<object>, axisSummaryLines: Array<string>, growthActions: Array<string>, blindSpots: Array<string> }} 页面结果模型。
  */
 function buildLocalResultModel(localResult) {
   return {
@@ -508,7 +470,6 @@ function buildLocalResultModel(localResult) {
       "把你的协作偏好写成工作说明，减少沟通损耗。",
     ],
     blindSpots: ["类型是偏好而不是能力上限", "高压下要防止维度失衡导致误判"],
-    summaryLines: localResult.summaryLines,
   };
 }
 
@@ -530,7 +491,6 @@ function startVersionTest(versionKey) {
   answers.value = Array.from({ length: versionQuestionBank.length }, () => null);
   currentQuestionIndex.value = 0;
   resultModel.value = null;
-  showAllSummary.value = false;
   stage.value = "survey";
 }
 
@@ -543,7 +503,6 @@ function resetToVersion() {
   answers.value = [];
   currentQuestionIndex.value = 0;
   resultModel.value = null;
-  showAllSummary.value = false;
   stage.value = "version";
   stopLoadingMessageTicker();
 }
@@ -601,15 +560,7 @@ async function goNextQuestion() {
     showToast(error?.message || "深度解析暂不可用，已切换基础解析");
   }
 
-  showAllSummary.value = false;
   stage.value = "result";
-}
-
-/**
- * 展开/收起摘要。
- */
-function toggleSummary() {
-  showAllSummary.value = !showAllSummary.value;
 }
 
 /**

@@ -205,6 +205,36 @@
           </p>
         </div>
 
+        <p
+          v-if="currentResultSoftInterventionText"
+          class="typeology-soft-intervention-tip"
+        >
+          {{ currentResultSoftInterventionText }}
+        </p>
+
+        <div
+          v-if="currentResultRelatedInsights.length > 0"
+          class="typeology-detail-section typeology-rare-section"
+        >
+          <h3>系统识别到的稀有特质</h3>
+          <div class="typeology-rare-tag-list">
+            <span
+              v-for="(insightItem, insightIndex) in currentResultRelatedInsights"
+              :key="`${insightItem.id}-${insightIndex}`"
+              class="typeology-rare-tag"
+            >
+              {{ insightItem.uiTag }}
+            </span>
+          </div>
+          <p
+            v-for="(insightItem, insightIndex) in currentResultRelatedInsights"
+            :key="`${insightItem.id}-text-${insightIndex}`"
+            class="typeology-rare-insight"
+          >
+            {{ insightItem.insightText }}
+          </p>
+        </div>
+
         <div class="typeology-score-wrap">
           <h3>Top 3 匹配</h3>
           <ul class="typeology-score-list">
@@ -274,28 +304,6 @@
               ></span>
             </li>
           </ul>
-        </div>
-
-        <div v-if="shouldShowAnswerSummary" class="typeology-detail-section">
-          <h3>
-            答卷摘要 {{ showAllSummary ? "" : `（前 ${SUMMARY_PREVIEW_LIMIT} 条）` }}
-          </h3>
-          <ul class="typeology-bullet-list">
-            <li
-              v-for="(summaryItem, summaryIndex) in summaryLinesForView"
-              :key="`${summaryItem}-${summaryIndex}`"
-            >
-              {{ summaryItem }}
-            </li>
-          </ul>
-          <button
-            v-if="currentResult.summaryLines.length > SUMMARY_PREVIEW_LIMIT"
-            type="button"
-            class="typeology-summary-toggle"
-            @click="toggleSummary"
-          >
-            {{ showAllSummary ? "收起摘要" : "展开全部摘要" }}
-          </button>
         </div>
 
         <div class="typeology-ai-section">
@@ -635,6 +643,137 @@
           </div>
         </div>
 
+        <section class="typeology-profile-panel">
+          <div class="typeology-profile-panel-head">
+            <h4>多维画像聚合</h4>
+            <span>{{ typeologyFinalProfile.completedCount }} 维已聚合</span>
+          </div>
+
+          <p class="typeology-profile-foundation">
+            基石 MBTI：
+            <strong>{{ typeologyFinalProfile.baseMbti || "未完成" }}</strong>
+          </p>
+          <p
+            v-if="!typeologyFinalProfile.foundationReady"
+            class="typeology-profile-foundation-tip"
+          >
+            建议优先完成 MBTI，系统才能启用柔性校准、冲突识别和多维 AI 洞察。
+          </p>
+
+          <ul v-else class="typeology-profile-trait-list">
+            <li
+              v-for="traitItem in typeologyProfileTraitList"
+              :key="`${traitItem.testKey}-${traitItem.displayText}`"
+              class="typeology-profile-trait-item"
+            >
+              <span>{{ traitItem.testName }}</span>
+              <strong>{{ traitItem.displayText }}</strong>
+            </li>
+          </ul>
+        </section>
+
+        <section
+          v-if="typeologyFinalProfile.specialTags.length > 0"
+          class="typeology-profile-panel typeology-profile-rare-panel"
+        >
+          <div class="typeology-profile-panel-head">
+            <h4>稀有特质徽章</h4>
+            <span>{{ typeologyFinalProfile.specialTags.length }} 个命中</span>
+          </div>
+
+          <div class="typeology-rare-tag-list">
+            <span
+              v-for="(tagItem, tagIndex) in typeologyFinalProfile.specialTags"
+              :key="`${tagItem}-${tagIndex}`"
+              class="typeology-rare-tag"
+            >
+              {{ tagItem }}
+            </span>
+          </div>
+
+          <p
+            v-for="(insightText, insightIndex) in typeologyFinalProfile.systemInsightTexts"
+            :key="`poster-insight-${insightIndex}`"
+            class="typeology-rare-insight"
+          >
+            {{ insightText }}
+          </p>
+        </section>
+
+        <section class="typeology-profile-panel typeology-profile-ai-panel">
+          <div class="typeology-profile-panel-head">
+            <h4>AI 专属侧写</h4>
+            <span
+              v-if="
+                typeologyProfileAiInsight?.generatedAt &&
+                !isGeneratingTypeologyProfileAiInsight
+              "
+            >
+              {{ formatTimestamp(typeologyProfileAiInsight.generatedAt) }}
+            </span>
+            <span
+              v-else-if="isGeneratingTypeologyProfileAiInsight"
+              class="typeology-ai-stream-status"
+            >
+              <van-loading :color="accentColor" size="14px" />
+              AI 生成中
+            </span>
+          </div>
+
+          <p
+            v-if="!canGenerateTypeologyProfileAiInsight"
+            class="typeology-profile-ai-empty"
+          >
+            完成 MBTI 后可解锁多维 AI 侧写。
+          </p>
+          <p
+            v-else-if="!typeologyProfileAiInsight && !isGeneratingTypeologyProfileAiInsight"
+            class="typeology-profile-ai-empty"
+          >
+            系统会结合基石 MBTI、已完成维度和稀有标签，生成你的专属画像。
+          </p>
+
+          <div
+            v-else-if="isGeneratingTypeologyProfileAiInsight"
+            class="typeology-profile-ai-loading"
+          >
+            <van-loading :color="accentColor" size="22px" />
+            <span>AI 正在生成多维人格侧写...</span>
+          </div>
+
+          <template v-else>
+            <p class="typeology-profile-ai-title">
+              {{ typeologyProfileAiInsight.title }}
+            </p>
+
+            <article class="typeology-profile-ai-block">
+              <h5>核心侧写</h5>
+              <p>{{ typeologyProfileAiInsight.corePortrait }}</p>
+            </article>
+
+            <article class="typeology-profile-ai-block">
+              <h5>矛盾与张力</h5>
+              <p>{{ typeologyProfileAiInsight.tensionAnalysis }}</p>
+            </article>
+
+            <article class="typeology-profile-ai-block">
+              <h5>破局建议</h5>
+              <p>{{ typeologyProfileAiInsight.growthAdvice }}</p>
+            </article>
+          </template>
+
+          <van-button
+            block
+            class="typeology-btn typeology-btn-primary"
+            :disabled="!canGenerateTypeologyProfileAiInsight"
+            :loading="isGeneratingTypeologyProfileAiInsight"
+            loading-text="生成中..."
+            @click="generateTypeologyProfileAiInsight"
+          >
+            AI 专属侧写
+          </van-button>
+        </section>
+
         <div class="typeology-poster-actions">
           <van-button
             block
@@ -684,6 +823,14 @@ import {
 } from "../services/typeologyAnalyzer";
 import { analyzeTypeologyWithAi } from "../services/typeologyAiAnalyzer";
 import {
+  analyzeTypeologyProfileWithAi,
+  buildFallbackTypeologyProfileAiInsight,
+} from "../services/typeologyProfileAiAnalyzer";
+import {
+  buildTypeologyFinalProfile,
+  resolveTypeologyFoundationMbti,
+} from "../services/typeologyProfileEngine";
+import {
   loadTypeologyResultCache,
   loadTypeologyProgressCache,
   removeTypeologyProgressCache,
@@ -696,11 +843,6 @@ import Suggestion from "./Suggestion.vue";
 
 /** 全局配置：意见反馈功能开关 */
 const enableActiveFeedback = import.meta.env.VITE_ENABLE_ACTIVE_FEEDBACK !== 'false';
-
-/**
- * 摘要默认预览条数。
- */
-const SUMMARY_PREVIEW_LIMIT = 3;
 
 /**
  * 页面阶段常量。
@@ -1634,7 +1776,6 @@ const answers = ref([]);
 const currentQuestionIndex = ref(0);
 const currentResult = ref(null);
 const resultCache = ref(loadTypeologyResultCache());
-const showAllSummary = ref(false);
 const isGeneratingAiInsight = ref(false);
 const isAiInsightStreaming = ref(false);
 const aiInsightStreamRawText = ref("");
@@ -1653,6 +1794,16 @@ const isGeneratingTypeologyPosterHd = ref(false);
  * 人格海报高清图 URL。
  */
 const typeologyPosterHdUrl = ref("");
+
+/**
+ * 多维人格 AI 侧写加载状态。
+ */
+const isGeneratingTypeologyProfileAiInsight = ref(false);
+
+/**
+ * 多维人格 AI 侧写结果。
+ */
+const typeologyProfileAiInsight = ref(null);
 
 /**
  * 答题跳转锁：
@@ -2078,22 +2229,66 @@ const typeologyPosterDataSignature = computed(() =>
 );
 
 /**
- * 当前结果摘要展示列表。
+ * 多维人格最终画像：
+ * 关键逻辑：海报页、稀有标签和 AI 侧写统一消费同一份聚合数据，避免前后语义不一致。
  */
-const summaryLinesForView = computed(() => {
-  const fullSummaryLines = currentResult.value?.summaryLines ?? [];
-  return showAllSummary.value
-    ? fullSummaryLines
-    : fullSummaryLines.slice(0, SUMMARY_PREVIEW_LIMIT);
+const typeologyFinalProfile = computed(() =>
+  buildTypeologyFinalProfile(resultCache.value),
+);
+
+/**
+ * 当前结果页关联的稀有标签。
+ * 关键逻辑：当前测试优先展示与自身相关的标签；MBTI 作为基石页则展示全部命中标签。
+ */
+const currentResultRelatedInsights = computed(() => {
+  const activeResultTestKey = String(activeTestConfig.value?.key ?? "").trim();
+  if (!activeResultTestKey) {
+    return [];
+  }
+
+  if (activeResultTestKey === "mbti") {
+    return typeologyFinalProfile.value.activeInsights;
+  }
+
+  return typeologyFinalProfile.value.relatedInsightsByTestKey[activeResultTestKey] ?? [];
 });
 
 /**
- * 是否展示“答卷摘要”模块。
- * 关键逻辑：MBTI 结果页隐藏摘要列表，其他类型学测试维持原有展示。
- * 复杂度评估：O(1)。
+ * 当前结果页的柔性干预说明文案。
+ * 关键逻辑：明确告知用户“系统只做轻量偏置，不覆盖真实作答”，降低结果冲突带来的理解成本。
  */
-const shouldShowAnswerSummary = computed(
-  () => activeTestConfig.value?.key !== "mbti",
+const currentResultSoftInterventionText = computed(() => {
+  const softInterventionMeta = currentResult.value?.softInterventionMeta;
+  if (!softInterventionMeta?.applied || !softInterventionMeta?.baseMbti) {
+    return "";
+  }
+
+  return `已基于基石 MBTI ${softInterventionMeta.baseMbti} 启用轻量柔性校准。系统只会对边缘结果做小幅偏置，若你的真实作答持续相反，最终结果仍以答卷为准。`;
+});
+
+/**
+ * 海报页使用的维度摘要列表。
+ * 关键逻辑：统一用“测试名 + 当前结果”渲染，便于用户快速校验聚合数据是否正确。
+ */
+const typeologyProfileTraitList = computed(() =>
+  typeologyFinalProfile.value.completedTraits.map((traitItem) => ({
+    testKey: traitItem.testKey,
+    testName: traitItem.testName,
+    displayText: normalizeTypeologyPosterText(
+      traitItem.displayValue || traitItem.resultLabel || traitItem.resultKey,
+      22,
+    ),
+  })),
+);
+
+/**
+ * 是否允许生成多维人格 AI 侧写。
+ * 关键逻辑：必须先完成 MBTI 基石测试，否则不开放跨测评 AI 洞察。
+ */
+const canGenerateTypeologyProfileAiInsight = computed(
+  () =>
+    typeologyFinalProfile.value.foundationReady &&
+    typeologyFinalProfile.value.completedCount > 0,
 );
 
 /**
@@ -2272,6 +2467,17 @@ let aiInsightPendingPreviewText = "";
  * 关键逻辑：每次重新生成都会递增令牌，旧任务结果会被丢弃，避免异步回写错位。
  */
 let typeologyPosterGenerationToken = 0;
+
+/**
+ * 多维人格 AI 侧写请求令牌。
+ * 关键逻辑：用户重复点击或聚合数据变更时，旧请求结果会自动失效。
+ */
+let typeologyProfileAiRequestToken = 0;
+
+/**
+ * 多维人格 AI 侧写取消控制器。
+ */
+let typeologyProfileAiRequestController = null;
 
 /**
  * 清理 AI 预览节流定时器。
@@ -2495,6 +2701,28 @@ function cancelActiveAiInsightRequest() {
 }
 
 /**
+ * 取消多维人格 AI 侧写请求。
+ * 关键逻辑：关闭海报页、重新聚合数据或重新发起请求时，都应中断旧请求以避免脏写入。
+ */
+function cancelTypeologyProfileAiInsightRequest() {
+  typeologyProfileAiRequestToken += 1;
+  if (typeologyProfileAiRequestController) {
+    typeologyProfileAiRequestController.abort();
+    typeologyProfileAiRequestController = null;
+  }
+  isGeneratingTypeologyProfileAiInsight.value = false;
+}
+
+/**
+ * 重置多维人格 AI 侧写状态。
+ * 关键逻辑：当聚合数据变化时清空旧画像，避免用户误把旧结果当作新数据的解析。
+ */
+function resetTypeologyProfileAiInsightState() {
+  cancelTypeologyProfileAiInsightRequest();
+  typeologyProfileAiInsight.value = null;
+}
+
+/**
  * 安全调用可选回调。
  * @param {Function|undefined} callback 可选回调。
  */
@@ -2585,7 +2813,6 @@ async function handleTestChipClick(testKey) {
   if (stage.value === STAGE_DETAIL) {
     if (nextCachedResult) {
       currentResult.value = nextCachedResult;
-      showAllSummary.value = false;
     } else {
       currentResult.value = null;
       stage.value = STAGE_HOME;
@@ -2612,7 +2839,6 @@ async function handleCardClick(testKey) {
   if (cachedResult) {
     currentResult.value = cachedResult;
     stage.value = STAGE_DETAIL;
-    showAllSummary.value = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     return;
   }
@@ -2656,7 +2882,6 @@ function activateTestingSession({
   isNavigatingQuestion.value = false;
   stage.value = STAGE_TESTING;
   currentResult.value = null;
-  showAllSummary.value = false;
 }
 
 /**
@@ -2918,6 +3143,26 @@ function buildRestorableSession({ testConfig, cachedProgress }) {
 async function startCurrentTest() {
   const testConfig = activeTestConfig.value;
   const testKey = String(testConfig?.key ?? "").trim();
+
+  if (testKey !== "mbti" && !resolveTypeologyFoundationMbti(resultCache.value)) {
+    try {
+      await showConfirmDialog({
+        title: "建议先完成 MBTI",
+        message:
+          "完成 MBTI 后，系统才能启用柔性校准、稀有特质识别和多维 AI 侧写。是否先切换到 MBTI？",
+        confirmButtonText: "去做 MBTI",
+        cancelButtonText: "继续当前",
+        closeOnClickOverlay: true,
+      });
+
+      activeTestKey.value = "mbti";
+      showToast("已切换到 MBTI，完成后可解锁跨测评增强能力");
+      return;
+    } catch {
+      // 关键逻辑：用户明确选择继续当前测试时，保留非强制入口，不中断主流程。
+    }
+  }
+
   const cachedProgress = loadTypeologyProgressCache(testKey);
   const restorableSession = buildRestorableSession({
     testConfig,
@@ -3243,6 +3488,10 @@ async function submitCurrentTest() {
     selectedQuestions: questionBank.value,
     answerIds: answers.value,
     modeConfig,
+    baseMbti:
+      activeTestConfig.value?.key === "mbti"
+        ? ""
+        : resolveTypeologyFoundationMbti(resultCache.value),
   });
 
   const localPersistedResult = {
@@ -3289,7 +3538,6 @@ async function submitCurrentTest() {
   await stageOpenGatePromise;
   if (stage.value === STAGE_ANALYZING) {
     stage.value = STAGE_DETAIL;
-    showAllSummary.value = false;
   }
 }
 
@@ -3304,7 +3552,6 @@ function restartCurrentType() {
   questionBank.value = [];
   answers.value = [];
   currentQuestionIndex.value = 0;
-  showAllSummary.value = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -3315,14 +3562,6 @@ function backToHome() {
   cancelActiveAiInsightRequest();
   stage.value = STAGE_HOME;
   currentResult.value = null;
-  showAllSummary.value = false;
-}
-
-/**
- * 展开/收起摘要。
- */
-function toggleSummary() {
-  showAllSummary.value = !showAllSummary.value;
 }
 
 /**
@@ -3851,6 +4090,7 @@ function openTypeologyPosterPreview() {
  * 关闭人格海报预览页。
  */
 function closeTypeologyPosterPreview() {
+  cancelTypeologyProfileAiInsightRequest();
   isTypeologyPosterPreviewVisible.value = false;
 }
 
@@ -3877,6 +4117,63 @@ function resetTypeologyPosterState() {
   isTypeologyPosterPreviewVisible.value = false;
   isGeneratingTypeologyPosterHd.value = false;
   typeologyPosterHdUrl.value = "";
+}
+
+/**
+ * 生成多维人格 AI 侧写。
+ * 关键逻辑：
+ * 1. 仅在 MBTI 基石存在时开放生成。
+ * 2. AI 失败时自动回退为本地稳定画像，避免海报页出现空白。
+ * 3. 通过请求令牌防止旧请求覆盖新画像。
+ */
+async function generateTypeologyProfileAiInsight() {
+  if (isGeneratingTypeologyProfileAiInsight.value) {
+    return;
+  }
+
+  const currentFinalProfile = typeologyFinalProfile.value;
+  if (!currentFinalProfile.foundationReady) {
+    showToast("请先完成 MBTI，再生成多维 AI 侧写");
+    return;
+  }
+
+  cancelTypeologyProfileAiInsightRequest();
+  const requestToken = typeologyProfileAiRequestToken + 1;
+  typeologyProfileAiRequestToken = requestToken;
+  typeologyProfileAiRequestController = new AbortController();
+  isGeneratingTypeologyProfileAiInsight.value = true;
+
+  try {
+    const aiProfileInsight = await analyzeTypeologyProfileWithAi(currentFinalProfile, {
+      timeoutMs: 24000,
+      abortSignal: typeologyProfileAiRequestController.signal,
+    });
+
+    if (requestToken !== typeologyProfileAiRequestToken) {
+      return;
+    }
+
+    typeologyProfileAiInsight.value = aiProfileInsight;
+    showToast("多维 AI 侧写已生成");
+  } catch (error) {
+    const isCancelledByContext =
+      requestToken !== typeologyProfileAiRequestToken ||
+      String(error?.message ?? "").includes("请求已取消");
+    if (isCancelledByContext) {
+      return;
+    }
+
+    typeologyProfileAiInsight.value =
+      buildFallbackTypeologyProfileAiInsight(currentFinalProfile);
+    showToast(error?.message ?? "AI 侧写暂不可用，已切换本地稳定解读");
+  } finally {
+    if (requestToken !== typeologyProfileAiRequestToken) {
+      return;
+    }
+
+    typeologyProfileAiRequestController = null;
+    isGeneratingTypeologyProfileAiInsight.value = false;
+  }
 }
 
 /**
@@ -3976,6 +4273,8 @@ watch(stage, (nextStage) => {
  * 关键逻辑：预览页打开期间，若用户新增测试结果，海报会自动更新且重置高清图。
  */
 watch(typeologyPosterDataSignature, () => {
+  resetTypeologyProfileAiInsightState();
+
   if (!isTypeologyPosterPreviewVisible.value) {
     return;
   }
@@ -4002,6 +4301,7 @@ onBeforeUnmount(() => {
     persistCurrentTestingProgress();
   }
   cancelActiveAiInsightRequest();
+  cancelTypeologyProfileAiInsightRequest();
   resetTypeologyPosterState();
   stopLoadingTicker();
 });
@@ -4521,6 +4821,17 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
+.typeology-soft-intervention-tip {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--type-accent) 36%, var(--type-card-border) 64%);
+  background: color-mix(in srgb, var(--type-accent) 8%, var(--type-card-bg) 92%);
+  color: color-mix(in srgb, var(--type-text) 84%, var(--type-muted) 16%);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
 .typeology-highlight-skeleton {
   display: grid;
   gap: 7px;
@@ -4672,6 +4983,45 @@ onBeforeUnmount(() => {
   margin: 0;
   font-size: 13px;
   color: var(--type-text);
+}
+
+.typeology-rare-section {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--type-accent) 10%, transparent),
+      transparent 68%
+    ),
+    color-mix(in srgb, var(--type-card-bg) 92%, var(--type-accent) 8%);
+}
+
+.typeology-rare-tag-list {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.typeology-rare-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--type-accent) 32%, var(--type-card-border) 68%);
+  background: color-mix(in srgb, var(--type-accent) 14%, var(--type-card-bg) 86%);
+  color: var(--type-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.typeology-rare-insight {
+  margin: 10px 0 0;
+  color: var(--type-muted);
+  font-size: 13px;
+  line-height: 1.65;
 }
 
 .typeology-ai-grid ul {
@@ -4921,6 +5271,135 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--type-muted);
   line-height: 1.55;
+}
+
+.typeology-profile-panel {
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--type-card-border);
+  background: var(--type-card-bg);
+  padding: 12px;
+}
+
+.typeology-profile-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.typeology-profile-panel-head h4 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--type-text);
+}
+
+.typeology-profile-panel-head span {
+  color: var(--type-muted);
+  font-size: 12px;
+}
+
+.typeology-profile-foundation {
+  margin: 10px 0 0;
+  color: var(--type-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.typeology-profile-foundation strong {
+  font-weight: 700;
+}
+
+.typeology-profile-foundation-tip,
+.typeology-profile-ai-empty {
+  margin: 10px 0 0;
+  color: var(--type-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.typeology-profile-trait-list {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+}
+
+.typeology-profile-trait-item {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--type-card-border) 76%, var(--type-accent) 24%);
+  background: color-mix(in srgb, var(--type-accent) 8%, var(--type-card-bg) 92%);
+}
+
+.typeology-profile-trait-item span {
+  color: var(--type-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.typeology-profile-trait-item strong {
+  color: var(--type-text);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.typeology-profile-rare-panel {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--type-accent) 10%, transparent),
+      transparent 72%
+    ),
+    color-mix(in srgb, var(--type-card-bg) 92%, var(--type-accent) 8%);
+}
+
+.typeology-profile-ai-panel .van-button {
+  margin-top: 12px;
+}
+
+.typeology-profile-ai-loading {
+  margin-top: 10px;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--type-muted);
+  font-size: 13px;
+}
+
+.typeology-profile-ai-title {
+  margin: 10px 0 0;
+  color: var(--type-text);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.typeology-profile-ai-block {
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--type-card-border) 76%, var(--type-accent) 24%);
+  background: color-mix(in srgb, var(--type-accent) 8%, var(--type-card-bg) 92%);
+  padding: 10px;
+}
+
+.typeology-profile-ai-block h5 {
+  margin: 0;
+  color: var(--type-text);
+  font-size: 13px;
+}
+
+.typeology-profile-ai-block p {
+  margin: 8px 0 0;
+  color: var(--type-muted);
+  font-size: 13px;
+  line-height: 1.65;
 }
 
 .typeology-knowledge-item {
