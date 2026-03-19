@@ -211,55 +211,8 @@ async function verifySessionWithBackend(request, sessionToken, scopePath) {
  * @returns {Promise<Response | undefined>} 拦截响应；返回 undefined 表示放行。
  */
 export default async function middleware(request) {
-  const requestUrl = new URL(request.url);
-  const currentPath = requestUrl.pathname;
-
-  if (isLicensePublicPath(currentPath)) {
-    return;
-  }
-
-  if (!isLicenseProtectedPath(currentPath)) {
-    return;
-  }
-
-  const scopePath = resolveLicenseScopePath(currentPath);
-  if (!scopePath) {
-    return;
-  }
-
-  const sessionSecret = String(process.env.LICENSE_SESSION_SECRET ?? "").trim();
-  if (!sessionSecret) {
-    return Response.redirect(buildAuthRedirectUrl(requestUrl, scopePath), 307);
-  }
-
-  const sessionToken = readCookieValue(
-    request.headers.get("cookie"),
-    LICENSE_SESSION_COOKIE_NAME,
-  );
-  if (!sessionToken) {
-    return Response.redirect(buildAuthRedirectUrl(requestUrl, scopePath), 307);
-  }
-
-  const verificationResult = await verifySessionToken(sessionToken, sessionSecret);
-  if (!verificationResult.valid) {
-    return Response.redirect(buildAuthRedirectUrl(requestUrl, scopePath), 307);
-  }
-
-  const grantedScopes = Array.isArray(verificationResult.payload?.scopes)
-    ? verificationResult.payload.scopes
-    : [];
-  if (!grantedScopes.includes(scopePath)) {
-    return Response.redirect(buildAuthRedirectUrl(requestUrl, scopePath), 307);
-  }
-
-  const backendValidationPassed = await verifySessionWithBackend(
-    request,
-    sessionToken,
-    scopePath,
-  );
-  if (!backendValidationPassed) {
-    return Response.redirect(buildAuthRedirectUrl(requestUrl, scopePath), 307);
-  }
-
+  // 关键逻辑：
+  // 关闭 Vercel 专属的边缘网关校验拦截，以统一 1Panel 和 Vercel 两种部署方式的底层表现差异。
+  // 全面信赖并回退采用客户端（App.vue 里的兜底守卫）配合发起相对路径 AJAX + 反向代理 的混合方式进行无感安全拦截。
   return;
 }
