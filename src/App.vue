@@ -31,6 +31,12 @@
       :portal-mode="portalSession"
       :portal-home-href="portalHubHref"
     />
+    <Mymbti
+      v-else-if="isMymbtiTheme"
+      :theme-config="activeThemeConfig"
+      :portal-mode="portalSession"
+      :portal-home-href="portalHubHref"
+    />
     <RomanceStandalone
       v-else-if="isRomanceStandaloneTheme"
       :theme-config="activeThemeConfig"
@@ -122,6 +128,9 @@ import {
  */
 const TypeologyLab = defineAsyncComponent(
   () => import("./components/TypeologyLab.vue"),
+);
+const Mymbti = defineAsyncComponent(
+  () => import("./components/Mymbti.vue"),
 );
 const RomanceStandalone = defineAsyncComponent(
   () => import("./components/RomanceStandalone.vue"),
@@ -277,6 +286,13 @@ const shouldShowLicenseAccessPage = computed(
  */
 const isTypeologyLabTheme = computed(
   () => activeThemeConfig.value?.key === "mbti",
+);
+
+/**
+ * 是否走统一蓝色 MBTI 主题：
+ */
+const isMymbtiTheme = computed(
+  () => activeThemeConfig.value?.key === "mymbti",
 );
 
 /**

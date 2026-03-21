@@ -3904,6 +3904,38 @@ export const SURVEY_THEME_CONFIGS = [
      * 不走通用 SurveyEngine 的 survey 配置流程。
      */
   },
+  {
+    key: "mymbti",
+    routePaths: ["/shmbti", "/shmbti.html"],
+    pageMeta: {
+      title: "全库测试 - 蓝色主题版",
+      description: "发现属于你的性格肖像",
+    },
+    theme: {
+      className: "theme-mbti",
+      badge: "MBTI",
+      title: "全库性格测试 (纯蓝)",
+      description: "一站式了解你的性格底色",
+      progressColor: "#1E88E5",
+      progressTrackColor: "transparent",
+      checkedColor: "#1E88E5",
+      sourceTag: {
+        deep: {
+          label: "深度解析",
+          color: "#E3F2FD",
+          textColor: "#1565C0",
+        },
+        local: {
+          label: "基础解析",
+          color: "#E3F2FD",
+          textColor: "#1565C0",
+        },
+      },
+      loadingMessages: ["正在生成你的性格肖像..."],
+      submitButtonText: "生成结果",
+      nextButtonText: "下一题",
+    },
+  },
 ];
 
 /**
