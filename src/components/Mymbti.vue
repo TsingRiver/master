@@ -714,6 +714,32 @@
           {{ completedTypeCardItems.length }} 个已测试维度作为默认海报内容。
         </p>
 
+        <section class="typeology-poster-theme-controls">
+          <label
+            class="typeology-poster-theme-label"
+            for="typeology-poster-theme-select"
+          >
+            海报配色
+          </label>
+          <select
+            id="typeology-poster-theme-select"
+            v-model="selectedTypeologyPosterThemeKey"
+            class="typeology-poster-theme-select"
+            @change="handleTypeologyPosterThemeSelectChange"
+          >
+            <option
+              v-for="themeOption in typeologyPosterThemeOptions"
+              :key="themeOption.key"
+              :value="themeOption.key"
+            >
+              {{ themeOption.label }}
+            </option>
+          </select>
+          <p class="typeology-poster-theme-tip">
+            切换后会自动重新生成当前海报，方便对比不同颜色效果。
+          </p>
+        </section>
+
         <div class="typeology-poster-preview-stage">
           <img
             v-if="typeologyPosterHdUrl"
@@ -1173,65 +1199,104 @@ const TYPEOLOGY_POSTER_THEME_PALETTE_MAP = Object.freeze({
 const TYPEOLOGY_POSTER_RANDOM_THEME_PALETTE_POOL = Object.freeze([
   {
     key: "blue",
-    backgroundTop: "#5682A3",
-    backgroundBottom: "#85AECB",
-    titleText: "#F0F8FF",
-    subtitleText: "rgba(227, 242, 253, 0.96)",
-    completedCountText: "rgba(187, 222, 251, 0.92)",
-    cardBackground: "#FFFFFF",
-    valueText: "#154360",
-    labelText: "#BBDEFB",
-    footerText: "rgba(227, 242, 253, 0.95)",
+    label: "蓝色",
+    backgroundTop: "#86a6df",
+    backgroundBottom: "#e8f4f8",
+    titleText: "#27456B",
+    subtitleText: "rgba(39, 69, 107, 0.72)",
+    completedCountText: "rgba(39, 69, 107, 0.66)",
+    cardBackground: "#FCFEFF",
+    valueText: "#1F4164",
+    labelText: "#5E7EA3",
+    footerText: "rgba(39, 69, 107, 0.62)",
   },
   {
     key: "green",
-    backgroundTop: "#4F7E6A",
-    backgroundBottom: "#7FAD98",
-    titleText: "#F3FFF8",
-    subtitleText: "rgba(226, 247, 236, 0.96)",
-    completedCountText: "rgba(196, 231, 212, 0.92)",
-    cardBackground: "#FFFFFF",
-    valueText: "#1E4F3A",
-    labelText: "#C9E7D8",
-    footerText: "rgba(224, 245, 234, 0.95)",
+    label: "绿色",
+    backgroundTop: "#6b8770",
+    backgroundBottom: "#ededed",
+    titleText: "#355442",
+    subtitleText: "rgba(53, 84, 66, 0.72)",
+    completedCountText: "rgba(53, 84, 66, 0.66)",
+    cardBackground: "#FCFDFC",
+    valueText: "#31523E",
+    labelText: "#617B68",
+    footerText: "rgba(53, 84, 66, 0.62)",
   },
   {
     key: "orange",
-    backgroundTop: "#A36E4A",
-    backgroundBottom: "#D09A74",
-    titleText: "#FFF8F2",
-    subtitleText: "rgba(252, 238, 225, 0.96)",
-    completedCountText: "rgba(244, 220, 197, 0.92)",
-    cardBackground: "#FFFFFF",
-    valueText: "#6D3E1F",
-    labelText: "#F1D8C3",
-    footerText: "rgba(249, 234, 218, 0.95)",
+    label: "橙色",
+    backgroundTop: "#f9bd6f",
+    backgroundBottom: "#fff9d6",
+    titleText: "#7C4E21",
+    subtitleText: "rgba(124, 78, 33, 0.72)",
+    completedCountText: "rgba(124, 78, 33, 0.66)",
+    cardBackground: "#FFFEFB",
+    valueText: "#70431C",
+    labelText: "#A1713E",
+    footerText: "rgba(124, 78, 33, 0.62)",
   },
   {
     key: "purple",
-    backgroundTop: "#6A63A3",
-    backgroundBottom: "#9A92CD",
-    titleText: "#F7F4FF",
-    subtitleText: "rgba(236, 232, 252, 0.96)",
-    completedCountText: "rgba(214, 207, 244, 0.92)",
-    cardBackground: "#FFFFFF",
-    valueText: "#3A326D",
-    labelText: "#D7D1F2",
-    footerText: "rgba(235, 229, 249, 0.95)",
+    label: "紫色",
+    backgroundTop: "#c3a2cf",
+    backgroundBottom: "#f4eef9",
+    titleText: "#62457A",
+    subtitleText: "rgba(98, 69, 122, 0.72)",
+    completedCountText: "rgba(98, 69, 122, 0.66)",
+    cardBackground: "#FEFCFF",
+    valueText: "#563B6D",
+    labelText: "#8869A1",
+    footerText: "rgba(98, 69, 122, 0.62)",
   },
   {
     key: "pink",
-    backgroundTop: "#A15F81",
-    backgroundBottom: "#CF95B2",
-    titleText: "#FFF6FB",
-    subtitleText: "rgba(249, 234, 242, 0.96)",
-    completedCountText: "rgba(239, 210, 224, 0.92)",
-    cardBackground: "#FFFFFF",
-    valueText: "#6B2F4B",
-    labelText: "#F0D0DE",
-    footerText: "rgba(247, 227, 237, 0.95)",
+    label: "粉色",
+    backgroundTop: "#f2bed1",
+    backgroundBottom: "#f9f5f6",
+    titleText: "#74354F",
+    subtitleText: "rgba(116, 53, 79, 0.72)",
+    completedCountText: "rgba(116, 53, 79, 0.66)",
+    cardBackground: "#FFFCFD",
+    valueText: "#663047",
+    labelText: "#966176",
+    footerText: "rgba(116, 53, 79, 0.62)",
+  },
+  {
+    key: "yellow",
+    label: "黄色",
+    backgroundTop: "#F0D264",
+    backgroundBottom: "#FFFFFF",
+    titleText: "#624E12",
+    subtitleText: "rgba(98, 78, 18, 0.76)",
+    completedCountText: "rgba(98, 78, 18, 0.7)",
+    cardBackground: "#FFFDF8",
+    valueText: "#5D4910",
+    labelText: "#927219",
+    footerText: "rgba(98, 78, 18, 0.64)",
   },
 ]);
+
+/**
+ * 根据色板键获取海报主题色板。
+ * 复杂度评估：O(P)，P 为色板数量；当前为固定小常量，实际可视为 O(1)。
+ * @param {string} themeKey 色板键。
+ * @returns {object|null} 命中的色板对象；未命中返回 null。
+ */
+function getTypeologyPosterThemePaletteByKey(themeKey) {
+  const normalizedThemeKey = String(themeKey ?? "")
+    .trim()
+    .toLowerCase();
+  if (!normalizedThemeKey) {
+    return null;
+  }
+
+  return (
+    TYPEOLOGY_POSTER_RANDOM_THEME_PALETTE_POOL.find(
+      (paletteItem) => paletteItem.key === normalizedThemeKey,
+    ) ?? null
+  );
+}
 
 /**
  * 随机选取一套海报色板。
@@ -1250,13 +1315,14 @@ function pickRandomTypeologyPosterThemeColors() {
 
 /**
  * 按当前海报预览会话解析主题色板。
- * 关键逻辑：同一次“生成人格海报”点击后的预览、自动刷新与保存必须保持同一色板，避免颜色跳变。
+ * 关键逻辑：同一次“生成人格海报”点击后的预览、自动刷新与保存必须保持同一色板；若用户手动选色，则以手动选择为准。
  * 复杂度评估：O(1)。
  * @returns {object} 当前会话应使用的海报主题色对象。
  */
 function resolveTypeologyPosterThemeColors() {
   if (!activeTypeologyPosterThemeColors.value) {
-    activeTypeologyPosterThemeColors.value = pickRandomTypeologyPosterThemeColors();
+    activeTypeologyPosterThemeColors.value =
+      pickRandomTypeologyPosterThemeColors();
   }
 
   return activeTypeologyPosterThemeColors.value;
@@ -1961,9 +2027,15 @@ const typeologyPosterHdUrl = ref("");
 
 /**
  * 当前海报预览会话使用的随机色板。
- * 关键逻辑：仅在用户点击“生成人格海报”时重新随机，预览打开期间保持不变。
+ * 关键逻辑：默认在用户点击“生成人格海报”时随机生成；若用户手动切换下拉框，则更新为手动选中的色板。
  */
 const activeTypeologyPosterThemeColors = ref(null);
+
+/**
+ * 当前海报下拉框选中的色板键。
+ * 关键逻辑：用于在预览弹层中手动切换配色，并与当前海报实际渲染色板保持同步。
+ */
+const selectedTypeologyPosterThemeKey = ref("");
 
 /**
  * 多维人格 AI 侧写加载状态。
@@ -1995,6 +2067,17 @@ const orderedTests = computed(() =>
   TYPEOLOGY_TEST_ORDER.map((testKey) => getTypeologyTestConfig(testKey)).filter(
     Boolean,
   ),
+);
+
+/**
+ * 海报配色下拉选项。
+ * 复杂度评估：O(P)，P 为色板数量；当前为固定小常量。
+ */
+const typeologyPosterThemeOptions = computed(() =>
+  TYPEOLOGY_POSTER_RANDOM_THEME_PALETTE_POOL.map((paletteItem) => ({
+    key: paletteItem.key,
+    label: paletteItem.label,
+  })),
 );
 
 /**
@@ -4283,7 +4366,11 @@ function generateTypeologyPosterDataUrl({
   context.textAlign = "right";
   context.fillStyle = resolvedThemeColors.subtitleText;
   context.font = `400 ${Math.round(18 * scaleRatio)}px ${TYPEOLOGY_POSTER_SONG_FONT_FAMILY}`;
-  context.fillText("@星禾心理社", width - posterHeaderPaddingX, posterHeaderTop + 8 * scaleRatio);
+  context.fillText(
+    "@星禾心理社",
+    width - posterHeaderPaddingX,
+    posterHeaderTop + 8 * scaleRatio,
+  );
 
   const gridPaddingX = 24 * scaleRatio;
   const gridTop = posterHeaderBottom;
@@ -4390,7 +4477,10 @@ function openTypeologyPosterPreview() {
   }
 
   // 关键逻辑：每次用户点击“生成人格海报”时重新随机一次主题色。
-  activeTypeologyPosterThemeColors.value = pickRandomTypeologyPosterThemeColors();
+  activeTypeologyPosterThemeColors.value =
+    pickRandomTypeologyPosterThemeColors();
+  selectedTypeologyPosterThemeKey.value =
+    activeTypeologyPosterThemeColors.value.key;
   isTypeologyPosterPreviewVisible.value = true;
   typeologyPosterHdUrl.value = "";
   void runTypeologyPosterGeneration({
@@ -4430,6 +4520,31 @@ function resetTypeologyPosterState() {
   isGeneratingTypeologyPosterHd.value = false;
   typeologyPosterHdUrl.value = "";
   activeTypeologyPosterThemeColors.value = null;
+  selectedTypeologyPosterThemeKey.value = "";
+}
+
+/**
+ * 处理海报下拉框切换。
+ * 关键逻辑：切换为指定配色后立即重绘海报，便于用户快速预览不同颜色效果。
+ * 复杂度评估：O(1)。
+ */
+function handleTypeologyPosterThemeSelectChange() {
+  const matchedPalette = getTypeologyPosterThemePaletteByKey(
+    selectedTypeologyPosterThemeKey.value,
+  );
+  if (!matchedPalette) {
+    return;
+  }
+
+  activeTypeologyPosterThemeColors.value = matchedPalette;
+  if (!isTypeologyPosterPreviewVisible.value) {
+    return;
+  }
+
+  typeologyPosterHdUrl.value = "";
+  void runTypeologyPosterGeneration({
+    showSuccessToast: false,
+  });
 }
 
 /**
@@ -5710,6 +5825,54 @@ div[class*="theme-"].theme-mymbti-blue .typeology-start-title-wrap h2::before {
   color: var(--type-muted);
   font-size: 13px;
   line-height: 1.58;
+}
+
+.typeology-poster-theme-controls {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.typeology-poster-theme-label {
+  color: var(--type-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.typeology-poster-theme-select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--type-card-border);
+  border-radius: 12px;
+  background: var(--type-card-bg);
+  color: var(--type-text);
+  font-size: 14px;
+  padding: 0 12px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--type-muted) 50%),
+    linear-gradient(135deg, var(--type-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 3px),
+    calc(100% - 12px) calc(50% - 3px);
+  background-size:
+    6px 6px,
+    6px 6px;
+  background-repeat: no-repeat;
+}
+
+.typeology-poster-theme-select:focus {
+  border-color: var(--type-accent-soft);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--type-accent) 14%, transparent);
+}
+
+.typeology-poster-theme-tip {
+  margin: 0;
+  color: var(--type-muted);
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .typeology-poster-preview-stage {
