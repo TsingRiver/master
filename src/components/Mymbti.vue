@@ -1167,13 +1167,12 @@ const TYPEOLOGY_POSTER_THEME_PALETTE_MAP = Object.freeze({
 });
 
 /**
- * 按测试主题解析海报色板。
- * @param {string} testKey 测试主题 key。
- * @returns {object} 海报主题色对象。
+ * `/shmbti` 海报随机色板池：
+ * 关键逻辑：新增绿、橙、紫、粉 4 套色板，并保持与当前蓝色相同的明暗层级和对比度。
  */
-function resolveTypeologyPosterThemeColors(testKey) {
-  // 全类别海报强制转为高雅治愈蓝
-  return {
+const TYPEOLOGY_POSTER_RANDOM_THEME_PALETTE_POOL = Object.freeze([
+  {
+    key: "blue",
     backgroundTop: "#5682A3",
     backgroundBottom: "#85AECB",
     titleText: "#F0F8FF",
@@ -1183,36 +1182,92 @@ function resolveTypeologyPosterThemeColors(testKey) {
     valueText: "#154360",
     labelText: "#BBDEFB",
     footerText: "rgba(227, 242, 253, 0.95)",
-  };
+  },
+  {
+    key: "green",
+    backgroundTop: "#4F7E6A",
+    backgroundBottom: "#7FAD98",
+    titleText: "#F3FFF8",
+    subtitleText: "rgba(226, 247, 236, 0.96)",
+    completedCountText: "rgba(196, 231, 212, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#1E4F3A",
+    labelText: "#C9E7D8",
+    footerText: "rgba(224, 245, 234, 0.95)",
+  },
+  {
+    key: "orange",
+    backgroundTop: "#A36E4A",
+    backgroundBottom: "#D09A74",
+    titleText: "#FFF8F2",
+    subtitleText: "rgba(252, 238, 225, 0.96)",
+    completedCountText: "rgba(244, 220, 197, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#6D3E1F",
+    labelText: "#F1D8C3",
+    footerText: "rgba(249, 234, 218, 0.95)",
+  },
+  {
+    key: "purple",
+    backgroundTop: "#6A63A3",
+    backgroundBottom: "#9A92CD",
+    titleText: "#F7F4FF",
+    subtitleText: "rgba(236, 232, 252, 0.96)",
+    completedCountText: "rgba(214, 207, 244, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#3A326D",
+    labelText: "#D7D1F2",
+    footerText: "rgba(235, 229, 249, 0.95)",
+  },
+  {
+    key: "pink",
+    backgroundTop: "#A15F81",
+    backgroundBottom: "#CF95B2",
+    titleText: "#FFF6FB",
+    subtitleText: "rgba(249, 234, 242, 0.96)",
+    completedCountText: "rgba(239, 210, 224, 0.92)",
+    cardBackground: "#FFFFFF",
+    valueText: "#6B2F4B",
+    labelText: "#F0D0DE",
+    footerText: "rgba(247, 227, 237, 0.95)",
+  },
+]);
+
+/**
+ * 随机选取一套海报色板。
+ * 复杂度评估：O(1)。
+ * @returns {object} 随机命中的海报主题色对象。
+ */
+function pickRandomTypeologyPosterThemeColors() {
+  const paletteCount = TYPEOLOGY_POSTER_RANDOM_THEME_PALETTE_POOL.length;
+  if (paletteCount <= 0) {
+    throw new Error("人格海报色板池为空");
+  }
+
+  const randomIndex = Math.floor(Math.random() * paletteCount);
+  return TYPEOLOGY_POSTER_RANDOM_THEME_PALETTE_POOL[randomIndex];
 }
 
 /**
- * 海报底部署名字体栈（手写体优先）：
- * 关键逻辑：仅使用系统内置字体，不引入额外字体包，按平台自动回退。
+ * 按当前海报预览会话解析主题色板。
+ * 关键逻辑：同一次“生成人格海报”点击后的预览、自动刷新与保存必须保持同一色板，避免颜色跳变。
+ * 复杂度评估：O(1)。
+ * @returns {object} 当前会话应使用的海报主题色对象。
  */
-const TYPEOLOGY_POSTER_FOOTER_HANDWRITING_FONT_FAMILY =
-  '"Segoe Print", "Bradley Hand", "Comic Sans MS", "Marker Felt", "KaiTi", "STKaiti", "Kaiti SC", cursive';
+function resolveTypeologyPosterThemeColors() {
+  if (!activeTypeologyPosterThemeColors.value) {
+    activeTypeologyPosterThemeColors.value = pickRandomTypeologyPosterThemeColors();
+  }
+
+  return activeTypeologyPosterThemeColors.value;
+}
 
 /**
- * 海报无衬线字体栈：
- * 关键逻辑：优先命中 ZeoSeven 在线思源黑体，未命中时回退到系统中文无衬线。
+ * 海报宋体字体栈：
+ * 关键逻辑：`/shmbti` 海报统一使用宋体系，保证标题、署名与结果卡片的排版风格一致。
  */
-const TYPEOLOGY_POSTER_SANS_FONT_FAMILY =
-  '"SF Pro Text", "SF Pro Display", "Helvetica Neue", "Arial", "Noto Sans CJK SC", "Noto Sans CJK", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif';
-
-/**
- * 海报衬线字体栈：
- * 关键逻辑：优先命中 ZeoSeven 在线思源宋体，避免 iOS 退回到默认 Times 字形。
- */
-const TYPEOLOGY_POSTER_SERIF_FONT_FAMILY =
-  '"Georgia", "Times New Roman", "Noto Serif CJK SC", "Noto Serif CJK", "Songti SC", "STSong", "Source Han Serif SC", serif';
-
-/**
- * 海报英文优先衬线字体栈：
- * 关键逻辑：英文字母优先保留 Times 风格，中文仍回退到思源宋体系。
- */
-const TYPEOLOGY_POSTER_LATIN_SERIF_FONT_FAMILY =
-  '"Times New Roman", "Noto Serif CJK SC", "Noto Serif CJK", "Songti SC", "STSong", serif';
+const TYPEOLOGY_POSTER_SONG_FONT_FAMILY =
+  '"Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", serif';
 
 /**
  * 人格海报单元主结果最大换行数。
@@ -1903,6 +1958,12 @@ const isGeneratingTypeologyPosterHd = ref(false);
  * 人格海报高清图 URL。
  */
 const typeologyPosterHdUrl = ref("");
+
+/**
+ * 当前海报预览会话使用的随机色板。
+ * 关键逻辑：仅在用户点击“生成人格海报”时重新随机，预览打开期间保持不变。
+ */
+const activeTypeologyPosterThemeColors = ref(null);
 
 /**
  * 多维人格 AI 侧写加载状态。
@@ -3840,16 +3901,6 @@ function buildTypeologyPosterRenderCells(posterItems) {
 }
 
 /**
- * 判断文本是否包含英文字符。
- * 复杂度评估：O(L)，L 为文本长度。
- * @param {string} rawText 原始文本。
- * @returns {boolean} 是否包含英文字符。
- */
-function hasTypeologyPosterLatinCharacters(rawText) {
-  return /[A-Za-z]/.test(String(rawText ?? ""));
-}
-
-/**
  * 根据主结果字符长度选择字号。
  * @param {string} valueText 主结果文本。
  * @returns {number} 基础字号（预览尺寸下）。
@@ -3867,13 +3918,12 @@ function resolveTypeologyPosterValueFontSize(valueText) {
 
 /**
  * 构建海报主结果字体定义。
+ * 关键逻辑：`/shmbti` 海报统一使用宋体，不再区分英文斜体。
  * @param {number} fontSize 字号。
- * @param {boolean} useItalic 是否使用斜体。
  * @returns {string} Canvas font 字符串。
  */
-function buildTypeologyPosterValueFont(fontSize, useItalic = false) {
-  const italicPrefix = useItalic ? "italic " : "";
-  return `${italicPrefix}700 ${Math.max(1, Math.round(fontSize))}px ${TYPEOLOGY_POSTER_SANS_FONT_FAMILY}`;
+function buildTypeologyPosterValueFont(fontSize) {
+  return `700 ${Math.max(1, Math.round(fontSize))}px ${TYPEOLOGY_POSTER_SONG_FONT_FAMILY}`;
 }
 
 /**
@@ -3972,7 +4022,6 @@ function clampTypeologyPosterValueLines({
  * @param {number} params.maxLines 最大行数。
  * @param {number} params.initialFontSize 初始字号。
  * @param {number} params.minFontSize 最小字号。
- * @param {boolean} params.preferItalic 是否按斜体测量宽度。
  * @returns {{ fontSize: number, lines: string[] }} 布局结果。
  */
 function resolveTypeologyPosterFittedValueLayout({
@@ -3982,7 +4031,6 @@ function resolveTypeologyPosterFittedValueLayout({
   maxLines,
   initialFontSize,
   minFontSize,
-  preferItalic,
 }) {
   const normalizedText = String(valueText ?? "").trim();
   const safeInitialFontSize = Math.max(1, Math.round(initialFontSize));
@@ -3998,10 +4046,7 @@ function resolveTypeologyPosterFittedValueLayout({
 
   let candidateFontSize = safeInitialFontSize;
   while (candidateFontSize >= safeMinFontSize) {
-    context.font = buildTypeologyPosterValueFont(
-      candidateFontSize,
-      preferItalic,
-    );
+    context.font = buildTypeologyPosterValueFont(candidateFontSize);
     const measuredLines = splitTypeologyPosterValueTextLines({
       context,
       valueText: normalizedText,
@@ -4016,7 +4061,7 @@ function resolveTypeologyPosterFittedValueLayout({
     candidateFontSize -= 1;
   }
 
-  context.font = buildTypeologyPosterValueFont(safeMinFontSize, preferItalic);
+  context.font = buildTypeologyPosterValueFont(safeMinFontSize);
   const measuredLines = splitTypeologyPosterValueTextLines({
     context,
     valueText: normalizedText,
@@ -4125,7 +4170,6 @@ function drawTypeologyPosterGridCell({
   context.fillStyle = themeColors.valueText;
   const baseValueFontSize =
     resolveTypeologyPosterValueFontSize(valueText) * scaleRatio;
-  const shouldItalicValue = hasTypeologyPosterLatinCharacters(valueText);
   const fittedValueLayout = resolveTypeologyPosterFittedValueLayout({
     context,
     valueText,
@@ -4133,12 +4177,8 @@ function drawTypeologyPosterGridCell({
     maxLines: TYPEOLOGY_POSTER_VALUE_MAX_LINES,
     initialFontSize: baseValueFontSize,
     minFontSize: 18 * scaleRatio,
-    preferItalic: shouldItalicValue,
   });
-  context.font = buildTypeologyPosterValueFont(
-    fittedValueLayout.fontSize,
-    shouldItalicValue,
-  );
+  context.font = buildTypeologyPosterValueFont(fittedValueLayout.fontSize);
   const valueLineHeight = Math.max(
     1,
     Math.round(fittedValueLayout.fontSize * 1.2),
@@ -4159,7 +4199,7 @@ function drawTypeologyPosterGridCell({
 
   const labelBaseY = resultCardY + resultCardHeight + 16 * scaleRatio;
   context.fillStyle = themeColors.labelText;
-  context.font = `400 ${Math.round(15 * scaleRatio)}px ${TYPEOLOGY_POSTER_LATIN_SERIF_FONT_FAMILY}`;
+  context.font = `400 ${Math.round(15 * scaleRatio)}px ${TYPEOLOGY_POSTER_SONG_FONT_FAMILY}`;
   context.fillText(labelText, centerX, labelBaseY);
   context.restore();
 }
@@ -4229,27 +4269,25 @@ function generateTypeologyPosterDataUrl({
   context.fillStyle = backgroundGradient;
   context.fillRect(0, 0, width, height);
 
-  context.textAlign = "center";
-  context.textBaseline = "middle";
+  const posterHeaderPaddingX = 34 * scaleRatio;
+  const posterHeaderTop = 34 * scaleRatio;
+  const posterHeaderBottom = 106 * scaleRatio;
+
+  context.textBaseline = "top";
+  context.textAlign = "left";
   context.fillStyle = resolvedThemeColors.titleText;
-  context.font = `700 ${Math.round(40 * scaleRatio)}px ${TYPEOLOGY_POSTER_SERIF_FONT_FAMILY}`;
-  context.fillText("人格图鉴", width / 2, 58 * scaleRatio);
+  context.font = `700 ${Math.round(34 * scaleRatio)}px ${TYPEOLOGY_POSTER_SONG_FONT_FAMILY}`;
+  context.fillText("我的类型学卡片", posterHeaderPaddingX, posterHeaderTop);
 
+  // 关键逻辑：右上角署名使用更淡、更小的宋体，形成主副信息层级。
+  context.textAlign = "right";
   context.fillStyle = resolvedThemeColors.subtitleText;
-  context.font = `400 ${Math.round(16 * scaleRatio)}px ${TYPEOLOGY_POSTER_LATIN_SERIF_FONT_FAMILY}`;
-  context.fillText("PERSONALITY ATLAS", width / 2, 92 * scaleRatio);
-
-  context.fillStyle = resolvedThemeColors.completedCountText;
-  context.font = `400 ${Math.round(14 * scaleRatio)}px ${TYPEOLOGY_POSTER_SERIF_FONT_FAMILY}`;
-  context.fillText(
-    `已完成维度 ${posterItems.length}/${TYPEOLOGY_POSTER_GRID_CAPACITY}`,
-    width / 2,
-    118 * scaleRatio,
-  );
+  context.font = `400 ${Math.round(18 * scaleRatio)}px ${TYPEOLOGY_POSTER_SONG_FONT_FAMILY}`;
+  context.fillText("@星禾心理社", width - posterHeaderPaddingX, posterHeaderTop + 8 * scaleRatio);
 
   const gridPaddingX = 24 * scaleRatio;
-  const gridTop = 148 * scaleRatio;
-  const gridBottomPadding = 56 * scaleRatio;
+  const gridTop = posterHeaderBottom;
+  const gridBottomPadding = 28 * scaleRatio;
   const gridGap = 2 * scaleRatio;
   const gridWidth = width - gridPaddingX * 2;
   const gridHeight = height - gridTop - gridBottomPadding;
@@ -4293,9 +4331,6 @@ function generateTypeologyPosterDataUrl({
     }
   }
 
-  context.fillStyle = resolvedThemeColors.footerText;
-  context.font = `400 ${Math.round(13 * scaleRatio)}px ${TYPEOLOGY_POSTER_FOOTER_HANDWRITING_FONT_FAMILY}`;
-  context.fillText("@湫的答案馆", width / 2, height - 24 * scaleRatio);
   return canvas.toDataURL("image/png");
 }
 
@@ -4316,9 +4351,10 @@ async function runTypeologyPosterGeneration({ showSuccessToast }) {
   isGeneratingTypeologyPosterHd.value = true;
 
   try {
+    const currentPosterThemeColors = resolveTypeologyPosterThemeColors();
     const generatedDataUrl = generateTypeologyPosterDataUrl({
       posterItems: completedTypeCardItems.value,
-      themeColors: resolveTypeologyPosterThemeColors(activeTestKey.value),
+      themeColors: currentPosterThemeColors,
       width: TYPEOLOGY_POSTER_HD_SIZE.width,
       height: TYPEOLOGY_POSTER_HD_SIZE.height,
     });
@@ -4353,6 +4389,8 @@ function openTypeologyPosterPreview() {
     return;
   }
 
+  // 关键逻辑：每次用户点击“生成人格海报”时重新随机一次主题色。
+  activeTypeologyPosterThemeColors.value = pickRandomTypeologyPosterThemeColors();
   isTypeologyPosterPreviewVisible.value = true;
   typeologyPosterHdUrl.value = "";
   void runTypeologyPosterGeneration({
@@ -4391,6 +4429,7 @@ function resetTypeologyPosterState() {
   isTypeologyPosterPreviewVisible.value = false;
   isGeneratingTypeologyPosterHd.value = false;
   typeologyPosterHdUrl.value = "";
+  activeTypeologyPosterThemeColors.value = null;
 }
 
 /**
