@@ -221,15 +221,16 @@ const currentProtectedLicenseScopePath = computed(() => {
 /**
  * 是否需要前端兜底授权守卫。
  * 关键逻辑：
- * 1. `vite dev` 本地开发不会执行 Vercel middleware，必须走前端兜底。
- * 2. `#` hash 路由不会被服务端看到，也必须走前端兜底。
+ * 1. 当前项目生产环境已显式关闭 Vercel middleware，受保护路径必须统一走客户端补校验。
+ * 2. `#` hash 路由与直达 plain path（例如 `/mbti`）都可能绕过服务端识别，因此只要命中受保护范围就执行守卫。
+ * 3. 显式排除授权页与无效链接页，避免守卫对 `/auth` 或错误页造成循环干扰。
+ * 复杂度评估：O(1)。
  */
 const requiresClientLicenseGuard = computed(
   () =>
     !showIncompleteLinkError.value &&
     !isLicenseAuthPath.value &&
-    Boolean(currentProtectedLicenseScopePath.value) &&
-    (import.meta.env.DEV || hasHashRouteEntry.value),
+    Boolean(currentProtectedLicenseScopePath.value),
 );
 
 /**

@@ -13,39 +13,79 @@ const THEME_CHUNK_RULES = [
   },
   {
     chunkName: "theme-fortune",
-    keywords: ["fortune2026QuestionBank", "fortune2026Analyzer", "fortune2026AiAnalyzer"],
+    keywords: [
+      "fortune2026QuestionBank",
+      "fortune2026Analyzer",
+      "fortune2026AiAnalyzer",
+    ],
   },
   {
     chunkName: "theme-ancient",
-    keywords: ["ancientIdentityQuestionBank", "ancientIdentityAnalyzer", "ancientIdentityAiAnalyzer"],
+    keywords: [
+      "ancientIdentityQuestionBank",
+      "ancientIdentityAnalyzer",
+      "ancientIdentityAiAnalyzer",
+    ],
   },
   {
     chunkName: "theme-talent",
-    keywords: ["hiddenTalentQuestionBank", "hiddenTalentAnalyzer", "hiddenTalentAiAnalyzer"],
+    keywords: [
+      "hiddenTalentQuestionBank",
+      "hiddenTalentAnalyzer",
+      "hiddenTalentAiAnalyzer",
+    ],
   },
   {
     chunkName: "theme-benefactor",
-    keywords: ["benefactor2026QuestionBank", "benefactor2026Analyzer", "benefactor2026AiAnalyzer"],
+    keywords: [
+      "benefactor2026QuestionBank",
+      "benefactor2026Analyzer",
+      "benefactor2026AiAnalyzer",
+    ],
   },
   {
     chunkName: "theme-color",
-    keywords: ["color2026QuestionBank", "color2026Analyzer", "color2026AiAnalyzer"],
+    keywords: [
+      "color2026QuestionBank",
+      "color2026Analyzer",
+      "color2026AiAnalyzer",
+    ],
   },
   {
     chunkName: "theme-romance",
-    keywords: ["romanceQuestionBank", "romanceAnalyzer", "romanceInsightAnalyzer", "RomanceStandalone"],
+    keywords: [
+      "romanceQuestionBank",
+      "romanceAnalyzer",
+      "romanceInsightAnalyzer",
+      "RomanceStandalone",
+    ],
   },
   {
     chunkName: "theme-love-attachment",
-    keywords: ["loveAttachmentQuestionBank", "loveAttachmentAnalyzer", "loveAttachmentAiAnalyzer"],
+    keywords: [
+      "loveAttachmentQuestionBank",
+      "loveAttachmentAnalyzer",
+      "loveAttachmentAiAnalyzer",
+    ],
   },
   {
     chunkName: "theme-love-brain",
-    keywords: ["loveBrainQuestionBank", "loveBrainAnalyzer", "loveBrainAiAnalyzer"],
+    keywords: [
+      "loveBrainQuestionBank",
+      "loveBrainAnalyzer",
+      "loveBrainAiAnalyzer",
+    ],
   },
   {
     chunkName: "theme-mbti",
-    keywords: ["mbtiQuestionBank", "mbtiAnalyzer", "mbtiAiAnalyzer", "typeology", "TypeologyLab", "MbtiStandalone"],
+    keywords: [
+      "mbtiQuestionBank",
+      "mbtiAnalyzer",
+      "mbtiAiAnalyzer",
+      "typeology",
+      "TypeologyLab",
+      "MbtiStandalone",
+    ],
   },
 ];
 
@@ -148,7 +188,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://47.98.142.11",
+        target: "https://qxyiu.xyz",
         changeOrigin: true,
       },
     },
