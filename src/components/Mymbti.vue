@@ -693,8 +693,12 @@
         class="typeology-disclaimer-card"
         aria-label="MBTI 测试免责声明"
       >
-        <p class="typeology-disclaimer-title">{{ MBTI_DISCLAIMER_CONTENT.title }}</p>
-        <p class="typeology-disclaimer-body">{{ MBTI_DISCLAIMER_CONTENT.body }}</p>
+        <p class="typeology-disclaimer-title">
+          {{ MBTI_DISCLAIMER_CONTENT.title }}
+        </p>
+        <p class="typeology-disclaimer-body">
+          {{ MBTI_DISCLAIMER_CONTENT.body }}
+        </p>
       </section>
     </main>
 
@@ -1284,6 +1288,19 @@ const TYPEOLOGY_POSTER_RANDOM_THEME_PALETTE_POOL = Object.freeze([
     valueText: "#5D4910",
     labelText: "#927219",
     footerText: "rgba(98, 78, 18, 0.64)",
+  },
+  {
+    key: "cyan",
+    label: "青色",
+    backgroundTop: "#add5a2",
+    backgroundBottom: "#FFFFFF",
+    titleText: "#355A45",
+    subtitleText: "rgba(53, 90, 69, 0.72)",
+    completedCountText: "rgba(53, 90, 69, 0.66)",
+    cardBackground: "#FCFEFB",
+    valueText: "#2F523D",
+    labelText: "#5F806A",
+    footerText: "rgba(53, 90, 69, 0.62)",
   },
 ]);
 
@@ -5084,8 +5101,13 @@ div[class*="theme-"].theme-mymbti-blue .typeology-start-title-wrap h2::before {
 .typeology-disclaimer-card {
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--type-accent) 24%, #ffffff 76%);
-  background: color-mix(in srgb, var(--type-surface) 88%, var(--type-accent) 12%);
-  box-shadow: 0 18px 38px color-mix(in srgb, var(--type-accent) 14%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--type-surface) 88%,
+    var(--type-accent) 12%
+  );
+  box-shadow: 0 18px 38px
+    color-mix(in srgb, var(--type-accent) 14%, transparent);
   padding: 14px 16px;
 }
 

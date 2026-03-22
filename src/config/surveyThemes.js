@@ -2668,6 +2668,551 @@ function buildLoveBrainLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 心动吸引类型主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildAttractionTypeDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 心动吸引类型主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildAttractionTypeUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const dominantProfile = result?.dominantProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 48);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(dominantProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const defaultDetailSections = [
+    {
+      title: "心动说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你会被让自己更舒服、更安心的人吸引。",
+        dominantProfile?.description
+          ? `主导偏好：${dominantProfile.description}`
+          : "主导偏好仍在整理中。",
+      ],
+    },
+    {
+      title: "你在关系里真正想要的",
+      items: [
+        String(resultRule.desireLine ?? "").trim() ||
+          "你正在确认自己真正会被什么样的人打动。",
+        ...(Array.isArray(resultRule.carePoints) ? resultRule.carePoints : []),
+      ].filter(Boolean),
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections;
+
+  return createUnifiedResult({
+    source: sourceType,
+    prefixLabel: "你的心动类型",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 48}`,
+    main: {
+      name: resultRule.levelName ?? "吸引类型待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "心动画像",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的心动偏好侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "吸引偏好档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 48}` },
+        {
+          label: "主导选项",
+          value: `${dominantProfile.label ?? "A 清冷稳定型"}（${dominantProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均得分",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "关系需求",
+          value: resultRule.needLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "选择分布",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "心动偏好图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮心动回放").trim() || "本轮心动回放",
+    summaryLines,
+    restartButtonText: "再测一次心动类型",
+    easterEggText: String(resultRule.needLabel ?? "").trim()
+      ? `你真正会心动的，不一定最热烈，但一定最贴近你想要的「${resultRule.needLabel}」。`
+      : "",
+  });
+}
+
+/**
+ * 心动吸引类型主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildAttractionTypeDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildAttractionTypeUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 心动吸引类型主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildAttractionTypeLocalUnifiedResult(localResult) {
+  return buildAttractionTypeUnifiedResult(localResult, "local");
+}
+
+/**
+ * 天生自带什么天赋主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildInnateGiftDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 天生自带什么天赋主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildInnateGiftUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const dominantProfile = result?.dominantProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 48);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(dominantProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const defaultDetailSections = [
+    {
+      title: "天赋说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你的天赋类型正在整理中。",
+        dominantProfile?.description
+          ? `主导反应：${dominantProfile.description}`
+          : "主导反应仍在整理中。",
+      ],
+    },
+    {
+      title: "你最强的发力方式",
+      items: [
+        String(resultRule.talentLine ?? "").trim() ||
+          "你的天赋路径正在汇总中。",
+        ...(Array.isArray(resultRule.carePoints) ? resultRule.carePoints : []),
+      ].filter(Boolean),
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections;
+
+  return createUnifiedResult({
+    source: sourceType,
+    prefixLabel: "你的天赋类型",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 48}`,
+    main: {
+      name: resultRule.levelName ?? "天赋类型待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "天赋画像",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的天赋侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "天赋档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 48}` },
+        {
+          label: "主导反应",
+          value: `${dominantProfile.label ?? "A 洞察向"}（${dominantProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均得分",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "核心优势",
+          value: resultRule.giftLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答倾向",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "天赋反应图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次天赋类型",
+    easterEggText:
+      String(resultRule.giftLabel ?? "").trim()
+        ? `你的天赋不是突然出现的，它一直藏在你最自然的「${resultRule.giftLabel}」里。`
+        : "",
+  });
+}
+
+/**
+ * 天生自带什么天赋主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildInnateGiftDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildInnateGiftUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 天生自带什么天赋主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildInnateGiftLocalUnifiedResult(localResult) {
+  return buildInnateGiftUnifiedResult(localResult, "local");
+}
+
+/**
+ * 讨好型指数主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildPeoplePleaserDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 讨好型指数主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildPeoplePleaserUnifiedResult(result, sourceType) {
+  const hiddenDetailSectionTitles = ["最容易委屈自己的场景", "温柔练习"];
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 48);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const topPressureScenarios = Array.isArray(result?.topPressureScenarios)
+    ? result.topPressureScenarios
+    : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const topPressureScenarioName =
+    String(topPressureScenarios[0]?.name ?? "").trim() || "稳定观察中";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const defaultDetailSections = [
+    {
+      title: "结果说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你正在学习如何把自己的需求放回关系里。",
+        majorityProfile?.description
+          ? `多数选项画像：${majorityProfile.description}`
+          : "多数选项画像仍在整理中。",
+      ],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections = (
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections
+  ).filter((sectionItem) => {
+    // 关键逻辑：仅对讨好型主题隐藏指定结果模块，避免改动通用结果模板。
+    return !hiddenDetailSectionTitles.includes(sectionItem.title);
+  });
+
+  return createUnifiedResult({
+    source: sourceType,
+    prefixLabel: "你的结果类型",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 48}`,
+    main: {
+      name: resultRule.levelName ?? "讨好型指数待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "多数选项画像",
+      content:
+        normalizedHighlightCard?.content ||
+        `${majorityProfile.name ?? "稳定观察中"}：${majorityProfile.description ?? "正在整理你的行为倾向侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "治愈档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 48}` },
+        {
+          label: "多数选项",
+          value: `${majorityProfile.label ?? "A 从不"}（${majorityProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均反应",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "边界状态",
+          value: resultRule.boundaryLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答分布",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "讨好触发图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    // 关键逻辑：该主题结果页按最新产品要求不展示 Top 3 模块。
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次讨好型指数",
+    easterEggText:
+      topPressureScenarioName && topPressureScenarioName !== "稳定观察中"
+        ? `先照顾别人之前，记得先问一句：这件事我真的愿意吗？`
+        : "",
+  });
+}
+
+/**
+ * 讨好型指数主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildPeoplePleaserDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildPeoplePleaserUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 讨好型指数主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildPeoplePleaserLocalUnifiedResult(localResult) {
+  return buildPeoplePleaserUnifiedResult(localResult, "local");
+}
+
+/**
  * 灵魂猫咪主题：构建深度分析请求负载。
  * 关键逻辑：分数与类型由本地模型锁定，AI 仅用于生成解读文案，避免类型漂移。
  * @param {object} localResult 本地分析结果。
@@ -3630,6 +4175,271 @@ export const SURVEY_THEME_CONFIGS = [
       buildDeepUnifiedResult: buildLoveBrainDeepUnifiedResult,
       buildLocalUnifiedResult: buildLoveBrainLocalUnifiedResult,
       deepFailToast: "AI深度解读暂不可用，已切换稳定结果",
+    },
+  },
+  {
+    key: "attraction-type",
+    routePaths: [
+      "/attraction-type",
+      "/who-attracts-you",
+      "/heart-attraction",
+      "/attraction-test",
+    ],
+    pageMeta: {
+      title: "你会被哪类人吸引",
+      description:
+        "12 道固定题测出你最容易被哪类人吸引，看看你更容易心动于清冷稳定型、温柔治愈型、阳光快乐型还是成熟靠山型。",
+    },
+    theme: {
+      className: "theme-attraction-type",
+      badge: "ATTRACTION TYPE TEST",
+      title: "你会被哪类人吸引",
+      description:
+        "12 题识别你的心动偏好，看看你更容易被清冷稳定型、温柔治愈型、阳光快乐型还是成熟靠山型吸引。",
+      progressColor: "linear-gradient(90deg, #d86f97, #e994b5, #f3bdd0)",
+      progressTrackColor: "rgba(216, 111, 151, 0.16)",
+      checkedColor: "#d86f97",
+      sourceTag: {
+        deep: {
+          label: "浪漫深度解读",
+          color: "#fff2f7",
+          textColor: "#b0547b",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#fff7fa",
+          textColor: "#b0547b",
+        },
+      },
+      loadingMessages: [
+        "正在识别你的心动偏好...",
+        "正在计算你的吸引力指向...",
+        "正在整理你的粉色结果档案...",
+      ],
+      submitButtonText: "查看我的心动类型",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { ATTRACTION_TYPE_QUESTION_BANK } =
+          await import("../data/attractionTypeQuestionBank");
+        return ATTRACTION_TYPE_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 12,
+        maxCount: 12,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "心动偏好测试",
+        titleMain: "测测你会被哪类\n人吸引",
+        intro: "计分规则",
+        points: [
+          "A=1分 ｜ B=2分",
+          "C=3分 ｜ D=4分",
+          "共12题，算完总分看结果！",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeAttractionTypeLocally } =
+          await import("../services/attractionTypeAnalyzer");
+        return analyzeAttractionTypeLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildAttractionTypeDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildAttractionTypeDeepUnifiedResult,
+      buildLocalUnifiedResult: buildAttractionTypeLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "innate-gift",
+    routePaths: [
+      "/innate-gift",
+      "/born-talent",
+      "/gift-talent",
+      "/talent-gift",
+    ],
+    pageMeta: {
+      title: "你天生自带什么天赋",
+      description:
+        "12 道固定题测出你天生自带什么天赋，看看你更接近洞察天赋、共情天赋、审美天赋、创意天赋、执行天赋还是领袖天赋。",
+    },
+    theme: {
+      className: "theme-innate-gift",
+      badge: "INNATE GIFT TEST",
+      title: "你天生自带什么天赋",
+      description:
+        "12 题识别你的天赋走向，看看你更接近洞察、共情、审美、创意、执行还是领袖天赋。",
+      progressColor: "linear-gradient(90deg, #4d84f4, #72b7ff, #9fd7ff)",
+      progressTrackColor: "rgba(77, 132, 244, 0.16)",
+      checkedColor: "#4d84f4",
+      sourceTag: {
+        deep: {
+          label: "蓝调深度解读",
+          color: "#eff5ff",
+          textColor: "#3e6fcb",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#f6faff",
+          textColor: "#3e6fcb",
+        },
+      },
+      loadingMessages: [
+        "正在识别你的天赋信号...",
+        "正在计算你的优势路径...",
+        "正在整理你的蓝色天赋档案...",
+      ],
+      submitButtonText: "查看我的天赋类型",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { INNATE_GIFT_QUESTION_BANK } =
+          await import("../data/innateGiftQuestionBank");
+        return INNATE_GIFT_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 12,
+        maxCount: 12,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "天赋测试",
+        titleMain: "你天生自带什么\n天赋",
+        intro: "计分规则",
+        points: [
+          "A=1分 ｜ B=2分",
+          "C=3分 ｜ D=4分",
+          "共12题，算完总分看结果！",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeInnateGiftLocally } =
+          await import("../services/innateGiftAnalyzer");
+        return analyzeInnateGiftLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildInnateGiftDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildInnateGiftDeepUnifiedResult,
+      buildLocalUnifiedResult: buildInnateGiftLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "people-pleaser",
+    routePaths: [
+      "/people-pleaser",
+      "/people-pleaser.html",
+      "/people-pleaser-index",
+      "/pleaser-test",
+    ],
+    pageMeta: {
+      title: "你的讨好型指数",
+      description:
+        "12 道固定题测出你的讨好型指数，看看你在关系里是清醒自我型、温和迁就型、隐性讨好型还是重度讨好型。",
+    },
+    theme: {
+      className: "theme-people-pleaser",
+      badge: "PEOPLE PLEASER TEST",
+      title: "你的讨好型指数",
+      description:
+        "12 题完整判定你的边界退让、自责敏感、冲突回避与自我压抑状态，看看你有多容易先照顾别人。",
+      progressColor: "linear-gradient(90deg, #f0a24c, #f6bc64, #ffb57a)",
+      progressTrackColor: "rgba(181, 126, 67, 0.16)",
+      checkedColor: "#f0a24c",
+      sourceTag: {
+        deep: {
+          label: "温柔深度解读",
+          color: "#fff4e8",
+          textColor: "#a56424",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#fff7ee",
+          textColor: "#a56424",
+        },
+      },
+      loadingMessages: [
+        "正在收集你的关系边界信号...",
+        "正在计算你的情绪让步指数...",
+        "正在整理你的治愈型结果...",
+      ],
+      submitButtonText: "查看我的讨好型结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { PEOPLE_PLEASER_QUESTION_BANK } =
+          await import("../data/peoplePleaserQuestionBank");
+        return PEOPLE_PLEASER_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 12,
+        maxCount: 12,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "1分钟测试（超准版）",
+        // 关键逻辑：封面标题显式换行，保证不同屏宽下仍保持海报式两行排版。
+        titleMain: "测测你的讨好\n型指数",
+        intro: "计分规则",
+        points: [
+          "A=1分 ｜ B=2分",
+          "C=3分 ｜ D=4分",
+          "共12题，算完总分看结果！",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzePeoplePleaserLocally } =
+          await import("../services/peoplePleaserAnalyzer");
+        return analyzePeoplePleaserLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildPeoplePleaserDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildPeoplePleaserDeepUnifiedResult,
+      buildLocalUnifiedResult: buildPeoplePleaserLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
     },
   },
   {
