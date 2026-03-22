@@ -232,7 +232,7 @@
       </section>
 
       <section v-else-if="stage === 'survey' && currentQuestion" class="survey-card survey-question-card card-in">
-        <!-- 返回首页按钮：绝对定位到右上角，避免误触 -->
+        <!-- 返回首页按钮：放在正常文档流并右对齐，避免遮挡进度区。 -->
         <button
           type="button"
           class="survey-question-quit-btn"
