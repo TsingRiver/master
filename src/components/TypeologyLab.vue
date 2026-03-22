@@ -607,6 +607,15 @@
           </div>
         </article>
       </section>
+
+      <section
+        v-if="shouldShowMbtiDisclaimer"
+        class="typeology-disclaimer-card"
+        aria-label="MBTI 测试免责声明"
+      >
+        <p class="typeology-disclaimer-title">{{ MBTI_DISCLAIMER_CONTENT.title }}</p>
+        <p class="typeology-disclaimer-body">{{ MBTI_DISCLAIMER_CONTENT.body }}</p>
+      </section>
     </main>
 
     <div
@@ -853,6 +862,7 @@ import {
   upsertTypeologyCachedResult,
 } from "../services/typeologyStorage";
 import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger";
+import { MBTI_DISCLAIMER_CONTENT } from "../constants/typeologyDisclaimer";
 import Like from "./Like.vue";
 import Suggestion from "./Suggestion.vue";
 
@@ -1850,6 +1860,14 @@ const activeTestConfig = computed(
     getTypeologyTestConfig(activeTestKey.value) ??
     orderedTests.value[0] ??
     props.themeConfig,
+);
+
+/**
+ * 是否展示 MBTI 测试免责声明。
+ * 关键逻辑：仅在当前测试切换到 `mbti` 时展示，避免干扰其他类型学量表的阅读节奏。
+ */
+const shouldShowMbtiDisclaimer = computed(
+  () => String(activeTestConfig.value?.key ?? "").trim() === "mbti",
 );
 
 /**
@@ -4565,6 +4583,29 @@ onBeforeUnmount(() => {
 
 .typeology-test-switcher::-webkit-scrollbar {
   display: none;
+}
+
+.typeology-disclaimer-card {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--type-accent) 24%, #ffffff 76%);
+  background: color-mix(in srgb, var(--type-surface) 88%, var(--type-accent) 12%);
+  box-shadow: 0 18px 38px color-mix(in srgb, var(--type-accent) 14%, transparent);
+  padding: 14px 16px;
+}
+
+.typeology-disclaimer-title {
+  margin: 0;
+  color: var(--type-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.typeology-disclaimer-body {
+  margin: 8px 0 0;
+  color: color-mix(in srgb, var(--type-text) 82%, var(--type-muted) 18%);
+  font-size: 13px;
+  line-height: 1.75;
 }
 
 .typeology-test-chip {
