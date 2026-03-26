@@ -882,7 +882,7 @@ const STAGE_DETAIL = "detail";
  * 关键逻辑：题库结构变化时可通过提升版本号让旧进度自动失效，避免恢复错题。
  */
 // 关键逻辑：题库模式映射与题面变更后提升版本号，避免旧缓存恢复到错误题目。
-const TYPEOLOGY_PROGRESS_SCHEMA_VERSION = 10;
+const TYPEOLOGY_PROGRESS_SCHEMA_VERSION = 11;
 
 /**
  * 进度缓存最小答题阈值。
@@ -976,17 +976,17 @@ const TYPEOLOGY_POSTER_THEME_PALETTE_MAP = Object.freeze({
     labelText: "#D6F0E4",
     footerText: "rgba(220, 245, 234, 0.95)",
   },
-  // 理想匹配 — 暖橘珊瑚
+  // 理想匹配 — 雾玫瑰
   "ideal-match": {
-    backgroundTop: "#9B5B3A",
-    backgroundBottom: "#C0785A",
-    titleText: "#FFF8F2",
-    subtitleText: "rgba(255, 240, 228, 0.96)",
-    completedCountText: "rgba(250, 232, 218, 0.92)",
-    cardBackground: "#FFFFFF",
-    valueText: "#8B5133",
-    labelText: "#F5DFD0",
-    footerText: "rgba(248, 230, 216, 0.95)",
+    backgroundTop: "#6F4B5D",
+    backgroundBottom: "#B68096",
+    titleText: "#FFF8FB",
+    subtitleText: "rgba(255, 239, 246, 0.96)",
+    completedCountText: "rgba(249, 228, 236, 0.92)",
+    cardBackground: "#FFFDFC",
+    valueText: "#754D60",
+    labelText: "#F2D9E2",
+    footerText: "rgba(247, 226, 234, 0.95)",
   },
   // 荣格经典 — 深青蓝
   "jung-classic": {
@@ -1000,17 +1000,17 @@ const TYPEOLOGY_POSTER_THEME_PALETTE_MAP = Object.freeze({
     labelText: "#CEEAF2",
     footerText: "rgba(218, 242, 250, 0.95)",
   },
-  // DISC — 琥珀金
+  // DISC — 鼠尾草金棕
   disc: {
-    backgroundTop: "#8B6930",
-    backgroundBottom: "#A98548",
-    titleText: "#FFFBF0",
-    subtitleText: "rgba(255, 248, 228, 0.96)",
-    completedCountText: "rgba(250, 240, 215, 0.92)",
-    cardBackground: "#FFFFFF",
-    valueText: "#7A5D2A",
-    labelText: "#F0E2C4",
-    footerText: "rgba(245, 235, 210, 0.95)",
+    backgroundTop: "#6F6446",
+    backgroundBottom: "#A99A72",
+    titleText: "#FBF9F1",
+    subtitleText: "rgba(246, 242, 227, 0.96)",
+    completedCountText: "rgba(239, 233, 212, 0.92)",
+    cardBackground: "#FFFDFC",
+    valueText: "#655A3F",
+    labelText: "#E9DFC2",
+    footerText: "rgba(241, 234, 212, 0.95)",
   },
   // 态度心理 — 薰衣草紫
   "attitude-psy": {

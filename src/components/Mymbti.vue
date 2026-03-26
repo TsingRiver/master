@@ -1002,7 +1002,7 @@ const STAGE_DETAIL = "detail";
  * 关键逻辑：题库结构变化时可通过提升版本号让旧进度自动失效，避免恢复错题。
  */
 // 关键逻辑：题库模式映射与题面变更后提升版本号，避免旧缓存恢复到错误题目。
-const TYPEOLOGY_PROGRESS_SCHEMA_VERSION = 10;
+const TYPEOLOGY_PROGRESS_SCHEMA_VERSION = 11;
 
 /**
  * 进度缓存最小答题阈值。

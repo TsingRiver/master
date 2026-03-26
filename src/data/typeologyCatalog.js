@@ -13,6 +13,7 @@ import { DND_ALIGNMENT_CORE_60_QUESTION_BANK } from "./dndAlignmentQuestionBank"
 import { ATTACHMENT_CORE_64_QUESTION_BANK } from "./attachmentTypeQuestionBank";
 import { HOLLAND_CORE_60_QUESTION_BANK } from "./hollandQuestionBank";
 import { BIG_FIVE_CORE_60_QUESTION_BANK } from "./bigFiveQuestionBank";
+import { ATTITUDE_PSY_CORE_64_QUESTION_BANK } from "./attitudePsyQuestionBank";
 
 /**
  * 类型学统一测试目录：
@@ -1366,7 +1367,7 @@ export const TYPEOLOGY_TESTS = [
     effectClass: "theme-type-attitude",
     sceneOffset: 25,
     modes: [createMode("core64", "64题", 64)],
-    poolSize: 84,
+    poolSize: 64,
     promptTemplates: [
       "你更习惯先调动哪种心理资源？",
       "你更相信哪类判断信号？",
@@ -1408,6 +1409,7 @@ export const TYPEOLOGY_TESTS = [
         actions: ["提升长期规划意识", "避免只追短期舒服", "把体感转为可执行标准"],
       },
     ],
+    staticQuestionPool: ATTITUDE_PSY_CORE_64_QUESTION_BANK,
   }),
   createTestDefinition({
     key: "temperament",
