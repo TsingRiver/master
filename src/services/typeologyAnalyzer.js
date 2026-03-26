@@ -747,7 +747,8 @@ function analyzeMbtiAsTypeology({
   const scoreBoard = mbtiLocalResult.scoredTypes.map((typeItem) => ({
     key: typeItem.type,
     label: `${typeItem.type} · ${typeItem.title}`,
-    rawScore: typeItem.score,
+    // 关键逻辑：保留更高精度原始分值，供缓存、排序与问题排查复用。
+    rawScore: Number(typeItem.rawScore ?? typeItem.score ?? 0),
     score: typeItem.score,
     summary: `${typeItem.type} 在当前作答中匹配度为 ${typeItem.score}%。`,
     tags: [],

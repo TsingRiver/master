@@ -3511,8 +3511,10 @@ async function runAiInsightGeneration({
     };
 
     resultCache.value = upsertTypeologyCachedResult(testKeySnapshot, mergedResult);
+    const persistedMergedResult = resultCache.value[testKeySnapshot] ?? mergedResult;
     if (String(activeTestConfig.value?.key ?? "").trim() === testKeySnapshot) {
-      currentResult.value = mergedResult;
+      // 关键逻辑：界面始终回读规范化后的缓存结果，避免本次内存对象绕过一致性修复。
+      currentResult.value = persistedMergedResult;
     }
 
     if (showSuccessToast) {
@@ -3572,7 +3574,8 @@ async function submitCurrentTest() {
   );
   clearTypeologyProgressByTestKey(activeTestConfig.value.key);
 
-  currentResult.value = localPersistedResult;
+  currentResult.value =
+    resultCache.value[activeTestConfig.value.key] ?? localPersistedResult;
 
   /**
    * 结果页切换闸门：

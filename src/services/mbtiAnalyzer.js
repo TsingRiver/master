@@ -147,6 +147,24 @@ function clampPercentage(value) {
 }
 
 /**
+ * 分值限制到 [0, 100]，并保留指定小数位。
+ * 关键逻辑：MBTI Top3 需要保留更高精度，避免边界结果在整数取整后出现大量“同分并列”。
+ * @param {number} value 原始值。
+ * @param {number} [digits=1] 小数位数。
+ * @returns {number} 限制并保留精度后的值。
+ */
+function clampPercentageWithPrecision(value, digits = 1) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  const safeDigits = Math.max(0, Math.floor(digits));
+  const precisionBase = 10 ** safeDigits;
+  const clampedValue = Math.max(0, Math.min(100, value));
+  return Math.round(clampedValue * precisionBase) / precisionBase;
+}
+
+/**
  * 分值限制到 [-100, 100]。
  * @param {number} value 原始值。
  * @returns {number} 限制后的值。
@@ -277,12 +295,27 @@ function resolveMbtiCode(axisScores) {
 }
 
 /**
- * 计算单类型匹配分。
+ * 从类型码解析各轴字母。
+ * @param {string} typeCode MBTI 类型码。
+ * @returns {{ ei: string, sn: string, tf: string, jp: string }} 轴字母映射。
+ */
+function resolveTypeLettersFromCode(typeCode) {
+  const normalizedTypeCode = String(typeCode ?? "").trim().toUpperCase();
+  return {
+    ei: normalizedTypeCode[0] ?? "",
+    sn: normalizedTypeCode[1] ?? "",
+    tf: normalizedTypeCode[2] ?? "",
+    jp: normalizedTypeCode[3] ?? "",
+  };
+}
+
+/**
+ * 计算单类型基础匹配分（未做主类型一致性偏置）。
  * @param {object} profile 类型画像。
  * @param {object} axisScores 用户轴分值。
- * @returns {number} 匹配度（0~100）。
+ * @returns {number} 基础匹配度（0~100，保留 4 位小数）。
  */
-function calculateTypeScore(profile, axisScores) {
+function calculateTypeBaseScore(profile, axisScores) {
   const distanceSquare = MBTI_AXIS_KEYS.reduce((accumulator, axisKey) => {
     const gap = profile.vector[axisKey] - axisScores[axisKey];
     return accumulator + gap * gap;
@@ -291,20 +324,91 @@ function calculateTypeScore(profile, axisScores) {
   const distance = Math.sqrt(distanceSquare);
   const maxDistance = 400;
   const normalized = 1 - distance / maxDistance;
-  return clampPercentage(normalized * 100);
+  return clampPercentageWithPrecision(normalized * 100, 4);
+}
+
+/**
+ * 计算候选类型与主结果的“字母冲突惩罚”。
+ * 关键逻辑：
+ * 1. 主结果由四轴正负号直接定型，必须永远排在 Top1；
+ * 2. 近邻候选应优先来自“弱轴翻转”，而不是把主结果挤到后面。
+ * 复杂度评估：O(D)，D 为轴数量，固定为 4。
+ * @param {object} profile 类型画像。
+ * @param {{ ei: string, sn: string, tf: string, jp: string }} resolvedLetters 主结果轴字母。
+ * @param {{ ei: number, sn: number, tf: number, jp: number }} axisStrength 轴强度。
+ * @returns {{ mismatchCount: number, mismatchPenalty: number }} 冲突统计。
+ */
+function calculateTypeMismatchMeta(profile, resolvedLetters, axisStrength) {
+  const profileLetters = resolveTypeLettersFromCode(profile?.type);
+
+  return MBTI_AXIS_KEYS.reduce(
+    (accumulator, axisKey) => {
+      if (profileLetters[axisKey] === resolvedLetters[axisKey]) {
+        return accumulator;
+      }
+
+      const currentAxisStrength = clampPercentage(axisStrength?.[axisKey] ?? 0);
+      return {
+        mismatchCount: accumulator.mismatchCount + 1,
+        // 关键逻辑：每个冲突轴给固定罚分，并按轴强度追加罚分，确保主结果和弱轴近邻排序稳定。
+        mismatchPenalty: accumulator.mismatchPenalty + 1.25 + currentAxisStrength * 0.03,
+      };
+    },
+    { mismatchCount: 0, mismatchPenalty: 0 },
+  );
 }
 
 /**
  * 构建 Top3。
+ * 关键逻辑：
+ * 1. 先保证主结果（四轴定型结果）稳定排在第一位；
+ * 2. 再按“弱轴近邻优先”的原则排候选类型；
+ * 3. 显示分值保留 1 位小数，减少边界样本被整数取整压成完全同分。
+ * 复杂度评估：O(T * D + T log T)，T=16，D=4。
  * @param {object} axisScores 用户轴分值。
+ * @param {object} axisStrength 轴强度。
+ * @param {string} resolvedTypeCode 主结果类型码。
  * @returns {Array<{ type: string, title: string, score: number }>} 排序结果。
  */
-function buildTypeRanking(axisScores) {
-  return MBTI_TYPE_PROFILES.map((profile) => ({
-    type: profile.type,
-    title: profile.title,
-    score: calculateTypeScore(profile, axisScores),
-  })).sort((left, right) => right.score - left.score);
+function buildTypeRanking(axisScores, axisStrength, resolvedTypeCode) {
+  const resolvedLetters = resolveTypeLettersFromCode(resolvedTypeCode);
+
+  return MBTI_TYPE_PROFILES.map((profile) => {
+    const baseScore = calculateTypeBaseScore(profile, axisScores);
+    const mismatchMeta = calculateTypeMismatchMeta(profile, resolvedLetters, axisStrength);
+    const adjustedRawScore = clampPercentageWithPrecision(
+      baseScore - mismatchMeta.mismatchPenalty,
+      4,
+    );
+
+    return {
+      type: profile.type,
+      title: profile.title,
+      rawScore: adjustedRawScore,
+      score: clampPercentageWithPrecision(adjustedRawScore, 1),
+      baseScore,
+      mismatchCount: mismatchMeta.mismatchCount,
+      mismatchPenalty: clampPercentageWithPrecision(mismatchMeta.mismatchPenalty, 4),
+    };
+  }).sort((left, right) => {
+    if (right.rawScore !== left.rawScore) {
+      return right.rawScore - left.rawScore;
+    }
+
+    if (left.mismatchCount !== right.mismatchCount) {
+      return left.mismatchCount - right.mismatchCount;
+    }
+
+    if (left.mismatchPenalty !== right.mismatchPenalty) {
+      return left.mismatchPenalty - right.mismatchPenalty;
+    }
+
+    if (right.baseScore !== left.baseScore) {
+      return right.baseScore - left.baseScore;
+    }
+
+    return 0;
+  });
 }
 
 /**
@@ -582,7 +686,7 @@ export function analyzeMbtiLocally({ questions, answerIds }) {
   const axisSummaryLines = buildAxisSummaryLines(axisScores);
 
   const { typeCode } = resolveMbtiCode(axisScores);
-  const scoredTypes = buildTypeRanking(axisScores);
+  const scoredTypes = buildTypeRanking(axisScores, axisStrength, typeCode);
 
   const topTypeFromRank =
     scoredTypes.find((item) => item.type === typeCode) ?? scoredTypes[0];

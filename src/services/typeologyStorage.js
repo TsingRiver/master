@@ -1,3 +1,5 @@
+import { sanitizeMbtiTypeologyResult } from "./mbtiResultIntegrity";
+
 /**
  * 类型学结果缓存键：
  * 统一存储 12 个测试的最近一次结果与进阶解读内容。
@@ -29,13 +31,36 @@ function safeParseObject(rawString) {
 }
 
 /**
+ * 规范化结果缓存对象。
+ * 关键逻辑：
+ * 1. 统一在存取缓存两端做兜底，兼容历史脏数据；
+ * 2. 当前仅对 MBTI 结果做强一致性修复，其余测试保持原样。
+ * 复杂度评估：O(K)，K 为缓存中的测试结果数量。
+ * @param {Record<string, object>} cacheObject 原始缓存对象。
+ * @returns {Record<string, object>} 规范化后的缓存对象。
+ */
+function normalizeTypeologyResultCache(cacheObject) {
+  const normalizedCacheObject = {};
+
+  Object.entries(cacheObject ?? {}).forEach(([testKey, resultPayload]) => {
+    // 关键逻辑：仅在 MBTI 结果上应用强校验，避免误伤其他测试的数据结构。
+    normalizedCacheObject[testKey] =
+      testKey === "mbti"
+        ? sanitizeMbtiTypeologyResult(resultPayload)
+        : resultPayload;
+  });
+
+  return normalizedCacheObject;
+}
+
+/**
  * 读取本地结果缓存。
  * @returns {Record<string, object>} 以 testKey 为键的结果对象。
  */
 export function loadTypeologyResultCache() {
   try {
     const rawCacheValue = window.localStorage.getItem(TYPEOLOGY_RESULT_CACHE_KEY);
-    return safeParseObject(rawCacheValue);
+    return normalizeTypeologyResultCache(safeParseObject(rawCacheValue));
   } catch {
     // 关键逻辑：隐私模式或禁用 localStorage 时返回空对象，保证主流程可用。
     return {};
@@ -48,9 +73,10 @@ export function loadTypeologyResultCache() {
  */
 export function saveTypeologyResultCache(cacheObject) {
   try {
+    const normalizedCacheObject = normalizeTypeologyResultCache(cacheObject ?? {});
     window.localStorage.setItem(
       TYPEOLOGY_RESULT_CACHE_KEY,
-      JSON.stringify(cacheObject ?? {}),
+      JSON.stringify(normalizedCacheObject),
     );
   } catch {
     // 关键逻辑：写入失败不抛异常，避免阻断答题流程。
@@ -91,8 +117,9 @@ export function upsertTypeologyCachedResult(testKey, resultPayload) {
     [testKey]: resultPayload,
   };
 
-  saveTypeologyResultCache(nextCacheObject);
-  return nextCacheObject;
+  const normalizedNextCacheObject = normalizeTypeologyResultCache(nextCacheObject);
+  saveTypeologyResultCache(normalizedNextCacheObject);
+  return normalizedNextCacheObject;
 }
 
 /**
