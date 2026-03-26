@@ -960,7 +960,7 @@ const TYPEOLOGY_POSTER_DEFAULT_THEME_COLORS = Object.freeze({
 /**
  * 人格海报按主题映射的手工调配色板：
  * 关键逻辑：每个主题手工调色，保证在不同色相下海报背景都足够鲜明好看。
- *   - backgroundTop/Bottom 使用渐变，让海报有纵深层次。
+ *   - backgroundTop/backgroundMiddle/backgroundBottom 使用渐变，让海报有纵深层次。
  *   - 卡片内文字颜色与背景同色系但明度更高，保持一体感和可读性。
  */
 const TYPEOLOGY_POSTER_THEME_PALETTE_MAP = Object.freeze({
@@ -1000,17 +1000,18 @@ const TYPEOLOGY_POSTER_THEME_PALETTE_MAP = Object.freeze({
     labelText: "#CEEAF2",
     footerText: "rgba(218, 242, 250, 0.95)",
   },
-  // DISC — 鼠尾草金棕
+  // DISC — 明亮金黄
   disc: {
-    backgroundTop: "#6F6446",
-    backgroundBottom: "#A99A72",
-    titleText: "#FBF9F1",
-    subtitleText: "rgba(246, 242, 227, 0.96)",
-    completedCountText: "rgba(239, 233, 212, 0.92)",
+    backgroundTop: "#FFC232",
+    backgroundMiddle: "#FFDE75",
+    backgroundBottom: "#FCEDAB",
+    titleText: "#7A4700",
+    subtitleText: "rgba(122, 71, 0, 0.78)",
+    completedCountText: "rgba(122, 71, 0, 0.72)",
     cardBackground: "#FFFDFC",
-    valueText: "#655A3F",
-    labelText: "#E9DFC2",
-    footerText: "rgba(241, 234, 212, 0.95)",
+    valueText: "#8A5314",
+    labelText: "#8C5A10",
+    footerText: "rgba(122, 71, 0, 0.76)",
   },
   // 态度心理 — 薰衣草紫
   "attitude-psy": {
@@ -4019,6 +4020,10 @@ function generateTypeologyPosterDataUrl({
 
   const backgroundGradient = context.createLinearGradient(0, 0, 0, height);
   backgroundGradient.addColorStop(0, resolvedThemeColors.backgroundTop);
+  // 关键逻辑：仅当主题显式声明中间色时，启用三段式纵向渐变；其它主题继续保持两段式渐变，避免已有视觉回归。
+  if (typeof resolvedThemeColors.backgroundMiddle === "string") {
+    backgroundGradient.addColorStop(0.5, resolvedThemeColors.backgroundMiddle);
+  }
   backgroundGradient.addColorStop(1, resolvedThemeColors.backgroundBottom);
   context.fillStyle = backgroundGradient;
   context.fillRect(0, 0, width, height);
