@@ -530,8 +530,7 @@
           <van-button
             v-if="typeologyLicenseSyncState.syncEnabled"
             block
-            plain
-            class="typeology-btn"
+            class="typeology-btn typeology-btn-recover"
             :disabled="
               isRestoringTypeologyLicenseResults ||
               stage === STAGE_TESTING ||
@@ -5607,6 +5606,38 @@ div[class*="theme-"].theme-mymbti-blue .typeology-start-title-wrap h2::before {
   background: var(--type-secondary-btn-bg) !important;
   color: var(--type-secondary-btn-text) !important;
   border: 1px solid var(--type-secondary-btn-border) !important;
+}
+
+.typeology-btn-recover {
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--type-accent) 30%,
+      var(--type-card-border) 70%
+    ) !important;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--type-accent) 18%, var(--type-card-bg) 82%),
+      color-mix(
+        in srgb,
+        var(--type-accent-soft) 22%,
+        var(--type-card-bg) 78%
+      )
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 8px 18px rgba(15, 23, 42, 0.06) !important;
+  color: color-mix(
+    in srgb,
+    var(--type-accent) 72%,
+    var(--type-text) 28%
+  ) !important;
+}
+
+.typeology-btn-recover :deep(.van-button__text),
+.typeology-btn-recover :deep(.van-loading__text) {
+  color: inherit !important;
 }
 
 .typeology-btn-ghost {
