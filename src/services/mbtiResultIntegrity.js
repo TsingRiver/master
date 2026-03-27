@@ -283,6 +283,22 @@ function sanitizeGenericTypeologyResult(resultPayload) {
   const normalizedMainLabel = String(currentMainResult?.label ?? "").trim();
   const normalizedTopScore = clampPercentage(topRank?.score);
   const normalizedMainScore = clampPercentage(currentMainResult?.score);
+  const dualHighProfile =
+    resultPayload?.dualHighProfile && typeof resultPayload.dualHighProfile === "object"
+      ? resultPayload.dualHighProfile
+      : null;
+  const normalizedDualHighLeftKey = String(dualHighProfile?.leftKey ?? "").trim();
+  const normalizedDualHighRightKey = String(dualHighProfile?.rightKey ?? "").trim();
+  const hasStructuredDualHighProfile =
+    normalizedTestKey === "jung-classic" &&
+    Boolean(dualHighProfile?.isDualHigh) &&
+    Boolean(normalizedDualHighLeftKey) &&
+    Boolean(normalizedDualHighRightKey) &&
+    [normalizedDualHighLeftKey, normalizedDualHighRightKey].includes(normalizedTopKey) &&
+    normalizedMainScore === normalizedTopScore;
+  if (hasStructuredDualHighProfile) {
+    return resultPayload;
+  }
 
   const isAlreadyAligned =
     normalizedTopKey &&

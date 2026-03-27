@@ -199,12 +199,19 @@ export function createPersistableTypeologyResultSnapshot(resultPayload) {
       ? resultPayload.summaryLines
       : [],
     insight: String(resultPayload.insight ?? "").trim(),
+    summaryText: String(resultPayload.summaryText ?? "").trim(),
     detailTags: Array.isArray(resultPayload.detailTags)
       ? resultPayload.detailTags
       : [],
     detailActions: Array.isArray(resultPayload.detailActions)
       ? resultPayload.detailActions
       : [],
+    scoreLabel: String(resultPayload.scoreLabel ?? "").trim(),
+    dualHighProfile:
+      resultPayload.dualHighProfile &&
+      typeof resultPayload.dualHighProfile === "object"
+        ? resultPayload.dualHighProfile
+        : null,
     aiInsight:
       resultPayload.aiInsight && typeof resultPayload.aiInsight === "object"
         ? resultPayload.aiInsight

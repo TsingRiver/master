@@ -63,6 +63,19 @@ function buildMbtiDeepPayload(localResult) {
  * @returns {string} 用户提示词。
  */
 function buildGenericUserPrompt(testConfig, localResult) {
+  const dualHighProfile =
+    localResult?.dualHighProfile && typeof localResult.dualHighProfile === "object"
+      ? localResult.dualHighProfile
+      : null;
+  const dualHighGuidanceLines =
+    dualHighProfile?.isDualHigh
+      ? [
+          "判定补充：当前结果存在并列第一的双高倾向，请不要写成唯一主导类型。",
+          `双高组合：${String(dualHighProfile.title ?? "").trim()}`,
+          `双高说明：${String(dualHighProfile.note ?? "").trim()}`,
+        ]
+      : [];
+
   return [
     "你是一位中文人格测评内容编辑，请根据测试结果输出结构化解读。",
     "只输出 JSON，不要输出任何额外说明。",
@@ -81,6 +94,7 @@ function buildGenericUserPrompt(testConfig, localResult) {
     `测试类型：${testConfig.name}`,
     `测试说明：${testConfig.moduleDescription}`,
     `历史背景：${testConfig.history}`,
+    ...dualHighGuidanceLines,
     "本地主结果：",
     JSON.stringify(localResult.mainResult, null, 2),
     "本地 Top3：",

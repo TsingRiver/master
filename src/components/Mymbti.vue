@@ -196,7 +196,7 @@
           </p>
           <h2>{{ currentResult.mainResult.label }}</h2>
           <p class="typeology-result-score">
-            匹配度：{{ currentResult.mainResult.score }}% ·
+            {{ currentResult.scoreLabel || "匹配度" }}：{{ currentResult.mainResult.score }}% ·
             {{ currentResult.modeLabel }}
           </p>
         </div>
@@ -218,6 +218,24 @@
               class="typeology-ai-cursor"
               aria-hidden="true"
             ></span>
+          </p>
+        </div>
+
+        <div
+          v-if="currentResult.dualHighProfile?.isDualHigh"
+          class="typeology-detail-section typeology-dual-high-section"
+        >
+          <h3>双高说明</h3>
+          <div class="typeology-dual-high-chip-list">
+            <span class="typeology-dual-high-chip">
+              {{ currentResult.dualHighProfile.leftLabel }}
+            </span>
+            <span class="typeology-dual-high-chip">
+              {{ currentResult.dualHighProfile.rightLabel }}
+            </span>
+          </div>
+          <p class="typeology-dual-high-copy">
+            {{ currentResult.dualHighProfile.note }}
           </p>
         </div>
 
@@ -2873,10 +2891,18 @@ const aiStreamingActionPreview = computed(() =>
 /**
  * 结果摘要视图文案：
  * 关键逻辑：
- * 1. 流式期间仅显示 AI 叙事预览；若尚无片段则返回空字符串，交给占位骨架屏。
- * 2. 流式结束后优先显示 AI 正式叙事；AI 失败则回退本地结果。
+ * 1. 若结果声明了 `summaryText`，优先固定展示该摘要，避免“双高说明”等结构化信息被 AI 文案覆盖。
+ * 2. 其它场景下，流式期间显示 AI 叙事预览；若尚无片段则返回空字符串，交给占位骨架屏。
+ * 3. 流式结束后优先显示 AI 正式叙事；AI 失败则回退本地结果。
  */
 const insightForView = computed(() => {
+  const summaryOverride = String(
+    currentResult.value?.summaryText ?? "",
+  ).trim();
+  if (summaryOverride) {
+    return summaryOverride;
+  }
+
   if (isAiInsightStreaming.value) {
     return aiStreamingNarrativeText.value;
   }
@@ -5764,6 +5790,45 @@ div[class*="theme-"].theme-mymbti-blue .typeology-start-title-wrap h2::before {
   line-height: 1.6;
   color: var(--type-text);
   font-size: 13px;
+}
+
+.typeology-dual-high-section {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--type-accent) 12%, transparent),
+      transparent 72%
+    ),
+    var(--type-card-bg);
+}
+
+.typeology-dual-high-chip-list {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.typeology-dual-high-chip {
+  border-radius: 999px;
+  border: 1px solid
+    color-mix(in srgb, var(--type-accent) 26%, var(--type-card-border) 74%);
+  background: color-mix(
+    in srgb,
+    var(--type-accent) 8%,
+    var(--type-card-bg) 92%
+  );
+  padding: 6px 10px;
+  color: color-mix(in srgb, var(--type-text) 92%, var(--type-accent) 8%);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.typeology-dual-high-copy {
+  margin: 10px 0 0;
+  color: var(--type-muted);
+  font-size: 13px;
+  line-height: 1.7;
 }
 
 .typeology-soft-intervention-tip {

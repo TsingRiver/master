@@ -617,14 +617,177 @@ function resolveDisplayValue(label, key) {
 }
 
 /**
+ * 合并并去重字符串列表。
+ * 关键逻辑：用于“双高倾向”场景下整合两个结果的标签/建议，避免重复信息堆叠。
+ * 复杂度评估：O(N + M)，N/M 为输入列表长度；当前均为固定小常量。
+ * @param {Array<string>} primaryList 主列表。
+ * @param {Array<string>} secondaryList 次列表。
+ * @param {number} limit 最大返回数量。
+ * @returns {Array<string>} 去重后的字符串列表。
+ */
+function mergeUniqueTextList(primaryList, secondaryList, limit = 6) {
+  const mergedTextList = [];
+  const seenTextSet = new Set();
+
+  [primaryList, secondaryList].forEach((candidateList) => {
+    if (!Array.isArray(candidateList)) {
+      return;
+    }
+
+    candidateList.forEach((textItem) => {
+      const normalizedText = String(textItem ?? "").trim();
+      if (!normalizedText || seenTextSet.has(normalizedText)) {
+        return;
+      }
+
+      seenTextSet.add(normalizedText);
+      mergedTextList.push(normalizedText);
+    });
+  });
+
+  return mergedTextList.slice(0, limit);
+}
+
+/**
+ * 解析经典荣格功能简称。
+ * 关键逻辑：优先从可读标签中提取 Fi/Ti/Ni 等简称，缺失时再回退内部 key。
+ * @param {string} label 结果标签。
+ * @param {string} key 结果键。
+ * @returns {string} 功能简称；解析失败时返回空字符串。
+ */
+function resolveJungFunctionShortCode(label, key) {
+  const normalizedLabel = String(label ?? "").trim();
+  const normalizedKey = String(key ?? "").trim();
+  const labelMatch = normalizedLabel.match(/\b([A-Z][a-z])\b/);
+  if (labelMatch?.[1]) {
+    return labelMatch[1];
+  }
+
+  const keyMatch = normalizedKey.match(/^j-([a-z]{2})$/i);
+  if (!keyMatch?.[1]) {
+    return "";
+  }
+
+  const normalizedCode = keyMatch[1].toLowerCase();
+  return `${normalizedCode[0].toUpperCase()}${normalizedCode[1]}`;
+}
+
+/**
+ * 判断两个结果是否为同分并列。
+ * 关键逻辑：基于最终 `rawScore` 判定，而不是四舍五入后的百分比，避免 99.6 / 100 这类“视觉同分”误判为并列第一。
+ * @param {object|null|undefined} leftItem 左侧结果。
+ * @param {object|null|undefined} rightItem 右侧结果。
+ * @returns {boolean} 是否原始分并列。
+ */
+function hasSameTopRawScore(leftItem, rightItem) {
+  const leftRawScore = Number(leftItem?.rawScore ?? NaN);
+  const rightRawScore = Number(rightItem?.rawScore ?? NaN);
+  if (!Number.isFinite(leftRawScore) || !Number.isFinite(rightRawScore)) {
+    return false;
+  }
+
+  if (leftRawScore <= 0 || rightRawScore <= 0) {
+    return false;
+  }
+
+  return Math.abs(leftRawScore - rightRawScore) < 0.0001;
+}
+
+/**
+ * 构建经典荣格“双高倾向”说明。
+ * 关键逻辑：Fi/Ti 组合采用更贴近用户理解的专用说明，其余组合使用通用表述。
+ * @param {string} leftShortCode 左侧简称。
+ * @param {string} rightShortCode 右侧简称。
+ * @param {string} leftLabel 左侧标签。
+ * @param {string} rightLabel 右侧标签。
+ * @returns {string} 面向用户的说明文案。
+ */
+function buildJungDualHighNote(
+  leftShortCode,
+  rightShortCode,
+  leftLabel,
+  rightLabel,
+) {
+  const normalizedCodeSet = new Set([leftShortCode, rightShortCode].filter(Boolean));
+  if (normalizedCodeSet.has("Fi") && normalizedCodeSet.has("Ti")) {
+    return "两者区分度较低，说明你既重视内在价值一致，也重视内部逻辑自洽。";
+  }
+
+  return `两者区分度较低，说明你在「${leftLabel}」与「${rightLabel}」之间都表现出稳定偏好。`;
+}
+
+/**
+ * 解析经典荣格并列第一结果。
+ * 关键逻辑：仅当经典荣格 Top1 / Top2 原始分完全并列时，才进入“双高倾向”展示。
+ * 复杂度评估：O(1)。
+ * @param {string} testKey 测试键。
+ * @param {Array<object>} topThree Top3 结果列表。
+ * @returns {object|null} 双高配置；不存在时返回 null。
+ */
+function resolveJungClassicDualHighProfile(testKey, topThree) {
+  if (String(testKey ?? "").trim() !== "jung-classic") {
+    return null;
+  }
+
+  const primaryResult = Array.isArray(topThree) ? topThree[0] : null;
+  const secondaryResult = Array.isArray(topThree) ? topThree[1] : null;
+  if (!primaryResult || !secondaryResult) {
+    return null;
+  }
+
+  if (!hasSameTopRawScore(primaryResult, secondaryResult)) {
+    return null;
+  }
+
+  const leftLabel = String(primaryResult.label ?? "").trim() || "未命名功能";
+  const rightLabel = String(secondaryResult.label ?? "").trim() || "未命名功能";
+  const leftShortCode =
+    resolveJungFunctionShortCode(primaryResult.label, primaryResult.key) || leftLabel;
+  const rightShortCode =
+    resolveJungFunctionShortCode(secondaryResult.label, secondaryResult.key) || rightLabel;
+  const note = buildJungDualHighNote(
+    leftShortCode,
+    rightShortCode,
+    leftLabel,
+    rightLabel,
+  );
+
+  return {
+    isDualHigh: true,
+    leftKey: String(primaryResult.key ?? "").trim(),
+    rightKey: String(secondaryResult.key ?? "").trim(),
+    leftLabel,
+    rightLabel,
+    leftShortCode,
+    rightShortCode,
+    note,
+    title: `${leftShortCode}-${rightShortCode} 双高倾向`,
+    displayValue: `${leftShortCode}-${rightShortCode}`,
+  };
+}
+
+/**
  * 构建通用测试本地叙事文案。
  * @param {object} params 参数对象。
  * @param {string} params.testName 测试名称。
  * @param {object} params.mainResult 主结果。
  * @param {Array<object>} params.topThree Top3。
+ * @param {object|null} [params.dualHighProfile] 双高配置。
  * @returns {string} 本地叙事文案。
  */
-function buildGenericNarrative({ testName, mainResult, topThree }) {
+function buildGenericNarrative({
+  testName,
+  mainResult,
+  topThree,
+  dualHighProfile = null,
+}) {
+  if (dualHighProfile?.isDualHigh) {
+    return [
+      `在「${testName}」中，你当前呈现出多条高匹配路径，说明你的偏好结构并不是单点型。`,
+      "建议结合真实场景继续观察自己的稳定偏好，不建议把一次结果当成固定结论。",
+    ].join("");
+  }
+
   const secondResult = topThree[1]?.label ?? "无";
   const thirdResult = topThree[2]?.label ?? "无";
 
@@ -847,6 +1010,34 @@ function analyzeGenericTypeology({
     tags: mainRank?.tags ?? [],
     actions: mainRank?.actions ?? [],
   };
+  const dualHighProfile = resolveJungClassicDualHighProfile(
+    testConfig?.key,
+    topThree,
+  );
+  const dualHighSummaryText =
+    dualHighProfile?.isDualHigh
+      ? buildGenericNarrative({
+          testName: testConfig.name,
+          mainResult,
+          topThree,
+          dualHighProfile,
+        })
+      : "";
+  const resolvedMainResult =
+    dualHighProfile?.isDualHigh
+      ? {
+          ...mainResult,
+          /**
+           * 关键逻辑：保留主 key 作为结构化编码真源，标签改为“Fi-Ti 双高倾向”供用户阅读。
+           * 这样既不破坏跨测评规则的编码依赖，也能修正用户面看到的“唯一冠军”误导。
+           */
+          label: dualHighProfile.title,
+          summary:
+            "当前结果存在并列高匹配维度，建议结合真实场景持续观察自己的稳定偏好。",
+          tags: mergeUniqueTextList(mainRank?.tags ?? [], topThree[1]?.tags ?? [], 6),
+          actions: mergeUniqueTextList(mainRank?.actions ?? [], topThree[1]?.actions ?? [], 3),
+        }
+      : mainResult;
 
   return {
     testKey: testConfig.key,
@@ -856,8 +1047,10 @@ function analyzeGenericTypeology({
     questionCount: selectedQuestions.length,
     completedAt: Date.now(),
     source: "local",
-    displayValue: resolveDisplayValue(mainResult.label, mainResult.key),
-    mainResult,
+    displayValue:
+      dualHighProfile?.displayValue ??
+      resolveDisplayValue(resolvedMainResult.label, resolvedMainResult.key),
+    mainResult: resolvedMainResult,
     topThree: topThree.map((item) => ({
       key: item.key,
       label: item.label,
@@ -865,13 +1058,25 @@ function analyzeGenericTypeology({
     })),
     scoreBoard,
     summaryLines,
-    insight: buildGenericNarrative({
-      testName: testConfig.name,
-      mainResult,
-      topThree,
-    }),
-    detailTags: mainResult.tags,
-    detailActions: mainResult.actions,
+    insight:
+      dualHighSummaryText ||
+      buildGenericNarrative({
+        testName: testConfig.name,
+        mainResult: resolvedMainResult,
+        topThree,
+        dualHighProfile,
+      }),
+    /**
+     * 关键逻辑：双高说明独立成块展示，摘要卡保持整体结论，避免信息层级混杂。
+     */
+    summaryText: dualHighSummaryText,
+    detailTags: resolvedMainResult.tags,
+    detailActions: resolvedMainResult.actions,
+    /**
+     * 关键逻辑：双高结果不再使用“匹配度”语义，避免用户把两个 100% 理解成两个唯一结论。
+     */
+    scoreLabel: dualHighProfile?.isDualHigh ? "相对匹配指数" : "匹配度",
+    dualHighProfile,
     softInterventionMeta,
   };
 }
