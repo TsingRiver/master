@@ -1,3 +1,5 @@
+import { getTypeologyTestConfig } from "../data/typeologyCatalog";
+
 /**
  * MBTI 16 型白名单：
  * 关键逻辑：统一由共享常量管理，避免不同模块各自维护导致类型判断漂移。
@@ -245,6 +247,105 @@ function buildLockedTopThreeTagLines(topThreeList, resultPayload) {
 }
 
 /**
+ * 校正通用类型学结果对象中的主结果与 Top3 一致性。
+ * 关键逻辑：
+ * 1. 非 MBTI 测试理论上都由同一份 scoreBoard 产出 mainResult 与 Top3；
+ * 2. 一旦缓存或后续改动导致二者分裂，统一以 Top3 第一名为准做修复。
+ * 复杂度评估：O(1)。
+ * @param {object} resultPayload 统一结果对象。
+ * @returns {object} 校正后的结果对象。
+ */
+function sanitizeGenericTypeologyResult(resultPayload) {
+  const normalizedTestKey = String(resultPayload?.testKey ?? "").trim();
+  if (
+    !normalizedTestKey ||
+    normalizedTestKey === "mbti" ||
+    !resultPayload ||
+    typeof resultPayload !== "object"
+  ) {
+    return resultPayload;
+  }
+
+  const currentTopThree = Array.isArray(resultPayload?.topThree) ? resultPayload.topThree : [];
+  const topRank = currentTopThree[0];
+  if (!topRank || typeof topRank !== "object") {
+    return resultPayload;
+  }
+
+  const currentMainResult = resultPayload?.mainResult;
+  if (!currentMainResult || typeof currentMainResult !== "object") {
+    return resultPayload;
+  }
+
+  const normalizedTopKey = String(topRank?.key ?? "").trim();
+  const normalizedMainKey = String(currentMainResult?.key ?? "").trim();
+  const normalizedTopLabel = String(topRank?.label ?? "").trim();
+  const normalizedMainLabel = String(currentMainResult?.label ?? "").trim();
+  const normalizedTopScore = clampPercentage(topRank?.score);
+  const normalizedMainScore = clampPercentage(currentMainResult?.score);
+
+  const isAlreadyAligned =
+    normalizedTopKey &&
+    normalizedTopKey === normalizedMainKey &&
+    normalizedTopScore === normalizedMainScore &&
+    (normalizedTestKey === "enneagram" || normalizedTopLabel === normalizedMainLabel);
+  if (isAlreadyAligned) {
+    return resultPayload;
+  }
+
+  const testConfig = getTypeologyTestConfig(normalizedTestKey);
+  const outcomeConfig =
+    normalizedTestKey === "enneagram"
+      ? null
+      : testConfig?.outcomeMap instanceof Map
+        ? testConfig.outcomeMap.get(normalizedTopKey) ?? null
+        : null;
+
+  const nextMainResult =
+    normalizedTestKey === "enneagram"
+      ? {
+          ...currentMainResult,
+          key: normalizedTopKey || normalizedMainKey,
+          score: normalizedTopScore,
+        }
+      : {
+          ...currentMainResult,
+          key: normalizedTopKey || normalizedMainKey,
+          label: normalizedTopLabel || normalizedMainLabel,
+          score: normalizedTopScore,
+          summary:
+            String(outcomeConfig?.summary ?? "").trim() || currentMainResult.summary,
+          tags: Array.isArray(outcomeConfig?.tags)
+            ? outcomeConfig.tags
+            : currentMainResult.tags ?? [],
+          actions: Array.isArray(outcomeConfig?.actions)
+            ? outcomeConfig.actions
+            : currentMainResult.actions ?? [],
+        };
+
+  const nextResultPayload = {
+    ...resultPayload,
+    mainResult: nextMainResult,
+  };
+
+  if (normalizedTestKey !== "enneagram") {
+    if (!resultPayload?.aiInsight) {
+      nextResultPayload.insight = [
+        `在「${String(resultPayload?.testName ?? testConfig?.name ?? "").trim()}」中，你当前最匹配的是「${nextMainResult.label}」。`,
+        `次高匹配分别是「${String(currentTopThree[1]?.label ?? "无").trim()}」「${String(
+          currentTopThree[2]?.label ?? "无",
+        ).trim()}」。`,
+        "结果更适合用于认识自己的稳定偏好，不建议作为能力上限判断。",
+      ].join("");
+      nextResultPayload.detailTags = nextMainResult.tags ?? [];
+      nextResultPayload.detailActions = nextMainResult.actions ?? [];
+    }
+  }
+
+  return nextResultPayload;
+}
+
+/**
  * 校正 MBTI 统一结果对象中的 AI 文案。
  * 关键逻辑：MBTI 主结果以本地算法为唯一真源，AI 只能解释结果，不能改判结果。
  * 复杂度评估：O(N * L)，N 为可见文案条数，L 为平均文本长度。
@@ -351,4 +452,23 @@ export function sanitizeMbtiTypeologyResult(resultPayload) {
   nextResultPayload.detailActions = nextAiInsight.suggestions;
 
   return nextResultPayload;
+}
+
+/**
+ * 统一校正类型学结果对象。
+ * 关键逻辑：所有类型学测试都走同一入口做结果一致性修复，避免页面层分别兜底。
+ * @param {object} resultPayload 统一结果对象。
+ * @returns {object} 校正后的结果对象。
+ */
+export function sanitizeTypeologyResult(resultPayload) {
+  const normalizedTestKey = String(resultPayload?.testKey ?? "").trim();
+  if (!normalizedTestKey) {
+    return resultPayload;
+  }
+
+  if (normalizedTestKey === "mbti") {
+    return sanitizeMbtiTypeologyResult(resultPayload);
+  }
+
+  return sanitizeGenericTypeologyResult(resultPayload);
 }
