@@ -488,10 +488,30 @@
         </div>
 
         <div
-          v-if="completedTypeCardItems.length > 0"
+          v-if="
+            completedTypeCardItems.length > 0 ||
+            typeologyLicenseSyncState.syncEnabled
+          "
           class="typeology-card-panel-actions"
         >
           <van-button
+            v-if="typeologyLicenseSyncState.syncEnabled"
+            block
+            plain
+            class="typeology-btn"
+            :disabled="
+              isRestoringTypeologyLicenseResults ||
+              stage === STAGE_TESTING ||
+              stage === STAGE_ANALYZING
+            "
+            :loading="isRestoringTypeologyLicenseResults"
+            loading-text="恢复中..."
+            @click="restoreTypeologyResultsFromLicense()"
+          >
+            恢复测试结果
+          </van-button>
+          <van-button
+            v-if="completedTypeCardItems.length > 0"
             block
             class="typeology-btn typeology-btn-danger"
             @click="confirmClearTypeologyResults"
@@ -853,14 +873,22 @@ import {
   resolveTypeologyFoundationMbti,
 } from "../services/typeologyProfileEngine";
 import {
-  clearAllTypeologyProgressCache,
-  clearTypeologyResultCache,
-  loadTypeologyResultCache,
-  loadTypeologyProgressCache,
-  removeTypeologyProgressCache,
-  saveTypeologyProgressCache,
-  upsertTypeologyCachedResult,
+  clearAllTypeologyProgressCache as clearAllTypeologyProgressCacheStorage,
+  clearTypeologyResultCache as clearTypeologyResultCacheStorage,
+  loadTypeologyResultCache as loadTypeologyResultCacheStorage,
+  loadTypeologyProgressCache as loadTypeologyProgressCacheStorage,
+  removeTypeologyProgressCache as removeTypeologyProgressCacheStorage,
+  saveTypeologyProgressCache as saveTypeologyProgressCacheStorage,
+  upsertTypeologyCachedResult as upsertTypeologyCachedResultStorage,
 } from "../services/typeologyStorage";
+import {
+  clearTypeologyResultsFromLicense,
+  hasTypeologyCachedResults,
+  readTypeologyLicenseSyncState,
+  resolveTypeologySyncTargetPath,
+  restoreTypeologyResultCacheFromLicense,
+  syncTypeologyResultToLicense,
+} from "../services/typeologyLicenseSync";
 import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger";
 import { MBTI_DISCLAIMER_CONTENT } from "../constants/typeologyDisclaimer";
 import Like from "./Like.vue";
@@ -1778,6 +1806,93 @@ const props = defineProps({
 });
 
 /**
+ * 当前页面对应的授权结果同步目标路径。
+ * 关键逻辑：类型学中心要基于当前授权上下文隔离结果缓存，避免不同授权码之间相互串用。
+ */
+const typeologyStorageTargetPath = computed(() =>
+  resolveTypeologySyncTargetPath(props.themeConfig),
+);
+
+/**
+ * 构建当前页面的本地缓存参数。
+ * @returns {{ targetPath: string }} 存储参数。
+ */
+function buildTypeologyStorageOptions() {
+  return {
+    targetPath: typeologyStorageTargetPath.value,
+  };
+}
+
+/**
+ * 读取当前授权上下文下的结果缓存。
+ * @returns {Record<string, object>} 当前命名空间下的结果缓存。
+ */
+function loadTypeologyResultCache() {
+  return loadTypeologyResultCacheStorage(buildTypeologyStorageOptions());
+}
+
+/**
+ * 增量写入当前授权上下文下的结果缓存。
+ * @param {string} testKey 测试键。
+ * @param {object} resultPayload 结果对象。
+ * @returns {Record<string, object>} 更新后的完整缓存对象。
+ */
+function upsertTypeologyCachedResult(testKey, resultPayload) {
+  return upsertTypeologyCachedResultStorage(
+    testKey,
+    resultPayload,
+    buildTypeologyStorageOptions(),
+  );
+}
+
+/**
+ * 清空当前授权上下文下的结果缓存。
+ */
+function clearTypeologyResultCache() {
+  clearTypeologyResultCacheStorage(buildTypeologyStorageOptions());
+}
+
+/**
+ * 读取当前授权上下文下的单测进度缓存。
+ * @param {string} testKey 测试键。
+ * @returns {object|null} 进度对象。
+ */
+function loadTypeologyProgressCache(testKey) {
+  return loadTypeologyProgressCacheStorage(
+    testKey,
+    buildTypeologyStorageOptions(),
+  );
+}
+
+/**
+ * 写入当前授权上下文下的单测进度缓存。
+ * @param {string} testKey 测试键。
+ * @param {object} progressPayload 进度对象。
+ */
+function saveTypeologyProgressCache(testKey, progressPayload) {
+  saveTypeologyProgressCacheStorage(
+    testKey,
+    progressPayload,
+    buildTypeologyStorageOptions(),
+  );
+}
+
+/**
+ * 删除当前授权上下文下的单测进度缓存。
+ * @param {string} testKey 测试键。
+ */
+function removeTypeologyProgressCache(testKey) {
+  removeTypeologyProgressCacheStorage(testKey, buildTypeologyStorageOptions());
+}
+
+/**
+ * 清空当前授权上下文下的全部进度缓存。
+ */
+function clearAllTypeologyProgressCache() {
+  clearAllTypeologyProgressCacheStorage(buildTypeologyStorageOptions());
+}
+
+/**
  * 当前测试状态。
  */
 const stage = ref(STAGE_HOME);
@@ -1802,6 +1917,10 @@ const answers = ref([]);
 const currentQuestionIndex = ref(0);
 const currentResult = ref(null);
 const resultCache = ref(loadTypeologyResultCache());
+const isRestoringTypeologyLicenseResults = ref(false);
+const typeologyLicenseSyncState = ref(
+  readTypeologyLicenseSyncState(typeologyStorageTargetPath.value),
+);
 const isGeneratingAiInsight = ref(false);
 const isAiInsightStreaming = ref(false);
 const aiInsightStreamRawText = ref("");
@@ -1842,6 +1961,134 @@ const isNavigatingQuestion = ref(false);
  */
 const loadingMessageIndex = ref(0);
 let loadingTickerTimer = null;
+
+/**
+ * 刷新当前页面的授权结果同步状态。
+ * 关键逻辑：授权上下文由 `licenseClient` 持久化到 localStorage，组件内需显式回读以驱动按钮状态。
+ */
+function refreshTypeologyLicenseSyncState() {
+  typeologyLicenseSyncState.value = readTypeologyLicenseSyncState(
+    typeologyStorageTargetPath.value,
+  );
+}
+
+/**
+ * 静默同步单条结果到授权码。
+ * 关键逻辑：只在 AI 解读完整结束后触发增量写入，避免把中间态或其他测试结果一起覆盖到云端。
+ * @param {string} testKey 测试键。
+ * @param {object|null} resultPayload 结果对象。
+ * @returns {Promise<void>} 同步完成。
+ */
+async function syncTypeologyResultToLicenseSilently(testKey, resultPayload) {
+  if (!resultPayload || typeof resultPayload !== "object") {
+    return;
+  }
+
+  const syncResult = await syncTypeologyResultToLicense({
+    targetPath: typeologyStorageTargetPath.value,
+    testKey,
+    resultPayload,
+  });
+
+  refreshTypeologyLicenseSyncState();
+  if (!syncResult.ok) {
+    // 关键逻辑：云端同步失败不打断答题主流程，仅记录日志并保留本地结果。
+    console.error(
+      "[typeology-license-sync] failed to sync result:",
+      syncResult.error,
+    );
+  }
+}
+
+/**
+ * 从授权码恢复云端结果，并且只补本地缺失项。
+ * @param {{ showSuccessToast?: boolean, showEmptyToast?: boolean }} [options={}] 恢复选项。
+ * @returns {Promise<void>} 恢复完成。
+ */
+async function restoreTypeologyResultsFromLicense(options = {}) {
+  if (isRestoringTypeologyLicenseResults.value) {
+    return;
+  }
+
+  const {
+    showSuccessToast = true,
+    showEmptyToast = true,
+  } = options;
+  isRestoringTypeologyLicenseResults.value = true;
+
+  try {
+    const restoreResult = await restoreTypeologyResultCacheFromLicense({
+      targetPath: typeologyStorageTargetPath.value,
+      currentCacheObject: resultCache.value,
+    });
+
+    resultCache.value = restoreResult.resultCache;
+    refreshTypeologyLicenseSyncState();
+
+    if (restoreResult.skippedReason === "SYNC_DISABLED") {
+      if (showEmptyToast) {
+        showToast("当前授权上下文暂不支持云端恢复");
+      }
+      return;
+    }
+
+    if (restoreResult.skippedReason === "REMOTE_CLEAR_PENDING") {
+      if (showEmptyToast) {
+        showToast("云端清空同步中，暂不恢复旧结果");
+      }
+      return;
+    }
+
+    if (restoreResult.restoredCount > 0) {
+      if (showSuccessToast) {
+        showToast(`已恢复 ${restoreResult.restoredCount} 项测试结果`);
+      }
+      return;
+    }
+
+    if (!showEmptyToast) {
+      return;
+    }
+
+    if (hasTypeologyCachedResults(resultCache.value)) {
+      showToast("未发现可补充的云端结果");
+      return;
+    }
+
+    showToast("云端暂无可恢复结果");
+  } catch (error) {
+    if (showEmptyToast) {
+      showToast(error?.message ?? "恢复测试结果失败，请稍后重试");
+    }
+  } finally {
+    isRestoringTypeologyLicenseResults.value = false;
+  }
+}
+
+/**
+ * 在首屏尝试自动恢复云端结果。
+ * 关键逻辑：仅当本地完全没有结果且授权上下文明确存在云端结果时才发起读取，避免首次进入多打一条空接口。
+ * @returns {Promise<void>} 恢复完成。
+ */
+async function maybeAutoRestoreTypeologyResults() {
+  refreshTypeologyLicenseSyncState();
+
+  if (hasTypeologyCachedResults(resultCache.value)) {
+    return;
+  }
+
+  if (
+    !typeologyLicenseSyncState.value.syncEnabled ||
+    !typeologyLicenseSyncState.value.hasRemoteResults
+  ) {
+    return;
+  }
+
+  await restoreTypeologyResultsFromLicense({
+    showSuccessToast: false,
+    showEmptyToast: false,
+  });
+}
 
 /**
  * 计算测试顺序列表。
@@ -3041,6 +3288,16 @@ async function confirmClearTypeologyResults() {
   resetTypeologyProfileAiInsightState();
   resetTypeologyPosterState();
   window.scrollTo({ top: 0, behavior: "smooth" });
+  const remoteClearResult = await clearTypeologyResultsFromLicense(
+    typeologyStorageTargetPath.value,
+  );
+  refreshTypeologyLicenseSyncState();
+
+  if (!remoteClearResult.ok) {
+    showToast("已清空本地结果，云端清空将在后续访问时自动重试");
+    return;
+  }
+
   showToast("已清空全部类型学测试结果");
 }
 
@@ -3445,6 +3702,7 @@ async function runAiInsightGeneration({
   isGeneratingAiInsight.value = true;
   isAiInsightStreaming.value = true;
   let hasEmittedFirstRenderable = false;
+  let finalResultForRemoteSync = null;
 
   /**
    * 标记“已出现首条可渲染 AI 内容”：
@@ -3516,6 +3774,7 @@ async function runAiInsightGeneration({
       // 关键逻辑：界面始终回读规范化后的缓存结果，避免本次内存对象绕过一致性修复。
       currentResult.value = persistedMergedResult;
     }
+    finalResultForRemoteSync = persistedMergedResult;
 
     if (showSuccessToast) {
       showToast("进阶解读已更新");
@@ -3531,12 +3790,21 @@ async function runAiInsightGeneration({
     if (showErrorToast) {
       showToast(error?.message ?? "进阶解读暂不可用，请稍后重试");
     }
+
+    finalResultForRemoteSync = resultCache.value[testKeySnapshot] ?? baseResult;
   } finally {
     invokeOptionalCallback(onSettled);
     if (requestSessionToken === aiInsightRequestSessionToken) {
       aiInsightRequestController = null;
       isGeneratingAiInsight.value = false;
       resetAiInsightStreamingUiState();
+    }
+
+    if (finalResultForRemoteSync) {
+      void syncTypeologyResultToLicenseSilently(
+        testKeySnapshot,
+        finalResultForRemoteSync,
+      );
     }
   }
 }
@@ -4364,6 +4632,8 @@ watch(typeologyPosterDataSignature, () => {
  */
 onMounted(() => {
   enableVisualEffectsAfterFirstPaint();
+  refreshTypeologyLicenseSyncState();
+  void maybeAutoRestoreTypeologyResults();
 });
 
 /**
@@ -5277,6 +5547,8 @@ onBeforeUnmount(() => {
 
 .typeology-card-panel-actions {
   margin-top: 12px;
+  display: grid;
+  gap: 12px;
 }
 
 .typeology-poster-overlay {

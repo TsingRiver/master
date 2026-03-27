@@ -2,12 +2,19 @@ import {
   LICENSE_DEVICE_COOKIE_NAME,
   LICENSE_SESSION_COOKIE_NAME,
   LICENSE_AUTH_ENTRY_PATH,
+  resolveLicenseScopePath,
 } from "../config/licenseAccess";
 
 /**
  * 浏览器端设备标识存储键。
  */
 const LICENSE_DEVICE_STORAGE_KEY = "asking-license-device-id";
+
+/**
+ * 授权访问上下文存储键：
+ * 关键逻辑：按 scopePath 持久化最近一次授权上下文，供结果缓存命名空间与恢复逻辑复用。
+ */
+const LICENSE_ACCESS_CONTEXT_STORAGE_KEY = "asking-license-access-context-v1";
 
 /**
  * 浏览器环境标识 Cookie 默认有效期（365 天）。
@@ -73,6 +80,156 @@ function readStoredLicenseDeviceId() {
   } catch {
     return "";
   }
+}
+
+/**
+ * 安全解析授权上下文映射。
+ * @param {string} rawValue 原始 JSON 文本。
+ * @returns {Record<string, object>} 解析后的上下文映射。
+ */
+function safeParseLicenseAccessContextMap(rawValue) {
+  if (!rawValue || typeof rawValue !== "string") {
+    return {};
+  }
+
+  try {
+    const parsedValue = JSON.parse(rawValue);
+    return parsedValue && typeof parsedValue === "object" ? parsedValue : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * 读取全部授权上下文映射。
+ * @returns {Record<string, object>} scopePath 到授权上下文的映射对象。
+ */
+function loadLicenseAccessContextMap() {
+  try {
+    return safeParseLicenseAccessContextMap(
+      window.localStorage.getItem(LICENSE_ACCESS_CONTEXT_STORAGE_KEY),
+    );
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * 保存全部授权上下文映射。
+ * @param {Record<string, object>} contextMap scopePath 到授权上下文的映射对象。
+ */
+function saveLicenseAccessContextMap(contextMap) {
+  try {
+    window.localStorage.setItem(
+      LICENSE_ACCESS_CONTEXT_STORAGE_KEY,
+      JSON.stringify(contextMap ?? {}),
+    );
+  } catch {
+    // 关键逻辑：授权上下文缓存失败时不阻断鉴权流程，最多退化为本次会话无法做结果恢复。
+  }
+}
+
+/**
+ * 读取当前 scopePath 的授权上下文。
+ * @param {string} targetPath 当前业务路径。
+ * @returns {{ licenseId: string, scopePath: string, scopes: Array<string>, typeologyResultSummary?: { hasAnyResult: boolean, testKeys: Array<string>, latestUpdatedAt: string | null }, updatedAt: number } | null} 授权上下文。
+ */
+export function readLicenseAccessContext(targetPath) {
+  const scopePath = resolveLicenseScopePath(targetPath);
+  if (!scopePath) {
+    return null;
+  }
+
+  const contextMap = loadLicenseAccessContextMap();
+  const contextPayload = contextMap[scopePath];
+  if (!contextPayload || typeof contextPayload !== "object") {
+    return null;
+  }
+
+  const licenseId = String(contextPayload.licenseId ?? "").trim();
+  if (!licenseId) {
+    return null;
+  }
+
+  return {
+    licenseId,
+    scopePath,
+    scopes: Array.isArray(contextPayload.scopes)
+      ? contextPayload.scopes.map((scopeItem) => String(scopeItem ?? "").trim()).filter(Boolean)
+      : [],
+    typeologyResultSummary:
+      contextPayload.typeologyResultSummary &&
+      typeof contextPayload.typeologyResultSummary === "object"
+        ? {
+            hasAnyResult: Boolean(contextPayload.typeologyResultSummary.hasAnyResult),
+            testKeys: Array.isArray(contextPayload.typeologyResultSummary.testKeys)
+              ? contextPayload.typeologyResultSummary.testKeys
+                  .map((testKey) => String(testKey ?? "").trim())
+                  .filter(Boolean)
+              : [],
+            latestUpdatedAt: contextPayload.typeologyResultSummary.latestUpdatedAt ?? null,
+          }
+        : undefined,
+    updatedAt: Number(contextPayload.updatedAt ?? 0) || 0,
+  };
+}
+
+/**
+ * 持久化当前 scopePath 的授权上下文。
+ * @param {{ targetPath?: string, scopePath?: string, licenseId?: string, scopes?: Array<string>, typeologyResultSummary?: { hasAnyResult?: boolean, testKeys?: Array<string>, latestUpdatedAt?: string | null } }} payload 授权上下文。
+ */
+export function persistLicenseAccessContext(payload) {
+  const resolvedScopePath =
+    resolveLicenseScopePath(payload.scopePath ?? payload.targetPath) ?? "";
+  const normalizedLicenseId = String(payload.licenseId ?? "").trim();
+  if (!resolvedScopePath || !normalizedLicenseId) {
+    return;
+  }
+
+  const nextContextMap = loadLicenseAccessContextMap();
+  nextContextMap[resolvedScopePath] = {
+    licenseId: normalizedLicenseId,
+    scopePath: resolvedScopePath,
+    scopes: Array.isArray(payload.scopes)
+      ? payload.scopes.map((scopeItem) => String(scopeItem ?? "").trim()).filter(Boolean)
+      : [],
+    typeologyResultSummary: payload.typeologyResultSummary
+      ? {
+          hasAnyResult: Boolean(payload.typeologyResultSummary.hasAnyResult),
+          testKeys: Array.isArray(payload.typeologyResultSummary.testKeys)
+            ? payload.typeologyResultSummary.testKeys
+                .map((testKey) => String(testKey ?? "").trim())
+                .filter(Boolean)
+            : [],
+          latestUpdatedAt: payload.typeologyResultSummary.latestUpdatedAt ?? null,
+        }
+      : {
+          hasAnyResult: false,
+          testKeys: [],
+          latestUpdatedAt: null,
+        },
+    updatedAt: Date.now(),
+  };
+  saveLicenseAccessContextMap(nextContextMap);
+}
+
+/**
+ * 根据接口返回刷新授权上下文。
+ * @param {object} responseData 授权服务返回 data。
+ * @param {string} targetPath 当前业务路径。
+ */
+function persistLicenseAccessArtifacts(responseData, targetPath) {
+  persistLicenseAccessContext({
+    targetPath,
+    scopePath: String(responseData?.scopePath ?? "").trim(),
+    licenseId: String(responseData?.licenseId ?? "").trim(),
+    scopes: Array.isArray(responseData?.scopes) ? responseData.scopes : [],
+    typeologyResultSummary:
+      responseData?.typeologyResultSummary &&
+      typeof responseData.typeologyResultSummary === "object"
+        ? responseData.typeologyResultSummary
+        : undefined,
+  });
 }
 
 /**
@@ -210,11 +367,13 @@ async function requestLicenseApi(apiPath, payload) {
  * @returns {Promise<{ sessionToken: string, scopes: Array<string>, scopePath: string, licenseId: string }>} 激活结果。
  */
 export async function activateLicenseAccess(payload) {
-  return requestLicenseApi("/api/license/activate", {
+  const activationResult = await requestLicenseApi("/api/license/activate", {
     code: String(payload.code ?? "").trim(),
     targetPath: String(payload.targetPath ?? "").trim(),
     deviceId: readOrCreateLicenseDeviceId(),
   });
+  persistLicenseAccessArtifacts(activationResult, payload.targetPath);
+  return activationResult;
 }
 
 /**
@@ -260,11 +419,72 @@ export async function checkLicenseSession(targetPath) {
     };
   }
 
-  return requestLicenseApi("/api/license/check", {
+  const validationResult = await requestLicenseApi("/api/license/check", {
     sessionToken,
     targetPath,
     deviceId: readOrCreateLicenseDeviceId(),
   });
+  persistLicenseAccessArtifacts(validationResult, targetPath);
+  return validationResult;
+}
+
+/**
+ * 读取授权码绑定的类型学结果。
+ * @param {string} targetPath 当前业务路径。
+ * @returns {Promise<{ licenseId: string, sessionToken?: string, scopePath?: string | null, scopes?: Array<string>, typeologyResultSummary?: { hasAnyResult: boolean, testKeys: Array<string>, latestUpdatedAt: string | null }, resultMap: Record<string, object> }>} 结果集。
+ */
+export async function readLicenseTypeologyResults(targetPath) {
+  const resultData = await requestLicenseApi("/api/license/typeology/read", {
+    sessionToken: readLicenseSessionToken(),
+    targetPath: String(targetPath ?? "").trim(),
+    deviceId: readOrCreateLicenseDeviceId(),
+  });
+
+  if (resultData?.sessionToken) {
+    persistLicenseSessionToken(resultData.sessionToken);
+  }
+  persistLicenseAccessArtifacts(resultData, targetPath);
+  return resultData;
+}
+
+/**
+ * 增量写入授权码绑定的单条类型学结果。
+ * @param {{ targetPath: string, testKey: string, resultPayload: object }} payload 写入参数。
+ * @returns {Promise<{ licenseId: string, sessionToken?: string, scopePath?: string | null, scopes?: Array<string>, typeologyResultSummary?: { hasAnyResult: boolean, testKeys: Array<string>, latestUpdatedAt: string | null } }>} 写入结果。
+ */
+export async function upsertLicenseTypeologyResult(payload) {
+  const resultData = await requestLicenseApi("/api/license/typeology/upsert", {
+    sessionToken: readLicenseSessionToken(),
+    targetPath: String(payload.targetPath ?? "").trim(),
+    deviceId: readOrCreateLicenseDeviceId(),
+    testKey: String(payload.testKey ?? "").trim(),
+    resultPayload: payload.resultPayload,
+  });
+
+  if (resultData?.sessionToken) {
+    persistLicenseSessionToken(resultData.sessionToken);
+  }
+  persistLicenseAccessArtifacts(resultData, payload.targetPath);
+  return resultData;
+}
+
+/**
+ * 清空授权码绑定的全部类型学结果。
+ * @param {string} targetPath 当前业务路径。
+ * @returns {Promise<{ licenseId: string, sessionToken?: string, scopePath?: string | null, scopes?: Array<string>, typeologyResultSummary?: { hasAnyResult: boolean, testKeys: Array<string>, latestUpdatedAt: string | null } }>} 清空结果。
+ */
+export async function clearLicenseTypeologyResults(targetPath) {
+  const resultData = await requestLicenseApi("/api/license/typeology/clear", {
+    sessionToken: readLicenseSessionToken(),
+    targetPath: String(targetPath ?? "").trim(),
+    deviceId: readOrCreateLicenseDeviceId(),
+  });
+
+  if (resultData?.sessionToken) {
+    persistLicenseSessionToken(resultData.sessionToken);
+  }
+  persistLicenseAccessArtifacts(resultData, targetPath);
+  return resultData;
 }
 
 /**
