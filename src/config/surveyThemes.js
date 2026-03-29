@@ -16,6 +16,7 @@ const ROMANCE_DESTINY_GATE_DEFAULTS = {
  */
 export const UNIFIED_RESULT_TEMPLATE = {
   source: "deep",
+  themeVariantClass: "",
   prefixLabel: "",
   scoreLabel: "",
   scoreSuffix: "%",
@@ -103,6 +104,7 @@ const SOUL_CAT_COVER_ARTWORK_POOL = Object.freeze(
  * 创建标准化结果对象。
  * @param {object} payload 渲染数据。
  * @param {"deep"|"local"} payload.source 结果来源。
+ * @param {string} [payload.themeVariantClass] 结果页视觉变体类名（可选）。
  * @param {string} payload.prefixLabel 主结果前缀文案。
  * @param {string} payload.scoreLabel 分值文案。
  * @param {string} [payload.scoreSuffix="%"] 主结果分值后缀。
@@ -3213,6 +3215,205 @@ function buildPeoplePleaserLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 桃花体质主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildLoveDestinyDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 桃花体质主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildLoveDestinyUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 36);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const topRiskScenarios = Array.isArray(result?.topRiskScenarios)
+    ? result.topRiskScenarios
+    : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const riskScenarioLines =
+    topRiskScenarios.length > 0
+      ? topRiskScenarios.map((scenarioItem) => {
+          const optionText = String(scenarioItem?.optionLabel ?? "")
+            .replace(/^[A-C]\s+/u, "")
+            .trim();
+          return `「${String(scenarioItem?.name ?? "").trim()}」：你更容易选择“${optionText || "待观察"}”。`;
+        })
+      : ["当前样本仍偏少，建议完整作答后再看最易踩坑的关系场景。"];
+  const defaultDetailSections = [
+    {
+      title: "结果说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你正在重新校准自己在感情里的边界与判断。",
+        majorityProfile?.description
+          ? `多数选项画像：${majorityProfile.description}`
+          : "多数选项画像仍在整理中。",
+      ],
+    },
+    {
+      title: "最容易被拿捏的场景",
+      items: riskScenarioLines,
+    },
+    {
+      title: "避坑提醒",
+      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
+        ? result.actionTips
+        : Array.isArray(resultRule.actionTips)
+          ? resultRule.actionTips
+          : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+
+  return createUnifiedResult({
+    source: sourceType,
+    themeVariantClass: String(
+      result?.themeVariantClass ?? resultRule.themeVariantClass ?? "",
+    ).trim(),
+    prefixLabel: "你的桃花结果",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 36}`,
+    main: {
+      name: resultRule.levelName ?? "桃花体质待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "当前桃花侧写",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的桃花体质侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "桃花档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 36}` },
+        {
+          label: "多数选项",
+          value: `${majorityProfile.label ?? "A 清醒边界型"}（${majorityProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均得分",
+          value: `${averageScore}/3`,
+        },
+        {
+          label: "桃花状态",
+          value: resultRule.statusLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答分布",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "桃花风险图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次桃花体质",
+    easterEggText: String(resultRule.easterEggText ?? "").trim(),
+  });
+}
+
+/**
+ * 桃花体质主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildLoveDestinyDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildLoveDestinyUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 桃花体质主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildLoveDestinyLocalUnifiedResult(localResult) {
+  return buildLoveDestinyUnifiedResult(localResult, "local");
+}
+
+/**
  * 灵魂猫咪主题：构建深度分析请求负载。
  * 关键逻辑：分数与类型由本地模型锁定，AI 仅用于生成解读文案，避免类型漂移。
  * @param {object} localResult 本地分析结果。
@@ -4439,6 +4640,94 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepUnifiedResult: buildPeoplePleaserDeepUnifiedResult,
       buildLocalUnifiedResult: buildPeoplePleaserLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "love-destiny",
+    routePaths: [
+      "/love-destiny",
+      "/destiny-or-redflag",
+      "/good-love-or-redflag",
+      "/love-filter",
+    ],
+    pageMeta: {
+      title: "你容易吸引正缘还是烂桃花",
+      description:
+        "12 道固定题测出你的桃花体质，看看你是正缘吸铁石、正缘与烂桃花各半，还是更容易招来烂桃花。",
+    },
+    theme: {
+      className: "theme-love-destiny",
+      badge: "LOVE DESTINY TEST",
+      title: "你容易吸引正缘还是烂桃花",
+      description:
+        "12 题识别你的边界守护、风险识别、情绪依赖与自我优先状态，看看你现在更容易吸引哪种桃花。",
+      progressColor: "linear-gradient(90deg, #cca4e1, #e5d3f0)",
+      progressTrackColor: "rgba(204, 164, 225, 0.2)",
+      checkedColor: "#cca4e1",
+      sourceTag: {
+        deep: {
+          label: "桃花深度解读",
+          color: "#f3ebf8",
+          textColor: "#7f6294",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#f7f1fb",
+          textColor: "#7f6294",
+        },
+      },
+      loadingMessages: [
+        "正在校准你的桃花雷达...",
+        "正在计算你的边界过滤力...",
+        "正在整理你的感情风险侧写...",
+      ],
+      submitButtonText: "查看我的桃花结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { LOVE_DESTINY_QUESTION_BANK } =
+          await import("../data/loveDestinyQuestionBank");
+        return LOVE_DESTINY_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 12,
+        maxCount: 12,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "桃花体质测试",
+        titleMain: "你容易吸引正缘\n还是烂桃花？",
+        intro: "计分规则",
+        points: [
+          "A=1分 ｜ B=2分 ｜ C=3分",
+          "共12题，算完总分看结果",
+          "边界越稳，越容易过滤烂桃花",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeLoveDestinyLocally } =
+          await import("../services/loveDestinyAnalyzer");
+        return analyzeLoveDestinyLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildLoveDestinyDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildLoveDestinyDeepUnifiedResult,
+      buildLocalUnifiedResult: buildLoveDestinyLocalUnifiedResult,
       deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
     },
   },

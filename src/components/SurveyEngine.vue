@@ -4,6 +4,7 @@
     :class="[
       themeConfig.theme.className,
       cityThemeVariantClass,
+      resultThemeVariantClass,
       `survey-stage-${stage}`,
       { 'survey-page-perf-ready': isVisualEffectsReady },
     ]"
@@ -2536,6 +2537,18 @@ const isCityInternationalMode = computed(() => {
 const cityThemeVariantClass = computed(() =>
   isCityInternationalMode.value ? "theme-city-international" : "",
 );
+
+/**
+ * 结果页运行时视觉变体类名。
+ * 关键逻辑：仅在结果页挂载变体 class，避免答题阶段按钮与选项色彩被结果态反向污染。
+ */
+const resultThemeVariantClass = computed(() => {
+  if (stage.value !== "result") {
+    return "";
+  }
+
+  return String(unifiedResult.value?.themeVariantClass ?? "").trim();
+});
 
 /**
  * 是否为浪漫主题。

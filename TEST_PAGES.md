@@ -10,6 +10,7 @@
 - `/#/color`：测试2026年你的主题色（动态配色主题）
 - `/#/romance`：《你认为最浪漫的事》浪漫指数测试（14题+雷达图+海报）
 - `/#/love-brain`：恋爱脑指数测试（心理学内核 + 梗文化，13-14题随机 + 长图）
+- `/#/love-destiny`：你容易吸引正缘还是烂桃花（12题固定 + 桃花风险图谱）
 - `/#/love`：恋爱心理测试（依恋类型 + AI报告主题）
 - `/#/five-elements-city`：五行推测 + 城市匹配度心理测试（20题 + 五行能量图谱 + 城市Top3 + AI解读）
 - `/#/soul-age`：灵魂年龄测试（20题题库随机抽12题 + 雷达图 + AI深度解读 + 分享海报）
@@ -27,6 +28,7 @@
 - `/color`：测试2026年你的主题色（动态配色主题）
 - `/romance`：《你认为最浪漫的事》浪漫指数测试（14题+雷达图+海报）
 - `/love-brain`：恋爱脑指数测试（13-14题随机 + 长图）
+- `/love-destiny`：你容易吸引正缘还是烂桃花（12题固定 + 桃花风险图谱）
 - `/love`：恋爱心理测试（依恋类型 + AI报告主题）
 - `/five-elements-city`：五行推测 + 城市匹配度心理测试（20题 + 五行能量图谱 + 城市Top3 + AI解读）
 - `/soul-age`：灵魂年龄测试（20题题库随机抽12题 + 结果图表 + AI深度解读 + 分享海报）
@@ -49,6 +51,7 @@
 - 主题色测试：`/color2026`、`/color-2026`、`/theme-color`
 - 浪漫指数：`/romance-test`、`/romantic`、`/1314-love`
 - 恋爱脑指数：`/love-brain.html`、`/lovebrain`、`/love-brain-index`
+- 桃花体质：`/destiny-or-redflag`、`/good-love-or-redflag`、`/love-filter`
 - 恋爱心理：`/love-attachment`、`/love-psych`、`/love-test`
 - 五行城市：`/five-elements-city.html`、`/wuxing-city`、`/wuxing-city.html`
 - 灵魂年龄：`/soul-age.html`、`/soul-age-test`、`/soul`、`/soul-test`
