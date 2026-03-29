@@ -2590,6 +2590,14 @@ const canGenerateTypeologyProfileAiInsight = computed(
 );
 
 /**
+ * AI 流式短摘要预览：
+ * 关键逻辑：主结果摘要优先读取 `shortSummary`，让主卡也能随流式结果即时更新。
+ */
+const aiStreamingShortSummaryText = computed(() =>
+  extractFieldPreviewFromJsonStream(aiInsightStreamRawText.value, "shortSummary"),
+);
+
+/**
  * AI 流式预览文本：
  * 关键逻辑：优先提取 narrative / insight 字段，避免把半截 JSON 直接展示给用户。
  */
@@ -2614,23 +2622,24 @@ const aiStreamingActionPreview = computed(() =>
 /**
  * 结果摘要视图文案：
  * 关键逻辑：
- * 1. 若结果声明了 `summaryText`，优先固定展示该摘要，避免“双高说明”等结构化信息被 AI 文案覆盖。
- * 2. 其它场景下，流式期间显示 AI 叙事预览；若尚无片段则返回空字符串，交给占位骨架屏。
- * 3. 流式结束后优先显示 AI 正式叙事；AI 失败则回退本地结果。
+ * 1. 优先展示 AI 生成的短摘要，确保主结果卡也能承接 AI 解读。
+ * 2. AI 不可用时回退到本地 `summaryText`，保证主流程稳定可用。
+ * 3. 不再复用 AI narrative，避免摘要卡再次变成长文进阶解读。
  */
 const insightForView = computed(() => {
+  const streamingShortSummary = String(aiStreamingShortSummaryText.value ?? "").trim();
+  if (isAiInsightStreaming.value && streamingShortSummary) {
+    return streamingShortSummary;
+  }
+
+  const aiShortSummary = String(currentResult.value?.aiInsight?.shortSummary ?? "").trim();
+  if (aiShortSummary) {
+    return aiShortSummary;
+  }
+
   const summaryOverride = String(currentResult.value?.summaryText ?? "").trim();
   if (summaryOverride) {
     return summaryOverride;
-  }
-
-  if (isAiInsightStreaming.value) {
-    return aiStreamingNarrativeText.value;
-  }
-
-  const aiNarrative = String(currentResult.value?.aiInsight?.narrative ?? "").trim();
-  if (aiNarrative) {
-    return aiNarrative;
   }
 
   return currentResult.value?.insight ?? "";
@@ -3729,7 +3738,7 @@ async function runAiInsightGeneration({
 
   /**
    * 标记“已出现首条可渲染 AI 内容”：
-   * 1. narrative / insight 任一有内容；
+   * 1. shortSummary / narrative / insight 任一有内容；
    * 2. strengths / suggestions 任一有至少 1 条。
    * 复杂度评估：O(L)，L 为当前累计流式文本长度。
    * @param {string} streamRawText 当前累计文本。
@@ -3739,11 +3748,14 @@ async function runAiInsightGeneration({
       return;
     }
 
+    const hasShortSummary = Boolean(
+      extractFieldPreviewFromJsonStream(streamRawText, "shortSummary"),
+    );
     const hasNarrative = Boolean(resolveAiNarrativePreviewText(streamRawText));
     const hasTag = extractStringArrayPreviewFromJsonStream(streamRawText, "strengths", 1).length > 0;
     const hasAction =
       extractStringArrayPreviewFromJsonStream(streamRawText, "suggestions", 1).length > 0;
-    if (!hasNarrative && !hasTag && !hasAction) {
+    if (!hasShortSummary && !hasNarrative && !hasTag && !hasAction) {
       return;
     }
 
@@ -3779,7 +3791,9 @@ async function runAiInsightGeneration({
     const mergedResult = {
       ...baseResult,
       aiInsight: aiInsightResult,
-      insight: aiInsightResult?.narrative ?? baseResult.insight,
+      // 关键逻辑：摘要区固定保留本地摘要，AI narrative 只在“进阶解读”模块展示。
+      insight: baseResult.insight,
+      summaryText: String(baseResult.summaryText ?? baseResult.insight ?? "").trim(),
       // 关键逻辑：主结果卡中的“核心标签/建议动作”与 AI 解读保持一致，避免两套文案割裂。
       detailTags:
         Array.isArray(aiInsightResult?.strengths) && aiInsightResult.strengths.length > 0

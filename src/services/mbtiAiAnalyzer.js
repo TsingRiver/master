@@ -3,6 +3,10 @@ import {
   sanitizeMbtiCopyList,
   sanitizeMbtiCopyText,
 } from "./mbtiResultIntegrity";
+import {
+  buildMbtiPersonalitySummary,
+  normalizeTypeologyShortSummary,
+} from "./typeologyCopyUtils";
 
 /**
  * 限制百分比分值。
@@ -15,6 +19,88 @@ function clampScore(score) {
   }
 
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+/**
+ * 去除句尾标点，便于拼接更自然的兜底文案。
+ * @param {unknown} value 任意值。
+ * @returns {string} 清洗后的文本。
+ */
+function stripTrailingPunctuation(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/[。！？!?；;，,]+$/g, "");
+}
+
+/**
+ * 构建 MBTI 本地进阶标题兜底。
+ * @param {object} localResult 本地结果。
+ * @returns {string} 进阶标题。
+ */
+function buildMbtiFallbackProfileTitle(localResult) {
+  return `${String(localResult?.topType?.type ?? "MBTI").trim()} · 维度深看`;
+}
+
+/**
+ * 构建 MBTI 本地短摘要兜底。
+ * 关键逻辑：主结果卡需要一句短解读；AI 未返回有效短摘要时回退到该字段。
+ * @param {object} localResult 本地结果。
+ * @returns {string} 短摘要。
+ */
+function buildMbtiFallbackShortSummary(localResult) {
+  return buildMbtiPersonalitySummary({
+    typeCode: localResult?.topType?.type,
+    typeTitle: localResult?.topType?.title,
+  });
+}
+
+/**
+ * 归一化 MBTI AI 短摘要。
+ * @param {unknown} value 任意值。
+ * @param {string} fallbackText 本地兜底摘要。
+ * @param {string} [insightText=""] 进阶叙事文本。
+ * @returns {string} 可用于主结果卡的短摘要。
+ */
+function resolveMbtiAiShortSummary(value, fallbackText, insightText = "") {
+  const normalizedText = String(value ?? "").trim();
+  const normalizedShortSummary = normalizeTypeologyShortSummary(value);
+  const normalizedInsightText = String(insightText ?? "").trim();
+  if (
+    normalizedShortSummary &&
+    normalizedText !== normalizedInsightText &&
+    normalizedShortSummary !== normalizedInsightText
+  ) {
+    return normalizedShortSummary;
+  }
+
+  return String(fallbackText ?? "").trim();
+}
+
+/**
+ * 构建 MBTI 本地进阶叙事兜底。
+ * 关键逻辑：进阶解读聚焦“为什么是这个类型”和“边界在哪”，避免重复摘要卡。
+ * @param {object} localResult 本地结果。
+ * @returns {string} 进阶叙事文案。
+ */
+function buildMbtiFallbackInsight(localResult) {
+  const topTypeCode = String(localResult?.topType?.type ?? "").trim();
+  const primaryAxisLine = stripTrailingPunctuation(localResult?.axisSummaryLines?.[0]);
+  const secondaryAxisLine = stripTrailingPunctuation(localResult?.axisSummaryLines?.[1]);
+  const tertiaryAxisLine = stripTrailingPunctuation(localResult?.axisSummaryLines?.[2]);
+  const secondTypeCode = String(localResult?.topThree?.[1]?.type ?? "").trim();
+  const thirdTypeCode = String(localResult?.topThree?.[2]?.type ?? "").trim();
+
+  return [
+    `比起“你像哪一型”，更值得关注的是「为什么 ${topTypeCode} 会排在第一位」。`,
+    primaryAxisLine ? `从维度看，${primaryAxisLine}。` : "",
+    secondaryAxisLine ? `${secondaryAxisLine}。` : "",
+    tertiaryAxisLine ? `${tertiaryAxisLine}。` : "",
+    secondTypeCode || thirdTypeCode
+      ? `你与 ${secondTypeCode || "次高类型"}、${thirdTypeCode || "第三类型"} 仍保持接近，说明某些边界场景下会出现可切换的次级风格，但长期主线依然更接近 ${topTypeCode}。`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("");
 }
 
 /**
@@ -46,6 +132,7 @@ function buildUserPrompt(payload) {
       {
         mainType: { name: lockedMainTypeCode, score: lockedMainTypeScore },
         topThree: lockedTopThree,
+        shortSummary: `${lockedMainTypeCode} 的80~120字单句人格描述，只描述当前测试下的你，不写建议或Top3比较`,
         profileTitle: `${lockedMainTypeCode} · 12字以内的小标题`,
         insight: `必须围绕 ${lockedMainTypeCode} 解释，不得写成其他类型`,
         growthActions: ["建议1", "建议2", "建议3"],
@@ -69,7 +156,7 @@ function buildUserPrompt(payload) {
  * 标准化深度结果，保证页面稳定渲染。
  * @param {object|null} aiData 深度模型返回。
  * @param {object} localResult 本地结果。
- * @returns {{ mainType: object, topThree: Array<object>, profileTitle: string, insight: string, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }} 标准化结果。
+ * @returns {{ mainType: object, topThree: Array<object>, shortSummary: string, profileTitle: string, insight: string, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }} 标准化结果。
  */
 function normalizeMbtiDeepResult(aiData, localResult) {
   const lockedMainType = {
@@ -80,7 +167,7 @@ function normalizeMbtiDeepResult(aiData, localResult) {
     name: item.type,
     score: clampScore(item.score),
   }));
-  const fallbackProfileTitle = `${localResult.topType.type} · ${localResult.topType.title}`;
+  const fallbackProfileTitle = buildMbtiFallbackProfileTitle(localResult);
   const fallbackGrowthActions = [
     "把你的核心优势场景固定下来，每周至少重复一次。",
     "把关键决策过程写成模板，减少情绪波动带来的偏差。",
@@ -90,12 +177,14 @@ function normalizeMbtiDeepResult(aiData, localResult) {
     "在高压环境下容易固化到单一决策路径",
     "表达风格与他人节奏不一致时会被误解",
   ];
+  const fallbackShortSummary = buildMbtiFallbackShortSummary(localResult);
 
   const fallbackResult = {
     mainType: lockedMainType,
     topThree: lockedTopThree,
+    shortSummary: fallbackShortSummary,
     profileTitle: fallbackProfileTitle,
-    insight: localResult.localNarrative,
+    insight: buildMbtiFallbackInsight(localResult),
     growthActions: fallbackGrowthActions,
     blindSpots: fallbackBlindSpots,
     typeCard: localResult.typeCard,
@@ -109,6 +198,11 @@ function normalizeMbtiDeepResult(aiData, localResult) {
     // 关键逻辑：MBTI 主类型与 Top3 永远锁定本地算法结果，AI 仅负责解释，不允许改判。
     mainType: lockedMainType,
     topThree: lockedTopThree,
+    shortSummary: resolveMbtiAiShortSummary(
+      aiData?.shortSummary,
+      fallbackShortSummary,
+      aiData?.insight,
+    ),
     profileTitle: sanitizeMbtiCopyText({
       text: aiData?.profileTitle,
       lockedTypeCode: lockedMainType.name,
@@ -148,7 +242,7 @@ function normalizeMbtiDeepResult(aiData, localResult) {
  * @param {number} [options.timeoutMs=18000] 超时时间。
  * @param {(fullText: string, deltaText: string) => void} [options.onStreamText] 流式文本回调。
  * @param {AbortSignal} [options.abortSignal] 外部取消信号。
- * @returns {Promise<{ mainType: object, topThree: Array<object>, profileTitle: string, insight: string, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }>} 标准化结果。
+ * @returns {Promise<{ mainType: object, topThree: Array<object>, shortSummary: string, profileTitle: string, insight: string, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }>} 标准化结果。
  */
 export async function analyzeMbtiWithDeepInsight(payload, options = {}) {
   const aiData = await requestBailianJson({

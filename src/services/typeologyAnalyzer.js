@@ -1,6 +1,12 @@
 import { analyzeMbtiLocally } from "./mbtiAnalyzer";
 import { getTypeologyQuestionPool } from "../data/typeologyCatalog";
 import { applyTypeologySoftIntervention } from "./typeologyProfileEngine";
+import {
+  buildMbtiPersonalitySummary,
+  buildTypeologyPersonalitySummary,
+  formatTypeologyOutcomeLabel,
+  stripTrailingPunctuation,
+} from "./typeologyCopyUtils";
 
 /**
  * 限制百分比分值到 [0, 100]。
@@ -577,6 +583,10 @@ function analyzeEnneagramTypeology({
     scoreBoard,
     summaryLines,
     insight: `你的九型结果为 ${resultCode}。核心动机更接近「${mainRank?.label ?? "未知类型"}」，建议结合近期真实场景持续观察，不把一次结果视为固定结论。`,
+    // 关键逻辑：摘要卡统一展示单句人格描述；更长解释仍由本地 insight / AI 进阶解读承接。
+    summaryText: buildTypeologyPersonalitySummary({
+      mainResult,
+    }),
     detailTags: mainResult.tags,
     detailActions: mainResult.actions,
     enneagramProfile: {
@@ -788,14 +798,36 @@ function buildGenericNarrative({
     ].join("");
   }
 
-  const secondResult = topThree[1]?.label ?? "无";
-  const thirdResult = topThree[2]?.label ?? "无";
+  const mainLabel = formatTypeologyOutcomeLabel({
+    outcome: mainResult,
+    fallbackText: "当前结果",
+  });
+  const secondResult = formatTypeologyOutcomeLabel({
+    outcome: topThree[1],
+    fallbackText: "无",
+  });
+  const thirdResult = formatTypeologyOutcomeLabel({
+    outcome: topThree[2],
+    fallbackText: "无",
+  });
+  const normalizedSummary = stripTrailingPunctuation(mainResult?.summary);
+  const normalizedTagList = Array.isArray(mainResult?.tags)
+    ? mainResult.tags.map((tagItem) => String(tagItem ?? "").trim()).filter(Boolean).slice(0, 3)
+    : [];
 
   return [
-    `在「${testName}」中，你当前最匹配的是「${mainResult.label}」。`,
+    `在「${testName}」中，你当前最匹配的是「${mainLabel}」。`,
+    normalizedSummary
+      ? `这说明你更接近「${normalizedSummary}」这条稳定主线。`
+      : "",
+    normalizedTagList.length > 0
+      ? `当前最突出的关键词是：${normalizedTagList.join("、")}。`
+      : "",
     `次高匹配分别是「${secondResult}」「${thirdResult}」。`,
     "结果更适合用于认识自己的稳定偏好，不建议作为能力上限判断。",
-  ].join("");
+  ]
+    .filter(Boolean)
+    .join("");
 }
 
 /**
@@ -949,6 +981,11 @@ function analyzeMbtiAsTypeology({
     scoreBoard,
     summaryLines: mbtiLocalResult.summaryLines,
     insight: mbtiLocalResult.localNarrative,
+    // 关键逻辑：摘要区固定使用单句人格描述，后续 AI 进阶解读只进入进阶模块。
+    summaryText: buildMbtiPersonalitySummary({
+      typeCode: mbtiLocalResult.topType.type,
+      typeTitle: mbtiLocalResult.topType.title,
+    }),
     detailTags: mbtiLocalResult.axisSummaryLines,
     detailActions: [
       "使用优势维度处理关键决策，提升稳定表现。",
@@ -1038,6 +1075,14 @@ function analyzeGenericTypeology({
           actions: mergeUniqueTextList(mainRank?.actions ?? [], topThree[1]?.actions ?? [], 3),
         }
       : mainResult;
+  const localNarrative =
+    dualHighSummaryText ||
+    buildGenericNarrative({
+      testName: testConfig.name,
+      mainResult: resolvedMainResult,
+      topThree,
+      dualHighProfile,
+    });
 
   return {
     testKey: testConfig.key,
@@ -1058,18 +1103,14 @@ function analyzeGenericTypeology({
     })),
     scoreBoard,
     summaryLines,
-    insight:
-      dualHighSummaryText ||
-      buildGenericNarrative({
-        testName: testConfig.name,
-        mainResult: resolvedMainResult,
-        topThree,
-        dualHighProfile,
-      }),
+    insight: localNarrative,
     /**
-     * 关键逻辑：双高说明独立成块展示，摘要卡保持整体结论，避免信息层级混杂。
+     * 关键逻辑：摘要卡固定展示单句人格描述；双高说明与详细解释保留在长文本区。
      */
-    summaryText: dualHighSummaryText,
+    summaryText: buildTypeologyPersonalitySummary({
+      mainResult: resolvedMainResult,
+      dualHighProfile,
+    }),
     detailTags: resolvedMainResult.tags,
     detailActions: resolvedMainResult.actions,
     /**
