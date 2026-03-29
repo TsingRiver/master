@@ -553,6 +553,42 @@ function shouldUpgradeGenericAiNarrative({ text, summaryText, mainResult }) {
 }
 
 /**
+ * 判断文本是否更像“进阶解读/旧模板”，而不是结果摘要。
+ * 关键逻辑：结果摘要应是一句人格描述；若文本明显带有分析、比较、建议或旧模板痕迹，则强制升级。
+ * @param {object} params 参数对象。
+ * @param {unknown} params.text 当前文本。
+ * @param {unknown} [params.narrative] 当前进阶叙事。
+ * @returns {boolean} 是否更像进阶解读。
+ */
+function looksLikeDeepNarrativeSummaryText({ text, narrative }) {
+  const normalizedText = String(text ?? "").trim();
+  const normalizedNarrative = String(narrative ?? "").trim();
+  if (!normalizedText) {
+    return true;
+  }
+
+  const sentenceCount = (normalizedText.match(/[。！？!?]/g) ?? []).length;
+  if (sentenceCount > 1) {
+    return true;
+  }
+
+  if (normalizedNarrative) {
+    if (normalizedText === normalizedNarrative) {
+      return true;
+    }
+
+    const narrativePrefix = normalizedNarrative.slice(0, Math.min(48, normalizedNarrative.length));
+    if (normalizedText.length >= 48 && narrativePrefix && normalizedText.startsWith(narrativePrefix)) {
+      return true;
+    }
+  }
+
+  return /(次高匹配|进一步看|从关键词看|排在首位|默认策略|放回真实场景|真实场景复盘|结果更适合|核心动机更接近|你的九型结果为|侧翼|三型组合|本能堆叠|从维度看|边界场景|长期主线|不只是表层偏好|建议结合)/.test(
+    normalizedText,
+  );
+}
+
+/**
  * 判断通用 AI 短摘要是否需要升级。
  * @param {object} params 参数对象。
  * @param {unknown} params.text 当前短摘要。
@@ -571,6 +607,15 @@ function shouldUpgradeGenericAiShortSummary({ text, narrative, mainResult }) {
   if (
     normalizedNarrative &&
     (normalizedText === normalizedNarrative || normalizedShortSummary === normalizedNarrative)
+  ) {
+    return true;
+  }
+
+  if (
+    looksLikeDeepNarrativeSummaryText({
+      text: normalizedText,
+      narrative: normalizedNarrative,
+    })
   ) {
     return true;
   }
@@ -610,10 +655,17 @@ function shouldUpgradeMbtiAiShortSummary({ text, narrative }) {
     return true;
   }
 
-  return (
+  if (
     Boolean(normalizedNarrative) &&
     (normalizedText === normalizedNarrative || normalizedShortSummary === normalizedNarrative)
-  );
+  ) {
+    return true;
+  }
+
+  return looksLikeDeepNarrativeSummaryText({
+    text: normalizedText,
+    narrative: normalizedNarrative,
+  });
 }
 
 /**

@@ -62,6 +62,37 @@ function joinTypeologyTraitPhrase(traitList) {
 }
 
 /**
+ * 提取带前缀的标签值。
+ * @param {Array<string>} tagList 标签列表。
+ * @param {string} prefix 标签前缀。
+ * @returns {string} 去前缀后的值。
+ */
+function extractTaggedTraitValue(tagList, prefix) {
+  const matchedTag = normalizeTypeologyTextList(tagList, 6).find((tagItem) =>
+    String(tagItem ?? "").startsWith(prefix),
+  );
+  if (!matchedTag) {
+    return "";
+  }
+
+  return String(matchedTag.slice(prefix.length)).trim();
+}
+
+/**
+ * 判断是否为九型人格结果标签组。
+ * @param {Array<string>} tagList 标签列表。
+ * @returns {boolean} 是否为九型人格标签。
+ */
+function isEnneagramTraitTagList(tagList) {
+  const normalizedTagList = normalizeTypeologyTextList(tagList, 6);
+  return (
+    normalizedTagList.some((tagItem) => tagItem.startsWith("主型：")) &&
+    normalizedTagList.some((tagItem) => tagItem.startsWith("侧翼：")) &&
+    normalizedTagList.some((tagItem) => tagItem.startsWith("本能："))
+  );
+}
+
+/**
  * 构建通用类型学主卡摘要。
  * 关键逻辑：结果摘要统一输出一条人格描述句，不再承担建议、Top3 比较或方法论说明。
  * @param {object} params 参数对象。
@@ -89,6 +120,19 @@ export function buildTypeologyPersonalitySummary({
   );
   const summaryLead = stripTrailingPunctuation(outcomeContext.summary || mainResult?.summary);
   const labelText = String(outcomeContext.displayLabel ?? "当前风格").trim();
+  const normalizedTagList =
+    outcomeContext.tags.length > 0 ? outcomeContext.tags : normalizeTypeologyTextList(mainResult?.tags, 6);
+
+  if (isEnneagramTraitTagList(normalizedTagList)) {
+    const coreTrait = extractTaggedTraitValue(normalizedTagList, "主型：");
+    const wingTrait = extractTaggedTraitValue(normalizedTagList, "侧翼：");
+    const tritypeTrait = extractTaggedTraitValue(normalizedTagList, "三型：");
+    const instinctTrait = extractTaggedTraitValue(normalizedTagList, "本能：");
+
+    return normalizeTypeologyShortSummary(
+      `你是一个核心动机很鲜明的人，内在更接近${coreTrait || "当前主型"}这一路径，平时会带着${wingTrait || "侧翼特征"}的处理方式去应对关系和压力，并常通过${tritypeTrait || "三型组合"}来平衡表达与行动，本能上则更偏${instinctTrait || "当前本能堆叠"}。`,
+    );
+  }
 
   return normalizeTypeologyShortSummary(
     [
