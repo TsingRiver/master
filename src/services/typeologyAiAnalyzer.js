@@ -43,21 +43,15 @@ function toSafeStringArray(value, fallbackArray, limit) {
 
 /**
  * 归一化 AI 短摘要：
- * 关键逻辑：主卡摘要应保持“约 100 字的单句人格描述”；若模型未返回有效短摘要，则回退本地摘要。
+ * 关键逻辑：主卡摘要中 AI `shortSummary` 具有最高优先级；只有字段缺失或为空时才回退本地摘要。
  * @param {unknown} value 任意值。
  * @param {string} fallbackText 本地兜底摘要。
- * @param {string} [narrativeText=""] 深度叙事文案，用于识别“把长文原样塞进短摘要”的异常结果。
+ * @param {string} [_narrativeText=""] 保留参数位，兼容现有调用签名。
  * @returns {string} 可用于主卡展示的短摘要。
  */
-function resolveAiShortSummary(value, fallbackText, narrativeText = "") {
-  const normalizedText = String(value ?? "").trim();
+function resolveAiShortSummary(value, fallbackText, _narrativeText = "") {
   const normalizedShortSummary = normalizeTypeologyShortSummary(value);
-  const normalizedNarrativeText = String(narrativeText ?? "").trim();
-  if (
-    normalizedShortSummary &&
-    normalizedText !== normalizedNarrativeText &&
-    normalizedShortSummary !== normalizedNarrativeText
-  ) {
+  if (normalizedShortSummary) {
     return normalizedShortSummary;
   }
 

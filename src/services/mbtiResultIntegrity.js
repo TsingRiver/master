@@ -597,30 +597,10 @@ function looksLikeDeepNarrativeSummaryText({ text, narrative }) {
  * @returns {boolean} 是否需要升级。
  */
 function shouldUpgradeGenericAiShortSummary({ text, narrative, mainResult }) {
-  const normalizedText = String(text ?? "").trim();
   const normalizedShortSummary = normalizeTypeologyShortSummary(text);
-  const normalizedNarrative = String(narrative ?? "").trim();
-  if (!normalizedShortSummary) {
-    return true;
-  }
-
-  if (
-    normalizedNarrative &&
-    (normalizedText === normalizedNarrative || normalizedShortSummary === normalizedNarrative)
-  ) {
-    return true;
-  }
-
-  if (
-    looksLikeDeepNarrativeSummaryText({
-      text: normalizedText,
-      narrative: normalizedNarrative,
-    })
-  ) {
-    return true;
-  }
-
-  return hasLegacyCodeHeadlineText(normalizedShortSummary, mainResult?.label);
+  void narrative;
+  void mainResult;
+  return !normalizedShortSummary;
 }
 
 /**
@@ -648,24 +628,9 @@ function shouldUpgradeMbtiAiNarrative({ text, summaryText }) {
  * @returns {boolean} 是否需要升级。
  */
 function shouldUpgradeMbtiAiShortSummary({ text, narrative }) {
-  const normalizedText = String(text ?? "").trim();
   const normalizedShortSummary = normalizeTypeologyShortSummary(text);
-  const normalizedNarrative = String(narrative ?? "").trim();
-  if (!normalizedShortSummary) {
-    return true;
-  }
-
-  if (
-    Boolean(normalizedNarrative) &&
-    (normalizedText === normalizedNarrative || normalizedShortSummary === normalizedNarrative)
-  ) {
-    return true;
-  }
-
-  return looksLikeDeepNarrativeSummaryText({
-    text: normalizedText,
-    narrative: normalizedNarrative,
-  });
+  void narrative;
+  return !normalizedShortSummary;
 }
 
 /**

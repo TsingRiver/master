@@ -58,18 +58,12 @@ function buildMbtiFallbackShortSummary(localResult) {
  * 归一化 MBTI AI 短摘要。
  * @param {unknown} value 任意值。
  * @param {string} fallbackText 本地兜底摘要。
- * @param {string} [insightText=""] 进阶叙事文本。
+ * @param {string} [_insightText=""] 保留参数位，兼容现有调用签名。
  * @returns {string} 可用于主结果卡的短摘要。
  */
-function resolveMbtiAiShortSummary(value, fallbackText, insightText = "") {
-  const normalizedText = String(value ?? "").trim();
+function resolveMbtiAiShortSummary(value, fallbackText, _insightText = "") {
   const normalizedShortSummary = normalizeTypeologyShortSummary(value);
-  const normalizedInsightText = String(insightText ?? "").trim();
-  if (
-    normalizedShortSummary &&
-    normalizedText !== normalizedInsightText &&
-    normalizedShortSummary !== normalizedInsightText
-  ) {
+  if (normalizedShortSummary) {
     return normalizedShortSummary;
   }
 
