@@ -49,6 +49,12 @@
       :portal-mode="portalSession"
       :portal-home-href="portalHubHref"
     />
+    <SoulAgeNumberStandalone
+      v-else-if="isSoulAgeNumberStandaloneTheme"
+      :theme-config="activeThemeConfig"
+      :portal-mode="portalSession"
+      :portal-home-href="portalHubHref"
+    />
     <SurveyEngine
       v-else
       :theme-config="activeThemeConfig"
@@ -137,6 +143,9 @@ const RomanceStandalone = defineAsyncComponent(
 );
 const SoulAgeStandalone = defineAsyncComponent(
   () => import("./components/SoulAgeStandalone.vue"),
+);
+const SoulAgeNumberStandalone = defineAsyncComponent(
+  () => import("./components/SoulAgeNumberStandalone.vue"),
 );
 const LicenseAccessPage = defineAsyncComponent(
   () => import("./components/LicenseAccessPage.vue"),
@@ -309,6 +318,14 @@ const isRomanceStandaloneTheme = computed(
  */
 const isSoulAgeStandaloneTheme = computed(
   () => activeThemeConfig.value?.key === "soul-age",
+);
+
+/**
+ * 是否走“8 档灵魂年龄”独立组件：
+ * 关键逻辑：`soul-age-number` 与旧 `soul-age` 共存，但使用独立题库与计分逻辑。
+ */
+const isSoulAgeNumberStandaloneTheme = computed(
+  () => activeThemeConfig.value?.key === "soul-age-number",
 );
 
 /**

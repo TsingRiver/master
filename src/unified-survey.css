@@ -664,6 +664,208 @@ body {
   --highlight-bg: linear-gradient(145deg, #fbfcfd, #edf2f6);
 }
 
+.theme-city-vibe {
+  --page-overlay-one:
+    radial-gradient(
+      circle at 14% 14%,
+      rgba(255, 255, 255, 0.64),
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(247, 239, 233, 0.52) 0%,
+      rgba(240, 236, 244, 0.3) 42%,
+      rgba(235, 242, 250, 0.54) 100%
+    );
+  --page-overlay-two: radial-gradient(
+    circle at 86% 18%,
+    rgba(210, 168, 155, 0.2),
+    transparent 32%
+  );
+  --page-bg: linear-gradient(145deg, #f7efe8 0%, #f1edf4 48%, #edf4fb 100%);
+  --text-main: #4b3c35;
+  --text-muted: #75635d;
+  --surface: rgba(255, 251, 248, 0.92);
+  --surface-border: rgba(240, 224, 217, 0.88);
+  --shadow: 0 24px 58px rgba(112, 90, 82, 0.15);
+  --primary: #bb7e63;
+  --primary-dark: #d7b4a5;
+  --aura-left: radial-gradient(circle at 30% 30%, #f0d3c6, #d9a88f);
+  --aura-right: radial-gradient(circle at 30% 30%, #d6deef, #8ca0c2);
+  --noise-dot: rgba(122, 94, 82, 0.22);
+  --option-border: #e7d6cf;
+  --option-selected-border: #bf866d;
+  --option-selected-bg: linear-gradient(180deg, #fffdfb, #f7f0ec);
+  --option-selected-shadow: rgba(187, 126, 99, 0.16);
+  --detail-border: #e8d9d2;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(248, 242, 238, 0.99)
+  );
+  --highlight-border: #ead9d0;
+  --highlight-bg: linear-gradient(145deg, #fffdfa, #f7f1ed);
+  --title-font: var(--survey-font-title);
+}
+
+.theme-city-vibe.theme-city-vibe-soft {
+  --primary: #b98d73;
+  --primary-dark: #dfc7b6;
+  --highlight-border: #e6dbd2;
+  --highlight-bg: linear-gradient(145deg, #fffdfb, #f7f0ec);
+}
+
+.theme-city-vibe.theme-city-vibe-balanced {
+  --primary: #ae7f68;
+  --primary-dark: #d8b6a8;
+  --detail-border: #e4d6cf;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(247, 241, 237, 0.99)
+  );
+}
+
+.theme-city-vibe.theme-city-vibe-modern {
+  --primary: #8b769d;
+  --primary-dark: #c7bdd8;
+  --option-selected-border: #8f7ea8;
+  --option-selected-bg: linear-gradient(180deg, #fffefe, #f4f1f9);
+  --option-selected-shadow: rgba(139, 118, 157, 0.16);
+}
+
+.theme-city-vibe.theme-city-vibe-bold {
+  --primary: #6d7f9c;
+  --primary-dark: #b8c4d8;
+  --shadow: 0 24px 60px rgba(91, 106, 131, 0.18);
+  --highlight-border: #d9e1ed;
+  --highlight-bg: linear-gradient(145deg, #fbfcff, #eef2f8);
+}
+
+.theme-gentle-wild {
+  --page-overlay-one: linear-gradient(
+    180deg,
+    rgba(241, 248, 243, 0.22) 0%,
+    rgba(231, 243, 235, 0.12) 28%,
+    rgba(216, 234, 222, 0.24) 58%,
+    rgba(243, 249, 245, 0.72) 100%
+  );
+  --page-overlay-two: radial-gradient(
+    circle at 16% 14%,
+    rgba(255, 255, 255, 0.54),
+    transparent 34%
+  );
+  --page-bg: url("/bck-1.jpg") center / cover no-repeat;
+  --text-main: #355446;
+  --text-muted: #638071;
+  --surface: rgba(250, 253, 250, 0.94);
+  --surface-border: rgba(207, 226, 214, 0.9);
+  --shadow: 0 24px 60px rgba(84, 126, 97, 0.14);
+  --primary: #6ea67f;
+  --primary-dark: #c8e1ce;
+  --aura-left: radial-gradient(circle at 30% 30%, #ebf8ef, #b8ddc0);
+  --aura-right: radial-gradient(circle at 30% 30%, #dff0e5, #8ec5a3);
+  --noise-dot: rgba(72, 102, 84, 0.18);
+  --option-border: #d7e6dc;
+  --option-selected-border: #6ea67f;
+  --option-selected-bg: linear-gradient(180deg, #fffffe, #f0f7f2);
+  --option-selected-shadow: rgba(110, 166, 127, 0.18);
+  --detail-border: #dbe9df;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(241, 248, 243, 0.99)
+  );
+  --highlight-border: #d4e4d8;
+  --highlight-bg: linear-gradient(145deg, #fbfefb, #eef6f0);
+  --title-font: var(--survey-font-title);
+}
+
+.theme-gentle-wild.theme-gentle-wild-soft {
+  --primary: #7eb792;
+  --primary-dark: #d8eadc;
+  --highlight-border: #dcece0;
+  --highlight-bg: linear-gradient(145deg, #fcfffc, #eef8f0);
+}
+
+.theme-gentle-wild.theme-gentle-wild-balanced {
+  --primary: #699f7d;
+  --primary-dark: #bfd8c5;
+  --detail-border: #d5e5da;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(236, 245, 239, 0.99)
+  );
+}
+
+.theme-gentle-wild.theme-gentle-wild-wild {
+  --primary: #47795b;
+  --primary-dark: #b2cdb9;
+  --shadow: 0 24px 60px rgba(56, 92, 69, 0.16);
+  --option-selected-border: #4d8261;
+  --option-selected-bg: linear-gradient(180deg, #fdfefd, #edf5ef);
+  --option-selected-shadow: rgba(71, 121, 91, 0.16);
+  --highlight-border: #cadcce;
+  --highlight-bg: linear-gradient(145deg, #f7fbf8, #e8f1ea);
+}
+
+.theme-inner-child {
+  --page-bg: linear-gradient(145deg, #fff8f1 0%, #fff0d8 44%, #ebf6ff 100%);
+  --text-main: #594236;
+  --text-muted: #8e7462;
+  --surface: rgba(255, 255, 255, 0.93);
+  --surface-border: rgba(243, 223, 201, 0.9);
+  --shadow: 0 24px 60px rgba(188, 138, 95, 0.14);
+  --primary: #f3a065;
+  --primary-dark: #f7d28f;
+  --aura-left: radial-gradient(circle at 30% 30%, #ffd5aa, #f4a66d);
+  --aura-right: radial-gradient(circle at 30% 30%, #d5ebff, #9fc4f5);
+  --noise-dot: rgba(145, 112, 79, 0.22);
+  --option-border: #f1ddc6;
+  --option-selected-border: #f1a271;
+  --option-selected-bg: linear-gradient(180deg, #fffefb, #fff6ea);
+  --option-selected-shadow: rgba(235, 155, 92, 0.18);
+  --detail-border: #f2e3d3;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 247, 238, 0.99)
+  );
+  --highlight-border: #f1dcc8;
+  --highlight-bg: linear-gradient(145deg, #fffaf4, #fff0de);
+  --title-font: var(--survey-font-title);
+}
+
+.theme-inner-child.theme-inner-child-soft {
+  --primary: #f4a577;
+  --primary-dark: #fad9ae;
+  --highlight-border: #f2decd;
+  --highlight-bg: linear-gradient(145deg, #fffaf6, #fff2e4);
+}
+
+.theme-inner-child.theme-inner-child-balanced {
+  --primary: #df9e61;
+  --primary-dark: #f0cf9e;
+  --detail-border: #ecdcc7;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 245, 233, 0.99)
+  );
+}
+
+.theme-inner-child.theme-inner-child-bold {
+  --primary: #d9854d;
+  --primary-dark: #f0c28f;
+  --shadow: 0 24px 60px rgba(164, 100, 57, 0.16);
+  --option-selected-border: #dd884f;
+  --option-selected-bg: linear-gradient(180deg, #fffdf9, #fff1e2);
+  --option-selected-shadow: rgba(208, 125, 67, 0.16);
+  --highlight-border: #ecd1b9;
+  --highlight-bg: linear-gradient(145deg, #fff9f2, #ffeddc);
+}
+
 .theme-romance {
   --page-bg: linear-gradient(136deg, #fff3f7, #f6efff 50%, #eef4ff);
   --text-main: #45315f;
@@ -2854,7 +3056,12 @@ body {
   min-height: 50px;
   border-radius: 18px !important;
   border-color: rgba(77, 132, 244, 0.56) !important;
-  background: linear-gradient(135deg, #4d84f4 0%, #72b7ff 54%, #9fd7ff 100%) !important;
+  background: linear-gradient(
+    135deg,
+    #4d84f4 0%,
+    #72b7ff 54%,
+    #9fd7ff 100%
+  ) !important;
   box-shadow: 0 14px 30px rgba(88, 133, 208, 0.22);
   color: #f8fbff !important;
   font-size: 16px;
@@ -3572,6 +3779,398 @@ body {
 .theme-love-destiny .survey-detail-wrap h3,
 .theme-love-destiny .survey-summary-wrap h3 {
   color: #8a6aa3;
+}
+
+.theme-city-vibe .survey-badge {
+  color: #8d614f;
+}
+
+.theme-city-vibe .survey-cover-card {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.76) 0%,
+    rgba(250, 244, 240, 0.88) 46%,
+    rgba(243, 242, 247, 0.92) 100%
+  );
+  backdrop-filter: blur(10px) saturate(1.05);
+}
+
+.theme-city-vibe .survey-cover-title-main {
+  color: #4b3c35;
+  white-space: pre-line;
+}
+
+.theme-city-vibe .survey-main-title,
+.theme-city-vibe .survey-question-title {
+  color: #4b3c35;
+}
+
+.theme-city-vibe .survey-result-prefix {
+  color: #856257;
+}
+
+.theme-city-vibe .survey-main-score {
+  color: #6d7f9c;
+}
+
+.theme-city-vibe .survey-main-tag-item {
+  color: #54423b;
+  border-color: rgba(204, 175, 162, 0.56);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 254, 252, 0.98),
+    rgba(245, 237, 232, 0.96)
+  );
+}
+
+.theme-city-vibe .survey-tag-item {
+  color: #684f46;
+  border-color: rgba(197, 176, 205, 0.48);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(241, 237, 246, 0.96)
+  );
+}
+
+.theme-city-vibe .survey-type-card-value {
+  color: #564740;
+}
+
+.theme-city-vibe .survey-type-card-label {
+  color: #816b63;
+}
+
+.theme-city-vibe .survey-radar-grid,
+.theme-city-vibe .survey-radar-axis {
+  stroke: rgba(150, 134, 156, 0.2);
+}
+
+.theme-city-vibe .survey-radar-data {
+  fill: rgba(187, 126, 99, 0.15);
+  stroke: rgba(109, 127, 156, 0.82);
+}
+
+.theme-city-vibe .survey-radar-label,
+.theme-city-vibe .survey-radar-name,
+.theme-city-vibe .survey-radar-score,
+.theme-city-vibe .survey-distribution-meta span,
+.theme-city-vibe .survey-type-card-wrap h3,
+.theme-city-vibe .survey-distribution-wrap h3,
+.theme-city-vibe .survey-radar-wrap h3,
+.theme-city-vibe .survey-top-wrap h3,
+.theme-city-vibe .survey-detail-wrap h3,
+.theme-city-vibe .survey-summary-wrap h3 {
+  color: #7d655b;
+}
+
+.theme-gentle-wild .survey-badge {
+  color: #4f765d;
+}
+
+.theme-gentle-wild .survey-aura,
+.theme-gentle-wild .survey-noise {
+  display: none;
+}
+
+.theme-gentle-wild .survey-cover-card {
+  display: flex;
+  flex-direction: column;
+  /* 关键逻辑：封面延续 love-destiny 的海报感布局，但改为绿色纵向呼吸感。 */
+  justify-content: center;
+  gap: 14px;
+  min-height: min(82vh, 980px);
+  padding: clamp(32px, 6vw, 38px) clamp(24px, 5.6vw, 34px)
+    clamp(30px, 7vw, 44px);
+  border-radius: 28px;
+  border-color: rgba(220, 238, 226, 0.48);
+  background: linear-gradient(
+    180deg,
+    rgba(252, 254, 252, 0.48) 0%,
+    rgba(243, 249, 245, 0.4) 24%,
+    rgba(229, 241, 233, 0.5) 60%,
+    rgba(247, 251, 248, 0.64) 100%
+  );
+  box-shadow:
+    0 30px 64px rgba(84, 126, 97, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(10px) saturate(1.08);
+}
+
+.theme-gentle-wild.survey-stage-cover .survey-header {
+  display: none;
+}
+
+.theme-gentle-wild.survey-stage-cover .survey-shell {
+  width: min(100%, 620px);
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+}
+
+.theme-gentle-wild.survey-stage-cover .survey-cover-card {
+  width: 100%;
+  margin: auto 0;
+}
+
+/* 关键逻辑：答题阶段只下移当前主题的主容器，不改通用结构，避免影响其他主题布局。 */
+.theme-gentle-wild.survey-stage-survey .survey-shell {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.theme-gentle-wild .survey-cover-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(248, 252, 249, 0.06) 18%,
+      rgba(226, 239, 231, 0.1) 42%,
+      rgba(246, 250, 247, 0.36) 100%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.08),
+      transparent 34%,
+      rgba(136, 188, 154, 0.14) 68%,
+      transparent 100%
+    );
+  opacity: 0.84;
+}
+
+.theme-gentle-wild .survey-cover-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-gentle-wild .survey-cover-title-main {
+  color: #2f4e3f;
+  white-space: pre-line;
+  text-shadow:
+    0 3px 14px rgba(255, 255, 255, 0.68),
+    0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+.theme-gentle-wild .survey-option {
+  background: linear-gradient(180deg, #fffefe, #f2f8f3);
+}
+
+.theme-gentle-wild .survey-main-title,
+.theme-gentle-wild .survey-question-title {
+  color: #355445;
+}
+
+.theme-gentle-wild .survey-result-prefix {
+  color: #4d6e5b;
+}
+
+.theme-gentle-wild .survey-main-score {
+  color: #335240;
+}
+
+.theme-gentle-wild .survey-main-tag-item {
+  color: #345342;
+  border-color: rgba(152, 194, 166, 0.52);
+  background: linear-gradient(
+    140deg,
+    rgba(251, 254, 251, 0.98),
+    rgba(232, 243, 235, 0.96)
+  );
+}
+
+.theme-gentle-wild .survey-tag-item {
+  color: #3d5f4d;
+  border-color: rgba(170, 205, 181, 0.56);
+  background: linear-gradient(
+    140deg,
+    rgba(251, 254, 251, 0.98),
+    rgba(236, 246, 239, 0.96)
+  );
+}
+
+.theme-gentle-wild .survey-type-card-value {
+  color: #31503f;
+}
+
+.theme-gentle-wild .survey-type-card-label {
+  color: #5b7868;
+}
+
+.theme-gentle-wild .survey-radar-grid,
+.theme-gentle-wild .survey-radar-axis {
+  stroke: rgba(103, 170, 129, 0.22);
+}
+
+.theme-gentle-wild .survey-radar-data {
+  fill: rgba(110, 166, 127, 0.2);
+  stroke: rgba(83, 142, 102, 0.86);
+}
+
+.theme-gentle-wild .survey-radar-label,
+.theme-gentle-wild .survey-radar-name,
+.theme-gentle-wild .survey-radar-score,
+.theme-gentle-wild .survey-distribution-meta span,
+.theme-gentle-wild .survey-type-card-wrap h3,
+.theme-gentle-wild .survey-distribution-wrap h3,
+.theme-gentle-wild .survey-radar-wrap h3,
+.theme-gentle-wild .survey-top-wrap h3,
+.theme-gentle-wild .survey-detail-wrap h3,
+.theme-gentle-wild .survey-summary-wrap h3 {
+  color: #557463;
+}
+
+.theme-inner-child .survey-badge {
+  color: #a56c41;
+}
+
+.theme-inner-child .survey-cover-card {
+  display: flex;
+  flex-direction: column;
+  /* 关键逻辑：封面统一走竖向居中布局，保证移动端大标题与规则说明都能稳定落入首屏。 */
+  justify-content: center;
+  gap: 14px;
+  min-height: min(82vh, 980px);
+  padding: clamp(32px, 6vw, 38px) clamp(24px, 5.6vw, 34px)
+    clamp(30px, 7vw, 44px);
+  border-radius: 28px;
+  border-color: rgba(246, 226, 204, 0.48);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 247, 0.58) 0%,
+    rgba(255, 245, 231, 0.5) 28%,
+    rgba(239, 248, 255, 0.54) 64%,
+    rgba(250, 252, 255, 0.68) 100%
+  );
+  box-shadow:
+    0 30px 64px rgba(188, 138, 95, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(10px) saturate(1.05);
+}
+
+.theme-inner-child.survey-stage-cover .survey-header {
+  display: none;
+}
+
+.theme-inner-child.survey-stage-cover .survey-shell {
+  width: min(100%, 620px);
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+}
+
+.theme-inner-child.survey-stage-cover .survey-cover-card {
+  width: 100%;
+  margin: auto 0;
+}
+
+.theme-inner-child .survey-cover-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 249, 240, 0.08) 22%,
+      rgba(255, 238, 216, 0.14) 48%,
+      rgba(239, 247, 255, 0.28) 100%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.12),
+      transparent 34%,
+      rgba(165, 205, 246, 0.16) 70%,
+      transparent 100%
+    );
+  opacity: 0.86;
+}
+
+.theme-inner-child .survey-cover-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-inner-child .survey-cover-title-main {
+  color: #6b432b;
+  white-space: pre-line;
+  text-shadow:
+    0 3px 14px rgba(255, 255, 255, 0.72),
+    0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+.theme-inner-child .survey-option {
+  background: linear-gradient(180deg, #fffefd, #fff8f0);
+}
+
+.theme-inner-child .survey-main-title,
+.theme-inner-child .survey-question-title {
+  color: #5b4336;
+}
+
+.theme-inner-child .survey-result-prefix {
+  color: #a07452;
+}
+
+.theme-inner-child .survey-main-score {
+  color: #c07441;
+}
+
+.theme-inner-child .survey-main-tag-item {
+  color: #6d4f3d;
+  border-color: rgba(236, 180, 131, 0.48);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 251, 246, 0.98),
+    rgba(255, 239, 220, 0.96)
+  );
+}
+
+.theme-inner-child .survey-tag-item {
+  color: #755540;
+  border-color: rgba(184, 201, 233, 0.48);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 251, 246, 0.98),
+    rgba(241, 248, 255, 0.96)
+  );
+}
+
+.theme-inner-child .survey-type-card-value {
+  color: #694a38;
+}
+
+.theme-inner-child .survey-type-card-label {
+  color: #97745b;
+}
+
+.theme-inner-child .survey-radar-grid,
+.theme-inner-child .survey-radar-axis {
+  stroke: rgba(243, 160, 101, 0.22);
+}
+
+.theme-inner-child .survey-radar-data {
+  fill: rgba(243, 160, 101, 0.18);
+  stroke: rgba(222, 132, 70, 0.88);
+}
+
+.theme-inner-child .survey-radar-label,
+.theme-inner-child .survey-radar-name,
+.theme-inner-child .survey-radar-score,
+.theme-inner-child .survey-distribution-meta span,
+.theme-inner-child .survey-type-card-wrap h3,
+.theme-inner-child .survey-distribution-wrap h3,
+.theme-inner-child .survey-radar-wrap h3,
+.theme-inner-child .survey-top-wrap h3,
+.theme-inner-child .survey-detail-wrap h3,
+.theme-inner-child .survey-summary-wrap h3 {
+  color: #9b6d4c;
 }
 
 /* 关键逻辑：答题卡作为绝对定位参照系，保证头像浮层不参与文档流。 */
@@ -6786,6 +7385,418 @@ body {
   .survey-poster-wrap-soul-cat .survey-poster-actions {
     grid-template-columns: 1fr;
   }
+}
+
+.theme-animal-lover {
+  /* 关键逻辑：默认阶段回退到暖米色主题底，不在答题过程中展示整页背景图。 */
+  --page-bg: linear-gradient(138deg, #f8f4e3 0%, #f7f1df 52%, #f3ebd5 100%);
+  --animal-lover-result-bg: url("/animal-lover.jpg") center 36% / cover
+    no-repeat;
+  --page-overlay-one: radial-gradient(
+    circle at 16% 14%,
+    rgba(255, 255, 255, 0.58),
+    transparent 40%
+  );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 84% 82%,
+      rgba(218, 204, 165, 0.18),
+      transparent 44%
+    ),
+    radial-gradient(
+      circle at 20% 84%,
+      rgba(255, 255, 255, 0.24),
+      transparent 36%
+    );
+  --text-main: #524537;
+  --text-muted: #85755d;
+  --surface: rgba(255, 251, 243, 0.88);
+  --surface-border: rgba(221, 210, 182, 0.92);
+  --shadow: 0 24px 52px rgba(145, 125, 86, 0.14);
+  --primary: #d7c79f;
+  --primary-dark: #a69472;
+  /* 关键逻辑：答题阶段的光球颜色与背景拉开层次，避免暖米色主题下完全融进底色。 */
+  --aura-left: radial-gradient(circle at 35% 35%, #fff1c9, #e2bc72);
+  --aura-right: radial-gradient(circle at 35% 35%, #fde7c4, #d4ac74);
+  --aura-opacity: 0.82;
+  --aura-blur: 18px;
+  --aura-left-size: 316px;
+  --aura-right-size: 292px;
+  --aura-left-top: -112px;
+  --aura-left-left: -96px;
+  --aura-right-bottom: 8%;
+  --aura-right-right: -94px;
+  --aura-left-radius: 56% 44% 60% 40% / 48% 62% 38% 52%;
+  --aura-right-radius: 44% 56% 42% 58% / 58% 42% 58% 42%;
+  --noise-dot: rgba(133, 117, 93, 0.22);
+  --option-border: #ddd0b5;
+  --option-selected-border: #c8b98f;
+  --option-selected-bg: linear-gradient(180deg, #fffdf8, #f8f4e3);
+  --option-selected-shadow: rgba(166, 148, 114, 0.14);
+  --detail-border: #e3d7bb;
+  --detail-bg: linear-gradient(180deg, #fffdf7, #f8f4e8);
+  --highlight-border: #e1d4b6;
+  --highlight-bg: #f8f4e3;
+}
+
+.theme-animal-lover .survey-noise {
+  display: none;
+}
+
+/* 关键逻辑：答题阶段恢复主题光球层，只复用现有两个 aura 节点，维护成本最低。 */
+.theme-animal-lover.survey-stage-survey .survey-aura {
+  display: block;
+  z-index: 1;
+}
+
+/* 关键逻辑：封面与结果页继续保持海报式整页图，不叠加漂浮光球，避免视觉信息过满。 */
+.theme-animal-lover.survey-stage-cover .survey-aura,
+.theme-animal-lover.survey-stage-result .survey-aura {
+  display: none;
+}
+
+.theme-animal-lover.survey-stage-cover {
+  /* 关键逻辑：封面沿用统一海报图，避免与结果页动物定制背景混用。 */
+  --page-bg: url("/animal-lover.jpg") center 36% / cover no-repeat;
+  --page-overlay-one: linear-gradient(
+    180deg,
+    rgba(248, 244, 227, 0.34) 0%,
+    rgba(248, 244, 227, 0.16) 26%,
+    rgba(248, 244, 227, 0.18) 62%,
+    rgba(248, 244, 227, 0.36) 100%
+  );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 18% 16%,
+      rgba(255, 255, 255, 0.32),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 82% 18%,
+      rgba(215, 199, 159, 0.16),
+      transparent 40%
+    );
+}
+
+.theme-animal-lover.survey-stage-result {
+  /* 关键逻辑：结果页背景图按动物结果切换，默认回退到主题封面图。 */
+  --page-bg: var(--animal-lover-result-bg);
+  --page-overlay-one: linear-gradient(
+    180deg,
+    rgba(248, 244, 227, 0.14) 0%,
+    rgba(248, 244, 227, 0.08) 32%,
+    rgba(248, 244, 227, 0.12) 100%
+  );
+  --page-overlay-two: linear-gradient(
+    135deg,
+    rgba(63, 48, 25, 0.16) 0%,
+    rgba(255, 255, 255, 0.06) 42%,
+    rgba(78, 61, 34, 0.18) 100%
+  );
+  overflow: hidden;
+}
+
+.theme-animal-lover.animal-lover-result-kitten {
+  --animal-lover-result-bg: url("/animal-lover/奶猫.png") center center / cover
+    no-repeat;
+}
+
+.theme-animal-lover.animal-lover-result-deer {
+  --animal-lover-result-bg: url("/animal-lover/小鹿.jpg") center center / cover
+    no-repeat;
+}
+
+.theme-animal-lover.animal-lover-result-swan {
+  --animal-lover-result-bg: url("/animal-lover/天鹅.jpg") center center / cover
+    no-repeat;
+}
+
+.theme-animal-lover.animal-lover-result-dolphin {
+  --animal-lover-result-bg: url("/animal-lover/海豚.jpg") center center / cover
+    no-repeat;
+}
+
+.theme-animal-lover.animal-lover-result-fox {
+  --animal-lover-result-bg: url("/animal-lover/狐狸.jpg") center center / cover
+    no-repeat;
+}
+
+.theme-animal-lover.animal-lover-result-panda {
+  --animal-lover-result-bg: url("/animal-lover/熊猫.jpg") center center / cover
+    no-repeat;
+}
+
+.theme-animal-lover.animal-lover-result-wolf {
+  --animal-lover-result-bg: url("/animal-lover/狼.jpg") center center / cover
+    no-repeat;
+}
+
+.theme-animal-lover.animal-lover-result-cheetah {
+  --animal-lover-result-bg: url("/animal-lover/猎豹.png") center center / cover
+    no-repeat;
+}
+
+.theme-animal-lover .survey-cover-card {
+  display: flex;
+  flex-direction: column;
+  /* 关键逻辑：封面恢复初始居中排版，靠容器 gap 控制间距，避免依赖硬编码 margin。 */
+  justify-content: center;
+  gap: 14px;
+  min-height: min(82vh, 980px);
+  padding: clamp(32px, 6vw, 38px) clamp(24px, 5.6vw, 34px)
+    clamp(30px, 7vw, 44px);
+  border-radius: 28px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.theme-animal-lover.survey-stage-cover .survey-header {
+  display: none;
+}
+
+.theme-animal-lover.survey-stage-cover .survey-shell {
+  width: min(100%, 620px);
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+}
+
+.theme-animal-lover.survey-stage-cover .survey-cover-card {
+  width: 100%;
+  margin: auto 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 关键逻辑：只调整当前主题封面与答题阶段容器，避免公共布局被连带改动。 */
+.theme-animal-lover.survey-stage-survey .survey-shell {
+  /* 关键逻辑：动物系恋人答题阶段恢复默认顶部布局，不再把题卡压到页面底部。 */
+  min-height: auto;
+  display: block;
+}
+
+.theme-animal-lover.survey-stage-result .survey-shell {
+  /* 关键逻辑：结果页 shell 升级为整块磨砂玻璃容器，并承担内部滚动，避免页面本体跟着滚动。 */
+  box-sizing: border-box;
+  width: min(100%, 672px);
+  height: calc(100vh - 56px);
+  height: calc(100dvh - 56px);
+  max-height: calc(100vh - 56px);
+  max-height: calc(100dvh - 56px);
+  padding: clamp(18px, 4.6vw, 26px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 250, 241, 0.28);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 245, 0.22) 0%,
+    rgba(248, 241, 223, 0.12) 54%,
+    rgba(243, 233, 210, 0.16) 100%
+  );
+  box-shadow:
+    0 24px 52px rgba(65, 48, 26, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(5px) saturate(1.04);
+  -webkit-backdrop-filter: blur(5px) saturate(1.04);
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.theme-animal-lover.survey-stage-result .survey-shell::-webkit-scrollbar {
+  width: 8px;
+}
+
+.theme-animal-lover.survey-stage-result .survey-shell::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(111, 92, 58, 0.28);
+}
+
+.theme-animal-lover.survey-stage-result .survey-shell::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.theme-animal-lover.survey-stage-result .survey-header {
+  margin: 0 0 18px;
+}
+
+.theme-animal-lover.survey-stage-result .survey-desc {
+  display: none;
+}
+
+.theme-animal-lover.survey-stage-result .survey-result-card {
+  /* 关键逻辑：结果内容卡改为透明壳，避免盖掉外层 shell 的整块磨砂玻璃效果。 */
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.theme-animal-lover.survey-stage-result .survey-result-state {
+  padding-bottom: 8px;
+}
+
+.theme-animal-lover.survey-stage-result .survey-result-prefix,
+.theme-animal-lover.survey-stage-result .survey-hero-artwork-caption,
+.theme-animal-lover.survey-stage-result .survey-type-card-label,
+.theme-animal-lover.survey-stage-result .survey-radar-name,
+.theme-animal-lover.survey-stage-result .survey-radar-score {
+  color: #6a5336;
+}
+
+.theme-animal-lover.survey-stage-result .survey-main-score,
+.theme-animal-lover.survey-stage-result .survey-main-tag-item,
+.theme-animal-lover.survey-stage-result .survey-tag-item,
+.theme-animal-lover.survey-stage-result .survey-top-tag-item,
+.theme-animal-lover.survey-stage-result .survey-highlight-box h3,
+.theme-animal-lover.survey-stage-result .survey-highlight-box p {
+  color: #563f24;
+}
+
+.theme-animal-lover.survey-stage-result .survey-easter-egg {
+  color: #664c2d;
+}
+
+.theme-animal-lover.survey-stage-result .survey-main-tag-item,
+.theme-animal-lover.survey-stage-result .survey-tag-item,
+.theme-animal-lover.survey-stage-result .survey-top-tag-item {
+  /* 关键逻辑：结果页标签改为轻边框透明态，避免在动物背景图上出现实心色块割裂。 */
+  background: rgba(255, 252, 245, 0.06);
+  border-color: rgba(255, 247, 233, 0.3);
+  box-shadow: none;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.theme-animal-lover.survey-stage-result .survey-highlight-box,
+.theme-animal-lover.survey-stage-result .survey-tag-wrap,
+.theme-animal-lover.survey-stage-result .survey-type-card-wrap,
+.theme-animal-lover.survey-stage-result .survey-distribution-wrap,
+.theme-animal-lover.survey-stage-result .survey-radar-wrap,
+.theme-animal-lover.survey-stage-result .survey-love-section,
+.theme-animal-lover.survey-stage-result .survey-top-wrap,
+.theme-animal-lover.survey-stage-result .survey-detail-wrap,
+.theme-animal-lover.survey-stage-result .survey-summary-wrap {
+  /* 关键逻辑：大模块统一降为轻玻璃，不再使用实心底色，保证背景图还能被感知。 */
+  background: rgba(255, 251, 242, 0.08);
+  border-color: rgba(255, 247, 233, 0.26);
+  box-shadow: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.theme-animal-lover.survey-stage-result .survey-type-card-item,
+.theme-animal-lover.survey-stage-result .survey-top-item,
+.theme-animal-lover.survey-stage-result .survey-radar-legend-item,
+.theme-animal-lover.survey-stage-result .survey-bullet-list li,
+.theme-animal-lover.survey-stage-result .survey-summary-item,
+.theme-animal-lover.survey-stage-result .survey-summary-toggle-btn {
+  background: rgba(255, 251, 242, 0.05);
+  border-color: rgba(255, 247, 233, 0.24);
+  box-shadow: none;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.theme-animal-lover .survey-cover-card::before {
+  content: none;
+}
+
+.theme-animal-lover .survey-cover-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-animal-lover.survey-stage-cover .survey-cover-promo-tag {
+  /* 关键逻辑：记分规则提升为页面级右上角定位，避免继续受封面卡片宽度与裁切影响。 */
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 22px);
+  right: calc(env(safe-area-inset-right, 0px) + 14px);
+  z-index: 6;
+  margin: 0;
+  text-align: right;
+}
+
+.theme-animal-lover .survey-badge {
+  color: #8a7858;
+}
+
+.theme-animal-lover .survey-header {
+  text-align: right;
+}
+
+.theme-animal-lover .survey-header h1 {
+  white-space: pre-line;
+}
+
+.theme-animal-lover .survey-desc {
+  width: 80%;
+  margin-left: auto;
+}
+
+.theme-animal-lover.survey-stage-cover .survey-cover-actions {
+  /* 关键逻辑：清掉通用 actions 顶部 margin，统一由封面容器 gap 管理间距。 */
+  margin-top: 0;
+}
+
+.theme-animal-lover.survey-stage-survey .survey-header {
+  text-align: left;
+}
+
+.theme-animal-lover.survey-stage-survey .survey-desc {
+  width: 100%;
+  margin-left: 0;
+}
+
+.theme-animal-lover .survey-cover-title-main {
+  white-space: pre-line;
+  color: #5f503c;
+  text-shadow:
+    0 3px 14px rgba(255, 255, 255, 0.72),
+    0 1px 0 rgba(255, 255, 255, 0.46);
+}
+
+.theme-animal-lover .survey-option {
+  background: linear-gradient(180deg, #fffdf8, #faf5e8);
+}
+
+.theme-animal-lover.survey-stage-cover .survey-cover-start-btn {
+  width: 80%;
+  margin: 0 auto;
+  border: 1px solid #d8ccb0 !important;
+  background: #f8f4e3 !important;
+  color: #6e5f45 !important;
+  box-shadow: 0 12px 24px rgba(166, 148, 114, 0.14);
+}
+
+.theme-animal-lover .survey-main-title,
+.theme-animal-lover .survey-question-title {
+  color: #5f503c;
+}
+
+.theme-animal-lover.theme-animal-lover-soft {
+  --primary: #ddd1b0;
+  --primary-dark: #b3a37e;
+}
+
+.theme-animal-lover.theme-animal-lover-warm {
+  --primary: #d7c79f;
+  --primary-dark: #a69472;
+}
+
+.theme-animal-lover.theme-animal-lover-free {
+  --primary: #d2c39c;
+  --primary-dark: #9e8d68;
+}
+
+.theme-animal-lover.theme-animal-lover-intense {
+  --primary: #ccb98d;
+  --primary-dark: #8f7c56;
 }
 
 @media (max-width: 759px) {

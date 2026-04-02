@@ -3215,6 +3215,773 @@ function buildPeoplePleaserLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 温柔 / 野性底色主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildGentleWildDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 温柔 / 野性底色主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildGentleWildUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 80);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const topCoreScenarios = Array.isArray(result?.topCoreScenarios)
+    ? result.topCoreScenarios
+    : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const resultPolarity = String(resultRule?.polarity ?? "balanced").trim();
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const coreScenarioTitle =
+    resultPolarity === "gentle"
+      ? "最像你的温柔场景"
+      : resultPolarity === "wild"
+        ? "最像你的野性场景"
+        : "最像你的柔野场景";
+  const coreScenarioLines =
+    topCoreScenarios.length > 0
+      ? topCoreScenarios.map((scenarioItem) => {
+          const optionText = String(scenarioItem?.optionLabel ?? "").trim();
+          const scenarioName = String(scenarioItem?.name ?? "").trim();
+
+          if (resultPolarity === "gentle") {
+            return `「${scenarioName}」里你更容易选择“${optionText || "待观察"}”，说明你会先收住锋芒，把温柔放在前面。`;
+          }
+
+          if (resultPolarity === "wild") {
+            return `「${scenarioName}」里你更容易选择“${optionText || "待观察"}”，说明你会更直接地释放野性和主场感。`;
+          }
+
+          return `「${scenarioName}」里你会落在“${optionText || "待观察"}”这一档，体现出你身上柔与野并存的层次感。`;
+        })
+      : ["当前样本仍偏少，建议完整作答后再看最像你的底色场景。"];
+  const defaultDetailSections = [
+    {
+      title: "结果说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你正在慢慢看清自己更偏温柔还是更偏野性。",
+        majorityProfile?.description
+          ? `多数选项画像：${majorityProfile.description}`
+          : "多数选项画像仍在整理中。",
+      ],
+    },
+    {
+      title: coreScenarioTitle,
+      items: coreScenarioLines,
+    },
+    {
+      title: "相处提醒",
+      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
+        ? result.actionTips
+        : Array.isArray(resultRule.actionTips)
+          ? resultRule.actionTips
+          : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+
+  return createUnifiedResult({
+    source: sourceType,
+    themeVariantClass: String(
+      result?.themeVariantClass ?? resultRule.themeVariantClass ?? "",
+    ).trim(),
+    prefixLabel: "你的底色结果",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 80}`,
+    main: {
+      name: resultRule.levelName ?? "柔野底色待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "底色判定",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的柔野底色侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "柔野档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 80}` },
+        {
+          label: "多数选项",
+          value: `${majorityProfile.label ?? "A 柔软收敛向"}（${majorityProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均反应",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "当前状态",
+          value: resultRule.statusLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答分布",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "柔野张力图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次柔野底色",
+    easterEggText: String(resultRule.easterEggText ?? "").trim(),
+  });
+}
+
+/**
+ * 温柔 / 野性底色主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildGentleWildDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildGentleWildUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 温柔 / 野性底色主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildGentleWildLocalUnifiedResult(localResult) {
+  return buildGentleWildUnifiedResult(localResult, "local");
+}
+
+/**
+ * 动物系恋人主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildAnimalLoverDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 动物系恋人主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildAnimalLoverUnifiedResult(result, sourceType) {
+  // 关键逻辑：动物系恋人结果页显式屏蔽这两块文案模块，避免后续深度结果再次注入。
+  const hiddenDetailSectionTitles = new Set(["结果说明", "最像你的恋爱场景"]);
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 80);
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const defaultDetailSections = [
+    {
+      title: "相处提醒",
+      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
+        ? result.actionTips
+        : Array.isArray(resultRule.actionTips)
+          ? resultRule.actionTips
+          : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) =>
+            sectionItem.title &&
+            sectionItem.items.length > 0 &&
+            !hiddenDetailSectionTitles.has(sectionItem.title),
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+
+  return createUnifiedResult({
+    source: sourceType,
+    themeVariantClass: String(
+      result?.themeVariantClass ?? resultRule.themeVariantClass ?? "",
+    ).trim(),
+    prefixLabel: "你的动物系结果",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 80}`,
+    main: {
+      name: resultRule.levelName ?? "动物系恋人待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "恋人属性判定",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的动物系恋人画像。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    // 关键逻辑：当前主题结果页主动收起画像卡与作答分布模块，只保留主结果与必要解读。
+    typeCard: null,
+    distributionChart: null,
+    radarChart: {
+      title: "恋爱气质图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮心动回放").trim() || "本轮心动回放",
+    summaryLines,
+    restartButtonText: "再测一次动物系恋人",
+    easterEggText: String(resultRule.easterEggText ?? "").trim(),
+  });
+}
+
+/**
+ * 动物系恋人主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildAnimalLoverDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildAnimalLoverUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 动物系恋人主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildAnimalLoverLocalUnifiedResult(localResult) {
+  return buildAnimalLoverUnifiedResult(localResult, "local");
+}
+
+/**
+ * 城市气质主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildCityVibeDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 城市气质主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildCityVibeUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 80);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const topCitySignals = Array.isArray(result?.topCitySignals)
+    ? result.topCitySignals
+    : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const citySignalLines =
+    topCitySignals.length > 0
+      ? topCitySignals.map((signalItem) => {
+          const optionText = String(signalItem?.optionLabel ?? "").trim();
+          const responseText = String(signalItem?.responseName ?? "").trim();
+          return `「${String(signalItem?.name ?? "").trim()}」：你选了“${optionText || "待观察"}”，这道线索明显指向${responseText || "稳定观察中"}的城市偏好。`;
+        })
+      : ["当前样本仍偏少，建议完整作答后再看最能代表你的城市气质线索。"];
+  const defaultDetailSections = [
+    {
+      title: "结果说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你正在慢慢看清自己更适合怎样的城市氛围。",
+        majorityProfile?.description
+          ? `多数选项画像：${majorityProfile.description}`
+          : "多数选项画像仍在整理中。",
+      ],
+    },
+    {
+      title: "最强城市线索",
+      items: citySignalLines,
+    },
+    {
+      title: "适配建议",
+      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
+        ? result.actionTips
+        : Array.isArray(resultRule.actionTips)
+          ? resultRule.actionTips
+          : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+
+  return createUnifiedResult({
+    source: sourceType,
+    themeVariantClass: String(
+      result?.themeVariantClass ?? resultRule.themeVariantClass ?? "",
+    ).trim(),
+    prefixLabel: "你的城市结果",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 80}`,
+    main: {
+      name: resultRule.levelName ?? "城市气质待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "城市气质判定",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的城市气质侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "城市气质档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 80}` },
+        {
+          label: "多数选项",
+          value: `${majorityProfile.label ?? "A 安静治愈向"}（${majorityProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均得分",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "当前气质",
+          value: resultRule.statusLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答分布",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "城市偏好图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次城市气质",
+    easterEggText: String(resultRule.easterEggText ?? "").trim(),
+  });
+}
+
+/**
+ * 城市气质主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildCityVibeDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildCityVibeUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 城市气质主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildCityVibeLocalUnifiedResult(localResult) {
+  return buildCityVibeUnifiedResult(localResult, "local");
+}
+
+/**
+ * 内在小孩主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildInnerChildDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 内在小孩主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildInnerChildUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 80);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const topCoreScenarios = Array.isArray(result?.topCoreScenarios)
+    ? result.topCoreScenarios
+    : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const coreScenarioLines =
+    topCoreScenarios.length > 0
+      ? topCoreScenarios.map((scenarioItem) => {
+          const optionText = String(scenarioItem?.optionLabel ?? "").trim();
+          const scenarioName = String(scenarioItem?.name ?? "").trim();
+          const dimensionLabel = String(
+            scenarioItem?.dimensionLabel ?? "稳定观察",
+          ).trim();
+
+          return `「${scenarioName}」里你更容易选择“${optionText || "待观察"}”，说明你的 ${dimensionLabel} 已经很贴近当前这类内在小孩的本能反应。`;
+        })
+      : ["当前样本仍偏少，建议完整作答后再看最像你的童年场景。"];
+  const defaultDetailSections = [
+    {
+      title: "结果说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你正在慢慢看见自己内在小孩最真实的反应方式。",
+        majorityProfile?.description
+          ? `多数选项画像：${majorityProfile.description}`
+          : "多数选项画像仍在整理中。",
+      ],
+    },
+    {
+      title: "最像你的童年场景",
+      items: coreScenarioLines,
+    },
+    {
+      title: "自我照顾提醒",
+      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
+        ? result.actionTips
+        : Array.isArray(resultRule.actionTips)
+          ? resultRule.actionTips
+          : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+
+  return createUnifiedResult({
+    source: sourceType,
+    themeVariantClass: String(
+      result?.themeVariantClass ?? resultRule.themeVariantClass ?? "",
+    ).trim(),
+    prefixLabel: "你的内在小孩是",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 80}`,
+    main: {
+      name: resultRule.levelName ?? "内在小孩待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "童心判定",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的童心侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "童心档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 80}` },
+        {
+          label: "多数选项",
+          value: `${majorityProfile.label ?? "A 被爱安抚向"}（${majorityProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均反应",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "当前状态",
+          value: resultRule.statusLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答倾向",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "内在小孩图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次内在小孩",
+    easterEggText: String(resultRule.easterEggText ?? "").trim(),
+  });
+}
+
+/**
+ * 内在小孩主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildInnerChildDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildInnerChildUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 内在小孩主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildInnerChildLocalUnifiedResult(localResult) {
+  return buildInnerChildUnifiedResult(localResult, "local");
+}
+
+/**
  * 桃花体质主题：构建深度分析请求负载。
  * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
  * @param {object} localResult 本地分析结果。
@@ -4732,6 +5499,362 @@ export const SURVEY_THEME_CONFIGS = [
     },
   },
   {
+    key: "gentle-wild",
+    routePaths: [
+      "/gentle-wild",
+      "/gentle-or-wild",
+      "/soft-or-wild",
+      "/wild-core",
+    ],
+    pageMeta: {
+      title: "测测你骨子里是「温柔」还是「野性」？",
+      description:
+        "20 道固定题测出你的柔野底色，看看你更接近纯柔软玉型、柔野茉莉型，还是极野王者型。",
+    },
+    theme: {
+      className: "theme-gentle-wild",
+      badge: "GENTLE · WILD TEST",
+      title: "测测你骨子里是「温柔」还是「野性」？",
+      description:
+        "20 题识别你的情绪外放、边界锋度、自由野感与主场气场，看看你骨子里更偏温柔还是野性。",
+      progressColor: "linear-gradient(90deg, #6ea67f, #89c29a, #b8ddc0)",
+      progressTrackColor: "rgba(110, 166, 127, 0.18)",
+      checkedColor: "#6ea67f",
+      sourceTag: {
+        deep: {
+          label: "柔野深度解读",
+          color: "#eef7f0",
+          textColor: "#466c52",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#f4faf5",
+          textColor: "#466c52",
+        },
+      },
+      loadingMessages: [
+        "正在校准你的柔野底色...",
+        "正在计算你的气场张力...",
+        "正在整理你的绿色人格档案...",
+      ],
+      submitButtonText: "查看我的柔野结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { GENTLE_WILD_QUESTION_BANK } =
+          await import("../data/gentleWildQuestionBank");
+        return GENTLE_WILD_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 20,
+        maxCount: 20,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "柔野底色测试",
+        titleMain: "测测你骨子里是\n「温柔」还是「野性」？",
+        intro: "计分规则",
+        points: [
+          "A=1分 ｜ B=2分",
+          "C=3分 ｜ D=4分",
+          "共20题，算完总分看结果！",
+          "分数越高，越偏向野性感与掌场气场",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeGentleWildLocally } =
+          await import("../services/gentleWildAnalyzer");
+        return analyzeGentleWildLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildGentleWildDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildGentleWildDeepUnifiedResult,
+      buildLocalUnifiedResult: buildGentleWildLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "city-vibe",
+    routePaths: [
+      "/city-vibe",
+      "/urban-vibe",
+      "/which-city-vibe",
+      "/city-aura",
+    ],
+    pageMeta: {
+      title: "测测你是「哪种城市气质」？",
+      description:
+        "20 道固定题测出你的城市气质，看看你更接近苏州、厦门、成都、上海、深圳还是北京。",
+    },
+    theme: {
+      className: "theme-city-vibe",
+      badge: "CITY VIBE TEST",
+      title: "测测你是「哪种城市气质」？",
+      description:
+        "20 题识别你的生活节奏、空间审美、生活方式与社交能量，看看你更像哪座城市。",
+      progressColor: "linear-gradient(90deg, #bb7e63, #d2a89b, #8697b6)",
+      progressTrackColor: "rgba(134, 151, 182, 0.16)",
+      checkedColor: "#bb7e63",
+      sourceTag: {
+        deep: {
+          label: "城市气质解读",
+          color: "#faf3ef",
+          textColor: "#8f5f4a",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#fdf8f5",
+          textColor: "#8f5f4a",
+        },
+      },
+      loadingMessages: [
+        "正在校准你的城市氛围偏好...",
+        "正在计算你的都市节奏坐标...",
+        "正在整理你的城市气质档案...",
+      ],
+      submitButtonText: "查看我的城市结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { CITY_VIBE_QUESTION_BANK } =
+          await import("../data/cityVibeQuestionBank");
+        return CITY_VIBE_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 20,
+        maxCount: 20,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "城市气质测试",
+        titleMain: "测测你是\n「哪种城市气质」？",
+        intro: "计分规则",
+        points: [
+          "A=1分 ｜ B=2分",
+          "C=3分 ｜ D=4分",
+          "共20题，算完总分看结果！",
+          "分数越高，越偏向繁华前卫与高能都市气场",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeCityVibeLocally } =
+          await import("../services/cityVibeAnalyzer");
+        return analyzeCityVibeLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildCityVibeDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildCityVibeDeepUnifiedResult,
+      buildLocalUnifiedResult: buildCityVibeLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "animal-lover",
+    routePaths: [
+      "/animal-lover",
+      "/animal-lover-test",
+      "/animal-love-style",
+      "/animal-lover-persona",
+    ],
+    pageMeta: {
+      title: "你的性格最像哪种「动物系恋人」？",
+      description:
+        "20 道固定题按总分区间匹配 8 种动物系恋人，看看你更像奶猫、小鹿、天鹅还是猎豹。",
+    },
+    theme: {
+      className: "theme-animal-lover",
+      badge: "ANIMAL LOVER TEST",
+      title: "你的性格最像\n哪种「动物系恋人」？",
+      description:
+        "20题固定分值，识别你的关系取向、冲突反应、表达方式与节奏角色，看看你更像哪一种动物系恋人。",
+      progressColor: "linear-gradient(90deg, #f8f4e3, #e8dec0, #d7c79f)",
+      progressTrackColor: "rgba(248, 244, 227, 0.72)",
+      checkedColor: "#d7c79f",
+      sourceTag: {
+        deep: {
+          label: "动物恋人深度解读",
+          color: "#f8f4e3",
+          textColor: "#8a7858",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#fbf8ee",
+          textColor: "#8a7858",
+        },
+      },
+      loadingMessages: [
+        "正在校准你的恋爱气质坐标...",
+        "正在拟合你的动物系恋人画像...",
+        "正在整理你的心动相处风格...",
+      ],
+      submitButtonText: "查看我的动物系结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { ANIMAL_LOVER_QUESTION_BANK } =
+          await import("../data/animalLoverQuestionBank");
+        return ANIMAL_LOVER_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 20,
+        maxCount: 20,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        // 关键逻辑：封面右上角补充轻量计分说明，减少用户进入题目后的理解成本。
+        promoTag: "记分规则 A=1 · B=2 · C=3 · D=4",
+        kicker: "动物系恋人测试",
+        titleMain: "你的性格最像哪种\n「动物系恋人」？",
+        // 关键逻辑：封面改为主题描述，不再展示分值规则，降低“先看规则”的阅读压迫感。
+        intro:
+          "20道恋爱情境题会从你的心动方式、表达习惯和相处节奏里，判断你最像哪一种动物系恋人，看看你的爱意究竟更偏温柔治愈，还是热烈直白。",
+        points: [],
+        startButtonText: "开始测试",
+        tip: "共20题 · 约2分钟",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeAnimalLoverLocally } =
+          await import("../services/animalLoverAnalyzer");
+        return analyzeAnimalLoverLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildAnimalLoverDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildAnimalLoverDeepUnifiedResult,
+      buildLocalUnifiedResult: buildAnimalLoverLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "inner-child",
+    routePaths: [
+      "/inner-child",
+      "/inner-child-test",
+      "/inner-kid",
+      "/childhood-heart",
+    ],
+    pageMeta: {
+      title: "你的「内在小孩」是什么类型？",
+      description:
+        "20 道固定题回看你的童年反应，输出 8 种内在小孩类型和专属童心图谱。",
+    },
+    theme: {
+      className: "theme-inner-child",
+      badge: "INNER CHILD TEST",
+      title: "你的「内在小孩」是什么类型？",
+      description:
+        "20 题识别你的玩心好奇度、表达直接度、互动活力值与自主成长力，看看你属于哪一种内在小孩。",
+      progressColor: "linear-gradient(90deg, #f3a065, #f4c978, #86bfd4)",
+      progressTrackColor: "rgba(243, 160, 101, 0.18)",
+      checkedColor: "#f3a065",
+      sourceTag: {
+        deep: {
+          label: "童心深度解读",
+          color: "#fff7ef",
+          textColor: "#a56a3d",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#f7fbff",
+          textColor: "#6b84af",
+        },
+      },
+      loadingMessages: [
+        "正在回看你的童年轨迹...",
+        "正在整理你的内在小孩画像...",
+        "正在生成你的童心档案...",
+      ],
+      submitButtonText: "查看我的内在小孩结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { INNER_CHILD_QUESTION_BANK } =
+          await import("../data/innerChildQuestionBank");
+        return INNER_CHILD_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 20,
+        maxCount: 20,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "内在小孩测试",
+        titleMain: "你的「内在小孩」\n是什么类型？",
+        intro: "计分规则",
+        points: [
+          "A=1分 ｜ B=2分",
+          "C=3分 ｜ D=4分",
+          "共20题，算完总分看结果",
+          "共 8 种结果，分数越高越偏向自主与冒险",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeInnerChildLocally } =
+          await import("../services/innerChildAnalyzer");
+        return analyzeInnerChildLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildInnerChildDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildInnerChildDeepUnifiedResult,
+      buildLocalUnifiedResult: buildInnerChildLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
     key: "love-attachment",
     routePaths: ["/love", "/love-attachment", "/love-psych", "/love-test"],
     pageMeta: {
@@ -4957,6 +6080,54 @@ export const SURVEY_THEME_CONFIGS = [
      * 关键逻辑：
      * `soul-age` 主题由独立组件 `SoulAgeStandalone.vue` 渲染，
      * 不走通用 SurveyEngine 的 survey 配置流程。
+     */
+  },
+  {
+    key: "soul-age-number",
+    routePaths: [
+      "/soul-age-number",
+      "/soul-age-years",
+      "/soul-age-8",
+      "/soul-age-score",
+    ],
+    pageMeta: {
+      title: "你的「灵魂年龄」是几岁？",
+      description:
+        "固定 20 题总分制，映射 8 档具体灵魂年龄，并附带 AI 深度解读。",
+    },
+    theme: {
+      className: "theme-soul-age-number",
+      badge: "SOUL AGE NUMBER TEST",
+      title: "你的「灵魂年龄」是几岁？",
+      description:
+        "固定 20 题、A=1/B=2/C=3/D=4，生成 8 档具体年龄结果、6 维雷达画像、AI 深度解读和可保存分享卡片。",
+      progressColor: "linear-gradient(90deg, #d4b996, #c19a6b)",
+      progressTrackColor: "rgba(193, 154, 107, 0.22)",
+      checkedColor: "#c19a6b",
+      sourceTag: {
+        deep: {
+          label: "灵魂年龄结果",
+          color: "#f5eee7",
+          textColor: "#6f5846",
+        },
+        local: {
+          label: "灵魂年龄结果",
+          color: "#f5eee7",
+          textColor: "#6f5846",
+        },
+      },
+      loadingMessages: [
+        "正在核对你的作答总分...",
+        "正在匹配你的灵魂年龄区间...",
+        "正在生成你的具体年龄报告...",
+      ],
+      submitButtonText: "提交测试",
+      nextButtonText: "下一题",
+    },
+    /**
+     * 关键逻辑：
+     * `soul-age-number` 主题由独立组件 `SoulAgeNumberStandalone.vue` 渲染，
+     * 与旧 `soul-age` 主题并行存在，不走通用 SurveyEngine 的 survey 配置流程。
      */
   },
   {
