@@ -33,6 +33,19 @@
         <p class="license-auth-purchase-tip">
           如尚未购买或需获取授权码，请联系客服。
         </p>
+        <p
+          v-if="shouldShowMbtiPurchaseEntry"
+          class="license-auth-purchase-entry"
+        >
+          如您还未购买，
+          <button
+            class="license-auth-purchase-link"
+            type="button"
+            @click="handlePurchaseClick"
+          >
+            点击去购买
+          </button>
+        </p>
       </div>
 
       <p v-if="statusMessage" class="license-auth-status" :class="statusClass">
@@ -78,6 +91,8 @@ const submitting = ref(false);
 const checkingSession = ref(false);
 const statusMessage = ref("");
 const statusType = ref("");
+const MBTI_PURCHASE_TARGET_PATH = "/mbti";
+const MBTI_PURCHASE_URL = "https://xhslink.com/m/LAhHZO3Ekd";
 
 /**
  * 状态文案样式类。
@@ -87,10 +102,37 @@ const statusClass = computed(() =>
 );
 
 /**
+ * 是否展示 MBTI 专属购买入口。
+ * 关键逻辑：只对 canonical path 为 `/mbti` 的授权页展示，显式排除 `/shmbti`。
+ */
+const shouldShowMbtiPurchaseEntry = computed(
+  () => props.targetPath === MBTI_PURCHASE_TARGET_PATH,
+);
+
+/**
  * 跳转到授权通过后的目标页。
  */
 function navigateToTarget() {
   window.location.replace(props.targetPath);
+}
+
+/**
+ * 打开 MBTI 购买链接。
+ * 关键逻辑：优先新开标签页，若被浏览器拦截则退化为当前页跳转，确保购买入口可达。
+ */
+function handlePurchaseClick() {
+  // 行内注释：保留 noopener/noreferrer，避免新窗口拿到当前页面上下文。
+  const openedWindow = window.open(
+    MBTI_PURCHASE_URL,
+    "_blank",
+    "noopener,noreferrer",
+  );
+  if (openedWindow) {
+    return;
+  }
+
+  // 行内注释：少数浏览器或 WebView 会拦截 window.open，此时回退到当前页跳转。
+  window.location.assign(MBTI_PURCHASE_URL);
 }
 
 /**
@@ -327,6 +369,31 @@ watch(
   color: #615a73;
   font-size: 13px;
   text-align: center;
+}
+
+.license-auth-purchase-entry {
+  margin: 0;
+  color: #615a73;
+  font-size: 13px;
+  text-align: center;
+}
+
+.license-auth-purchase-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #5e5574;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.license-auth-purchase-link:focus-visible {
+  outline: 2px solid rgba(94, 85, 116, 0.3);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .license-auth-status {
