@@ -76,7 +76,7 @@ J048,"我能直达事物核心",j-ni,false,1,true
 J049,"我擅长组织安排，推进事务",j-te,false,1,true
 J050,"我分析问题客观中立",j-ti,false,1,true
 J051,"我容易察觉他人情绪",j-fe,false,1,true
-J052,"我重视真实自我表达",j-fi,false,1,true
+J052,"如果表达方式违背了我的价值判断，我宁愿暂时不说",j-fi,false,1,true
 J053,"我对环境变化很敏锐",j-se,false,1,true
 J054,"我遵循惯例，不喜变动",j-si,false,1,true
 J055,"我思维开放，接纳新可能",j-ne,false,1,true
@@ -84,7 +84,7 @@ J056,"我有强烈的内在洞见",j-ni,false,1,true
 J057,"我看重秩序、责任与执行力",j-te,false,1,true
 J058,"我擅长逻辑解构与推理",j-ti,false,1,true
 J059,"我重视集体情感与共识",j-fe,false,1,true
-J060,"我忠于自我感受与价值观",j-fi,false,1,true
+J060,"就算周围人都不同意，我也会坚持自己真正认同的选择",j-fi,false,1,true
 `;
 
 /**

@@ -569,6 +569,21 @@
             清空测试结果
           </van-button>
         </div>
+
+        <TypeologyDevResultOverridePanel
+          v-if="
+            enableTypeologyDevResultOverride &&
+            stage !== STAGE_TESTING &&
+            stage !== STAGE_ANALYZING
+          "
+          :test-key="activeTestConfig.key"
+          :test-name="activeTestConfig.name"
+          :override-value="activeTypeologyDevResultOverrideValue"
+          :placeholder-text="activeTypeologyDevResultOverridePlaceholder"
+          :hint-text="activeTypeologyDevResultOverrideHint"
+          @apply-override="handleApplyTypeologyDevResultOverride"
+          @clear-override="handleClearTypeologyDevResultOverride"
+        />
       </section>
 
       <section class="typeology-panel typeology-knowledge-panel">
@@ -620,7 +635,7 @@
             @click="handleCardClick(activeTestConfig.key)"
           >
             {{
-              resultCache[activeTestConfig.key]
+              displayedResultCache[activeTestConfig.key]
                 ? "查看该测试结果"
                 : "进入该测试"
             }}
@@ -1015,6 +1030,20 @@ import {
   upsertTypeologyCachedResult as upsertTypeologyCachedResultStorage,
 } from "../services/typeologyStorage";
 import {
+  buildTypeologyDevResultOverrideHint,
+  buildTypeologyDevResultOverridePlaceholder,
+  buildTypeologyDevResultOverrideValidationMessage,
+  clearTypeologyDevResultOverrideMap as clearTypeologyDevResultOverrideMapStorage,
+  isTypeologyDevResultOverrideEnabled,
+  loadTypeologyDevResultOverrideMap as loadTypeologyDevResultOverrideMapStorage,
+  mergeTypeologyResultCacheWithDevOverrides,
+  normalizeTypeologyDevResultOverrideInput,
+  removeTypeologyDevResultOverride as removeTypeologyDevResultOverrideStorage,
+  saveTypeologyDevResultOverrideMap as saveTypeologyDevResultOverrideMapStorage,
+  resolveTypeologyDevResultOverrideValue,
+  upsertTypeologyDevResultOverride as upsertTypeologyDevResultOverrideStorage,
+} from "../services/typeologyDevResultOverride";
+import {
   clearTypeologyResultsFromLicense,
   hasTypeologyCachedResults,
   readTypeologyLicenseSyncState,
@@ -1029,6 +1058,7 @@ import {
 import { MBTI_DISCLAIMER_CONTENT } from "../constants/typeologyDisclaimer";
 import Like from "./Like.vue";
 import Suggestion from "./Suggestion.vue";
+import TypeologyDevResultOverridePanel from "./TypeologyDevResultOverridePanel.vue";
 
 /** 全局配置：意见反馈功能开关 */
 const enableActiveFeedback =
@@ -2141,6 +2171,60 @@ function clearAllTypeologyProgressCache() {
 }
 
 /**
+ * 读取当前授权上下文下的开发覆盖映射。
+ * @returns {Record<string, { overrideValue: string, updatedAt: number }>} 开发覆盖映射。
+ */
+function loadTypeologyDevResultOverrideMap() {
+  return loadTypeologyDevResultOverrideMapStorage(buildTypeologyStorageOptions());
+}
+
+/**
+ * 增量写入当前授权上下文下的开发覆盖。
+ * @param {string} testKey 测试键。
+ * @param {string} overrideValue 结果覆盖值。
+ * @returns {Record<string, { overrideValue: string, updatedAt: number }>} 更新后的覆盖映射。
+ */
+function upsertTypeologyDevResultOverride(testKey, overrideValue) {
+  return upsertTypeologyDevResultOverrideStorage(
+    {
+      testKey,
+      overrideValue,
+    },
+    buildTypeologyStorageOptions(),
+  );
+}
+
+/**
+ * 删除当前授权上下文下的单条开发覆盖。
+ * @param {string} testKey 测试键。
+ * @returns {Record<string, { overrideValue: string, updatedAt: number }>} 删除后的覆盖映射。
+ */
+function removeTypeologyDevResultOverride(testKey) {
+  return removeTypeologyDevResultOverrideStorage(
+    testKey,
+    buildTypeologyStorageOptions(),
+  );
+}
+
+/**
+ * 清空当前授权上下文下的全部开发覆盖。
+ */
+function clearTypeologyDevResultOverrideMap() {
+  clearTypeologyDevResultOverrideMapStorage(buildTypeologyStorageOptions());
+}
+
+/**
+ * 写入当前授权上下文下的开发覆盖映射。
+ * @param {Record<string, any>} overrideMap 覆盖映射。
+ */
+function saveTypeologyDevResultOverrideMap(overrideMap) {
+  saveTypeologyDevResultOverrideMapStorage(
+    overrideMap,
+    buildTypeologyStorageOptions(),
+  );
+}
+
+/**
  * 当前测试状态。
  */
 const stage = ref(STAGE_HOME);
@@ -2165,6 +2249,8 @@ const answers = ref([]);
 const currentQuestionIndex = ref(0);
 const currentResult = ref(null);
 const resultCache = ref(loadTypeologyResultCache());
+const enableTypeologyDevResultOverride = isTypeologyDevResultOverrideEnabled();
+const typeologyDevResultOverrideMap = ref(loadTypeologyDevResultOverrideMap());
 const isRestoringTypeologyLicenseResults = ref(false);
 const typeologyLicenseSyncState = ref(
   readTypeologyLicenseSyncState(typeologyStorageTargetPath.value),
@@ -2379,6 +2465,41 @@ const activeTestConfig = computed(
     getTypeologyTestConfig(activeTestKey.value) ??
     orderedTests.value[0] ??
     props.themeConfig,
+);
+
+/**
+ * 当前页面实际用于展示的结果缓存。
+ * 关键逻辑：开发覆盖只在展示层生效，不回写正式缓存，避免污染真实结果与同步链路。
+ */
+const displayedResultCache = computed(() =>
+  mergeTypeologyResultCacheWithDevOverrides(
+    resultCache.value,
+    typeologyDevResultOverrideMap.value,
+  ),
+);
+
+/**
+ * 当前测试的开发覆盖值。
+ */
+const activeTypeologyDevResultOverrideValue = computed(() =>
+  resolveTypeologyDevResultOverrideValue(
+    activeTestConfig.value?.key,
+    typeologyDevResultOverrideMap.value,
+  ),
+);
+
+/**
+ * 当前测试的开发覆盖输入占位文案。
+ */
+const activeTypeologyDevResultOverridePlaceholder = computed(() =>
+  buildTypeologyDevResultOverridePlaceholder(activeTestConfig.value?.key),
+);
+
+/**
+ * 当前测试的开发覆盖提示文案。
+ */
+const activeTypeologyDevResultOverrideHint = computed(() =>
+  buildTypeologyDevResultOverrideHint(activeTestConfig.value?.key),
 );
 
 /**
@@ -2715,7 +2836,7 @@ const typeCardItems = computed(() => {
   const pendingCards = [];
 
   defaultOrderedTests.forEach((testItem) => {
-    const cachedResult = resultCache.value[testItem.key];
+    const cachedResult = displayedResultCache.value[testItem.key];
     const normalizedCardItem = {
       testKey: testItem.key,
       testName: testItem.name,
@@ -2797,7 +2918,7 @@ const typeologyPosterDataSignature = computed(() =>
  * 关键逻辑：海报页、稀有标签和 AI 侧写统一消费同一份聚合数据，避免前后语义不一致。
  */
 const typeologyFinalProfile = computed(() =>
-  buildTypeologyFinalProfile(resultCache.value),
+  buildTypeologyFinalProfile(displayedResultCache.value),
 );
 
 /**
@@ -3415,6 +3536,81 @@ function selectMode(modeKey) {
 }
 
 /**
+ * 应用当前测试的开发覆盖结果。
+ * @param {string} overrideValue 用户输入的覆盖值。
+ */
+function handleApplyTypeologyDevResultOverride(overrideValue) {
+  const normalizedTestKey = String(activeTestConfig.value?.key ?? "").trim();
+  const normalizedOverrideValue = normalizeTypeologyDevResultOverrideInput({
+    testKey: normalizedTestKey,
+    overrideValue,
+  });
+  if (!normalizedTestKey || !normalizedOverrideValue) {
+    showToast(
+      buildTypeologyDevResultOverrideValidationMessage(normalizedTestKey),
+    );
+    return;
+  }
+
+  typeologyDevResultOverrideMap.value = upsertTypeologyDevResultOverride(
+    normalizedTestKey,
+    normalizedOverrideValue,
+  );
+  showToast(`已更新「${activeTestConfig.value?.name ?? ""}」结果`);
+}
+
+/**
+ * 清除当前测试的开发覆盖结果。
+ */
+function handleClearTypeologyDevResultOverride() {
+  const normalizedTestKey = String(activeTestConfig.value?.key ?? "").trim();
+  const currentOverrideValue = resolveTypeologyDevResultOverrideValue(
+    normalizedTestKey,
+    typeologyDevResultOverrideMap.value,
+  );
+  if (!normalizedTestKey || !currentOverrideValue) {
+    return;
+  }
+
+  typeologyDevResultOverrideMap.value = removeTypeologyDevResultOverride(
+    normalizedTestKey,
+  );
+  showToast(`已恢复「${activeTestConfig.value?.name ?? ""}」默认结果`);
+}
+
+/**
+ * 持久化当前测试的快捷设定结果负载。
+ * 关键逻辑：覆盖结果的 AI 解读与详情态只写入快捷设定存储，不进入正式结果缓存与云端同步。
+ * @param {string} testKey 测试键。
+ * @param {object} resultPayload 当前结果负载。
+ * @returns {Record<string, any>} 更新后的快捷设定映射。
+ */
+function persistTypeologyDevResultOverrideResult(testKey, resultPayload) {
+  const normalizedTestKey = String(testKey ?? "").trim();
+  const currentOverrideEntry =
+    typeologyDevResultOverrideMap.value?.[normalizedTestKey];
+  if (
+    !normalizedTestKey ||
+    !currentOverrideEntry ||
+    !resultPayload ||
+    typeof resultPayload !== "object"
+  ) {
+    return typeologyDevResultOverrideMap.value;
+  }
+
+  const nextOverrideMap = {
+    ...typeologyDevResultOverrideMap.value,
+    [normalizedTestKey]: {
+      ...currentOverrideEntry,
+      updatedAt: Date.now(),
+      resultPayload,
+    },
+  };
+  saveTypeologyDevResultOverrideMap(nextOverrideMap);
+  return nextOverrideMap;
+}
+
+/**
  * 点击顶部测试切换。
  * @param {string} testKey 测试键。
  */
@@ -3432,7 +3628,7 @@ async function handleTestChipClick(testKey) {
   activeTestKey.value = testKey;
 
   // 关键逻辑：详情页下切换测试，优先展示该测试缓存结果，否则回到首页。
-  const nextCachedResult = resultCache.value[testKey];
+  const nextCachedResult = displayedResultCache.value[testKey];
   if (stage.value === STAGE_DETAIL) {
     if (nextCachedResult) {
       currentResult.value = nextCachedResult;
@@ -3456,7 +3652,7 @@ async function handleCardClick(testKey) {
   }
 
   cancelActiveAiInsightRequest();
-  const cachedResult = resultCache.value[testKey];
+  const cachedResult = displayedResultCache.value[testKey];
   activeTestKey.value = testKey;
 
   if (cachedResult) {
@@ -3629,8 +3825,10 @@ async function confirmClearTypeologyResults() {
   cancelActiveAiInsightRequest();
   resetTestingSessionState();
   clearTypeologyResultCache();
+  clearTypeologyDevResultOverrideMap();
   clearAllTypeologyProgressCache();
   resultCache.value = {};
+  typeologyDevResultOverrideMap.value = {};
   currentResult.value = null;
   stage.value = STAGE_HOME;
   resetTypeologyProfileAiInsightState();
@@ -3829,7 +4027,7 @@ async function startCurrentTest() {
 
   if (
     testKey !== "mbti" &&
-    !resolveTypeologyFoundationMbti(resultCache.value)
+    !resolveTypeologyFoundationMbti(displayedResultCache.value)
   ) {
     try {
       await showConfirmDialog({
@@ -4064,6 +4262,9 @@ async function runAiInsightGeneration({
 
   const testConfigSnapshot = activeTestConfig.value;
   const testKeySnapshot = String(testConfigSnapshot?.key ?? "").trim();
+  const isTypeologyDevOverrideResult = Boolean(
+    baseResult?.devOverrideMeta?.applied,
+  );
   if (!testKeySnapshot) {
     return;
   }
@@ -4152,16 +4353,31 @@ async function runAiInsightGeneration({
           : baseResult.detailActions,
     };
 
-    resultCache.value = upsertTypeologyCachedResult(
-      testKeySnapshot,
-      mergedResult,
-    );
-    const persistedMergedResult = resultCache.value[testKeySnapshot] ?? mergedResult;
-    if (String(activeTestConfig.value?.key ?? "").trim() === testKeySnapshot) {
-      // 关键逻辑：界面始终回读规范化后的缓存结果，避免本次内存对象绕过一致性修复。
-      currentResult.value = persistedMergedResult;
+    if (isTypeologyDevOverrideResult) {
+      typeologyDevResultOverrideMap.value =
+        persistTypeologyDevResultOverrideResult(testKeySnapshot, mergedResult);
+      const persistedMergedResult =
+        mergeTypeologyResultCacheWithDevOverrides(
+          resultCache.value,
+          typeologyDevResultOverrideMap.value,
+        )[testKeySnapshot] ?? mergedResult;
+      if (String(activeTestConfig.value?.key ?? "").trim() === testKeySnapshot) {
+        currentResult.value = persistedMergedResult;
+      }
+      finalResultForRemoteSync = null;
+    } else {
+      resultCache.value = upsertTypeologyCachedResult(
+        testKeySnapshot,
+        mergedResult,
+      );
+      const persistedMergedResult =
+        resultCache.value[testKeySnapshot] ?? mergedResult;
+      if (String(activeTestConfig.value?.key ?? "").trim() === testKeySnapshot) {
+        // 关键逻辑：界面始终回读规范化后的缓存结果，避免本次内存对象绕过一致性修复。
+        currentResult.value = persistedMergedResult;
+      }
+      finalResultForRemoteSync = persistedMergedResult;
     }
-    finalResultForRemoteSync = persistedMergedResult;
 
     if (showSuccessToast) {
       showToast("进阶解读已更新");
@@ -4178,7 +4394,9 @@ async function runAiInsightGeneration({
       showToast(error?.message ?? "进阶解读暂不可用，请稍后重试");
     }
 
-    finalResultForRemoteSync = resultCache.value[testKeySnapshot] ?? baseResult;
+    finalResultForRemoteSync = isTypeologyDevOverrideResult
+      ? null
+      : resultCache.value[testKeySnapshot] ?? baseResult;
   } finally {
     invokeOptionalCallback(onSettled);
     if (requestSessionToken === aiInsightRequestSessionToken) {
@@ -4215,7 +4433,7 @@ async function submitCurrentTest() {
     baseMbti:
       activeTestConfig.value?.key === "mbti"
         ? ""
-        : resolveTypeologyFoundationMbti(resultCache.value),
+        : resolveTypeologyFoundationMbti(displayedResultCache.value),
   });
 
   const localPersistedResult = {
@@ -4230,7 +4448,7 @@ async function submitCurrentTest() {
   clearTypeologyProgressByTestKey(activeTestConfig.value.key);
 
   currentResult.value =
-    resultCache.value[activeTestConfig.value.key] ?? localPersistedResult;
+    displayedResultCache.value[activeTestConfig.value.key] ?? localPersistedResult;
 
   /**
    * 结果页切换闸门：
@@ -5019,6 +5237,27 @@ watch(
     syncSelectedModeByActiveTest();
   },
   { immediate: true },
+);
+
+/**
+ * 监听展示结果缓存与详情页上下文变化。
+ * 关键逻辑：开发覆盖或真实结果变化后，详情页始终回读当前测试的最终展示结果，避免卡片与详情页不一致。
+ */
+watch(
+  [displayedResultCache, () => activeTestConfig.value.key, stage],
+  ([nextDisplayedResultCache, nextActiveTestKey, nextStage]) => {
+    if (nextStage !== STAGE_DETAIL) {
+      return;
+    }
+
+    const normalizedTestKey = String(nextActiveTestKey ?? "").trim();
+    if (!normalizedTestKey) {
+      currentResult.value = null;
+      return;
+    }
+
+    currentResult.value = nextDisplayedResultCache[normalizedTestKey] ?? null;
+  },
 );
 
 /**

@@ -37,14 +37,14 @@ const ATTITUDE_PSY_RAW_ITEMS = [
   { title: "事情拖着不动时，我会忍不住开始推动进度。", outcomeKey: "ap-v" },
   { title: "选方案时，我很在意实际用起来是不是顺手。", outcomeKey: "ap-f" },
 
-  { title: "遇到分歧时，我会先把事实和推论分开看。", outcomeKey: "ap-l" },
+  { title: "遇到分歧时，我会先追问各自依据是什么，而不是先被态度带走。", outcomeKey: "ap-l" },
   { title: "冲突升级时，我更想先让气氛缓下来再谈对错。", outcomeKey: "ap-e" },
   { title: "我一旦认定要做，就会尽快进入执行状态。", outcomeKey: "ap-v" },
   { title: "身体状态不好时，我很难只靠意志硬顶下去。", outcomeKey: "ap-f" },
 
   { title: "信息很多很乱时，我会先整理框架再表态。", outcomeKey: "ap-l" },
-  { title: "做选择时，我会在意这件事会不会伤到关系。", outcomeKey: "ap-e" },
-  { title: "资源不够时，我会先想怎样把局面撑起来。", outcomeKey: "ap-v" },
+  { title: "如果一个决定可能让关系里的人留下被刺痛的感觉，我会反复权衡。", outcomeKey: "ap-e" },
+  { title: "资源吃紧时，我首先会盘算先保哪条主线，别让事情直接掉地上。", outcomeKey: "ap-v" },
   { title: "我判断一件事适不适合自己，常先看真实体验。", outcomeKey: "ap-f" },
 
   { title: "别人情绪很强烈时，我也会先确认问题本身是什么。", outcomeKey: "ap-l" },
@@ -54,7 +54,7 @@ const ATTITUDE_PSY_RAW_ITEMS = [
 
   { title: "计划要改动时，我会先比较不同方案的利弊。", outcomeKey: "ap-l" },
   { title: "别人给我反馈时，我会先在意对方说话的方式。", outcomeKey: "ap-e" },
-  { title: "做重要选择时，我会很看重自己能不能主导节奏。", outcomeKey: "ap-v" },
+  { title: "做关键决定时，对我来说能不能自己掌舵，比流程漂不漂亮更重要。", outcomeKey: "ap-v" },
   { title: "做安排时，我会先考虑吃得消、睡得好、节奏稳不稳。", outcomeKey: "ap-f" },
 
   { title: "我更容易被论证严密的观点说服，而不是被语气说服。", outcomeKey: "ap-l" },
@@ -63,8 +63,8 @@ const ATTITUDE_PSY_RAW_ITEMS = [
   { title: "我对空间、声音、温度这类现场感受比较敏感。", outcomeKey: "ap-f" },
 
   { title: "学新东西时，我会先搞懂原理，再开始上手。", outcomeKey: "ap-l" },
-  { title: "关系出现距离感时，我会先想办法确认彼此状态。", outcomeKey: "ap-e" },
-  { title: "团队分散时，我会先把人和事往一个目标上收。", outcomeKey: "ap-v" },
+  { title: "关系一旦变冷，我会主动发信号确认对方是不是在往后退。", outcomeKey: "ap-e" },
+  { title: "团队劲头散掉时，我常会重新定焦点，把大家拉回同一战线。", outcomeKey: "ap-v" },
   { title: "如果一个选择让我长期不舒服，我很难说服自己继续。", outcomeKey: "ap-f" },
 
   { title: "我不太能接受“差不多就行”，前提得先说得通。", outcomeKey: "ap-l" },
@@ -72,10 +72,10 @@ const ATTITUDE_PSY_RAW_ITEMS = [
   { title: "我对“说了就做、定了就推”这件事要求比较高。", outcomeKey: "ap-v" },
   { title: "我会通过亲自做一遍，确认这件事到底合不合适。", outcomeKey: "ap-f" },
 
-  { title: "别人给建议时，我会先问依据是什么。", outcomeKey: "ap-l" },
+  { title: "别人给建议时，我通常会继续追问这套做法成立的前提条件。", outcomeKey: "ap-l" },
   { title: "面对重要谈话，我会先选一个合适的情绪时机。", outcomeKey: "ap-e" },
   { title: "机会出现时，我往往先想能不能马上拿下。", outcomeKey: "ap-v" },
-  { title: "我做决定时，会自然考虑这件事会不会影响生活质感。", outcomeKey: "ap-f" },
+  { title: "我做决定时，会直接想到这件事会不会打乱住处、作息和日常舒适度。", outcomeKey: "ap-f" },
 
   { title: "需要合作时，我倾向先把规则和边界讲清楚。", outcomeKey: "ap-l" },
   { title: "决定要不要答应别人前，我会先体会自己和对方的感受。", outcomeKey: "ap-e" },
@@ -92,7 +92,7 @@ const ATTITUDE_PSY_RAW_ITEMS = [
   { title: "如果一件事必须有人负责，我通常不排斥把责任接过来。", outcomeKey: "ap-v" },
   { title: "当下的身体反应，常常会提醒我这件事该不该继续。", outcomeKey: "ap-f" },
 
-  { title: "选一个长期方向时，我会先想这件事是否自洽。", outcomeKey: "ap-l" },
+  { title: "选长期方向时，我会先检查目标、路径和代价能不能前后一致。", outcomeKey: "ap-l" },
   { title: "我判断一段关系好不好时，会先看相处时是否安心。", outcomeKey: "ap-e" },
   { title: "我更容易因为目标被卡住而着急，而不是因为气氛不舒服而着急。", outcomeKey: "ap-v" },
   { title: "我安排日常时，会优先让自己的节奏和环境比较舒服。", outcomeKey: "ap-f" },

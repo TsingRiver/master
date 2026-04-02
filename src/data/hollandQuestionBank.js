@@ -22,11 +22,11 @@ const HOLLAND_CORE60_COUNT = 60;
  * 2. 顺序按 R / I / A / S / E / C 交错，避免用户连续答到同类题面。
  */
 const HOLLAND_RAW_ITEMS = [
-  { title: "看到设备或家具需要安装时，我通常愿意上手处理。", outcomeKey: "h-r" },
+  { title: "家里有东西需要装起来时，我多半会自己拿工具试一试。", outcomeKey: "h-r" },
   { title: "遇到复杂问题时，我会想先查资料、找规律再下结论。", outcomeKey: "h-i" },
   { title: "同样一项任务，我会自然想把它做得更有风格和表达感。", outcomeKey: "h-a" },
-  { title: "看到别人卡住时，我会想先帮对方理顺问题。", outcomeKey: "h-s" },
-  { title: "需要争取资源或推动结果时，我通常愿意站到前面。", outcomeKey: "h-e" },
+  { title: "别人一旦卡住，我常会主动把思路拆开，陪对方一步步理清。", outcomeKey: "h-s" },
+  { title: "涉及拉资源、定方向或拍推进节奏时，我愿意扛起主导角色。", outcomeKey: "h-e" },
   { title: "我处理资料时，会主动分类、归档并保持清楚。", outcomeKey: "h-c" },
 
   { title: "比起开会讨论，我更喜欢到现场把问题解决掉。", outcomeKey: "h-r" },
@@ -57,11 +57,11 @@ const HOLLAND_RAW_ITEMS = [
   { title: "我喜欢把人、资源和节奏组织起来，把事情推成。", outcomeKey: "h-e" },
   { title: "明确的制度、分工和步骤，通常能让我发挥更稳定。", outcomeKey: "h-c" },
 
-  { title: "需要长期坐着只写材料的工作，通常很难让我一直有劲。", outcomeKey: "h-r" },
+  { title: "整天闷在桌前反复写材料，会很快消耗我的耐心。", outcomeKey: "h-r" },
   { title: "独立钻研一个问题，往往比频繁社交更让我投入。", outcomeKey: "h-i" },
   { title: "完全按固定模板做事，常会让我觉得有点压抑。", outcomeKey: "h-a" },
   { title: "比起单纯追结果，我也很重视合作中的感受和支持。", outcomeKey: "h-s" },
-  { title: "需要说服别人接受一个方案时，我通常愿意出面。", outcomeKey: "h-e" },
+  { title: "碰到方案需要路演或谈判时，我乐意亲自去把人说服。", outcomeKey: "h-e" },
   { title: "我愿意做需要耐心、准确和持续重复的基础工作。", outcomeKey: "h-c" },
 
   { title: "我喜欢一步步把零散部件组装成能用的成品。", outcomeKey: "h-r" },
@@ -72,7 +72,7 @@ const HOLLAND_RAW_ITEMS = [
   { title: "面对复杂信息时，我会先整理顺序，再开始处理。", outcomeKey: "h-c" },
 
   { title: "遇到实际问题时，我更愿意先试做，再慢慢调整。", outcomeKey: "h-r" },
-  { title: "如果一个结论缺少证据，我很难完全信服。", outcomeKey: "h-i" },
+  { title: "没有足够证据支撑的判断，很难真正说服我。", outcomeKey: "h-i" },
   { title: "一个项目能自由发挥创意时，我通常更愿意投入。", outcomeKey: "h-a" },
   { title: "需要协调关系、安抚情绪的场合，我不太会躲开。", outcomeKey: "h-s" },
   { title: "在竞争或目标导向强的环境里，我往往更能进入状态。", outcomeKey: "h-e" },
@@ -83,14 +83,14 @@ const HOLLAND_RAW_ITEMS = [
   { title: "我不太满足于“能用就行”，还会在意它好不好看、有没有感觉。", outcomeKey: "h-a" },
   { title: "看到别人因为我的帮助轻松下来，我会觉得这件事很值得。", outcomeKey: "h-s" },
   { title: "我不太抗拒承担决策责任，尤其在关键节点上。", outcomeKey: "h-e" },
-  { title: "如果流程还没理顺，我很难完全放心把事情交出去。", outcomeKey: "h-c" },
+  { title: "交接前若关键步骤还没梳理清楚，我会一直记挂着。", outcomeKey: "h-c" },
 
-  { title: "需要手眼配合和动手熟练度的任务，常让我更容易进入状态。", outcomeKey: "h-r" },
-  { title: "需要分析、推理和长期思考的任务，通常更适合我。", outcomeKey: "h-i" },
-  { title: "需要原创表达和风格判断的工作，通常更吸引我。", outcomeKey: "h-a" },
-  { title: "以服务、辅导、协作支持为主的工作，通常更符合我的兴趣。", outcomeKey: "h-s" },
-  { title: "需要开拓、管理、成交或推进落地的工作，通常更吸引我。", outcomeKey: "h-e" },
-  { title: "需要细致执行、校对和维护秩序的岗位，通常更适合我。", outcomeKey: "h-c" },
+  { title: "只要任务考验手上功夫和配合感，我做起来往往会越干越顺。", outcomeKey: "h-r" },
+  { title: "让我连续几天拆解问题、推演假设，我反而更容易进入状态。", outcomeKey: "h-i" },
+  { title: "要自己定调性、做表达取舍的创作任务，会明显勾起我的兴趣。", outcomeKey: "h-a" },
+  { title: "当工作核心是陪人、支持人、帮助人成长时，我会更投入。", outcomeKey: "h-s" },
+  { title: "那种要拿结果、带队伍、把事情往前拱的岗位，会让我有冲劲。", outcomeKey: "h-e" },
+  { title: "反复核对、稳住流程、把细节执行到位的岗位，我通常能做得很稳。", outcomeKey: "h-c" },
 ];
 
 /**

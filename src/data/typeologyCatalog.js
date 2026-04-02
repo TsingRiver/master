@@ -1,4 +1,5 @@
 import {
+  MBTI_PRO_72_QUESTION_BANK,
   MBTI_PRO_120_QUESTION_BANK,
   MBTI_QUICK_32_QUESTION_BANK,
 } from "./mbtiQuestionBank";
@@ -727,7 +728,7 @@ const SOCIAL_PERSONA_QUESTION_BLUEPRINT = [
   ["我喜欢挑战自己，突破舒适区。", "s-explorer"],
   ["聚会时，我通常是活跃气氛的人。", "s-social"],
   ["人多的场合会让我觉得疲惫。", "s-independent"],
-  ["我不会为了合群而违背本心。", "s-principle"],
+  ["即使周围人都在附和，我也不会为了融入去说违心的话。", "s-principle"],
   ["我喜欢安排任务，推动进度。", "s-lead"],
   ["我很在意身边人过得好不好。", "s-empathy"],
   ["我习惯用数据和事实说话。", "s-analyst"],
@@ -737,7 +738,7 @@ const SOCIAL_PERSONA_QUESTION_BLUEPRINT = [
   ["我更喜欢一个人完成事情。", "s-independent"],
   ["我清楚自己的底线，不会退让。", "s-principle"],
   ["大家遇到问题会习惯找我拿主意。", "s-lead"],
-  ["我愿意为了在乎的人付出很多。", "s-empathy"],
+  ["在乎的人遇到难处时，我会优先留出陪伴和支持，而不是只在口头上关心。", "s-empathy"],
   ["我能客观看待问题，不偏袒。", "s-analyst"],
   ["我喜欢按计划一步步执行。", "s-stability"],
   ["我不喜欢一成不变的生活。", "s-explorer"],
@@ -748,7 +749,7 @@ const SOCIAL_PERSONA_QUESTION_BLUEPRINT = [
   ["我很会换位思考，体谅他人。", "s-empathy"],
   ["情绪波动很少影响我的判断。", "s-analyst"],
   ["安稳踏实的生活让我满足。", "s-stability"],
-  ["我愿意为了兴趣尝试各种可能。", "s-explorer"],
+  ["只要真心喜欢一件事，我会自己折腾出很多不同玩法去试。", "s-explorer"],
   ["我很容易和陌生人聊得来。", "s-social"],
   ["我不太喜欢主动开启话题。", "s-independent"],
   ["我做事有底线，不会随波逐流。", "s-principle"],
@@ -759,7 +760,7 @@ const SOCIAL_PERSONA_QUESTION_BLUEPRINT = [
   ["我喜欢探索不同的生活方式。", "s-explorer"],
   ["我喜欢和很多人保持良好关系。", "s-social"],
   ["我更适合独立思考和工作。", "s-independent"],
-  ["我不会为了利益放弃原则。", "s-principle"],
+  ["就算眼前能占便宜，我也不愿意做明知不对的交易。", "s-principle"],
   ["我敢于拍板，承担责任。", "s-lead"],
   ["我待人真诚，愿意用心经营关系。", "s-empathy"],
   ["我看重逻辑自洽，不喜欢双标。", "s-analyst"],
@@ -962,7 +963,7 @@ export const TYPEOLOGY_TESTS = [
     outcomes: [],
     // 关键逻辑：pro72 保持当前题库；quick32 使用独立强区分题库，避免题面与专业版同质化。
     modeQuestionPoolMap: {
-      pro72: MBTI_PRO_120_QUESTION_BANK,
+      pro72: MBTI_PRO_72_QUESTION_BANK,
       quick32: MBTI_QUICK_32_QUESTION_BANK,
     },
     staticQuestionPool: MBTI_PRO_120_QUESTION_BANK,

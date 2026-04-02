@@ -38,7 +38,7 @@ B011,"我乐于接受新鲜事物，不排斥未知挑战",bf-scoei,false,1,true
 B012,"我做事有条理，很少出现混乱无序的情况",bf-sco--,false,1,true
 B013,"我能快速融入新群体，与陌生人轻松搭话",bf-s--e-,false,1,true
 B014,"我享受独处时光，不觉得孤独或无聊",bf--c-i,false,1,true
-B015,"我容易察觉他人的情绪变化并共情",bf--oei,false,1,true
+B015,"别人还没明说时，我常能从语气和表情里察觉到对方情绪不对",bf--oei,false,1,true
 B016,"我面对任务时，会全力以赴追求最优结果",bf-sco--,false,1,true
 B017,"我做事容易分心，难以长时间专注一件事",bf-sc--i,true,1,true
 B018,"我喜欢参与集体活动，不喜欢独自待着",bf-s--e-,false,1,true
@@ -46,9 +46,9 @@ B019,"我愿意尝试不同的生活方式，突破舒适区",bf-scoei,false,1,t
 B020,"我做决定前会谨慎思考，不轻易冲动",bf--c-i,false,1,true
 B021,"我对新观点、新思想抱有开放接纳的态度",bf-scoei,false,1,true
 B022,"我注重细节，能发现别人忽略的小问题",bf-sc--i,false,1,true
-B023,"我善于表达自己的想法，不害怕当众发言",bf-s--e-,false,1,true
+B023,"需要在一群人面前讲清观点时，我通常能自然开口并把想法说完整",bf-s--e-,false,1,true
 B024,"我不擅长主动社交，通常等待别人主动",bf--c-i,false,1,true
-B025,"我对他人的需求很敏感，愿意提供帮助",bf--oei,false,1,true
+B025,"我往往能留意到别人实际缺什么，并愿意主动搭把手",bf--oei,false,1,true
 B026,"我有强烈的责任心，答应的事一定会做到",bf-sco--,false,1,true
 B027,"我常常拖延任务，不到最后不着急完成",bf-sc--i,true,1,true
 B028,"我乐于分享自己的经历和感受，增进彼此了解",bf--oei,false,1,true
@@ -60,13 +60,13 @@ B033,"我在社交场合中很活跃，能带动氛围",bf-s--e-,false,1,true
 B034,"我更倾向于独立完成任务，不依赖他人",bf--c-i,false,1,true
 B035,"我情感丰富，容易被文字、画面打动",bf--oei,false,1,true
 B036,"我面对困难时，会积极寻找解决办法",bf-sco--,false,1,true
-B037,"我做事缺乏规划，常常临时抱佛脚",bf-sc--i,true,1,true
+B037,"很多任务我会拖到截止前才集中处理，前面不太会主动排节奏",bf-sc--i,true,1,true
 B038,"我喜欢结交新朋友，拓展自己的社交圈",bf-s--e-,false,1,true
 B039,"我对新鲜事物充满热情，愿意主动尝试",bf-scoei,false,1,true
 B040,"我不喜欢频繁社交，会觉得身心疲惫",bf--c-i,false,1,true
 B041,"我善于观察，能捕捉到环境中的细微变化",bf--oei,false,1,true
 B042,"我注重效率，会合理安排时间完成任务",bf-sco--,false,1,true
-B043,"我容易半途而废，缺乏坚持下去的毅力",bf-sc--i,true,1,true
+B043,"我做长期任务时，常会被新兴趣打断原来的节奏",bf-sc--i,true,1,true
 B044,"我能快速适应新的社交环境，不怯生",bf-s--e-,false,1,true
 B045,"我愿意接受新的挑战，不畏惧失败",bf-scoei,false,1,true
 B046,"我做决定时很谨慎，会反复权衡利弊",bf-sc--i,false,1,true
@@ -78,11 +78,11 @@ B051,"我能理解他人的处境，给予包容和支持",bf--oei,false,1,true
 B052,"我有很强的执行力，能快速落实计划",bf-sco--,false,1,true
 B053,"我做事没有耐心，容易急躁冒进",bf-sc--i,true,1,true
 B054,"我乐于参与社交活动，享受与人相处的时光",bf-s--e-,false,1,true
-B055,"我喜欢探索新的可能性，不局限于现状",bf-scoei,false,1,true
-B056,"我性格内敛，不善于表达自己的情绪",bf--c-i,false,1,true
-B057,"我对他人的情绪很敏感，容易被影响",bf--oei,false,1,true
+B055,"我会主动接触和自己原本圈层差很远的人或内容",bf-scoei,false,1,true
+B056,"即使心里起伏很大，我通常也不会把情绪直接表露出来",bf--c-i,false,1,true
+B057,"周围人的情绪一旦很强烈，我常会被带进去，自己的状态也跟着波动",bf--oei,false,1,true
 B058,"我面对责任时，会勇于承担，不推诿",bf-sco--,false,1,true
-B059,"我做事缺乏条理，常常丢三落四",bf-sc--i,true,1,true
+B059,"我整理物品和信息时容易顾此失彼，经常漏拿东西或忘记细节",bf-sc--i,true,1,true
 B060,"我善于与人打交道，能建立良好的人际关系",bf-s--e-,false,1,true
 `;
 

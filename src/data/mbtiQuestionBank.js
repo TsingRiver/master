@@ -98,7 +98,7 @@ const MBTI_CUSTOM_RAW_ITEMS = [
   { title: "批评时我会照顾对方情绪，委婉表达。", outcomeKey: "f" },
   { title: "我不容易被情绪影响判断。", outcomeKey: "t" },
   { title: "我很容易被别人的情绪带动。", outcomeKey: "f" },
-  { title: "我更看重效率，而不是别人的脸色。", outcomeKey: "t" },
+  { title: "推进事情时，我通常先看结果能不能出来，而不是先照顾每个人当下舒不舒服。", outcomeKey: "t" },
   { title: "我会为了照顾别人感受而妥协。", outcomeKey: "f" },
   { title: "我习惯先分析对错，再考虑心情。", outcomeKey: "t" },
   { title: "我习惯先照顾心情，再理性沟通。", outcomeKey: "f" },
@@ -163,29 +163,29 @@ const MBTI_CUSTOM_RAW_ITEMS = [
   { title: "我喜欢脚踏实地的生活。", outcomeKey: "s" },
   { title: "我喜欢不切实际的幻想。", outcomeKey: "n" },
   { title: "我说话直接，不爱拐弯。", outcomeKey: "t" },
-  { title: "我说话委婉，照顾他人。", outcomeKey: "f" },
+  { title: "关系变僵时，我会先想办法修复彼此的连接感。", outcomeKey: "f" },
   { title: "我讨厌半途而废。", outcomeKey: "j" },
-  { title: "我觉得过程比结果更重要。", outcomeKey: "p" },
+  { title: "我更喜欢先保留选项，而不是很早把路定死。", outcomeKey: "p" },
   { title: "我愿意主动分享情绪和生活。", outcomeKey: "e" },
-  { title: "我不太愿意主动分享私生活。", outcomeKey: "i" },
+  { title: "做重要决定前，我通常需要先独处一会儿，才能想清楚。", outcomeKey: "i" },
   { title: "我关注细节，容易发现变化。", outcomeKey: "s" },
-  { title: "我关注整体，忽略小细节。", outcomeKey: "n" },
+  { title: "我常会先预判一件事接下来可能怎么发展。", outcomeKey: "n" },
   { title: "我能冷静面对批评。", outcomeKey: "t" },
-  { title: "我很在意别人的评价。", outcomeKey: "f" },
+  { title: "我会下意识留意场面里的情绪流动，避免气氛彻底变冷。", outcomeKey: "f" },
   { title: "我习惯把事情做完再休息。", outcomeKey: "j" },
-  { title: "我习惯边休息边做事。", outcomeKey: "p" },
+  { title: "任务推进到一半时，我常会根据新情况临时改打法。", outcomeKey: "p" },
   { title: "我喜欢认识各种各样的人。", outcomeKey: "e" },
-  { title: "我只喜欢和同频的人深交。", outcomeKey: "i" },
+  { title: "我更习惯先用文字整理想法，再进入面对面交流。", outcomeKey: "i" },
   { title: "我更愿意接受看得见的事实。", outcomeKey: "s" },
-  { title: "我更愿意相信直觉的判断。", outcomeKey: "n" },
-  { title: "我更看重公平合理。", outcomeKey: "t" },
-  { title: "我更看重彼此舒服。", outcomeKey: "f" },
+  { title: "别人讲一件事时，我会自然联想到更远的连锁影响。", outcomeKey: "n" },
+  { title: "遇到争议时，我更在意标准是否一致，而不是谁讲得更可怜。", outcomeKey: "t" },
+  { title: "做决定时，我会考虑这件事会不会让重要的人失望。", outcomeKey: "f" },
   { title: "我喜欢有秩序的生活。", outcomeKey: "j" },
-  { title: "我喜欢自由松散的生活。", outcomeKey: "p" },
+  { title: "遇到突发机会时，我通常愿意先试试看，再决定要不要长期投入。", outcomeKey: "p" },
   { title: "我在人群中不会感到紧张。", outcomeKey: "e" },
-  { title: "人太多时我会感到紧张。", outcomeKey: "i" },
+  { title: "连续几天高频社交后，我会明显需要降低互动密度。", outcomeKey: "i" },
   { title: "我是一个很现实的人。", outcomeKey: "s" },
-  { title: "我是一个很理想主义的人。", outcomeKey: "n" },
+  { title: "面对模糊信息时，我通常会先抓方向，而不是先要完整细节。", outcomeKey: "n" },
   { title: "我不容易妥协原则。", outcomeKey: "t" },
   { title: "我不容易妥协关系。", outcomeKey: "f" },
   { title: "我喜欢提前规划好每一天。", outcomeKey: "j" },
@@ -229,7 +229,7 @@ const MBTI_QUICK_32_RAW_ITEMS = [
   { title: "我不纠结细节，更看重整体和趋势。", outcomeKey: "mbti-n" },
   { title: "我喜欢探讨理论和创意，不喜欢重复的实操。", outcomeKey: "mbti-n" },
   { title: "我常常有奇思妙想，喜欢想象不同的可能性。", outcomeKey: "mbti-n" },
-  { title: "我做事喜欢创新，不喜欢按部就班。", outcomeKey: "mbti-n" },
+  { title: "面对熟悉任务时，我也会忍不住去想有没有更新的思路。", outcomeKey: "mbti-n" },
   { title: "我更关注“可能是什么”，而非“是什么”。", outcomeKey: "mbti-n" },
   { title: "我对新鲜创意、未知领域充满好奇。", outcomeKey: "mbti-n" },
 
@@ -261,7 +261,7 @@ const MBTI_QUICK_32_RAW_ITEMS = [
   { title: "突发情况会让我感到焦虑，难以从容应对。", outcomeKey: "mbti-j" },
 
   { title: "我不喜欢提前规划，享受随心所欲的状态。", outcomeKey: "mbti-p" },
-  { title: "我做事喜欢灵活变通，不急于做出决定。", outcomeKey: "mbti-p" },
+  { title: "事情刚开始时，我更愿意先保留几个选项，而不是立刻定方案。", outcomeKey: "mbti-p" },
   { title: "我习惯随机应变，不喜欢被计划束缚。", outcomeKey: "mbti-p" },
   { title: "我喜欢自由随性的生活，不追求绝对秩序。", outcomeKey: "mbti-p" },
   { title: "我可以边做边调整，不执着于一次性完成任务。", outcomeKey: "mbti-p" },
@@ -269,6 +269,41 @@ const MBTI_QUICK_32_RAW_ITEMS = [
   { title: "我不擅长制定固定计划，更喜欢随机发挥。", outcomeKey: "mbti-p" },
   { title: "突发情况能激发我的应变力，我能从容应对。", outcomeKey: "mbti-p" },
 ];
+
+/**
+ * MBTI quick32 模式的 outcome 定向取题索引。
+ * 关键逻辑：
+ * 1. 每个 outcome 固定取 4 题，保证模式稳定；
+ * 2. 对立 outcome 刻意错开概念索引，避免同一语义簇的正反镜像题同时出现。
+ */
+const MBTI_QUICK_32_SELECTION_INDEX_MAP = {
+  e: [0, 2, 4, 6],
+  i: [1, 3, 5, 7],
+  s: [0, 2, 4, 6],
+  n: [1, 3, 5, 7],
+  t: [0, 2, 4, 6],
+  f: [1, 3, 5, 7],
+  j: [0, 2, 4, 6],
+  p: [1, 3, 5, 7],
+};
+
+/**
+ * MBTI pro72 模式的 outcome 定向取题索引。
+ * 关键逻辑：
+ * 1. 72 题模式按 9 题 * 8 个 outcome 固定出题；
+ * 2. 优先覆盖不同语义概念，只保留少量新增独立题补足题量；
+ * 3. 避免直接按同序号对立题硬配对，降低“题意重复感”。
+ */
+const MBTI_PRO_72_SELECTION_INDEX_MAP = {
+  e: [0, 2, 4, 6, 8, 10, 12, 13, 14],
+  i: [1, 3, 5, 7, 9, 11, 12, 13, 14],
+  s: [0, 2, 4, 6, 8, 10, 12, 13, 14],
+  n: [1, 3, 5, 7, 9, 11, 12, 13, 14],
+  t: [0, 2, 4, 6, 8, 10, 12, 13, 14],
+  f: [1, 3, 5, 7, 9, 11, 12, 13, 14],
+  j: [0, 2, 4, 6, 8, 10, 12, 13, 14],
+  p: [1, 3, 5, 7, 9, 11, 12, 13, 14],
+};
 
 /**
  * 生成轴零向量。
@@ -502,44 +537,106 @@ function buildProRawQuestionItems(normalizedItems) {
 }
 
 /**
+ * 按 outcome 定向索引构建原始题目。
+ * 关键逻辑：
+ * 1. 先按索引表稳定选题，保证模式内题面语义分布固定；
+ * 2. 若某些索引缺题，再使用同 outcome 余量补齐，避免线上题量波动；
+ * 3. 最后仍做全局去重，防止历史题库脏数据混入。
+ * 复杂度评估：O(N)。
+ * @param {Array<{ title: string, outcomeKey: string, dimensionTag: string, direction: number }>} normalizedItems 规范化题目。
+ * @param {Record<string, Array<number>>} selectionIndexMap outcome -> 索引列表。
+ * @param {number} targetCount 目标总题量。
+ * @returns {Array<object>} 定向构建后的原始题目。
+ */
+function buildTargetedRawQuestionItems(normalizedItems, selectionIndexMap, targetCount) {
+  const groupedMap = groupQuestionsByOutcome(normalizedItems);
+  const selectedGroupedMap = new Map();
+  const selectedTitleSet = new Set();
+  const safeTargetCount = Math.max(0, Math.floor(Number(targetCount) || 0));
+
+  MBTI_OUTCOME_ORDER.forEach((outcomeKey) => {
+    const sourceItems = groupedMap.get(outcomeKey) ?? [];
+    const preferredIndexList = Array.isArray(selectionIndexMap?.[outcomeKey])
+      ? selectionIndexMap[outcomeKey]
+      : [];
+    const selectedItems = [];
+
+    preferredIndexList.forEach((sourceIndex) => {
+      const candidateItem = sourceItems[sourceIndex];
+      if (!candidateItem || selectedTitleSet.has(candidateItem.title)) {
+        return;
+      }
+
+      selectedItems.push(candidateItem);
+      selectedTitleSet.add(candidateItem.title);
+    });
+
+    if (selectedItems.length < preferredIndexList.length) {
+      sourceItems.forEach((candidateItem) => {
+        if (
+          selectedItems.length >= preferredIndexList.length ||
+          selectedTitleSet.has(candidateItem.title)
+        ) {
+          return;
+        }
+
+        selectedItems.push(candidateItem);
+        selectedTitleSet.add(candidateItem.title);
+      });
+    }
+
+    selectedGroupedMap.set(outcomeKey, selectedItems);
+  });
+
+  let targetedRawItems = interleaveOutcomeGroups(selectedGroupedMap);
+
+  if (targetedRawItems.length < safeTargetCount) {
+    const remainingItems = normalizedItems.filter((item) => !selectedTitleSet.has(item.title));
+    for (const remainingItem of remainingItems) {
+      if (targetedRawItems.length >= safeTargetCount) {
+        break;
+      }
+
+      selectedTitleSet.add(remainingItem.title);
+      targetedRawItems.push(remainingItem);
+    }
+  }
+
+  return targetedRawItems.slice(0, safeTargetCount);
+}
+
+/**
  * 构建 quick32 速测版原始题目。
  * 关键逻辑：
- * 1. 目标每个 outcomeKey 取 4 题，共 32 题，保证四维两极均衡覆盖；
- * 2. 若个别 outcome 不足，则使用剩余题稳定补齐，仍保持去重。
+ * 1. 每个 outcomeKey 固定取 4 题，共 32 题；
+ * 2. 对立维度故意错开概念索引，避免镜像重复题同时进入速测版。
  * 复杂度评估：O(N)。
  * @param {Array<{ title: string, outcomeKey: string, dimensionTag: string, direction: number }>} normalizedItems 规范化题目。
  * @returns {Array<object>} quick32 原始题目。
  */
 function buildQuick32RawQuestionItems(normalizedItems) {
-  const groupedMap = groupQuestionsByOutcome(normalizedItems);
-  const selectedGroupedMap = new Map();
-  const selectedTitleSet = new Set();
-  const QUICK_TARGET_COUNT = 32;
-  const OUTCOME_TARGET_COUNT = 4;
+  return buildTargetedRawQuestionItems(
+    normalizedItems,
+    MBTI_QUICK_32_SELECTION_INDEX_MAP,
+    32,
+  );
+}
 
-  MBTI_OUTCOME_ORDER.forEach((outcomeKey) => {
-    const sourceItems = groupedMap.get(outcomeKey) ?? [];
-    const selectedItems = sourceItems.slice(0, OUTCOME_TARGET_COUNT);
-    selectedGroupedMap.set(outcomeKey, selectedItems);
-    selectedItems.forEach((item) => {
-      selectedTitleSet.add(item.title);
-    });
-  });
-
-  let quickRawItems = interleaveOutcomeGroups(selectedGroupedMap);
-
-  if (quickRawItems.length < QUICK_TARGET_COUNT) {
-    const remainingItems = normalizedItems.filter((item) => !selectedTitleSet.has(item.title));
-    for (const remainingItem of remainingItems) {
-      if (quickRawItems.length >= QUICK_TARGET_COUNT) {
-        break;
-      }
-      selectedTitleSet.add(remainingItem.title);
-      quickRawItems.push(remainingItem);
-    }
-  }
-
-  return quickRawItems.slice(0, QUICK_TARGET_COUNT);
+/**
+ * 构建 pro72 类型学专业版原始题目。
+ * 关键逻辑：
+ * 1. 每个 outcomeKey 固定取 9 题，共 72 题；
+ * 2. 通过定向索引优先覆盖不同概念，再用新增独立题补足 72 题。
+ * 复杂度评估：O(N)。
+ * @param {Array<{ title: string, outcomeKey: string, dimensionTag: string, direction: number }>} normalizedItems 规范化题目。
+ * @returns {Array<object>} pro72 原始题目。
+ */
+function buildPro72RawQuestionItems(normalizedItems) {
+  return buildTargetedRawQuestionItems(
+    normalizedItems,
+    MBTI_PRO_72_SELECTION_INDEX_MAP,
+    72,
+  );
 }
 
 /**
@@ -572,6 +669,11 @@ const MBTI_NORMALIZED_ITEMS = normalizeRawItems(MBTI_CUSTOM_RAW_ITEMS);
 const MBTI_PRO_120_RAW_ITEMS = buildProRawQuestionItems(MBTI_NORMALIZED_ITEMS);
 
 /**
+ * 72 题专业版原始题集（类型学 pro72 专用）。
+ */
+const MBTI_PRO_72_RAW_ITEMS = buildPro72RawQuestionItems(MBTI_NORMALIZED_ITEMS);
+
+/**
  * quick32 规范化后的独立题库。
  */
 const MBTI_QUICK_32_NORMALIZED_ITEMS = normalizeRawItems(MBTI_QUICK_32_RAW_ITEMS);
@@ -591,6 +693,13 @@ export const MBTI_PRO_120_QUESTION_BANK = buildQuestionBankFromRawItems(
 );
 
 /**
+ * 72 题专业版题库导出（类型学 pro72 专用）。
+ */
+export const MBTI_PRO_72_QUESTION_BANK = buildQuestionBankFromRawItems(
+  MBTI_PRO_72_RAW_ITEMS,
+);
+
+/**
  * 32 题速测版（类型学 quick32 专用）导出。
  */
 export const MBTI_QUICK_32_QUESTION_BANK = buildQuestionBankFromRawItems(
@@ -599,9 +708,9 @@ export const MBTI_QUICK_32_QUESTION_BANK = buildQuestionBankFromRawItems(
 
 /**
  * 36 题速测版题库导出：
- * 关键逻辑：从 120 题稳定截取前 36 题，避免多版本题库不一致导致的测后波动。
+ * 关键逻辑：优先继承已去镜像化的 pro72 语义分布，降低独立页的重复题体感。
  */
-export const MBTI_QUICK_36_QUESTION_BANK = MBTI_PRO_120_QUESTION_BANK.slice(0, 36);
+export const MBTI_QUICK_36_QUESTION_BANK = MBTI_PRO_72_QUESTION_BANK.slice(0, 36);
 
 /**
  * 兼容旧引用：

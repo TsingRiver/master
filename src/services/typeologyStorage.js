@@ -32,7 +32,7 @@ const TYPEOLOGY_PROGRESS_CACHE_KEY_PREFIX = "asking_typeology_progress_v2_";
  * @param {{ targetPath?: string }} [storageOptions={}] 存储参数。
  * @returns {{ resultCacheKey: string, progressPrefix: string, namespaceId: string | null }} 当前命名空间。
  */
-function resolveTypeologyStorageNamespace(storageOptions = {}) {
+export function resolveTypeologyStorageNamespace(storageOptions = {}) {
   const resolvedScopePath =
     resolveLicenseScopePath(storageOptions.targetPath ?? window.location.pathname) ?? "";
   const licenseAccessContext = resolvedScopePath

@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "audit:typeology-banks": "node ./scripts/auditTypeologyQuestionBankDuplicates.mjs"
   },
   "dependencies": {
     "@vercel/speed-insights": "^1.3.1",
