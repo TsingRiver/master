@@ -134,14 +134,14 @@ export function buildTypeologyPersonalitySummary({
 }
 
 const MBTI_DIMENSION_SUMMARY_MAP = Object.freeze({
-  E: "更愿意通过互动和表达来启动思考",
-  I: "更习惯先在内心整理想法再输出观点",
-  S: "看问题时会优先关注现实细节与可执行性",
-  N: "看问题时会先抓趋势、可能性和整体图景",
-  T: "做决定时更看重逻辑、边界和效率",
-  F: "做决定时更在意感受、关系和价值共鸣",
-  J: "处理任务时倾向先建立结构、节奏和确定性",
-  P: "处理任务时更喜欢保留弹性，并边走边调整路径",
+  E: "更愿意边说边想，也常主动接话",
+  I: "更习惯先想清楚，再慢慢开口",
+  S: "会先看眼前细节和现实情况",
+  N: "会先抓趋势、感觉和可能性",
+  T: "更常按道理和判断标准来定",
+  F: "更会顾及感受和彼此关系",
+  J: "喜欢先定安排，不爱临时改动",
+  P: "会留些余地，边做边再调整",
 });
 
 /**
@@ -150,7 +150,7 @@ const MBTI_DIMENSION_SUMMARY_MAP = Object.freeze({
  * @param {object} params 参数对象。
  * @param {string} params.typeCode MBTI 类型码。
  * @param {string} params.typeTitle MBTI 中文标题。
- * @returns {string} 约 100 字的人格描述。
+ * @returns {string} 约 60~80 字的人格描述。
  */
 export function buildMbtiPersonalitySummary({ typeCode, typeTitle }) {
   const normalizedTypeCode = String(typeCode ?? "").trim().toUpperCase();
@@ -159,7 +159,7 @@ export function buildMbtiPersonalitySummary({ typeCode, typeTitle }) {
     normalizedTypeCode.split("");
 
   return normalizeTypeologyShortSummary(
-    `你整体更像一个${normalizedTypeTitle}型的人，通常${MBTI_DIMENSION_SUMMARY_MAP[energyLetter] ?? "有自己稳定的表达节奏"}，${MBTI_DIMENSION_SUMMARY_MAP[perceptionLetter] ?? "会先形成自己的观察框架"}，${MBTI_DIMENSION_SUMMARY_MAP[decisionLetter] ?? "做判断时有清晰依据"}，并且${MBTI_DIMENSION_SUMMARY_MAP[lifestyleLetter] ?? "会按照适合自己的节奏推进事情"}。`,
+    `你给人的感觉更像${normalizedTypeTitle}型，平时${MBTI_DIMENSION_SUMMARY_MAP[energyLetter] ?? "有自己稳定的表达节奏"}；看事情时${MBTI_DIMENSION_SUMMARY_MAP[perceptionLetter] ?? "会先形成自己的观察框架"}，拿主意时${MBTI_DIMENSION_SUMMARY_MAP[decisionLetter] ?? "会按自己的判断来定"}，做事也${MBTI_DIMENSION_SUMMARY_MAP[lifestyleLetter] ?? "会按照适合自己的节奏推进事情"}。`,
   );
 }
 
