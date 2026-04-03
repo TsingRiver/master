@@ -122,21 +122,17 @@ function buildUserPrompt(payload) {
     `3. profileTitle、insight、growthActions、blindSpots 中不得出现 ${lockedMainTypeCode} 之外的其他 MBTI 类型码。`,
     "4. 你的职责是解释结果，不是改判结果。",
     "5. shortSummary 必须是 80~120 字单句人格描述，只描述当前测试下的你，不写建议或 Top3 比较。",
+    "6. 必须填写真实内容，不得照抄字段说明、示例文案、空字符串或占位数组。",
     "字段规范：",
     JSON.stringify(
       {
         mainType: { name: lockedMainTypeCode, score: lockedMainTypeScore },
-        topThree: lockedTopThree,
-        shortSummary:
-          "你通常会先在心里梳理信息，再用相对稳定的判断框架推进关键决定。",
-        profileTitle: `${lockedMainTypeCode} · 维度深看`,
-        insight: `当前结果更接近 ${lockedMainTypeCode}，因为你的作答在四条轴上呈现出相对稳定的偏好重心。`,
-        growthActions: [
-          "把核心优势放进关键任务持续复用",
-          "定期练习次弱维度保持弹性",
-          "用真实场景复盘长期主线",
-        ],
-        blindSpots: ["高压下容易固化路径", "节奏差异可能放大误解"],
+        topThree: [{ name: "", score: 0 }, { name: "", score: 0 }, { name: "", score: 0 }],
+        shortSummary: "",
+        profileTitle: "",
+        insight: "",
+        growthActions: ["", "", ""],
+        blindSpots: ["", ""],
       },
       null,
       2,

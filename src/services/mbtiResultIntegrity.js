@@ -546,7 +546,10 @@ function shouldUpgradeGenericAiTitle({ text, mainResult }) {
  * @returns {boolean} 是否需要升级。
  */
 function shouldUpgradeGenericAiNarrative({ text, summaryText, mainResult }) {
-  const normalizedText = String(text ?? "").trim();
+  const normalizedText = sanitizeAiCopyText({
+    text,
+    fallbackText: "",
+  });
   const normalizedSummaryText = String(summaryText ?? "").trim();
   if (!normalizedText) {
     return true;
@@ -618,7 +621,10 @@ function shouldUpgradeGenericAiShortSummary({ text, narrative, mainResult }) {
  * @returns {boolean} 是否需要升级。
  */
 function shouldUpgradeMbtiAiNarrative({ text, summaryText }) {
-  const normalizedText = String(text ?? "").trim();
+  const normalizedText = sanitizeAiCopyText({
+    text,
+    fallbackText: "",
+  });
   const normalizedSummaryText = String(summaryText ?? "").trim();
   if (!normalizedText) {
     return true;
@@ -648,23 +654,11 @@ function shouldUpgradeMbtiAiShortSummary({ text, narrative }) {
  * @returns {Array<string>} 清洗后的数组。
  */
 function sanitizeStringList(value, fallbackList, limit = 3) {
-  const normalizedValueList = Array.isArray(value)
-    ? value
-        .map((item) => String(item ?? "").trim())
-        .filter(Boolean)
-        .slice(0, limit)
-    : [];
-
-  if (normalizedValueList.length > 0) {
-    return normalizedValueList;
-  }
-
-  return Array.isArray(fallbackList)
-    ? fallbackList
-        .map((item) => String(item ?? "").trim())
-        .filter(Boolean)
-        .slice(0, limit)
-    : [];
+  return sanitizeAiCopyList({
+    textList: value,
+    fallbackList,
+    limit,
+  });
 }
 
 /**
@@ -729,7 +723,10 @@ function sanitizeGenericAiInsightPayload({
     mainResult,
   })
     ? fallbackNarrative
-    : String(currentAiInsight.narrative ?? "").trim();
+    : sanitizeAiCopyText({
+        text: currentAiInsight.narrative,
+        fallbackText: fallbackNarrative,
+      });
   const resolvedShortSummary = shouldUpgradeGenericAiShortSummary({
     text: currentAiInsight.shortSummary,
     narrative: currentAiInsight.narrative,

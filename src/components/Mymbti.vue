@@ -1020,6 +1020,7 @@ import {
   buildTypeologyFinalProfile,
   resolveTypeologyFoundationMbti,
 } from "../services/typeologyProfileEngine";
+import { sanitizeAiCopyText } from "../services/aiCopySanitizer.js";
 import { normalizeTypeologyShortSummary } from "../services/typeologyCopyUtils";
 import {
   clearAllTypeologyProgressCache as clearAllTypeologyProgressCacheStorage,
@@ -3021,9 +3022,9 @@ const aiStreamingActionPreview = computed(() =>
 /**
  * 结果摘要视图文案：
  * 关键逻辑：
- * 1. 优先展示 AI 生成的短摘要，确保主结果卡也能承接 AI 解读。
- * 2. AI 不可用时回退到本地 `summaryText`，保证主流程稳定可用。
- * 3. 不再复用 AI narrative，避免摘要卡再次变成长文进阶解读。
+ * 1. 优先展示 AI 生成的短摘要，但前提是该摘要已通过模板脏词拦截。
+ * 2. AI 无有效摘要时回退到本地 `summaryText`，保证主流程稳定可用。
+ * 3. 不复用 AI narrative，避免摘要卡再次变成长文进阶解读。
  */
 const insightForView = computed(() => {
   const streamingShortSummary = String(
@@ -3317,15 +3318,21 @@ function resolveAiShortSummaryPreviewText(streamRawText) {
  * @returns {string} 可展示叙事文本。
  */
 function resolveAiNarrativePreviewText(streamRawText) {
-  const narrativePreview = extractFieldPreviewFromJsonStream(
-    streamRawText,
-    "narrative",
-  );
+  const narrativePreview = sanitizeAiCopyText({
+    text: extractFieldPreviewFromJsonStream(
+      streamRawText,
+      "narrative",
+    ),
+    fallbackText: "",
+  });
   if (narrativePreview) {
     return narrativePreview;
   }
 
-  return extractFieldPreviewFromJsonStream(streamRawText, "insight");
+  return sanitizeAiCopyText({
+    text: extractFieldPreviewFromJsonStream(streamRawText, "insight"),
+    fallbackText: "",
+  });
 }
 
 /**

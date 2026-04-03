@@ -34,12 +34,13 @@ function buildTypeologyProfileSystemPrompt() {
     "6. 如果输入中没有明显冲突，请把重点放在“多维一致性”与“稳定核心优势”上，不要强行制造矛盾。",
     "【Output Requirement】",
     "必须严格输出 JSON，不要输出任何额外说明。JSON 结构如下：",
+    "四个字段都必须填写真实内容，不得照抄字段说明、示例文案或空字符串。",
     JSON.stringify(
       {
-        title: "稀有张力型",
-        corePortrait: "你的人格底盘有清晰主线，同时保留少见的复合信号。",
-        tensionAnalysis: "这些看似相反的特质并不是误差，而是你在不同场景调度心理资源的证据。",
-        growthAdvice: "真正的成长不是抹平张力，而是学会识别何时放大优势、何时收束能量。",
+        title: "",
+        corePortrait: "",
+        tensionAnalysis: "",
+        growthAdvice: "",
       },
       null,
       2,
