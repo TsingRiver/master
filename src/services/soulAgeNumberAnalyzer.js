@@ -4,35 +4,45 @@
  * 2. shortInsight 用于结果页 hover / 点击后的短解读。
  */
 export const SOUL_AGE_DIMENSION_META = Object.freeze({
-  "stress-response": {
-    key: "stress-response",
-    label: "应变稳度",
-    shortInsight: "面对变化时，你更偏向本能反应、快速处理，还是稳定接住自己。",
+  curiosity: {
+    key: "curiosity",
+    label: "好奇心",
+    shortInsight: "你对新鲜体验、未来可能性和学习探索的打开程度，会影响灵魂的鲜活感。",
   },
-  "life-rhythm": {
-    key: "life-rhythm",
-    label: "生活取向",
-    shortInsight: "你更需要刺激与变化，还是更偏爱松弛、稳定和简单生活。",
+  "emotion-stability": {
+    key: "emotion-stability",
+    label: "情绪稳定",
+    shortInsight: "你在批评、遗憾和波动面前，能否慢慢回到平衡，决定了内心底盘。",
   },
-  "emotion-balance": {
-    key: "emotion-balance",
-    label: "情绪稳度",
-    shortInsight: "你对批评、遗憾和情绪波动的消化方式，决定了你的内在稳定性。",
+  "social-ease": {
+    key: "social-ease",
+    label: "社交从容",
+    shortInsight: "你在关系里是否自然、松弛而有分寸，会直接影响相处时的舒适度。",
   },
-  "goal-awareness": {
-    key: "goal-awareness",
-    label: "目标感",
-    shortInsight: "你对未来、责任、学习与金钱的态度，反映了长期规划意识。",
+  responsibility: {
+    key: "responsibility",
+    label: "责任担当",
+    shortInsight: "你面对目标、责任与现实问题时的回应方式，反映了成熟与可靠程度。",
   },
-  "relationship-attitude": {
-    key: "relationship-attitude",
-    label: "关系分寸",
-    shortInsight: "你在人际与支持关系中的位置，透露了靠近方式与边界感。",
+  resilience: {
+    key: "resilience",
+    label: "抗逆力",
+    shortInsight: "遇到变化、疲惫和压力时，你把自己带回稳定状态的能力，就是你的韧性。",
   },
-  "inner-clarity": {
-    key: "inner-clarity",
-    label: "内在通透",
-    shortInsight: "你如何理解人生阶段、价值排序和终极重要之事，最能体现灵魂成熟度。",
+  "life-enthusiasm": {
+    key: "life-enthusiasm",
+    label: "生活热情",
+    shortInsight: "你对生活节奏、兴趣体验和日常投入感的选择，会决定灵魂的明亮度。",
+  },
+  inclusiveness: {
+    key: "inclusiveness",
+    label: "包容度",
+    shortInsight: "你是否愿意理解别人、接纳差异和留出空间，会影响关系里的温度。",
+  },
+  "self-acceptance": {
+    key: "self-acceptance",
+    label: "自我接纳",
+    shortInsight: "你如何看待自己的状态、缺点和人生阶段，是内在稳定感的重要来源。",
   },
 });
 
@@ -40,6 +50,27 @@ export const SOUL_AGE_DIMENSION_META = Object.freeze({
  * 维度 key 列表。
  */
 const SOUL_AGE_DIMENSION_KEYS = Object.keys(SOUL_AGE_DIMENSION_META);
+
+/**
+ * 八维雷达图题目映射：
+ * 1. 固定 20 题不足以让 8 个维度都拥有完全独立的题组，因此允许同一题贡献给多个结果维度。
+ * 2. 映射顺序与雷达图维度顺序保持一致，避免展示和计算脱节。
+ */
+const RADAR_DIMENSION_QUESTION_MAP = Object.freeze({
+  curiosity: ["soul-age-q04", "soul-age-q09", "soul-age-q15"],
+  "emotion-stability": ["soul-age-q03", "soul-age-q10", "soul-age-q14"],
+  "social-ease": ["soul-age-q05", "soul-age-q11", "soul-age-q19"],
+  responsibility: ["soul-age-q04", "soul-age-q12", "soul-age-q18"],
+  resilience: ["soul-age-q01", "soul-age-q07", "soul-age-q16"],
+  "life-enthusiasm": ["soul-age-q02", "soul-age-q06", "soul-age-q17"],
+  inclusiveness: ["soul-age-q05", "soul-age-q19", "soul-age-q20"],
+  "self-acceptance": [
+    "soul-age-q03",
+    "soul-age-q08",
+    "soul-age-q13",
+    "soul-age-q20",
+  ],
+});
 
 /**
  * 灵魂年龄结果区间：
@@ -140,29 +171,37 @@ const SOUL_AGE_RESULT_RULES = Object.freeze([
  * 关键词标签映射。
  */
 const DIMENSION_KEYWORD_MAP = Object.freeze({
-  "stress-response": {
-    keyword: "稳住",
-    desc: "遇到变化时，你开始更会先接住自己，再处理问题。",
+  curiosity: {
+    keyword: "探索",
+    desc: "你对新鲜感、学习欲和未来可能性的打开程度，会影响灵魂的鲜活感。",
   },
-  "life-rhythm": {
-    keyword: "松弛",
-    desc: "你很清楚自己真正舒服的生活节奏，不容易被外界带乱。",
+  "emotion-stability": {
+    keyword: "稳感",
+    desc: "你在情绪起伏里回到平衡的能力，决定了内心底盘是否扎实。",
   },
-  "emotion-balance": {
+  "social-ease": {
+    keyword: "从容",
+    desc: "你在社交里是否自然、不用过度证明自己，会影响关系的舒适度。",
+  },
+  responsibility: {
+    keyword: "担当",
+    desc: "你对责任、目标和现实问题的回应方式，代表了成熟度与可靠感。",
+  },
+  resilience: {
+    keyword: "韧性",
+    desc: "遇到变化、疲惫和压力时，你恢复节奏的能力就是你的抗逆力。",
+  },
+  "life-enthusiasm": {
+    keyword: "热度",
+    desc: "你对生活本身的兴趣和投入感，会决定灵魂呈现出来的明亮程度。",
+  },
+  inclusiveness: {
+    keyword: "包容",
+    desc: "你能否理解别人、接纳差异和留出空间，会影响关系里的温度。",
+  },
+  "self-acceptance": {
     keyword: "自洽",
-    desc: "你对情绪和遗憾的消化能力，决定了你的恢复速度和稳定感。",
-  },
-  "goal-awareness": {
-    keyword: "笃定",
-    desc: "你更知道自己为什么努力，也更愿意为长期结果负责。",
-  },
-  "relationship-attitude": {
-    keyword: "分寸",
-    desc: "你在人际里既会靠近，也慢慢学会保留边界和空间。",
-  },
-  "inner-clarity": {
-    keyword: "通透",
-    desc: "你越来越清楚什么才是真正重要的，也更不容易被表面喧闹带偏。",
+    desc: "你是否愿意接住自己、允许不完美，是内在稳定感的重要来源。",
   },
 });
 
@@ -213,6 +252,12 @@ const PIE_SEGMENT_META = Object.freeze({
   mature: { key: "mature", label: "成熟特质", color: "#E8D5C4" },
   insightful: { key: "insightful", label: "通透感悟", color: "#D4B996" },
 });
+
+/**
+ * 未填写实际年龄时的契合度默认估算年龄。
+ * 关键逻辑：封面文案、结果说明和分析模型必须共用同一个默认值，避免出现展示与计算不一致。
+ */
+const DEFAULT_COMPATIBILITY_AGE = 25;
 
 /**
  * 安全数字转换。
@@ -329,28 +374,37 @@ function buildTotalScore(answerSummary) {
 
 /**
  * 聚合维度分值。
- * 复杂度评估：O(Q + D)
- * Q 为题量，D 为维度数（固定 6，常数级）。
+ * 复杂度评估：O(Q + D * R)
+ * Q 为题量，D 为维度数，R 为单维度挂载题目数；当前 D=8、R<=4，整体仍为常数级。
  * @param {Array<object>} answerSummary 结构化答卷摘要。
  * @returns {{ [dimension: string]: number }} 维度分值（0~100）。
  */
 function buildDimensionScoreMap(answerSummary) {
-  const scoreSumMap = createZeroDimensionMap();
-  const countMap = createZeroDimensionMap();
-
-  answerSummary.forEach((summaryItem) => {
-    const dimensionKey = String(summaryItem?.dimension ?? "").trim();
-    if (!summaryItem.optionId || !SOUL_AGE_DIMENSION_META[dimensionKey]) {
-      return;
+  const questionScoreMap = answerSummary.reduce((accumulator, summaryItem) => {
+    if (!summaryItem.optionId) {
+      return accumulator;
     }
 
-    scoreSumMap[dimensionKey] += toSafeNumber(summaryItem.score, 0);
-    countMap[dimensionKey] += 1;
-  });
+    accumulator[String(summaryItem.questionId ?? "").trim()] = toSafeNumber(
+      summaryItem.score,
+      0,
+    );
+    return accumulator;
+  }, {});
 
   return SOUL_AGE_DIMENSION_KEYS.reduce((accumulator, dimensionKey) => {
-    const questionCount = countMap[dimensionKey];
-    const averageScore = questionCount > 0 ? scoreSumMap[dimensionKey] / questionCount : 2.5;
+    const mappedQuestionIds = RADAR_DIMENSION_QUESTION_MAP[dimensionKey] ?? [];
+    const dimensionScores = mappedQuestionIds
+      .map((questionId) => questionScoreMap[questionId])
+      .filter((scoreItem) => Number.isFinite(scoreItem));
+    const questionCount = dimensionScores.length;
+    const averageScore =
+      questionCount > 0
+        ? dimensionScores.reduce(
+            (scoreSum, scoreItem) => scoreSum + toSafeNumber(scoreItem, 0),
+            0,
+          ) / questionCount
+        : 2.5;
     // 关键逻辑：总分按 1~4 计，但雷达图统一换算到 25~100，便于视觉差异更清晰。
     const normalizedScore = ((averageScore - 1) / 3) * 75 + 25;
     accumulator[dimensionKey] = Math.round(clamp(normalizedScore, 0, 100));
@@ -475,7 +529,7 @@ function buildPieDistribution(answerSummary) {
 /**
  * 生成关键词标签模块。
  * 复杂度评估：O(D log D)
- * D 为维度数（固定 6，常数级）。
+ * D 为维度数（当前固定 8，常数级）。
  * @param {{ [dimension: string]: number }} dimensionScoreMap 维度分值。
  * @returns {Array<{ shape: string, keyword: string, description: string }>} 关键词标签。
  */
@@ -505,12 +559,22 @@ function buildKeywordCards(dimensionScoreMap) {
  * @returns {{ actualAge: number, isUserProvided: boolean, diff: number, fitPercent: number, line: string }} 契合度模型。
  */
 function buildCompatibilityModel(soulAge, actualAge) {
-  const parsedActualAge = Number(actualAge);
+  const normalizedActualAgeInput =
+    actualAge === null || actualAge === undefined
+      ? ""
+      : String(actualAge).trim();
+  // 关键逻辑：空值必须视为“未填写”，避免 Number(null) 被当成 0 导致默认年龄错误落到下限。
+  const parsedActualAge =
+    normalizedActualAgeInput === "" ? Number.NaN : Number(normalizedActualAgeInput);
   const isUserProvided = Number.isFinite(parsedActualAge);
-  const safeActualAge = clamp(Math.round(toSafeNumber(actualAge, 25)), 12, 80);
+  const safeActualAge = isUserProvided
+    ? clamp(Math.round(parsedActualAge), 12, 80)
+    : DEFAULT_COMPATIBILITY_AGE;
   const diff = soulAge - safeActualAge;
   const fitPercent = Math.round(clamp(100 - Math.abs(diff) * 3, 42, 98));
-  const linePrefix = isUserProvided ? "" : "默认按 25 岁估算，";
+  const linePrefix = isUserProvided
+    ? ""
+    : `默认按 ${DEFAULT_COMPATIBILITY_AGE} 岁估算，`;
 
   if (diff >= 10) {
     return {
@@ -567,28 +631,36 @@ function buildCompatibilityModel(soulAge, actualAge) {
  * @returns {Array<string>} 核心描述文案。
  */
 function buildCoreDescriptionLines(dimensionScoreMap) {
-  const stressResponse = toSafeNumber(dimensionScoreMap["stress-response"], 50);
-  const lifeRhythm = toSafeNumber(dimensionScoreMap["life-rhythm"], 50);
-  const emotionBalance = toSafeNumber(dimensionScoreMap["emotion-balance"], 50);
-  const goalAwareness = toSafeNumber(dimensionScoreMap["goal-awareness"], 50);
-  const relationshipAttitude = toSafeNumber(
-    dimensionScoreMap["relationship-attitude"],
+  const curiosity = toSafeNumber(dimensionScoreMap.curiosity, 50);
+  const emotionStability = toSafeNumber(
+    dimensionScoreMap["emotion-stability"],
     50,
   );
-  const innerClarity = toSafeNumber(dimensionScoreMap["inner-clarity"], 50);
+  const socialEase = toSafeNumber(dimensionScoreMap["social-ease"], 50);
+  const responsibility = toSafeNumber(dimensionScoreMap.responsibility, 50);
+  const resilience = toSafeNumber(dimensionScoreMap.resilience, 50);
+  const lifeEnthusiasm = toSafeNumber(
+    dimensionScoreMap["life-enthusiasm"],
+    50,
+  );
+  const inclusiveness = toSafeNumber(dimensionScoreMap.inclusiveness, 50);
+  const selfAcceptance = toSafeNumber(
+    dimensionScoreMap["self-acceptance"],
+    50,
+  );
 
   const lineOne =
-    stressResponse >= emotionBalance
-      ? "面对变化时，你更倾向先稳住局面，再决定如何回应情绪。"
-      : "面对变化时，你会先照顾感受，再慢慢把自己带回稳定状态。";
+    resilience >= emotionStability
+      ? "遇到变化和压力时，你更像是先把局面稳住，再慢慢处理自己的感受。"
+      : "遇到变化和压力时，你会先照顾情绪，再一点点把自己带回稳定状态。";
   const lineTwo =
-    goalAwareness >= lifeRhythm
-      ? "你越来越重视方向感和结果感，愿意为想要的生活承担责任。"
-      : "你更看重舒服、可持续的节奏，知道不是所有努力都需要和别人同速。";
+    curiosity + lifeEnthusiasm >= responsibility + socialEase
+      ? "你对世界仍保留着明显的探索欲和生活热度，很多动力来自新鲜感、体验感和鲜活感。"
+      : "你更重视秩序感与现实回应，愿意把精力放在长期稳定、责任和关系质量上。";
   const lineThree =
-    innerClarity >= relationshipAttitude
-      ? "随着经历增加，你更在意内心清楚与不内耗，而不是表面的热闹和评判。"
-      : "你很重视关系质感，懂得在靠近、支持和自我边界之间寻找平衡。";
+    selfAcceptance + inclusiveness >= responsibility + socialEase
+      ? "你正在形成更强的自我接纳和理解他人的能力，关系里也更愿意留出空间与余地。"
+      : "你更在意把自己站稳、把事情做好，在人与事面前都会表现出更成熟的分寸感。";
 
   return [lineOne, lineTwo, lineThree];
 }
@@ -601,68 +673,79 @@ function buildCoreDescriptionLines(dimensionScoreMap) {
  */
 function buildAdviceCards(dimensionScoreMap, compatibilityModel) {
   const adviceCards = [];
-  const stressResponse = toSafeNumber(dimensionScoreMap["stress-response"], 50);
-  const lifeRhythm = toSafeNumber(dimensionScoreMap["life-rhythm"], 50);
-  const emotionBalance = toSafeNumber(dimensionScoreMap["emotion-balance"], 50);
-  const goalAwareness = toSafeNumber(dimensionScoreMap["goal-awareness"], 50);
-  const relationshipAttitude = toSafeNumber(
-    dimensionScoreMap["relationship-attitude"],
-    50,
-  );
-  const innerClarity = toSafeNumber(dimensionScoreMap["inner-clarity"], 50);
-
-  if (stressResponse < 58) {
-    adviceCards.push({
+  const dimensionAdviceRules = [
+    {
+      key: "resilience",
+      threshold: 58,
       icon: "✦",
       text: "遇到突发状况时，先把问题拆成“现在能做”和“暂时做不了”两部分，会更容易稳住自己。",
-    });
-  }
-
-  if (emotionBalance < 58) {
-    adviceCards.push({
+    },
+    {
+      key: "emotion-stability",
+      threshold: 58,
       icon: "☁",
       text: "别急着要求自己马上想通，给情绪留一点出口，恢复速度反而会更快。",
-    });
-  }
-
-  if (goalAwareness < 58) {
-    adviceCards.push({
+    },
+    {
+      key: "social-ease",
+      threshold: 58,
+      icon: "❀",
+      text: "社交里不用急着表现得很会说，先让自己松弛下来，关系通常会更自然。",
+    },
+    {
+      key: "responsibility",
+      threshold: 58,
       icon: "☘",
       text: "把一个长期目标拆成一周内能完成的小动作，你会更容易把热情变成稳定结果。",
-    });
-  }
-
-  if (relationshipAttitude < 58) {
-    adviceCards.push({
-      icon: "❀",
-      text: "关系里先确认“我愿不愿意”，再决定怎么回应别人，你的分寸感会更稳。",
-    });
-  }
-
-  if (lifeRhythm < 58) {
-    adviceCards.push({
+    },
+    {
+      key: "life-enthusiasm",
+      threshold: 58,
       icon: "☼",
-      text: "给自己保留一点真正放松的空白时间，不必一直靠新鲜感或忙碌来证明生活充实。",
-    });
-  }
-
-  if (innerClarity < 58) {
-    adviceCards.push({
+      text: "给自己保留一点真正让你期待的活动，不必一直靠忙碌来证明生活充实。",
+    },
+    {
+      key: "inclusiveness",
+      threshold: 58,
+      icon: "♢",
+      text: "先区分“我是否理解对方”和“我是否认同对方”，会更容易建立稳定边界和包容感。",
+    },
+    {
+      key: "self-acceptance",
+      threshold: 58,
       icon: "❤",
-      text: "每周花 10 分钟写下“这周最重要的一件事”，能帮你更快看清真正想保留的东西。",
-    });
-  }
+      text: "当你又开始苛责自己时，先把标准放低一点，允许自己在不完美里慢慢变好。",
+    },
+    {
+      key: "curiosity",
+      threshold: 58,
+      icon: "❋",
+      text: "给最近的生活加一点新体验或新知识输入，灵魂的轻盈感通常会明显回来。",
+    },
+  ];
+
+  const lowDimensionAdviceCards = dimensionAdviceRules
+    .map((ruleItem) => ({
+      ...ruleItem,
+      score: toSafeNumber(dimensionScoreMap[ruleItem.key], 50),
+    }))
+    .filter((ruleItem) => ruleItem.score < ruleItem.threshold)
+    .sort((leftItem, rightItem) => leftItem.score - rightItem.score)
+    .slice(0, 3)
+    .map(({ icon, text }) => ({ icon, text }));
+
+  adviceCards.push(...lowDimensionAdviceCards);
 
   if (compatibilityModel.diff >= 10) {
     adviceCards.push({
-      icon: "♢",
+      icon: "✧",
       text: "你很容易习惯提前成熟，偶尔允许自己轻松一点、幼稚一点，反而更有弹性。",
     });
   }
 
   if (compatibilityModel.diff <= -10) {
     adviceCards.push({
-      icon: "❋",
+      icon: "✧",
       text: "你身上的少年感很珍贵，同时也建议给自己加一个长期锚点，让热情更能落地。",
     });
   }

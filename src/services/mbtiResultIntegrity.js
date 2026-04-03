@@ -37,6 +37,41 @@ export const MBTI_TYPE_CODE_LIST = Object.freeze([
 
 const MBTI_TYPE_CODE_SET = new Set(MBTI_TYPE_CODE_LIST);
 const MBTI_TYPE_CODE_PATTERN = new RegExp(`\\b(?:${MBTI_TYPE_CODE_LIST.join("|")})\\b`, "gi");
+const MBTI_AXIS_STRENGTH_FALLBACK_META = Object.freeze({
+  ei: {
+    label: "能量来源",
+    positive: "E",
+    negative: "I",
+    positiveStrengthText: "更愿意把判断和想法推向外部环境，带动互动和协作节奏。",
+    negativeStrengthText: "更擅长先独立沉淀信息，再给出相对稳定的结论。",
+    balancedStrengthText: "能在主动推动与独立沉淀之间切换，不容易被单一互动方式锁死。",
+  },
+  sn: {
+    label: "信息获取",
+    positive: "N",
+    negative: "S",
+    positiveStrengthText: "更容易先看到趋势、可能性和长期空间，而不是只盯当前细节。",
+    negativeStrengthText: "更容易从现实细节中抓住可执行线索，把判断建立在具体事实之上。",
+    balancedStrengthText: "能在趋势判断与现实细节之间反复校准，减少只看一端带来的偏差。",
+  },
+  tf: {
+    label: "决策偏好",
+    positive: "T",
+    negative: "F",
+    positiveStrengthText: "做判断时更容易先立标准、切结构，因此在复杂情境下更敢推进决策。",
+    negativeStrengthText: "做判断时会把关系感受与价值一致性一起纳入，更容易推动他人形成认同。",
+    balancedStrengthText: "能在标准判断与关系体感之间双向参考，减少只凭一种标准下结论。",
+  },
+  jp: {
+    label: "生活方式",
+    positive: "J",
+    negative: "P",
+    positiveStrengthText: "倾向先搭框架和节奏，利于把目标拆成可执行步骤并持续推进。",
+    negativeStrengthText: "更擅长在变化中保留调整空间，面对突发情况时反应更灵活。",
+    balancedStrengthText: "能在结构推进与临场调整之间保留弹性，既不僵硬也不松散。",
+  },
+});
+const MBTI_AXIS_STRENGTH_FALLBACK_KEYS = Object.freeze(["ei", "sn", "tf", "jp"]);
 
 /**
  * 限制百分比分值到 [0, 100]，并保留指定小数位。
@@ -89,20 +124,28 @@ export function extractMbtiTypeCodesFromText(rawText) {
 
 /**
  * 判断文本是否出现与锁定主类型不一致的 MBTI 类型码。
- * 关键逻辑：结果摘要区不允许出现其他 4 位类型码，否则会造成同页自相矛盾。
+ * 关键逻辑：默认不允许出现其他 4 位类型码；仅在少数字段需要解释边界类型时，才允许显式传入白名单放行。
  * 复杂度评估：O(L)，L 为文本长度。
  * @param {unknown} rawText 原始文本。
  * @param {string} lockedTypeCode 锁定主类型码。
+ * @param {Array<string>} [allowedTypeCodes=[]] 允许额外出现的 MBTI 类型码白名单。
  * @returns {boolean} 是否出现冲突类型码。
  */
-export function hasForeignMbtiTypeReference(rawText, lockedTypeCode) {
+export function hasForeignMbtiTypeReference(rawText, lockedTypeCode, allowedTypeCodes = []) {
   const normalizedLockedTypeCode = normalizeMbtiTypeCode(lockedTypeCode);
   if (!normalizedLockedTypeCode) {
     return false;
   }
 
+  const allowedSet = new Set(
+    (Array.isArray(allowedTypeCodes) ? allowedTypeCodes : [])
+      .map((code) => normalizeMbtiTypeCode(code))
+      .filter(Boolean),
+  );
+  allowedSet.add(normalizedLockedTypeCode);
+
   return extractMbtiTypeCodesFromText(rawText).some(
-    (typeCode) => typeCode !== normalizedLockedTypeCode,
+    (typeCode) => !allowedSet.has(typeCode),
   );
 }
 
@@ -113,9 +156,10 @@ export function hasForeignMbtiTypeReference(rawText, lockedTypeCode) {
  * @param {unknown} params.text 待校正文案。
  * @param {string} params.lockedTypeCode 锁定主类型码。
  * @param {string} params.fallbackText 兜底文案。
+ * @param {Array<string>} [params.allowedTypeCodes=[]] 允许额外出现的 MBTI 类型码白名单。
  * @returns {string} 安全文案。
  */
-export function sanitizeMbtiCopyText({ text, lockedTypeCode, fallbackText }) {
+export function sanitizeMbtiCopyText({ text, lockedTypeCode, fallbackText, allowedTypeCodes = [] }) {
   const normalizedFallbackText = sanitizeAiCopyText({
     text: fallbackText,
     fallbackText: "",
@@ -128,7 +172,7 @@ export function sanitizeMbtiCopyText({ text, lockedTypeCode, fallbackText }) {
     return normalizedFallbackText;
   }
 
-  if (hasForeignMbtiTypeReference(normalizedText, lockedTypeCode)) {
+  if (hasForeignMbtiTypeReference(normalizedText, lockedTypeCode, allowedTypeCodes)) {
     return normalizedFallbackText;
   }
 
@@ -143,6 +187,7 @@ export function sanitizeMbtiCopyText({ text, lockedTypeCode, fallbackText }) {
  * @param {unknown} params.textList 待校正文案数组。
  * @param {string} params.lockedTypeCode 锁定主类型码。
  * @param {Array<string>} params.fallbackList 兜底文案数组。
+ * @param {Array<string>} [params.allowedTypeCodes=[]] 允许额外出现的 MBTI 类型码白名单。
  * @param {number} [params.limit=3] 返回条数上限。
  * @returns {Array<string>} 安全文案数组。
  */
@@ -150,6 +195,7 @@ export function sanitizeMbtiCopyList({
   textList,
   lockedTypeCode,
   fallbackList,
+  allowedTypeCodes = [],
   limit = 3,
 }) {
   const safeLimit = Math.max(1, Math.floor(limit));
@@ -174,7 +220,7 @@ export function sanitizeMbtiCopyList({
   }
 
   const hasConflictItem = normalizedTextList.some((textItem) =>
-    hasForeignMbtiTypeReference(textItem, lockedTypeCode),
+    hasForeignMbtiTypeReference(textItem, lockedTypeCode, allowedTypeCodes),
   );
   if (hasConflictItem) {
     return normalizedFallbackList;
@@ -239,29 +285,173 @@ function buildLockedTopThreeFromResult(resultPayload) {
 }
 
 /**
- * 构建锁定 Top 3 的展示标签。
+ * 构建 MBTI 进阶优势信号/核心标签兜底。
+ * 关键逻辑：MBTI 的 strengths 必须锚定维度特征，而不是复述 Top3 匹配度，否则摘要卡和进阶解读会同时退化成排名列表。
+ * 复杂度评估：O(N * L)，N 为候选条数，L 为平均文本长度。
  * @param {object} resultPayload 统一结果对象。
- * @returns {Array<string>} Top 3 展示文本。
+ * @returns {Array<string>} 优势信号列表。
  */
-function buildLockedTopThreeTagLines(topThreeList, resultPayload) {
-  const topThreeLabelMap = new Map(
-    (Array.isArray(resultPayload?.topThree) ? resultPayload.topThree : []).map((topItem) => [
-      normalizeMbtiTypeCode(topItem?.key ?? String(topItem?.label ?? "").slice(0, 4)),
-      String(topItem?.label ?? "").trim(),
-    ]),
-  );
+export function buildMbtiFallbackAiStrengths(resultPayload) {
+  const axisScoreMap =
+    resultPayload?.mbtiLocalResult && typeof resultPayload.mbtiLocalResult === "object"
+      ? resultPayload.mbtiLocalResult.axisScores ?? null
+      : null;
+  if (axisScoreMap && typeof axisScoreMap === "object") {
+    const axisStrengthItemList = MBTI_AXIS_STRENGTH_FALLBACK_KEYS.map((axisKey) => ({
+      axisKey,
+      axisScore: Number(axisScoreMap?.[axisKey] ?? 0) || 0,
+      axisAbsScore: Math.abs(Number(axisScoreMap?.[axisKey] ?? 0) || 0),
+    })).sort((leftItem, rightItem) => rightItem.axisAbsScore - leftItem.axisAbsScore);
+    const dominantAxisLineList = axisStrengthItemList.slice(0, 2).map((axisItem) => {
+      const axisMeta = MBTI_AXIS_STRENGTH_FALLBACK_META[axisItem.axisKey];
+      const isPositiveDominant = axisItem.axisScore >= 0;
+      const dominantLetter = isPositiveDominant ? axisMeta.positive : axisMeta.negative;
+      const normalizedAxisAbsScore = clampPercentage(axisItem.axisAbsScore);
+      const dominanceLevelText =
+        normalizedAxisAbsScore >= 60 ? "稳定偏向" : normalizedAxisAbsScore >= 25 ? "明显偏向" : "轻度偏向";
 
-  return (Array.isArray(topThreeList) ? topThreeList : [])
-    .map((topItem) => {
-      const normalizedTypeCode = normalizeMbtiTypeCode(topItem?.name);
-      const normalizedLabel =
-        topThreeLabelMap.get(normalizedTypeCode) ||
-        (normalizedTypeCode ? normalizedTypeCode : "");
-      const normalizedScore = clampPercentage(topItem?.score);
-      return normalizedLabel ? `${normalizedLabel} ${normalizedScore}%` : "";
-    })
+      if (normalizedAxisAbsScore <= 10) {
+        return `${axisMeta.label}接近平衡，这意味着你${axisMeta.balancedStrengthText}`;
+      }
+
+      return `${axisMeta.label}${dominanceLevelText}${dominantLetter}侧，这让你${isPositiveDominant ? axisMeta.positiveStrengthText : axisMeta.negativeStrengthText}`;
+    });
+    const weakestAxisItem = axisStrengthItemList[axisStrengthItemList.length - 1] ?? null;
+    if (weakestAxisItem) {
+      const weakestAxisMeta = MBTI_AXIS_STRENGTH_FALLBACK_META[weakestAxisItem.axisKey];
+      const weakestAxisAbsScore = clampPercentage(weakestAxisItem.axisAbsScore);
+      if (weakestAxisAbsScore <= 12) {
+        dominantAxisLineList.push(
+          `${weakestAxisMeta.label}保持较强弹性，说明你${weakestAxisMeta.balancedStrengthText}`,
+        );
+      }
+    }
+
+    const topScore = Number(resultPayload?.topThree?.[0]?.score ?? 0) || 0;
+    const secondScore = Number(resultPayload?.topThree?.[1]?.score ?? 0) || 0;
+    const topTypeCode = String(
+      resultPayload?.mainResult?.key ?? resultPayload?.mbtiLocalResult?.topType?.type ?? "MBTI",
+    ).trim();
+    const scoreGap = Math.max(0, Math.round((topScore - secondScore) * 10) / 10);
+    dominantAxisLineList.push(
+      scoreGap <= 5
+        ? `${topTypeCode} 仍是当前主线，但与次高类型差距较小，说明你在边界场景中保留了可切换的次级优势。`
+        : `${topTypeCode} 相对次高类型已拉开约 ${scoreGap}% 的差距，说明你的核心行为主线已经比较稳定。`,
+    );
+
+    return dominantAxisLineList.filter(Boolean).slice(0, 3);
+  }
+
+  const topTypeCode = String(
+    resultPayload?.mainResult?.key ?? resultPayload?.mbtiLocalResult?.topType?.type ?? "MBTI",
+  ).trim();
+  const secondTypeCode = String(resultPayload?.topThree?.[1]?.key ?? "").trim();
+  const thirdTypeCode = String(resultPayload?.topThree?.[2]?.key ?? "").trim();
+
+  return [
+    `${topTypeCode} 的主导倾向已经足够稳定，说明你的核心决策偏好比较清晰。`,
+    // 关键逻辑：兜底标签仍要围绕主结果展开，避免在“核心标签”区域再次展开其他类型码。
+    secondTypeCode || thirdTypeCode
+      ? "你仍保留一定的次级风格弹性，说明自己在边界场景里并不是完全僵化的单一路径。"
+      : "除了主导偏好之外，你仍保留一定的次级风格弹性，适合根据场景调整表达方式。",
+    "真正值得长期观察的，是这些维度信号在真实关系与任务中的重复出现频率。",
+  ];
+}
+
+/**
+ * 判断 MBTI 优势信号是否仍是旧版 Top3 匹配度复写。
+ * 关键逻辑：优势信号应描述维度/行为特征，不应出现成组的“匹配度 xx%”排名文案。
+ * 复杂度评估：O(N * L)，N 为数组长度，L 为平均文本长度。
+ * @param {unknown} textList 待检测文案数组。
+ * @param {Array<string>} [summaryTagList=[]] 摘要卡核心标签列表。
+ * @returns {boolean} 是否需要升级为新的维度信号文案。
+ */
+export function shouldUpgradeMbtiAiStrengthList(textList, summaryTagList = []) {
+  const normalizedTextList = Array.isArray(textList)
+    ? textList
+        .map((textItem) => String(textItem ?? "").trim())
+        .filter(Boolean)
+    : [];
+  if (normalizedTextList.length === 0) {
+    return false;
+  }
+
+  const legacyScoreLineCount = normalizedTextList.filter((textItem) =>
+    /匹配度\s*\d+(?:\.\d+)?%/.test(textItem),
+  ).length;
+  if (legacyScoreLineCount >= Math.min(2, normalizedTextList.length)) {
+    return true;
+  }
+
+  const normalizedSummaryTagList = Array.isArray(summaryTagList)
+    ? summaryTagList
+        .map((textItem) => String(textItem ?? "").trim())
+        .filter(Boolean)
+    : [];
+  if (
+    normalizedSummaryTagList.length > 0 &&
+    normalizedSummaryTagList.length === normalizedTextList.length &&
+    normalizedSummaryTagList.every((tagItem, tagIndex) => tagItem === normalizedTextList[tagIndex])
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * 解析 MBTI 摘要区核心标签。
+ * 关键逻辑：摘要卡必须锚定本地维度信号，不能被 AI strengths 覆盖成进阶内容。
+ * 复杂度评估：O(N * L)，N 为标签条数，L 为平均文本长度。
+ * @param {object} resultPayload 统一结果对象。
+ * @returns {Array<string>} 摘要区核心标签。
+ */
+function resolveMbtiSummaryDetailTags(resultPayload) {
+  const axisSummaryLineList = Array.isArray(resultPayload?.mbtiLocalResult?.axisSummaryLines)
+    ? resultPayload.mbtiLocalResult.axisSummaryLines
+    : Array.isArray(resultPayload?.mainResult?.tags)
+      ? resultPayload.mainResult.tags
+      : [];
+  return axisSummaryLineList
+    .map((lineItem) => String(lineItem ?? "").trim())
     .filter(Boolean)
     .slice(0, 3);
+}
+
+/**
+ * 解析 MBTI 摘要区建议动作。
+ * 关键逻辑：优先保留本地摘要动作；若缓存已被 AI suggestions 覆盖，则回退到稳定的本地兜底动作。
+ * 复杂度评估：O(N * L)，N 为动作条数，L 为平均文本长度。
+ * @param {object} resultPayload 统一结果对象。
+ * @returns {Array<string>} 摘要区建议动作。
+ */
+function resolveMbtiSummaryDetailActions(resultPayload) {
+  const normalizedDetailActionList = Array.isArray(resultPayload?.detailActions)
+    ? resultPayload.detailActions
+        .map((actionItem) => String(actionItem ?? "").trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+  const normalizedAiSuggestionList = Array.isArray(resultPayload?.aiInsight?.suggestions)
+    ? resultPayload.aiInsight.suggestions
+        .map((actionItem) => String(actionItem ?? "").trim())
+        .filter(Boolean)
+        .slice(0, 3)
+    : [];
+  const fallbackActionList = [
+    "使用优势维度处理关键决策，提升稳定表现。",
+    "在低分维度做刻意练习，增强适应弹性。",
+    "结合实际场景复盘，避免把类型当成固定标签。",
+  ];
+
+  if (
+    normalizedDetailActionList.length > 0 &&
+    JSON.stringify(normalizedDetailActionList) !== JSON.stringify(normalizedAiSuggestionList)
+  ) {
+    return normalizedDetailActionList;
+  }
+
+  return fallbackActionList;
 }
 
 /**
@@ -757,8 +947,9 @@ function sanitizeGenericAiInsightPayload({
       risks: resolvedRiskList,
       suggestions: resolvedSuggestionList,
     },
-    detailTags: resolvedStrengthList,
-    detailActions: resolvedSuggestionList,
+    detailTags: Array.isArray(mainResult?.tags) ? mainResult.tags : resultPayload?.detailTags ?? [],
+    detailActions:
+      Array.isArray(mainResult?.actions) ? mainResult.actions : resultPayload?.detailActions ?? [],
   };
 }
 
@@ -948,7 +1139,14 @@ export function sanitizeMbtiTypeologyResult(resultPayload) {
     summaryText: fallbackSummaryText,
     topThree: normalizedTopThree,
   });
-  const fallbackTagList = buildLockedTopThreeTagLines(lockedTopThree, resultPayload);
+  const fallbackTagList = buildMbtiFallbackAiStrengths({
+    ...resultPayload,
+    mainResult: {
+      ...resultPayload?.mainResult,
+      key: lockedMainType.name,
+    },
+    topThree: normalizedTopThree,
+  });
   const fallbackSuggestionList = Array.isArray(resultPayload?.mainResult?.actions)
     ? resultPayload.mainResult.actions
         .map((actionItem) => String(actionItem ?? "").trim())
@@ -965,6 +1163,8 @@ export function sanitizeMbtiTypeologyResult(resultPayload) {
     topThree: normalizedTopThree,
     summaryText: fallbackSummaryText,
     insight: fallbackSummaryText,
+    detailTags: resolveMbtiSummaryDetailTags(resultPayload),
+    detailActions: resolveMbtiSummaryDetailActions(resultPayload),
   };
 
   if (!resultPayload.aiInsight || typeof resultPayload.aiInsight !== "object") {
@@ -1004,10 +1204,17 @@ export function sanitizeMbtiTypeologyResult(resultPayload) {
         ? ""
         : resultPayload.aiInsight.narrative,
       lockedTypeCode: lockedMainType.name,
+      allowedTypeCodes: lockedTopThree.map((item) => item.name),
       fallbackText: fallbackNarrative,
     }),
     strengths: sanitizeMbtiCopyList({
-      textList: resultPayload.aiInsight.strengths,
+      // 关键逻辑：历史错误版本曾把 strengths 写成 Top3 匹配度列表，这里读取时强制升级回维度信号。
+      textList: shouldUpgradeMbtiAiStrengthList(
+        resultPayload.aiInsight.strengths,
+        nextResultPayload.detailTags,
+      )
+        ? []
+        : resultPayload.aiInsight.strengths,
       lockedTypeCode: lockedMainType.name,
       fallbackList: fallbackTagList,
       limit: 3,
@@ -1032,8 +1239,8 @@ export function sanitizeMbtiTypeologyResult(resultPayload) {
   nextResultPayload.aiInsight = nextAiInsight;
   nextResultPayload.summaryText = fallbackSummaryText;
   nextResultPayload.insight = fallbackSummaryText;
-  nextResultPayload.detailTags = nextAiInsight.strengths;
-  nextResultPayload.detailActions = nextAiInsight.suggestions;
+  nextResultPayload.detailTags = resolveMbtiSummaryDetailTags(nextResultPayload);
+  nextResultPayload.detailActions = resolveMbtiSummaryDetailActions(nextResultPayload);
 
   return nextResultPayload;
 }

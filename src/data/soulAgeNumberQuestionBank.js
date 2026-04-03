@@ -1,15 +1,17 @@
 /**
  * 灵魂年龄测试维度字段：
- * 1. 所有题目都归档到固定 6 个成熟度维度，便于结果页稳定输出雷达图。
+ * 1. 所有题目都归档到固定 8 个展示维度，便于结果页稳定输出八维雷达图。
  * 2. 字段顺序固定，避免后续维护时展示顺序漂移。
  */
 export const SOUL_AGE_DIMENSION_KEYS = [
-  "stress-response",
-  "life-rhythm",
-  "emotion-balance",
-  "goal-awareness",
-  "relationship-attitude",
-  "inner-clarity",
+  "curiosity",
+  "emotion-stability",
+  "social-ease",
+  "responsibility",
+  "resilience",
+  "life-enthusiasm",
+  "inclusiveness",
+  "self-acceptance",
 ];
 
 /**
@@ -94,8 +96,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q01",
     title: "遇到突发状况，你的第一反应是？",
-    dimension: "stress-response",
-    dimensionLabel: "应变稳度",
+    dimension: "resilience",
+    dimensionLabel: "抗逆力",
     optionLabelMap: {
       A: "有点慌，需要别人拿主意",
       B: "冷静分析，快速想解决办法",
@@ -106,8 +108,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q02",
     title: "你更喜欢哪种生活节奏？",
-    dimension: "life-rhythm",
-    dimensionLabel: "生活取向",
+    dimension: "life-enthusiasm",
+    dimensionLabel: "生活热情",
     optionLabelMap: {
       A: "热闹新鲜，每天都有新变化",
       B: "有计划有目标，稳步向前",
@@ -118,8 +120,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q03",
     title: "面对别人的批评，你会？",
-    dimension: "emotion-balance",
-    dimensionLabel: "情绪稳度",
+    dimension: "self-acceptance",
+    dimensionLabel: "自我接纳",
     optionLabelMap: {
       A: "难过委屈，容易自我怀疑",
       B: "理性看待，有则改之无则加勉",
@@ -130,8 +132,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q04",
     title: "你对“未来”的态度是？",
-    dimension: "goal-awareness",
-    dimensionLabel: "目标感",
+    dimension: "curiosity",
+    dimensionLabel: "好奇心",
     optionLabelMap: {
       A: "充满期待，喜欢畅想各种可能",
       B: "认真规划，一步步落实目标",
@@ -142,8 +144,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q05",
     title: "朋友遇到困难，你会？",
-    dimension: "relationship-attitude",
-    dimensionLabel: "关系分寸",
+    dimension: "inclusiveness",
+    dimensionLabel: "包容度",
     optionLabelMap: {
       A: "感同身受，陪着一起难过",
       B: "理性分析，帮 TA 找解决方案",
@@ -154,8 +156,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q06",
     title: "你更偏爱哪种娱乐方式？",
-    dimension: "life-rhythm",
-    dimensionLabel: "生活取向",
+    dimension: "life-enthusiasm",
+    dimensionLabel: "生活热情",
     optionLabelMap: {
       A: "刺激新鲜的（密室、过山车、演唱会）",
       B: "有意义的（看展、看书、学习新技能）",
@@ -166,8 +168,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q07",
     title: "当你感到疲惫时，会选择？",
-    dimension: "stress-response",
-    dimensionLabel: "应变稳度",
+    dimension: "resilience",
+    dimensionLabel: "抗逆力",
     optionLabelMap: {
       A: "找朋友倾诉，释放情绪",
       B: "独自扛着，快速调整状态",
@@ -178,8 +180,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q08",
     title: "你觉得自己最像哪个阶段？",
-    dimension: "inner-clarity",
-    dimensionLabel: "内在通透",
+    dimension: "self-acceptance",
+    dimensionLabel: "自我接纳",
     optionLabelMap: {
       A: "无忧无虑的孩童",
       B: "努力拼搏的青年",
@@ -190,8 +192,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q09",
     title: "你对“新鲜感”的需求？",
-    dimension: "life-rhythm",
-    dimensionLabel: "生活取向",
+    dimension: "curiosity",
+    dimensionLabel: "好奇心",
     optionLabelMap: {
       A: "非常需要，没新鲜感会无聊",
       B: "偶尔需要，调剂生活",
@@ -202,8 +204,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q10",
     title: "你处理情绪的方式？",
-    dimension: "emotion-balance",
-    dimensionLabel: "情绪稳度",
+    dimension: "emotion-stability",
+    dimensionLabel: "情绪稳定",
     optionLabelMap: {
       A: "直接表达，喜怒哀乐写在脸上",
       B: "理性克制，不轻易表露",
@@ -214,8 +216,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q11",
     title: "你喜欢的社交方式？",
-    dimension: "relationship-attitude",
-    dimensionLabel: "关系分寸",
+    dimension: "social-ease",
+    dimensionLabel: "社交从容",
     optionLabelMap: {
       A: "热闹聚会，认识新朋友",
       B: "小范围深交，知己两三",
@@ -226,8 +228,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q12",
     title: "你对“责任”的看法？",
-    dimension: "goal-awareness",
-    dimensionLabel: "目标感",
+    dimension: "responsibility",
+    dimensionLabel: "责任担当",
     optionLabelMap: {
       A: "害怕承担，想逃避",
       B: "主动承担，有担当",
@@ -238,8 +240,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q13",
     title: "你更看重？",
-    dimension: "inner-clarity",
-    dimensionLabel: "内在通透",
+    dimension: "self-acceptance",
+    dimensionLabel: "自我接纳",
     optionLabelMap: {
       A: "当下的快乐",
       B: "未来的成就",
@@ -250,8 +252,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q14",
     title: "你对“遗憾”的态度？",
-    dimension: "emotion-balance",
-    dimensionLabel: "情绪稳度",
+    dimension: "emotion-stability",
+    dimensionLabel: "情绪稳定",
     optionLabelMap: {
       A: "耿耿于怀，难以释怀",
       B: "总结经验，向前看",
@@ -262,8 +264,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q15",
     title: "你喜欢的学习方式？",
-    dimension: "goal-awareness",
-    dimensionLabel: "目标感",
+    dimension: "curiosity",
+    dimensionLabel: "好奇心",
     optionLabelMap: {
       A: "兴趣驱动，想学就学",
       B: "目标明确，系统学习",
@@ -274,8 +276,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q16",
     title: "你对“改变”的态度？",
-    dimension: "stress-response",
-    dimensionLabel: "应变稳度",
+    dimension: "resilience",
+    dimensionLabel: "抗逆力",
     optionLabelMap: {
       A: "期待改变，喜欢挑战",
       B: "接受改变，适应调整",
@@ -286,8 +288,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q17",
     title: "你理想的晚年生活？",
-    dimension: "life-rhythm",
-    dimensionLabel: "生活取向",
+    dimension: "life-enthusiasm",
+    dimensionLabel: "生活热情",
     optionLabelMap: {
       A: "热闹充实，环游世界",
       B: "安稳富足，家庭美满",
@@ -298,8 +300,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q18",
     title: "你对“金钱”的看法？",
-    dimension: "goal-awareness",
-    dimensionLabel: "目标感",
+    dimension: "responsibility",
+    dimensionLabel: "责任担当",
     optionLabelMap: {
       A: "越多越好，追求财富",
       B: "够用就好，理性消费",
@@ -310,8 +312,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q19",
     title: "你对“人际关系”的态度？",
-    dimension: "relationship-attitude",
-    dimensionLabel: "关系分寸",
+    dimension: "social-ease",
+    dimensionLabel: "社交从容",
     optionLabelMap: {
       A: "积极经营，渴望被认可",
       B: "真诚相待，宁缺毋滥",
@@ -322,8 +324,8 @@ export const SOUL_AGE_QUESTION_BANK = [
   buildQuestion({
     id: "soul-age-q20",
     title: "你觉得人生最重要的是？",
-    dimension: "inner-clarity",
-    dimensionLabel: "内在通透",
+    dimension: "self-acceptance",
+    dimensionLabel: "自我接纳",
     optionLabelMap: {
       A: "快乐自由",
       B: "成功成就",

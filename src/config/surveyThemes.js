@@ -6093,14 +6093,14 @@ export const SURVEY_THEME_CONFIGS = [
     pageMeta: {
       title: "你的「灵魂年龄」是几岁？",
       description:
-        "固定 20 题总分制，映射 8 档具体灵魂年龄，并附带 AI 深度解读。",
+        "通过一组日常情境题，看看你当下的内在状态更接近哪一个灵魂年龄阶段。",
     },
     theme: {
       className: "theme-soul-age-number",
       badge: "SOUL AGE NUMBER TEST",
       title: "你的「灵魂年龄」是几岁？",
       description:
-        "固定 20 题、A=1/B=2/C=3/D=4，生成 8 档具体年龄结果、6 维雷达画像、AI 深度解读和可保存分享卡片。",
+        "通过 20 道日常情境题，观察你在情绪、关系、节奏与人生取向上的自然反应，看看你的内在状态更接近哪一个灵魂年龄阶段。",
       progressColor: "linear-gradient(90deg, #d4b996, #c19a6b)",
       progressTrackColor: "rgba(193, 154, 107, 0.22)",
       checkedColor: "#c19a6b",

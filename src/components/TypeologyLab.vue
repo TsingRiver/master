@@ -2729,20 +2729,6 @@ const aiStreamingNarrativeText = computed(() =>
 );
 
 /**
- * AI 流式核心标签预览。
- */
-const aiStreamingTagPreview = computed(() =>
-  extractStringArrayPreviewFromJsonStream(aiInsightStreamRawText.value, "strengths", 3),
-);
-
-/**
- * AI 流式建议动作预览。
- */
-const aiStreamingActionPreview = computed(() =>
-  extractStringArrayPreviewFromJsonStream(aiInsightStreamRawText.value, "suggestions", 3),
-);
-
-/**
  * 结果摘要视图文案：
  * 关键逻辑：
  * 1. 优先展示 AI 生成的短摘要，但前提是该摘要已通过模板脏词拦截。
@@ -2771,39 +2757,39 @@ const insightForView = computed(() => {
 /**
  * 核心标签视图数据：
  * 关键逻辑：
- * 1. 流式期间只显示 AI 片段；无片段则返回空数组触发占位。
- * 2. 流式结束后优先显示 AI strengths；失败时回退本地标签。
+ * 1. 摘要卡固定展示本地标签，避免与进阶解读的“优势信号”重复。
+ * 2. 优先使用结果对象中已校正过的 `detailTags`，缺失时再退回主结果标签。
  */
 const detailTagsForView = computed(() => {
-  if (isAiInsightStreaming.value) {
-    return aiStreamingTagPreview.value;
+  const normalizedDetailTagList = Array.isArray(currentResult.value?.detailTags)
+    ? currentResult.value.detailTags
+    : [];
+  if (normalizedDetailTagList.length > 0) {
+    return normalizedDetailTagList;
   }
 
-  const aiTagList = currentResult.value?.aiInsight?.strengths;
-  if (Array.isArray(aiTagList) && aiTagList.length > 0) {
-    return aiTagList;
-  }
-
-  return currentResult.value?.detailTags ?? [];
+  return Array.isArray(currentResult.value?.mainResult?.tags)
+    ? currentResult.value.mainResult.tags
+    : [];
 });
 
 /**
  * 建议动作视图数据：
  * 关键逻辑：
- * 1. 流式期间只显示 AI 片段；无片段则返回空数组触发占位。
- * 2. 流式结束后优先显示 AI suggestions；失败时回退本地建议。
+ * 1. 摘要卡固定展示本地建议动作，避免与进阶解读的“行动建议”重复。
+ * 2. 优先使用结果对象中已校正过的 `detailActions`，缺失时再退回主结果动作。
  */
 const detailActionsForView = computed(() => {
-  if (isAiInsightStreaming.value) {
-    return aiStreamingActionPreview.value;
+  const normalizedDetailActionList = Array.isArray(currentResult.value?.detailActions)
+    ? currentResult.value.detailActions
+    : [];
+  if (normalizedDetailActionList.length > 0) {
+    return normalizedDetailActionList;
   }
 
-  const aiSuggestionList = currentResult.value?.aiInsight?.suggestions;
-  if (Array.isArray(aiSuggestionList) && aiSuggestionList.length > 0) {
-    return aiSuggestionList;
-  }
-
-  return currentResult.value?.detailActions ?? [];
+  return Array.isArray(currentResult.value?.mainResult?.actions)
+    ? currentResult.value.mainResult.actions
+    : [];
 });
 
 /**
@@ -4017,15 +4003,9 @@ async function runAiInsightGeneration({
       // 关键逻辑：摘要区固定保留本地摘要，AI narrative 只在“进阶解读”模块展示。
       insight: baseResult.insight,
       summaryText: String(baseResult.summaryText ?? baseResult.insight ?? "").trim(),
-      // 关键逻辑：主结果卡中的“核心标签/建议动作”与 AI 解读保持一致，避免两套文案割裂。
-      detailTags:
-        Array.isArray(aiInsightResult?.strengths) && aiInsightResult.strengths.length > 0
-          ? aiInsightResult.strengths
-          : baseResult.detailTags,
-      detailActions:
-        Array.isArray(aiInsightResult?.suggestions) && aiInsightResult.suggestions.length > 0
-          ? aiInsightResult.suggestions
-          : baseResult.detailActions,
+      // 关键逻辑：摘要卡继续使用本地标签/动作，AI 结果只进入“进阶解读”模块。
+      detailTags: baseResult.detailTags,
+      detailActions: baseResult.detailActions,
     };
 
     if (isTypeologyDevOverrideResult) {
@@ -4107,6 +4087,13 @@ async function submitCurrentTest() {
         : resolveTypeologyFoundationMbti(displayedResultCache.value),
   });
 
+  const normalizedTestKey = String(activeTestConfig.value?.key ?? "").trim();
+  if (normalizedTestKey) {
+    typeologyDevResultOverrideMap.value = removeTypeologyDevResultOverride(
+      normalizedTestKey,
+    );
+  }
+
   const localPersistedResult = {
     ...localResult,
     aiInsight: null,
@@ -4160,6 +4147,14 @@ async function submitCurrentTest() {
  */
 function restartCurrentType() {
   cancelActiveAiInsightRequest();
+
+  const normalizedTestKey = String(activeTestConfig.value?.key ?? "").trim();
+  if (normalizedTestKey) {
+    typeologyDevResultOverrideMap.value = removeTypeologyDevResultOverride(
+      normalizedTestKey,
+    );
+  }
+
   clearTypeologyProgressByTestKey(activeTestConfig.value.key);
   stage.value = STAGE_HOME;
   currentResult.value = null;

@@ -1,5 +1,6 @@
 import { requestBailianJson } from "./bailianClient";
 import {
+  buildMbtiFallbackAiStrengths,
   sanitizeMbtiCopyList,
   sanitizeMbtiCopyText,
 } from "./mbtiResultIntegrity";
@@ -19,6 +20,29 @@ function clampScore(score) {
   }
 
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+/**
+ * MBTI 深度分析提示词中答卷摘要节选条数上限。
+ * 关键逻辑：保留足够作答证据，同时控制 prompt 体积，避免 72 题模式下提示词过长。
+ */
+const MBTI_PROMPT_SUMMARY_LINE_LIMIT = 12;
+
+/**
+ * 规范化提示词中的答卷摘要节选。
+ * 复杂度评估：O(N)，N 为摘要条数；当前题量上限有限，实际开销可忽略。
+ * @param {unknown} summaryLines 原始答卷摘要数组。
+ * @returns {Array<string>} 可用于提示词的摘要节选。
+ */
+function buildPromptSummaryLineExcerpt(summaryLines) {
+  if (!Array.isArray(summaryLines)) {
+    return [];
+  }
+
+  return summaryLines
+    .map((lineItem) => String(lineItem ?? "").trim())
+    .filter(Boolean)
+    .slice(0, MBTI_PROMPT_SUMMARY_LINE_LIMIT);
 }
 
 /**
@@ -106,6 +130,7 @@ function buildUserPrompt(payload) {
   const lockedMainType = payload?.localResult?.topType;
   const lockedMainTypeCode = String(lockedMainType?.type ?? "INTJ").trim();
   const lockedMainTypeScore = clampScore(lockedMainType?.score);
+  const promptSummaryLineList = buildPromptSummaryLineExcerpt(payload?.summaryLines);
   const lockedTopThree = Array.isArray(payload?.localTopThree)
     ? payload.localTopThree.slice(0, 3).map((item) => ({
         name: String(item?.name ?? "").trim(),
@@ -119,10 +144,11 @@ function buildUserPrompt(payload) {
     "强约束：",
     `1. mainType.name 必须等于 ${lockedMainTypeCode}，不得改成其他 MBTI 类型。`,
     "2. topThree 必须与“本地模型 Top3（优先参考）”保持相同类型与顺序，不得改写排名。",
-    `3. profileTitle、insight、growthActions、blindSpots 中不得出现 ${lockedMainTypeCode} 之外的其他 MBTI 类型码。`,
+    `3. 在解释进阶分析（insight）时允许提及本地模型 Top3 中的其他类型，但必须明确最终结论仍以 ${lockedMainTypeCode} 为主导，且 profileTitle 中不得出现其他类型码。`,
     "4. 你的职责是解释结果，不是改判结果。",
-    "5. shortSummary 必须是 80~120 字单句人格描述，只描述当前测试下的你，不写建议或 Top3 比较。",
-    "6. 必须填写真实内容，不得照抄字段说明、示例文案、空字符串或占位数组。",
+    "5. shortSummary 必须是一段 80~120 字的人格描述，只描述当前测试下的你，不写建议或 Top3 比较。",
+    "6. strengths 必须写成 3 条“优势信号”，解释维度如何转化为行为优势；不得直接照抄 axisSummaryLines，不得出现百分比、匹配度或 Top3 排名复述。",
+    "7. 必须填写真实内容，不得照抄字段说明、示例文案、空字符串或占位数组。",
     "字段规范：",
     JSON.stringify(
       {
@@ -131,20 +157,23 @@ function buildUserPrompt(payload) {
         shortSummary: "",
         profileTitle: "",
         insight: "",
+        strengths: ["", "", ""],
         growthActions: ["", "", ""],
         blindSpots: ["", ""],
       },
       null,
       2,
     ),
-    "可选 MBTI 类型（必须从中选择）：",
-    JSON.stringify(payload.typeCandidates, null, 2),
     "本地模型 Top3（优先参考）：",
     JSON.stringify(payload.localTopThree, null, 2),
     "维度倾向：",
     JSON.stringify(payload.axisScores, null, 2),
-    "答卷摘要：",
-    payload.summaryLines.join("\n"),
+    ...(promptSummaryLineList.length > 0
+      ? [
+          "答卷摘要（节选，优先参考）：",
+          promptSummaryLineList.join("\n"),
+        ]
+      : []),
   ].join("\n\n");
 }
 
@@ -152,7 +181,7 @@ function buildUserPrompt(payload) {
  * 标准化深度结果，保证页面稳定渲染。
  * @param {object|null} aiData 深度模型返回。
  * @param {object} localResult 本地结果。
- * @returns {{ mainType: object, topThree: Array<object>, shortSummary: string, profileTitle: string, insight: string, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }} 标准化结果。
+ * @returns {{ mainType: object, topThree: Array<object>, shortSummary: string, profileTitle: string, insight: string, strengths: Array<string>, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }} 标准化结果。
  */
 function normalizeMbtiDeepResult(aiData, localResult) {
   const lockedMainType = {
@@ -174,6 +203,18 @@ function normalizeMbtiDeepResult(aiData, localResult) {
     "表达风格与他人节奏不一致时会被误解",
   ];
   const fallbackShortSummary = buildMbtiFallbackShortSummary(localResult);
+  const fallbackStrengths = buildMbtiFallbackAiStrengths({
+    mainResult: {
+      key: localResult?.topType?.type,
+      label: `${String(localResult?.topType?.type ?? "").trim()} · ${String(localResult?.topType?.title ?? "").trim()}`,
+    },
+    topThree: localResult?.topThree?.map((item) => ({
+      key: item.type,
+      label: `${item.type} · ${item.title}`,
+      score: item.score,
+    })),
+    mbtiLocalResult: localResult,
+  });
 
   const fallbackResult = {
     mainType: lockedMainType,
@@ -181,6 +222,7 @@ function normalizeMbtiDeepResult(aiData, localResult) {
     shortSummary: fallbackShortSummary,
     profileTitle: fallbackProfileTitle,
     insight: buildMbtiFallbackInsight(localResult),
+    strengths: fallbackStrengths,
     growthActions: fallbackGrowthActions,
     blindSpots: fallbackBlindSpots,
     typeCard: localResult.typeCard,
@@ -207,7 +249,15 @@ function normalizeMbtiDeepResult(aiData, localResult) {
     insight: sanitizeMbtiCopyText({
       text: aiData?.insight,
       lockedTypeCode: lockedMainType.name,
+      allowedTypeCodes: lockedTopThree.map((item) => item.name),
       fallbackText: fallbackResult.insight,
+    }),
+    strengths: sanitizeMbtiCopyList({
+      textList: aiData?.strengths,
+      lockedTypeCode: lockedMainType.name,
+      allowedTypeCodes: lockedTopThree.map((item) => item.name),
+      fallbackList: fallbackStrengths,
+      limit: 3,
     }),
     growthActions: sanitizeMbtiCopyList({
       textList: aiData?.growthActions,
@@ -231,18 +281,17 @@ function normalizeMbtiDeepResult(aiData, localResult) {
  * @param {object} payload 请求负载。
  * @param {Array<string>} payload.summaryLines 答卷摘要。
  * @param {object} payload.axisScores 维度分值。
- * @param {Array<object>} payload.typeCandidates 候选类型。
  * @param {Array<object>} payload.localTopThree 本地 Top3。
  * @param {object} payload.localResult 本地完整结果。
  * @param {object} [options] 调用配置。
  * @param {number} [options.timeoutMs=18000] 超时时间。
  * @param {(fullText: string, deltaText: string) => void} [options.onStreamText] 流式文本回调。
  * @param {AbortSignal} [options.abortSignal] 外部取消信号。
- * @returns {Promise<{ mainType: object, topThree: Array<object>, shortSummary: string, profileTitle: string, insight: string, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }>} 标准化结果。
+ * @returns {Promise<{ mainType: object, topThree: Array<object>, shortSummary: string, profileTitle: string, insight: string, strengths: Array<string>, growthActions: Array<string>, blindSpots: Array<string>, typeCard: object }>} 标准化结果。
  */
 export async function analyzeMbtiWithDeepInsight(payload, options = {}) {
   const aiData = await requestBailianJson({
-    systemPrompt: "你是中文人格分析师。必须严格输出 JSON。",
+    systemPrompt: "请严格根据要求输出 JSON，不要包含任何多余文字或 Markdown 代码块标记（如 ```json）。",
     userPrompt: buildUserPrompt(payload),
     timeoutMs: options.timeoutMs ?? 18000,
     temperature: 0.35,

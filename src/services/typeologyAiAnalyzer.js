@@ -2,6 +2,10 @@ import { requestBailianJson } from "./bailianClient";
 import { analyzeMbtiWithDeepInsight } from "./mbtiAiAnalyzer";
 import { sanitizeAiCopyList, sanitizeAiCopyText } from "./aiCopySanitizer.js";
 import {
+  buildMbtiFallbackAiStrengths,
+  shouldUpgradeMbtiAiStrengthList,
+} from "./mbtiResultIntegrity";
+import {
   buildMbtiPersonalitySummary,
   buildTypeologyPersonalitySummary,
   buildTypeologyOutcomeMetaMap,
@@ -245,11 +249,6 @@ function buildMbtiDeepPayload(localResult) {
   return {
     summaryLines: mbtiLocalResult.summaryLines,
     axisScores: mbtiLocalResult.axisScores,
-    typeCandidates: mbtiLocalResult.scoredTypes.map((item) => ({
-      type: item.type,
-      title: item.title,
-      score: item.score,
-    })),
     localTopThree: mbtiLocalResult.topThree.map((item) => ({
       name: item.type,
       score: item.score,
@@ -281,8 +280,9 @@ function buildGenericUserPrompt(testConfig, localResult) {
 
   return [
     "你是一位中文人格测评内容编辑，请根据测试结果输出结构化解读。",
-    "只输出 JSON，不要输出任何额外说明。",
-    "shortSummary 必须是 80~120 字的一句话人格描述，只描述当前测试下的你，不写建议、不写 Top3 比较。",
+    "只输出 JSON，不要输出任何额外说明或 Markdown 代码块标记（如 ```json）。",
+    `【重要规则】：你的所有解读（包括总结、优点、风险等）必须、且只能绝对围绕“本地主结果”中的类型（${localResult.mainResult.label}）展开。严禁出现或解读成任何其他的类型！`,
+    "shortSummary 必须是一段 80~120 字的人格描述，只描述当前测试下的你，不写建议、不写 Top3 比较。",
     "所有字段都必须填写真实内容，不得照抄字段说明、示例文案、空字符串或占位数组。",
     "JSON 字段格式：",
     JSON.stringify(
@@ -305,8 +305,6 @@ function buildGenericUserPrompt(testConfig, localResult) {
     JSON.stringify(localResult.mainResult, null, 2),
     "本地 Top3：",
     JSON.stringify(localResult.topThree, null, 2),
-    "答卷摘要（节选）：",
-    localResult.summaryLines.slice(0, 20).join("\n"),
   ].join("\n\n");
 }
 
@@ -353,10 +351,7 @@ function normalizeGenericAiInsight(aiData, testConfig, localResult) {
  * @returns {{ shortSummary: string, title: string, narrative: string, strengths: Array<string>, risks: Array<string>, suggestions: Array<string>, deepMainType: object, deepTopThree: Array<object>, generatedAt: number }} 归一化结果。
  */
 function normalizeMbtiAiInsight(deepResult, localResult) {
-  const defaultStrengths =
-    Array.isArray(deepResult?.topThree) && deepResult.topThree.length > 0
-      ? deepResult.topThree.map((item) => `${item.name} 匹配度 ${item.score}%`)
-      : localResult.topThree.map((item) => `${item.label}（${item.score}%）`);
+  const fallbackStrengths = buildMbtiFallbackAiStrengths(localResult);
   const fallbackSummaryText =
     String(localResult?.summaryText ?? "").trim() ||
     buildMbtiPersonalitySummary({
@@ -374,8 +369,12 @@ function normalizeMbtiAiInsight(deepResult, localResult) {
     title: toSafeString(deepResult?.profileTitle, `${localResult.mainResult.label} · 进阶解读`),
     narrative: resolvedNarrative,
     strengths: toSafeStringArray(
-      defaultStrengths,
-      ["维度偏好稳定", "类型识别清晰", "具备可迁移的行为优势"],
+      shouldUpgradeMbtiAiStrengthList(deepResult?.strengths, localResult?.detailTags)
+        ? []
+        : deepResult?.strengths,
+      fallbackStrengths.length > 0
+        ? fallbackStrengths
+        : ["维度偏好稳定", "类型识别清晰", "具备可迁移的行为优势"],
       3,
     ),
     risks: toSafeStringArray(
@@ -425,7 +424,7 @@ export async function analyzeTypeologyWithAi({
   }
 
   const aiData = await requestBailianJson({
-    systemPrompt: "你是中文人格测评分析师。请严格输出 JSON。",
+    systemPrompt: "请严格根据要求输出 JSON，不要包含任何多余文字或 Markdown 代码块标记（如 ```json）。",
     userPrompt: buildGenericUserPrompt(testConfig, localResult),
     timeoutMs,
     temperature: 0.35,

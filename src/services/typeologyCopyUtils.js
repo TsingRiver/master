@@ -13,12 +13,11 @@ export function stripTrailingPunctuation(value) {
 
 /**
  * 规范化 AI 短摘要文本。
- * 关键逻辑：主结果摘要适合展示一条约 100 字的单句人格描述，避免再次长成“进阶解读”。
+ * 关键逻辑：主结果摘要只做脏词与空值清洗，不再对 AI 返回内容做长度截断，避免用户可见文案被硬裁剪。
  * @param {unknown} value 任意值。
- * @param {number} [maxLength=110] 最大展示长度。
  * @returns {string} 规范化后的短摘要。
  */
-export function normalizeTypeologyShortSummary(value, maxLength = 110) {
+export function normalizeTypeologyShortSummary(value) {
   const normalizedText = sanitizeAiCopyText({
     text: value,
     fallbackText: "",
@@ -27,19 +26,7 @@ export function normalizeTypeologyShortSummary(value, maxLength = 110) {
     return "";
   }
 
-  const safeMaxLength = Math.max(72, Math.floor(maxLength));
-  if (normalizedText.length <= safeMaxLength) {
-    return normalizedText;
-  }
-
-  const sentenceLead = String(normalizedText.split(/[。！？!?]/)[0] ?? "").trim();
-  if (sentenceLead && sentenceLead.length >= 12 && sentenceLead.length <= safeMaxLength) {
-    return sentenceLead;
-  }
-
-  return `${normalizedText
-    .slice(0, safeMaxLength - 1)
-    .replace(/[，、；;：:, ]+$/g, "")}…`;
+  return normalizedText;
 }
 
 /**
