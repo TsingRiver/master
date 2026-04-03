@@ -1,64 +1,83 @@
 <template>
   <div
-    class="soul-page soul-number-page"
+    class="survey-page soul-age-number-page"
     :class="[
+      'theme-gentle-wild',
       themeConfig.theme.className,
-      { 'soul-page-perf-ready': isVisualEffectsReady },
+      `survey-stage-${stage === 'submitting' ? 'result' : stage}`,
+      { 'survey-page-perf-ready': isVisualEffectsReady },
     ]"
   >
-    <div class="soul-paper-texture" aria-hidden="true"></div>
-    <div class="soul-tree-rings" aria-hidden="true"></div>
+    <div class="survey-aura aura-left" aria-hidden="true"></div>
+    <div class="survey-aura aura-right" aria-hidden="true"></div>
+    <div class="survey-noise" aria-hidden="true"></div>
 
-    <main class="soul-shell">
-      <div v-if="portalMode" class="soul-portal-back-wrap">
-        <a class="soul-portal-back-link" :href="portalHomeHref">返回主题中心</a>
-      </div>
+    <main class="survey-shell" aria-live="polite">
+      <header class="survey-header">
+        <div v-if="portalMode" class="survey-hub-back-wrap">
+          <a class="survey-hub-back-link" :href="portalHomeHref">返回主题中心</a>
+        </div>
+        <p class="survey-badge">{{ themeConfig.theme.badge }}</p>
+        <h1>{{ themeConfig.theme.title }}</h1>
+        <p class="survey-desc">{{ themeConfig.theme.description }}</p>
+      </header>
 
-      <section v-if="stage === 'cover'" class="soul-cover soul-number-cover">
-        <p class="soul-cover-kicker">SOUL AGE NUMBER TEST</p>
-        <h1 class="soul-cover-title">你的「灵魂年龄」是几岁？</h1>
-        <p class="soul-cover-subtitle">
-          固定 20 题，A=1、B=2、C=3、D=4。不是模糊标签，而是直接落到 8 档具体年龄数字。
+      <section
+        v-if="stage === 'cover'"
+        class="survey-card survey-cover-card card-in"
+      >
+        <p class="survey-cover-kicker">SOUL AGE NUMBER TEST</p>
+        <h2 class="survey-cover-title">
+          <span class="survey-cover-title-main">你的「灵魂年龄」是几岁？</span>
+        </h2>
+        <p class="survey-cover-intro">
+          固定 20 题，A=1、B=2、C=3、D=4。不是模糊人格标签，而是直接落到 8 档具体数字年龄。
         </p>
 
-        <div class="soul-cover-rule-grid" aria-label="答题计分规则">
-          <div class="soul-cover-rule-card">
-            <span class="soul-cover-rule-key">A</span>
-            <span class="soul-cover-rule-value">1 分</span>
-          </div>
-          <div class="soul-cover-rule-card">
-            <span class="soul-cover-rule-key">B</span>
-            <span class="soul-cover-rule-value">2 分</span>
-          </div>
-          <div class="soul-cover-rule-card">
-            <span class="soul-cover-rule-key">C</span>
-            <span class="soul-cover-rule-value">3 分</span>
-          </div>
-          <div class="soul-cover-rule-card">
-            <span class="soul-cover-rule-key">D</span>
-            <span class="soul-cover-rule-value">4 分</span>
-          </div>
+        <ul class="survey-cover-points">
+          <li>完整答完固定 20 题后，才会计算最终灵魂年龄。</li>
+          <li>结果会展示年龄阶梯、6 维雷达画像、现实年龄契合度和 AI 深度解读。</li>
+          <li>填写实际年龄只影响契合度模块，不会改变灵魂年龄总分结果。</li>
+        </ul>
+
+        <div class="soul-age-number-cover-rule-grid" aria-label="答题计分规则">
+          <article class="soul-age-number-cover-chip">
+            <span class="soul-age-number-cover-chip-key">A</span>
+            <span class="soul-age-number-cover-chip-value">1 分</span>
+          </article>
+          <article class="soul-age-number-cover-chip">
+            <span class="soul-age-number-cover-chip-key">B</span>
+            <span class="soul-age-number-cover-chip-value">2 分</span>
+          </article>
+          <article class="soul-age-number-cover-chip">
+            <span class="soul-age-number-cover-chip-key">C</span>
+            <span class="soul-age-number-cover-chip-value">3 分</span>
+          </article>
+          <article class="soul-age-number-cover-chip">
+            <span class="soul-age-number-cover-chip-key">D</span>
+            <span class="soul-age-number-cover-chip-value">4 分</span>
+          </article>
         </div>
 
-        <div class="soul-cover-scale-grid" aria-label="灵魂年龄档位">
-          <div
+        <div class="soul-age-number-cover-scale-grid" aria-label="灵魂年龄档位">
+          <article
             v-for="scaleItem in SOUL_AGE_YEAR_SCALE"
             :key="`cover-scale-${scaleItem.age}`"
-            class="soul-cover-scale-item"
+            class="soul-age-number-cover-scale-item"
           >
-            <p class="soul-cover-scale-age">{{ scaleItem.age }}</p>
-            <p class="soul-cover-scale-range">{{ scaleItem.rangeLabel }}</p>
-          </div>
+            <p class="soul-age-number-cover-scale-age">{{ scaleItem.age }}</p>
+            <p class="soul-age-number-cover-scale-range">{{ scaleItem.rangeLabel }}</p>
+          </article>
         </div>
 
-        <div class="soul-cover-age-input-wrap">
-          <label for="actual-age-input" class="soul-cover-age-label">
-            实际年龄（可选，默认按 25 岁计算契合度）
+        <div class="soul-age-number-cover-input-wrap">
+          <label for="actual-age-input" class="soul-age-number-cover-input-label">
+            实际年龄（可选，默认按 25 岁估算契合度）
           </label>
           <input
             id="actual-age-input"
             v-model.trim="actualAgeInput"
-            class="soul-cover-age-input"
+            class="soul-age-number-cover-input"
             type="number"
             inputmode="numeric"
             min="12"
@@ -67,16 +86,90 @@
           />
         </div>
 
-        <button
-          class="soul-btn soul-btn-primary soul-cover-start-btn"
-          type="button"
-          @click="startSurvey"
-        >
-          开始测试 →
-        </button>
+        <div class="survey-cover-actions">
+          <p class="survey-cover-hook-line">
+            这一版使用和「温柔野生派」相同的通用页面模板，只替换成灵魂年龄的固定总分内容。
+          </p>
+          <button
+            class="survey-btn survey-btn-primary survey-cover-start-btn"
+            type="button"
+            @click="startSurvey"
+          >
+            开始测试
+          </button>
+          <p class="survey-cover-tip">固定 20 题完整作答，大约需要 2-3 分钟。</p>
+        </div>
 
-        <p class="soul-cover-note">
-          结果会展示年龄阶梯、6 维雷达画像、现实年龄契合度、AI 深度解读和可保存分享卡片。
+        <div v-if="enableActiveFeedback" class="survey-feedback-entry">
+          <a
+            class="survey-feedback-link"
+            href="javascript:void(0)"
+            @click="isSuggestionVisible = true"
+          >
+            💬 来唠两句
+          </a>
+        </div>
+      </section>
+
+      <section
+        v-else-if="stage === 'survey' && currentQuestion"
+        class="survey-card survey-question-card card-in"
+      >
+        <div class="survey-progress-meta">
+          <span>第 {{ currentQuestionNumber }} 题 / 共 {{ questionCount }} 题</span>
+          <span>{{ progressPercent }}%</span>
+        </div>
+        <div
+          class="soul-age-number-progress-track"
+          role="progressbar"
+          :aria-valuemin="0"
+          :aria-valuemax="100"
+          :aria-valuenow="progressPercent"
+        >
+          <div
+            class="soul-age-number-progress-fill"
+            :style="{ width: `${progressPercent}%` }"
+          ></div>
+        </div>
+
+        <transition name="soul-card-swap" mode="out-in">
+          <div :key="currentQuestion.id" class="survey-question-wrap">
+            <p class="soul-age-number-question-kicker">{{ currentQuestion.dimensionLabel }}</p>
+            <h2 class="survey-question-title">{{ currentQuestion.title }}</h2>
+            <p class="survey-question-desc">{{ currentQuestion.description }}</p>
+
+            <div class="soul-age-number-option-list" role="radiogroup" aria-label="灵魂年龄题目选项">
+              <button
+                v-for="option in currentQuestion.options"
+                :key="option.id"
+                class="survey-option soul-age-number-option"
+                :class="{
+                  'survey-option-selected': currentSelectedOptionId === option.id,
+                  'is-pulsing': lastTappedOptionId === option.id,
+                }"
+                type="button"
+                @click="selectOption(option.id)"
+              >
+                <span class="soul-age-number-option-tier">{{ option.tier }}</span>
+                <span class="soul-age-number-option-label">{{ option.label }}</span>
+                <span class="soul-age-number-option-score">{{ option.score }} 分</span>
+              </button>
+            </div>
+          </div>
+        </transition>
+
+        <div class="survey-actions survey-actions-single">
+          <button
+            class="survey-btn survey-btn-secondary"
+            type="button"
+            :disabled="currentQuestionIndex === 0"
+            @click="goPrevQuestion"
+          >
+            上一题
+          </button>
+        </div>
+        <p class="soul-age-number-auto-tip">
+          点击选项后会自动进入下一题，最后一题会直接计算结果。
         </p>
 
         <div v-if="enableActiveFeedback" class="survey-feedback-entry">
@@ -85,369 +178,338 @@
             href="javascript:void(0)"
             @click="isSuggestionVisible = true"
           >
-            来唠两句
-          </a>
-        </div>
-      </section>
-
-      <section v-else-if="stage === 'survey' && currentQuestion" class="soul-survey soul-number-survey">
-        <header class="soul-survey-top">
-          <div class="soul-survey-topline">
-            <div class="soul-progress-wrap">
-              <div
-                class="soul-progress-track"
-                role="progressbar"
-                :aria-valuemin="0"
-                :aria-valuemax="100"
-                :aria-valuenow="progressPercent"
-              >
-                <div class="soul-progress-fill" :style="{ width: `${progressPercent}%` }"></div>
-              </div>
-              <p class="soul-progress-text">
-                第 {{ currentQuestionNumber }} 题 / 共 {{ questionCount }} 题
-              </p>
-            </div>
-
-            <p class="soul-question-dimension-pill">
-              {{ currentQuestion.dimensionLabel }}
-            </p>
-          </div>
-        </header>
-
-        <transition name="soul-card-swap" mode="out-in">
-          <article :key="currentQuestion.id" class="soul-question-card">
-            <p class="soul-question-order">
-              Q{{ String(currentQuestionNumber).padStart(2, "0") }}
-            </p>
-            <h2 class="soul-question-title">{{ currentQuestion.title }}</h2>
-            <p class="soul-question-intro">{{ currentQuestion.description }}</p>
-
-            <div class="soul-option-list" role="radiogroup" aria-label="灵魂年龄题目选项">
-              <button
-                v-for="option in currentQuestion.options"
-                :key="option.id"
-                class="soul-option-item"
-                :class="{
-                  'is-selected': currentSelectedOptionId === option.id,
-                  'is-pulsing': lastTappedOptionId === option.id,
-                }"
-                type="button"
-                @click="selectOption(option.id)"
-              >
-                <span class="soul-option-tier">{{ option.tier }}</span>
-                <span class="soul-option-label">{{ option.label }}</span>
-                <span class="soul-option-score">{{ option.score }} 分</span>
-              </button>
-            </div>
-          </article>
-        </transition>
-
-        <footer class="soul-survey-bottom">
-          <button
-            class="soul-btn soul-btn-secondary soul-prev-btn"
-            type="button"
-            :disabled="currentQuestionIndex === 0"
-            @click="goPrevQuestion"
-          >
-            上一题
-          </button>
-          <p class="soul-auto-next-tip">
-            点击后会自动进入下一题，最后一题会直接生成年龄结果。
-          </p>
-        </footer>
-
-        <div v-if="enableActiveFeedback" class="survey-feedback-entry">
-          <a
-            class="survey-feedback-link"
-            href="javascript:void(0)"
-            @click="isSuggestionVisible = true"
-          >
-            来唠两句
+            💬 来唠两句
           </a>
         </div>
       </section>
 
       <section
         v-else-if="stage === 'submitting'"
-        class="soul-submitting-card"
+        class="survey-card survey-result-card"
         role="status"
         aria-live="polite"
       >
-        <div class="soul-submitting-spinner" aria-hidden="true"></div>
-        <p class="soul-submitting-text">正在解锁你的灵魂年龄坐标...</p>
+        <div class="survey-loading-wrap soul-age-number-loading-wrap">
+          <div class="soul-age-number-spinner" aria-hidden="true"></div>
+          <p>正在整理你的 20 题总分轨迹与灵魂年龄坐标...</p>
+        </div>
       </section>
 
-      <section v-else-if="stage === 'result' && analysisResult" class="soul-result soul-number-result">
-        <header class="soul-result-hero">
-          <p class="soul-result-score-line">
-            总分 {{ analysisResult.totalScore }} / 80 · 命中 {{ analysisResult.resultRangeText }}
+      <section
+        v-else-if="stage === 'result' && analysisResult"
+        class="survey-card survey-result-card"
+      >
+        <div class="survey-result-state">
+          <p class="survey-result-prefix">灵魂年龄固定总分结果</p>
+          <div class="survey-main-title-row">
+            <h2 class="survey-main-title">
+              <span class="survey-main-title-primary">{{ analysisResult.soulAge }} 岁</span>
+              <span class="survey-main-title-secondary">{{ analysisResult.ageTitle }}</span>
+            </h2>
+          </div>
+          <p class="survey-main-score">
+            总分：{{ analysisResult.totalScore }} / 80 · 命中区间：{{ analysisResult.resultRangeText }}
           </p>
-          <p class="soul-result-age-number">{{ analysisResult.soulAge }}</p>
-          <p class="soul-result-age-tag">{{ analysisResult.ageTagText }}</p>
-          <p class="soul-result-one-line">{{ analysisResult.ageOneLine }}</p>
-          <p class="soul-result-summary">{{ analysisResult.summaryLine }}</p>
-        </header>
 
-        <article class="soul-result-module soul-result-module-key soul-result-module-scale">
-          <h3 class="soul-result-module-title">
-            <span>灵魂年龄阶梯</span>
-            <span class="soul-module-pill">8 档</span>
-          </h3>
-
-          <div class="soul-age-scale-grid">
-            <div
-              v-for="scaleItem in resultAgeScaleItems"
-              :key="`result-scale-${scaleItem.age}`"
-              class="soul-age-scale-item"
-              :class="{ 'is-active': scaleItem.isActive }"
-            >
-              <p class="soul-age-scale-age">{{ scaleItem.age }}</p>
-              <p class="soul-age-scale-range">{{ scaleItem.rangeLabel }}</p>
-            </div>
+          <div class="survey-main-tag-grid">
+            <span class="survey-main-tag-item">固定 20 题</span>
+            <span class="survey-main-tag-item">A=1 / B=2 / C=3 / D=4</span>
+            <span class="survey-main-tag-item">8 档具体年龄</span>
+            <span class="survey-main-tag-item">
+              契合度 {{ analysisResult.compatibility.fitPercent }}%
+            </span>
           </div>
-        </article>
 
-        <section class="soul-stat-grid">
-          <article
-            v-for="coordinateItem in resultCoordinateCards"
-            :key="coordinateItem.label"
-            class="soul-stat-card"
-          >
-            <p class="soul-stat-label">{{ coordinateItem.label }}</p>
-            <p class="soul-stat-value">{{ coordinateItem.value }}</p>
-            <p class="soul-stat-description">{{ coordinateItem.description }}</p>
-          </article>
-        </section>
+          <div class="survey-highlight-box">
+            <h3>一句话画像</h3>
+            <p>{{ analysisResult.ageOneLine }}</p>
+          </div>
 
-        <article class="soul-result-module soul-result-module-key soul-result-module-core">
-          <h3 class="soul-result-module-title">
-            <span>灵魂年龄核心特质</span>
-            <span class="soul-module-pill">核心</span>
-          </h3>
+          <p class="survey-insight">{{ analysisResult.summaryLine }}</p>
 
-          <div class="soul-radar-layout">
-            <div class="soul-radar-wrap">
-              <svg class="soul-radar-svg" :viewBox="radarViewBox" role="img" aria-label="灵魂特质雷达图">
-                <polygon
-                  v-for="(gridPolygonPoints, gridIndex) in radarGridPolygons"
-                  :key="`radar-grid-${gridIndex}`"
-                  :points="gridPolygonPoints"
-                  class="soul-radar-grid"
-                />
-
-                <line
-                  v-for="(axisPoint, axisIndex) in radarAxisPoints"
-                  :key="`radar-axis-${axisIndex}`"
-                  :x1="radarCenterPoint"
-                  :y1="radarCenterPoint"
-                  :x2="axisPoint.outerX"
-                  :y2="axisPoint.outerY"
-                  class="soul-radar-axis"
-                />
-
-                <polygon :points="radarDataPolygonPoints" class="soul-radar-data"></polygon>
-
-                <g
-                  v-for="(axisPoint, pointIndex) in radarAxisPoints"
-                  :key="`radar-point-${pointIndex}`"
-                >
-                  <circle
-                    class="soul-radar-point"
-                    :cx="axisPoint.valueX"
-                    :cy="axisPoint.valueY"
-                    r="4"
-                  />
-                  <circle
-                    class="soul-radar-point-hit"
-                    :cx="axisPoint.valueX"
-                    :cy="axisPoint.valueY"
-                    r="12"
-                    tabindex="0"
-                    @mouseenter="setActiveRadarDimension(axisPoint.key)"
-                    @focus="setActiveRadarDimension(axisPoint.key)"
-                    @click="setActiveRadarDimension(axisPoint.key)"
-                  />
-                </g>
-
-                <text
-                  v-for="(labelPoint, labelIndex) in radarLabelPoints"
-                  :key="`radar-label-${labelIndex}`"
-                  :x="labelPoint.x"
-                  :y="labelPoint.y"
-                  class="soul-radar-label"
-                >
-                  {{ labelPoint.label }}
-                </text>
-              </svg>
-            </div>
-
-            <div class="soul-radar-side">
-              <div class="soul-dimension-tabs">
-                <button
-                  v-for="axisPoint in radarAxisPoints"
-                  :key="`dimension-${axisPoint.key}`"
-                  class="soul-dimension-tab"
-                  :class="{ 'is-active': activeRadarDimensionKey === axisPoint.key }"
-                  type="button"
-                  @click="setActiveRadarDimension(axisPoint.key)"
-                >
-                  <span>{{ axisPoint.label }}</span>
-                  <strong>{{ axisPoint.score }}</strong>
-                </button>
-              </div>
-
-              <p class="soul-radar-insight">{{ activeRadarInsightLine }}</p>
-
-              <p
-                v-for="(descriptionLine, descriptionIndex) in analysisResult.coreDescriptionLines"
-                :key="`core-line-${descriptionIndex}`"
-                class="soul-core-line"
+          <div class="survey-type-card-wrap soul-age-number-scale-wrap">
+            <h3>灵魂年龄阶梯</h3>
+            <div class="soul-age-number-scale-grid">
+              <article
+                v-for="scaleItem in resultAgeScaleItems"
+                :key="`result-scale-${scaleItem.age}`"
+                class="soul-age-number-scale-item"
+                :class="{ 'is-active': scaleItem.isActive }"
               >
-                {{ descriptionLine }}
-              </p>
+                <p class="soul-age-number-scale-age">{{ scaleItem.age }}</p>
+                <p class="soul-age-number-scale-range">{{ scaleItem.rangeLabel }}</p>
+              </article>
             </div>
           </div>
-        </article>
 
-        <article class="soul-result-module">
-          <h3 class="soul-result-module-title">灵魂成长关键词</h3>
-          <div class="soul-keyword-grid">
+          <div class="survey-type-card-wrap soul-age-number-type-card-wrap">
+            <h3>年龄坐标速览</h3>
+            <div class="survey-type-card-grid soul-age-number-type-card-grid">
+              <article
+                v-for="coordinateItem in resultCoordinateCards"
+                :key="coordinateItem.label"
+                class="survey-type-card-item soul-age-number-type-card-item"
+              >
+                <p class="survey-type-card-value">{{ coordinateItem.value }}</p>
+                <p class="survey-type-card-label">{{ coordinateItem.label }}</p>
+                <p class="soul-age-number-type-card-desc">{{ coordinateItem.description }}</p>
+              </article>
+            </div>
+          </div>
+
+          <div class="survey-distribution-wrap">
+            <h3>现实年龄契合度</h3>
+            <p class="soul-age-number-fit-line">{{ analysisResult.compatibility.line }}</p>
             <div
-              v-for="(keywordItem, keywordIndex) in analysisResult.keywordCards"
-              :key="`keyword-${keywordIndex}`"
-              class="soul-keyword-tag"
-              :class="`shape-${keywordItem.shape}`"
+              class="soul-age-number-fit-track"
+              role="progressbar"
+              :aria-valuemin="0"
+              :aria-valuemax="100"
+              :aria-valuenow="analysisResult.compatibility.fitPercent"
             >
-              <p class="soul-keyword-title">{{ keywordItem.keyword }}</p>
-              <p class="soul-keyword-desc">{{ keywordItem.description }}</p>
-            </div>
-          </div>
-        </article>
-
-        <article class="soul-result-module soul-fit-module soul-result-module-key soul-result-module-fit">
-          <h3 class="soul-result-module-title">
-            <span>灵魂与实际年龄的契合度</span>
-            <span class="soul-module-pill">重点</span>
-          </h3>
-          <div class="soul-fit-layout">
-            <div class="soul-fit-copy">
-              <p class="soul-fit-line">{{ analysisResult.compatibility.line }}</p>
               <div
-                class="soul-fit-progress-track"
-                role="progressbar"
-                :aria-valuemin="0"
-                :aria-valuemax="100"
-                :aria-valuenow="analysisResult.compatibility.fitPercent"
-              >
-                <div
-                  class="soul-fit-progress-fill"
-                  :style="{ width: `${analysisResult.compatibility.fitPercent}%` }"
-                ></div>
-              </div>
-              <p class="soul-fit-progress-text">
-                契合度 {{ analysisResult.compatibility.fitPercent }}%
-              </p>
+                class="soul-age-number-fit-fill"
+                :style="{ width: `${analysisResult.compatibility.fitPercent}%` }"
+              ></div>
             </div>
+            <p class="soul-age-number-fit-percent">
+              契合度 {{ analysisResult.compatibility.fitPercent }}%
+            </p>
 
-            <div class="soul-pie-wrap">
-              <div class="soul-pie-blob" :style="pieChartStyle"></div>
-              <ul class="soul-pie-legend">
+            <div class="soul-age-number-pie-layout">
+              <div class="soul-age-number-pie-blob" :style="pieChartStyle"></div>
+              <ul class="survey-distribution-list">
                 <li
                   v-for="segment in analysisResult.pieDistribution"
                   :key="segment.key"
-                  class="soul-pie-legend-item"
+                  class="survey-distribution-item"
                 >
-                  <span class="soul-pie-dot" :style="{ backgroundColor: segment.color }"></span>
-                  <span>{{ segment.label }} {{ segment.percent }}%</span>
+                  <div class="survey-distribution-meta">
+                    <span>{{ segment.label }}</span>
+                    <span>{{ segment.percent }}%</span>
+                  </div>
+                  <div class="soul-age-number-segment-bar">
+                    <div
+                      class="soul-age-number-segment-fill"
+                      :style="{
+                        width: `${segment.percent}%`,
+                        background: segment.color,
+                      }"
+                    ></div>
+                  </div>
                 </li>
               </ul>
             </div>
           </div>
-        </article>
 
-        <article class="soul-result-module soul-result-module-key soul-result-module-advice">
-          <h3 class="soul-result-module-title">
-            <span>给你的灵魂小建议</span>
-            <span class="soul-module-pill">行动</span>
-          </h3>
-          <div class="soul-advice-list">
-            <div
-              v-for="(adviceItem, adviceIndex) in analysisResult.adviceCards"
-              :key="`advice-${adviceIndex}`"
-              class="soul-advice-card"
-            >
-              <span class="soul-advice-icon" aria-hidden="true">{{ adviceItem.icon }}</span>
-              <p class="soul-advice-text">{{ adviceItem.text }}</p>
+          <div class="survey-radar-wrap">
+            <h3>灵魂年龄图谱</h3>
+            <div class="soul-age-number-radar-layout">
+              <div class="survey-radar-canvas">
+                <svg :viewBox="radarViewBox" role="img" aria-label="灵魂特质雷达图">
+                  <polygon
+                    v-for="(gridPolygonPoints, gridIndex) in radarGridPolygons"
+                    :key="`radar-grid-${gridIndex}`"
+                    :points="gridPolygonPoints"
+                    class="survey-radar-grid"
+                  />
+                  <line
+                    v-for="(axisPoint, axisIndex) in radarAxisPoints"
+                    :key="`radar-axis-${axisIndex}`"
+                    :x1="radarCenterPoint"
+                    :y1="radarCenterPoint"
+                    :x2="axisPoint.outerX"
+                    :y2="axisPoint.outerY"
+                    class="survey-radar-axis"
+                  />
+                  <polygon :points="radarDataPolygonPoints" class="survey-radar-data" />
+                  <g
+                    v-for="(axisPoint, pointIndex) in radarAxisPoints"
+                    :key="`radar-point-${pointIndex}`"
+                  >
+                    <circle
+                      class="soul-age-number-radar-point"
+                      :cx="axisPoint.valueX"
+                      :cy="axisPoint.valueY"
+                      r="4"
+                    />
+                    <circle
+                      class="soul-age-number-radar-point-hit"
+                      :cx="axisPoint.valueX"
+                      :cy="axisPoint.valueY"
+                      r="12"
+                      tabindex="0"
+                      @mouseenter="setActiveRadarDimension(axisPoint.key)"
+                      @focus="setActiveRadarDimension(axisPoint.key)"
+                      @click="setActiveRadarDimension(axisPoint.key)"
+                    />
+                  </g>
+                  <text
+                    v-for="(labelPoint, labelIndex) in radarLabelPoints"
+                    :key="`radar-label-${labelIndex}`"
+                    :x="labelPoint.x"
+                    :y="labelPoint.y"
+                    class="survey-radar-label"
+                  >
+                    {{ labelPoint.label }}
+                  </text>
+                </svg>
+              </div>
+
+              <div class="soul-age-number-radar-side">
+                <div class="survey-radar-legend">
+                  <button
+                    v-for="axisPoint in radarAxisPoints"
+                    :key="`dimension-${axisPoint.key}`"
+                    class="survey-radar-legend-item soul-age-number-radar-legend-item"
+                    :class="{ 'is-active': activeRadarDimensionKey === axisPoint.key }"
+                    type="button"
+                    @click="setActiveRadarDimension(axisPoint.key)"
+                  >
+                    <span class="survey-radar-dot"></span>
+                    <span class="survey-radar-name">{{ axisPoint.label }}</span>
+                    <span class="survey-radar-score">{{ axisPoint.score }}</span>
+                  </button>
+                </div>
+                <p class="soul-age-number-radar-insight">{{ activeRadarInsightLine }}</p>
+              </div>
             </div>
           </div>
-        </article>
 
-        <article class="soul-result-module">
-          <h3 class="soul-result-module-title">灵魂同频的人</h3>
-          <p class="soul-resonance-line">{{ resonanceLineForView }}</p>
-        </article>
+          <div class="survey-top-wrap">
+            <h3>灵魂成长关键词</h3>
+            <ul class="survey-top-list">
+              <li
+                v-for="(keywordItem, keywordIndex) in analysisResult.keywordCards"
+                :key="`keyword-${keywordIndex}`"
+                class="survey-top-item"
+              >
+                <div class="survey-top-item-left">
+                  <p class="survey-top-item-title">{{ keywordItem.keyword }}</p>
+                  <div class="survey-top-tag-grid">
+                    <span class="survey-top-tag-item">{{ keywordItem.description }}</span>
+                  </div>
+                </div>
+                <span class="survey-top-item-score">0{{ keywordIndex + 1 }}</span>
+              </li>
+            </ul>
+          </div>
 
-        <article class="soul-result-module soul-result-module-key soul-result-module-ai">
-          <h3 class="soul-result-module-title">
-            <span>AI 深度解读</span>
-            <span class="soul-module-pill">AI</span>
-          </h3>
-          <p v-if="aiInsightStatus === 'loading'" class="soul-ai-status">
-            AI 正在结合你的完整 20 题作答路径、总分区间和维度波形生成更细的解读...
-          </p>
-          <template v-else-if="aiInsightStatus === 'success' && aiInsightResult">
-            <p class="soul-ai-paragraph">{{ aiInsightResult.deepInsight }}</p>
+          <div class="survey-detail-wrap">
+            <h3>核心特质解读</h3>
+            <ul class="survey-bullet-list">
+              <li
+                v-for="(descriptionLine, descriptionIndex) in analysisResult.coreDescriptionLines"
+                :key="`core-line-${descriptionIndex}`"
+              >
+                {{ descriptionLine }}
+              </li>
+            </ul>
+          </div>
 
-            <div class="soul-ai-columns">
-              <div class="soul-ai-column">
-                <p class="soul-ai-column-title">AI 行动建议</p>
-                <ul class="soul-ai-list">
-                  <li
-                    v-for="(growthItem, growthIndex) in aiGrowthActionsForView"
-                    :key="`ai-growth-${growthIndex}`"
-                  >
-                    {{ growthItem }}
-                  </li>
-                </ul>
-              </div>
+          <div class="survey-detail-wrap">
+            <h3>给你的灵魂小建议</h3>
+            <ul class="survey-bullet-list">
+              <li
+                v-for="(adviceItem, adviceIndex) in analysisResult.adviceCards"
+                :key="`advice-${adviceIndex}`"
+              >
+                {{ adviceItem.icon }} {{ adviceItem.text }}
+              </li>
+            </ul>
+          </div>
 
-              <div class="soul-ai-column">
-                <p class="soul-ai-column-title">AI 风险提醒</p>
-                <ul class="soul-ai-list">
-                  <li
-                    v-for="(avoidItem, avoidIndex) in aiAvoidSignalsForView"
-                    :key="`ai-avoid-${avoidIndex}`"
-                  >
-                    {{ avoidItem }}
-                  </li>
-                </ul>
-              </div>
+          <div class="survey-detail-wrap">
+            <h3>灵魂同频的人</h3>
+            <p class="soul-age-number-detail-copy">{{ resonanceLineForView }}</p>
+          </div>
+
+          <div class="survey-detail-wrap">
+            <h3>AI 深度解读</h3>
+            <p v-if="aiInsightStatus === 'loading'" class="soul-age-number-detail-copy">
+              AI 正在结合你的完整 20 题作答路径、总分区间和维度波形生成更细的解读...
+            </p>
+            <template v-else-if="aiInsightStatus === 'success' && aiInsightResult">
+              <p class="soul-age-number-detail-copy">{{ aiInsightResult.deepInsight }}</p>
+              <ul class="survey-bullet-list soul-age-number-ai-list">
+                <li
+                  v-for="(growthItem, growthIndex) in aiGrowthActionsForView"
+                  :key="`ai-growth-${growthIndex}`"
+                >
+                  行动建议：{{ growthItem }}
+                </li>
+                <li
+                  v-for="(avoidItem, avoidIndex) in aiAvoidSignalsForView"
+                  :key="`ai-avoid-${avoidIndex}`"
+                >
+                  风险提醒：{{ avoidItem }}
+                </li>
+              </ul>
+            </template>
+            <p v-else class="soul-age-number-detail-copy">
+              AI 深度解读暂不可用，当前已展示本地稳定解析结果。
+            </p>
+          </div>
+
+          <div class="survey-poster-wrap">
+            <h3>分享长图</h3>
+            <p class="survey-poster-desc">
+              可生成 9:16 分享卡片，保留当前灵魂年龄结果与核心关键词。
+            </p>
+
+            <div
+              v-if="posterPreviewUrl"
+              class="survey-poster-preview"
+              :style="posterContainerStyle"
+            >
+              <img
+                :src="posterPreviewUrl"
+                alt="灵魂年龄结果海报"
+                loading="lazy"
+              />
             </div>
-          </template>
-          <p v-else class="soul-ai-status">
-            AI 深度解读暂不可用，当前已展示本地稳定解析结果。
-          </p>
-        </article>
+            <div
+              v-else
+              class="survey-poster-loading"
+              :style="posterContainerStyle"
+            >
+              <span>
+                {{ isGeneratingPoster ? "正在生成分享卡片..." : "点击下方按钮生成预览" }}
+              </span>
+            </div>
 
-        <footer class="soul-result-actions">
-          <button
-            class="soul-btn soul-btn-primary"
-            type="button"
-            :disabled="isGeneratingPoster"
-            @click="saveResultPoster"
-          >
-            {{ isGeneratingPoster ? "正在生成..." : "保存结果卡片" }}
-          </button>
-          <button class="soul-btn soul-btn-secondary" type="button" @click="shareResultToFriend">
-            分享给朋友，测 TA 的灵魂年龄
-          </button>
-          <p class="soul-flow-copy">
-            这是固定 20 题的完整总分制结果，重测会重新走完整答题流程。
-          </p>
-          <button class="soul-btn soul-btn-text" type="button" @click="restartSurvey">
-            重新测试
-          </button>
-          <p v-if="interactionFeedback" class="soul-interaction-feedback">{{ interactionFeedback }}</p>
+            <div class="survey-poster-actions">
+              <button
+                class="survey-btn survey-btn-primary"
+                type="button"
+                :disabled="isGeneratingPoster"
+                @click="saveResultPoster"
+              >
+                {{ isGeneratingPoster ? "正在生成..." : "保存结果卡片" }}
+              </button>
+              <button
+                class="survey-btn survey-btn-secondary"
+                type="button"
+                @click="shareResultToFriend"
+              >
+                分享给朋友
+              </button>
+            </div>
+
+            <p v-if="interactionFeedback" class="soul-age-number-poster-feedback">
+              {{ interactionFeedback }}
+            </p>
+          </div>
+
+          <div class="survey-restart-wrap">
+            <button
+              class="survey-btn survey-btn-secondary survey-restart-btn"
+              type="button"
+              @click="restartSurvey"
+            >
+              重新测试
+            </button>
+          </div>
 
           <div v-if="enableActiveFeedback" class="survey-feedback-entry">
             <a
@@ -455,28 +517,10 @@
               href="javascript:void(0)"
               @click="isSuggestionVisible = true"
             >
-              来唠两句
+              💬 来唠两句
             </a>
           </div>
-        </footer>
-
-        <section class="soul-poster-preview-block">
-          <p class="soul-poster-preview-title">9:16 分享卡片预览</p>
-          <div class="soul-poster-preview-media" :style="posterContainerStyle">
-            <img
-              v-if="posterPreviewUrl"
-              :src="posterPreviewUrl"
-              alt="灵魂年龄结果海报"
-              class="soul-poster-preview-image"
-              loading="lazy"
-            />
-            <div v-else class="soul-poster-preview-loading">
-              <span>
-                {{ isGeneratingPoster ? "正在生成分享卡片..." : "点击“保存结果卡片”生成预览" }}
-              </span>
-            </div>
-          </div>
-        </section>
+        </div>
       </section>
     </main>
   </div>
@@ -1444,1042 +1488,320 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.soul-page {
-  --soul-bg: #f8f5f2;
-  --soul-card: #f8f5f2;
-  --soul-border: #e8d5c4;
-  --soul-text-main: #5a4b3e;
-  --soul-text-sub: #8b7d6b;
-  --soul-gold: #d4b996;
-  --soul-brown: #c19a6b;
-  --soul-blue: #b8d4e3;
-  min-height: 100vh;
-  background: var(--soul-bg);
-  color: var(--soul-text-main);
-  position: relative;
-  overflow-x: hidden;
-  padding: 20px 14px 36px;
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+.soul-age-number-page .survey-shell {
+  width: min(100%, 620px);
 }
 
-.soul-paper-texture {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.3;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(193, 154, 107, 0.12), transparent 38%),
-    radial-gradient(circle at 80% 12%, rgba(184, 212, 227, 0.18), transparent 35%),
-    repeating-linear-gradient(
-      10deg,
-      rgba(90, 75, 62, 0.02) 0px,
-      rgba(90, 75, 62, 0.02) 1px,
-      transparent 1px,
-      transparent 6px
-    );
-  z-index: 0;
-}
-
-.soul-page:not(.soul-page-perf-ready) .soul-paper-texture,
-.soul-page:not(.soul-page-perf-ready) .soul-tree-rings {
-  display: none;
-}
-
-.soul-tree-rings {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.16;
-  background:
-    radial-gradient(circle at 72% 34%, transparent 0 130px, rgba(193, 154, 107, 0.2) 132px, transparent 136px),
-    radial-gradient(circle at 72% 34%, transparent 0 170px, rgba(193, 154, 107, 0.14) 172px, transparent 176px),
-    radial-gradient(circle at 72% 34%, transparent 0 210px, rgba(193, 154, 107, 0.1) 212px, transparent 216px);
-  filter: blur(1px);
-  z-index: 0;
-}
-
-.soul-shell {
-  position: relative;
-  z-index: 1;
-  width: min(100%, 980px);
-  margin: 0 auto;
-}
-
-.soul-portal-back-wrap {
-  margin-bottom: 10px;
-}
-
-.soul-portal-back-link {
-  font-size: 13px;
-  color: var(--soul-text-sub);
-  text-decoration: none;
-  border-bottom: 1px dashed var(--soul-border);
-}
-
-.soul-cover {
-  min-height: min(78vh, 780px);
-  border-radius: 18px;
-  border: 1px solid rgba(232, 213, 196, 0.9);
-  background: rgba(248, 245, 242, 0.92);
-  box-shadow: 0 22px 42px rgba(90, 75, 62, 0.1);
-  padding: 44px 22px 36px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.soul-cover-kicker {
-  margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  color: var(--soul-text-sub);
-}
-
-.soul-cover-title {
-  margin: 18px 0 10px;
-  font-family: "Source Han Serif SC", "Songti SC", serif;
-  font-size: clamp(28px, 5.1vw, 38px);
-  line-height: 1.35;
-  color: var(--soul-text-main);
-  font-weight: 700;
-}
-
-.soul-cover-subtitle {
-  margin: 0;
-  max-width: 720px;
-  font-size: 16px;
-  line-height: 1.7;
-  color: var(--soul-text-sub);
-}
-
-.soul-cover-rule-grid,
-.soul-cover-scale-grid {
-  width: min(100%, 760px);
+.soul-age-number-cover-rule-grid,
+.soul-age-number-cover-scale-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
-.soul-cover-rule-grid {
-  margin-top: 28px;
+.soul-age-number-cover-rule-grid {
+  margin-top: 2px;
 }
 
-.soul-cover-scale-grid {
-  margin-top: 16px;
+.soul-age-number-cover-chip,
+.soul-age-number-cover-scale-item,
+.soul-age-number-scale-item {
+  border-radius: 12px;
+  border: 1px solid rgba(174, 205, 183, 0.56);
+  background: linear-gradient(
+    140deg,
+    rgba(251, 254, 251, 0.98),
+    rgba(236, 246, 239, 0.96)
+  );
+  padding: 12px 10px;
 }
 
-.soul-cover-rule-card,
-.soul-cover-scale-item {
-  border-radius: 14px;
-  border: 1px solid rgba(232, 213, 196, 0.92);
-  background: rgba(255, 255, 255, 0.76);
-  padding: 14px 12px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.soul-cover-rule-key,
-.soul-stat-label {
-  margin: 0;
+.soul-age-number-cover-chip-key {
   display: block;
-  color: var(--soul-text-sub);
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  color: #527060;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
 }
 
-.soul-cover-rule-value {
+.soul-age-number-cover-chip-value {
   display: block;
   margin-top: 6px;
-  color: var(--soul-text-main);
-  font-size: 18px;
+  color: #2f4e3f;
+  font-size: 17px;
   font-weight: 700;
 }
 
-.soul-cover-scale-age,
-.soul-age-scale-age {
+.soul-age-number-cover-scale-age,
+.soul-age-number-scale-age {
   margin: 0;
-  color: var(--soul-brown);
-  font-family: "Source Han Serif SC", "Songti SC", serif;
-  font-size: 28px;
+  color: #31503f;
+  font-size: 24px;
   line-height: 1;
+  font-family: var(--survey-font-title);
   font-weight: 700;
 }
 
-.soul-cover-scale-range,
-.soul-age-scale-range {
-  margin: 8px 0 0;
-  color: var(--soul-text-sub);
+.soul-age-number-cover-scale-range,
+.soul-age-number-scale-range {
+  margin: 6px 0 0;
+  color: #638071;
   font-size: 12px;
   line-height: 1.5;
 }
 
-.soul-cover-age-input-wrap {
-  width: min(100%, 360px);
-  margin-top: 26px;
-}
-
-.soul-cover-age-label {
-  display: block;
-  margin-bottom: 8px;
-  text-align: left;
-  font-size: 13px;
-  color: var(--soul-text-sub);
-}
-
-.soul-cover-age-input {
-  width: 100%;
-  border: 1px solid var(--soul-border);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--soul-text-main);
-  padding: 10px 12px;
-  font-size: 15px;
-}
-
-.soul-cover-age-input:focus {
-  outline: 2px solid rgba(212, 185, 150, 0.42);
-  border-color: var(--soul-gold);
-}
-
-.soul-btn {
-  border: none;
-  cursor: pointer;
-  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
-}
-
-.soul-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.soul-btn-primary {
-  border-radius: 8px;
-  background: var(--soul-border);
-  color: var(--soul-text-main);
-  font-size: 18px;
-  font-weight: 600;
-  box-shadow: 0 8px 18px rgba(193, 154, 107, 0.18);
-}
-
-.soul-btn-primary:hover:not(:disabled) {
-  background: var(--soul-gold);
-  transform: translateY(-1px);
-}
-
-.soul-cover-start-btn {
-  margin-top: 22px;
-  width: min(80%, 300px);
-  min-height: 52px;
-}
-
-.soul-cover-note {
-  margin: 14px 0 0;
-  max-width: 720px;
-  color: var(--soul-text-sub);
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.soul-survey {
-  display: grid;
-  gap: 16px;
-  max-width: 780px;
-  margin: 0 auto;
-}
-
-.soul-survey-topline {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.soul-progress-wrap {
-  flex: 1;
-}
-
-.soul-progress-track {
-  width: 100%;
-  height: 10px;
-  border-radius: 999px;
-  background: #f0eee9;
-  overflow: hidden;
-}
-
-.soul-progress-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: #d4b996;
-  transition: width 300ms ease;
-}
-
-.soul-progress-text {
-  margin: 8px 0 0;
-  color: var(--soul-text-sub);
-  font-size: 14px;
-}
-
-.soul-question-dimension-pill {
-  margin: 0;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  border: 1px solid rgba(193, 154, 107, 0.45);
-  background: rgba(212, 185, 150, 0.3);
-  color: var(--soul-text-main);
-  padding: 8px 14px;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.soul-question-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(232, 213, 196, 0.48);
-  padding: 24px;
-}
-
-.soul-question-order {
-  margin: 0;
-  color: var(--soul-text-sub);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-}
-
-.soul-question-title {
-  margin: 12px 0 0;
-  color: var(--soul-text-main);
-  font-size: clamp(18px, 3.2vw, 22px);
-  line-height: 1.5;
-  text-align: center;
-  font-family: "Source Han Serif SC", "Songti SC", serif;
-}
-
-.soul-question-intro {
-  margin: 10px 0 0;
-  text-align: center;
-  color: var(--soul-text-sub);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.soul-option-list {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.soul-option-item {
-  position: relative;
-  border: 1px solid var(--soul-border);
-  border-radius: 10px;
-  background: #fff;
-  text-align: left;
-  padding: 16px 80px 16px 64px;
-  min-height: 58px;
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--soul-text-sub);
-  transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease;
-}
-
-.soul-option-item:hover {
-  background: #f5f0eb;
-}
-
-.soul-option-item.is-selected {
-  background: rgba(232, 213, 196, 0.42);
-  color: var(--soul-text-main);
-  border-width: 1.5px;
-  border-color: var(--soul-brown);
-}
-
-.soul-option-item.is-pulsing {
-  animation: soulOptionPulse 200ms ease;
-}
-
-.soul-option-tier {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: rgba(212, 185, 150, 0.36);
-  color: var(--soul-text-main);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.soul-option-label {
-  display: block;
-}
-
-.soul-option-score {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--soul-brown);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.soul-survey-bottom {
+.soul-age-number-cover-input-wrap {
   display: grid;
   gap: 8px;
 }
 
-.soul-prev-btn {
-  width: min(100%, 320px);
-  min-height: 46px;
-  margin: 0 auto;
+.soul-age-number-cover-input-label {
+  color: #4f6d5b;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.soul-btn-secondary {
-  border: 1px solid var(--soul-border);
-  background: #fff;
-  color: var(--soul-text-main);
-}
-
-.soul-btn-secondary:hover:not(:disabled) {
-  background: #f5f0eb;
-}
-
-.soul-auto-next-tip {
-  margin: 0;
-  text-align: center;
-  color: var(--soul-text-sub);
-  font-size: 13px;
-}
-
-.soul-submitting-card {
-  border-radius: 16px;
-  border: 1px solid rgba(232, 213, 196, 0.88);
-  background: rgba(248, 245, 242, 0.94);
-  box-shadow: 0 18px 40px rgba(90, 75, 62, 0.1);
-  padding: 42px 24px;
-  text-align: center;
-}
-
-.soul-submitting-spinner {
-  width: 44px;
-  height: 44px;
-  margin: 0 auto;
-  border-radius: 999px;
-  border: 3px solid rgba(212, 185, 150, 0.24);
-  border-top-color: var(--soul-gold);
-  animation: soulSpin 0.9s linear infinite;
-}
-
-.soul-submitting-text {
-  margin: 14px 0 0;
-  font-size: 15px;
-  color: var(--soul-text-sub);
-}
-
-.soul-result {
-  display: grid;
-  gap: 14px;
-}
-
-.soul-result-hero {
-  border-radius: 16px;
-  border: 1.5px solid rgba(193, 154, 107, 0.35);
-  background:
-    radial-gradient(circle at 88% 14%, rgba(212, 185, 150, 0.18), transparent 34%),
-    linear-gradient(145deg, rgba(248, 245, 242, 0.98), rgba(255, 255, 255, 0.94));
-  box-shadow: 0 20px 44px rgba(90, 75, 62, 0.12);
-  padding: 24px 18px;
-  text-align: center;
-}
-
-.soul-result-score-line {
-  margin: 0;
-  color: var(--soul-text-sub);
-  font-size: 14px;
-  letter-spacing: 0.04em;
-}
-
-.soul-result-age-number {
-  margin: 8px 0 0;
-  color: var(--soul-brown);
-  font-size: clamp(48px, 8vw, 60px);
-  font-weight: 800;
-  text-shadow: 0 0 10px rgba(193, 154, 107, 0.3);
-  font-family: "Source Han Serif SC", "Songti SC", serif;
-}
-
-.soul-result-age-tag {
-  margin: 8px auto 0;
-  background: var(--soul-border);
-  color: var(--soul-text-main);
-  width: fit-content;
-  max-width: 100%;
-  border-radius: 999px;
-  padding: 7px 14px;
-  font-size: 18px;
-}
-
-.soul-result-one-line {
-  margin: 12px auto 0;
-  max-width: 760px;
-  color: var(--soul-text-main);
-  font-size: 16px;
-  line-height: 1.7;
-}
-
-.soul-result-summary {
-  margin: 10px auto 0;
-  color: var(--soul-text-sub);
-  font-size: 15px;
-  line-height: 1.6;
-  max-width: 760px;
-}
-
-.soul-result-module {
-  --module-accent: rgba(193, 154, 107, 0.28);
-  position: relative;
-  overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid rgba(232, 213, 196, 0.85);
-  background: rgba(248, 245, 242, 0.95);
-  box-shadow: 0 10px 26px rgba(90, 75, 62, 0.09);
-  padding: 18px 16px;
-}
-
-.soul-result-module::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
+.soul-age-number-cover-input {
   width: 100%;
-  height: 4px;
-  background: var(--module-accent);
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(170, 205, 181, 0.56);
+  background: rgba(255, 255, 255, 0.92);
+  color: #355446;
+  padding: 0 12px;
+  font-size: 14px;
 }
 
-.soul-result-module-title {
-  margin: 0;
-  font-size: 18px;
-  color: var(--soul-text-main);
-  font-family: "Source Han Serif SC", "Songti SC", serif;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.soul-age-number-cover-input:focus {
+  outline: none;
+  border-color: rgba(103, 170, 129, 0.7);
+  box-shadow: 0 0 0 3px rgba(103, 170, 129, 0.12);
+}
+
+.soul-age-number-progress-track {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(201, 219, 207, 0.7);
+}
+
+.soul-age-number-progress-fill,
+.soul-age-number-fit-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #6fa77d, #8bc095);
+  transition: width 260ms ease;
+}
+
+.soul-age-number-question-kicker {
+  margin: 0 0 10px;
+  color: #4f6d5b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.soul-age-number-option-list {
+  display: grid;
   gap: 10px;
 }
 
-.soul-module-pill {
+.soul-age-number-option {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 12px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.soul-age-number-option-tier {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  height: 24px;
-  border-radius: 999px;
-  padding: 0 10px;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  font-weight: 700;
-  color: #5a4b3e;
-  background: rgba(212, 185, 150, 0.4);
-  border: 1px solid rgba(193, 154, 107, 0.45);
-}
-
-.soul-result-module-key {
-  border-width: 1.5px;
-  box-shadow: 0 14px 30px rgba(90, 75, 62, 0.12);
-}
-
-.soul-result-module-core {
-  --module-accent: linear-gradient(90deg, rgba(193, 154, 107, 0.65), rgba(212, 185, 150, 0.25));
-  background:
-    linear-gradient(160deg, rgba(255, 250, 245, 0.96), rgba(248, 245, 242, 0.96)),
-    rgba(248, 245, 242, 0.95);
-}
-
-.soul-result-module-fit {
-  --module-accent: linear-gradient(90deg, rgba(152, 187, 204, 0.8), rgba(193, 154, 107, 0.38));
-  background:
-    linear-gradient(150deg, rgba(238, 247, 250, 0.94), rgba(248, 245, 242, 0.96) 62%),
-    rgba(248, 245, 242, 0.95);
-}
-
-.soul-result-module-advice {
-  --module-accent: linear-gradient(90deg, rgba(232, 213, 196, 0.9), rgba(212, 185, 150, 0.4));
-  background:
-    linear-gradient(155deg, rgba(255, 248, 241, 0.96), rgba(248, 245, 242, 0.95)),
-    rgba(248, 245, 242, 0.95);
-}
-
-.soul-result-module-ai {
-  --module-accent: linear-gradient(90deg, rgba(212, 185, 150, 0.9), rgba(184, 212, 227, 0.46));
-  background:
-    radial-gradient(circle at 94% 16%, rgba(212, 185, 150, 0.16), transparent 28%),
-    linear-gradient(150deg, rgba(255, 251, 245, 0.96), rgba(248, 245, 242, 0.95)),
-    rgba(248, 245, 242, 0.95);
-}
-
-.soul-age-scale-grid {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.soul-age-scale-item {
-  border-radius: 12px;
-  border: 1px solid rgba(232, 213, 196, 0.92);
-  background: rgba(255, 255, 255, 0.72);
-  padding: 14px 12px;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-}
-
-.soul-age-scale-item.is-active {
-  border-color: rgba(193, 154, 107, 0.88);
-  background: rgba(232, 213, 196, 0.45);
-  box-shadow: 0 10px 20px rgba(193, 154, 107, 0.16);
-  transform: translateY(-1px);
-}
-
-.soul-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.soul-stat-card {
-  border-radius: 14px;
-  border: 1px solid rgba(232, 213, 196, 0.86);
-  background: rgba(248, 245, 242, 0.95);
-  padding: 16px;
-  box-shadow: 0 10px 26px rgba(90, 75, 62, 0.08);
-}
-
-.soul-stat-value {
-  margin: 8px 0 0;
-  color: var(--soul-text-main);
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 700;
-}
-
-.soul-stat-description {
-  margin: 8px 0 0;
-  color: var(--soul-text-sub);
+  background: rgba(103, 170, 129, 0.14);
+  color: #355445;
   font-size: 13px;
+  font-weight: 700;
+}
+
+.soul-age-number-option-label {
+  min-width: 0;
+  color: #355445;
+  font-size: 14px;
   line-height: 1.6;
 }
 
-.soul-radar-layout {
-  margin-top: 14px;
+.soul-age-number-option-score {
+  color: #547663;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.soul-age-number-option.is-pulsing {
+  animation: soulOptionPulse 220ms ease;
+}
+
+.soul-age-number-auto-tip,
+.soul-age-number-fit-percent,
+.soul-age-number-poster-feedback,
+.soul-age-number-type-card-desc {
+  margin: 8px 0 0;
+  color: #638071;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.soul-age-number-loading-wrap {
+  min-height: 220px;
+}
+
+.soul-age-number-spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 3px solid rgba(111, 167, 125, 0.18);
+  border-top-color: #5c9167;
+  animation: soulSpin 0.9s linear infinite;
+}
+
+.soul-age-number-scale-wrap,
+.soul-age-number-type-card-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.soul-age-number-scale-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.soul-age-number-scale-item {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.soul-age-number-scale-item.is-active {
+  border-color: rgba(92, 145, 103, 0.72);
+  box-shadow: 0 12px 20px rgba(92, 145, 103, 0.16);
+  transform: translateY(-1px);
+}
+
+.soul-age-number-type-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.soul-age-number-type-card-item {
+  min-height: 124px;
+}
+
+.soul-age-number-fit-line,
+.soul-age-number-radar-insight,
+.soul-age-number-detail-copy {
+  margin: 0;
+  color: #355446;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.soul-age-number-fit-track,
+.soul-age-number-segment-bar {
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(211, 228, 216, 0.78);
+}
+
+.soul-age-number-fit-track {
+  margin-top: 10px;
+  height: 10px;
+}
+
+.soul-age-number-segment-bar {
+  height: 7px;
+}
+
+.soul-age-number-segment-fill {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.soul-age-number-pie-layout {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: minmax(120px, 152px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+}
+
+.soul-age-number-pie-blob {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 54% 46% 58% 42% / 44% 56% 48% 52%;
+  border: 2px dashed rgba(91, 140, 100, 0.5);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.7);
+}
+
+.soul-age-number-radar-layout {
   display: grid;
   gap: 14px;
 }
 
-.soul-radar-wrap {
-  display: flex;
-  justify-content: center;
+.soul-age-number-radar-side {
+  display: grid;
+  gap: 10px;
 }
 
-.soul-radar-svg {
-  width: min(100%, 260px);
-  height: auto;
+.soul-age-number-radar-point {
+  fill: #5c9167;
 }
 
-.soul-radar-grid {
-  fill: none;
-  stroke: rgba(193, 154, 107, 0.26);
-  stroke-width: 1.2;
-  stroke-dasharray: 5 5;
-}
-
-.soul-radar-axis {
-  stroke: rgba(193, 154, 107, 0.32);
-  stroke-width: 1;
-}
-
-.soul-radar-data {
-  fill: rgba(232, 213, 196, 0.3);
-  stroke: #c19a6b;
-  stroke-width: 2;
-}
-
-.soul-radar-point {
-  fill: #c19a6b;
-}
-
-.soul-radar-point-hit {
+.soul-age-number-radar-point-hit {
   fill: transparent;
   cursor: pointer;
 }
 
-.soul-radar-label {
-  font-size: 14px;
-  fill: #5a4b3e;
-  text-anchor: middle;
-}
-
-.soul-radar-side {
-  display: grid;
-  gap: 10px;
-}
-
-.soul-dimension-tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.soul-dimension-tab {
-  min-height: 44px;
-  border-radius: 10px;
-  border: 1px solid rgba(232, 213, 196, 0.88);
-  background: rgba(255, 255, 255, 0.78);
-  color: var(--soul-text-main);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  transition: background-color 180ms ease, border-color 180ms ease;
-}
-
-.soul-dimension-tab strong {
-  color: var(--soul-brown);
-  font-size: 16px;
-}
-
-.soul-dimension-tab.is-active {
-  background: rgba(232, 213, 196, 0.45);
-  border-color: rgba(193, 154, 107, 0.88);
-}
-
-.soul-radar-insight {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--soul-text-main);
-  background: rgba(232, 213, 196, 0.35);
-  border-radius: 8px;
-  padding: 8px 10px;
-}
-
-.soul-core-line {
-  margin: 0;
-  color: var(--soul-text-main);
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.soul-keyword-grid {
-  margin-top: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.soul-keyword-tag {
-  background: var(--soul-card);
-  border: 1px solid var(--soul-brown);
-  padding: 12px 14px;
-  min-width: 170px;
-  flex: 1;
-}
-
-.soul-keyword-tag.shape-cloud {
-  border-radius: 52% 48% 50% 50% / 46% 50% 50% 54%;
-}
-
-.soul-keyword-tag.shape-leaf {
-  border-radius: 58% 42% 44% 56% / 34% 63% 37% 66%;
-  transform: rotate(-1deg);
-}
-
-.soul-keyword-tag.shape-drop {
-  border-radius: 40% 52% 56% 44% / 66% 42% 58% 34%;
-}
-
-.soul-keyword-title {
-  margin: 0;
-  color: var(--soul-text-main);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.soul-keyword-desc {
-  margin: 6px 0 0;
-  color: var(--soul-text-sub);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.soul-fit-layout {
-  margin-top: 10px;
-  display: grid;
-  gap: 14px;
-}
-
-.soul-fit-line {
-  margin: 0;
-  color: var(--soul-text-main);
-  font-size: 16px;
-  line-height: 1.55;
-}
-
-.soul-fit-progress-track {
-  margin-top: 10px;
-  height: 9px;
-  border-radius: 999px;
-  background: #f0eee9;
-  overflow: hidden;
-}
-
-.soul-fit-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #8fb8cc, #d4b996);
-  transition: width 300ms ease;
-}
-
-.soul-fit-progress-text {
-  margin: 8px 0 0;
-  color: var(--soul-text-sub);
-  font-size: 14px;
-}
-
-.soul-pie-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.soul-pie-blob {
-  width: clamp(160px, 34vw, 200px);
-  aspect-ratio: 1 / 1;
-  border-radius: 54% 46% 58% 42% / 44% 56% 48% 52%;
-  border: 2px dashed rgba(193, 154, 107, 0.65);
-  transform: rotate(-6deg);
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.65);
-  flex: 0 0 auto;
-}
-
-.soul-pie-legend {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 7px;
-}
-
-.soul-pie-legend-item {
-  color: var(--soul-text-main);
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.soul-pie-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-}
-
-.soul-advice-list {
-  margin-top: 10px;
-  display: grid;
-  gap: 12px;
-}
-
-.soul-advice-card {
-  border-radius: 12px;
-  border: 1px dashed var(--soul-border);
-  background: var(--soul-card);
-  padding: 14px 14px;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.soul-advice-icon {
-  color: var(--soul-gold);
-  font-size: 18px;
-  line-height: 1.1;
-}
-
-.soul-advice-text {
-  margin: 0;
-  color: var(--soul-text-main);
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-.soul-resonance-line {
-  margin: 10px 0 0;
-  color: var(--soul-text-sub);
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.soul-ai-status {
-  margin: 10px 0 0;
-  color: var(--soul-text-sub);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.soul-ai-paragraph {
-  margin: 10px 0 0;
-  color: var(--soul-text-main);
-  font-size: 15px;
-  line-height: 1.7;
-}
-
-.soul-ai-columns {
-  margin-top: 12px;
-  display: grid;
-  gap: 12px;
-}
-
-.soul-ai-column {
-  border: 1px dashed var(--soul-border);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.6);
-  padding: 10px 12px;
-}
-
-.soul-ai-column-title {
-  margin: 0;
-  color: var(--soul-text-main);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.soul-ai-list {
-  margin: 8px 0 0;
-  padding-left: 18px;
-  color: var(--soul-text-main);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.soul-ai-list li + li {
-  margin-top: 4px;
-}
-
-.soul-result-actions {
-  border-radius: 14px;
-  border: 1px solid rgba(232, 213, 196, 0.86);
-  background: rgba(248, 245, 242, 0.95);
-  box-shadow: 0 10px 26px rgba(90, 75, 62, 0.08);
-  padding: 16px;
-  display: grid;
-  gap: 10px;
-}
-
-.soul-result-actions .soul-btn-primary,
-.soul-result-actions .soul-btn-secondary {
-  min-height: 46px;
-  border-radius: 8px;
-  font-size: 16px;
-}
-
-.soul-flow-copy {
-  margin: 2px 0 0;
-  color: var(--soul-text-sub);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.soul-btn-text {
-  width: fit-content;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--soul-text-sub);
-  font-size: 14px;
-  padding: 2px 0;
-}
-
-.soul-interaction-feedback {
-  margin: 0;
-  color: var(--soul-text-sub);
-  font-size: 13px;
-}
-
-.soul-poster-preview-block {
-  border-radius: 14px;
-  border: 1px solid rgba(232, 213, 196, 0.86);
-  background: rgba(248, 245, 242, 0.95);
-  padding: 14px;
-}
-
-.soul-poster-preview-title {
-  margin: 0 0 10px;
-  color: var(--soul-text-main);
-  font-size: 15px;
-}
-
-.soul-poster-preview-image {
+.soul-age-number-radar-legend-item {
   width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  border: 1px solid var(--soul-border);
-  display: block;
-  object-fit: cover;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.soul-poster-preview-media {
-  width: min(100%, 300px);
-  margin: 0 auto;
-  border-radius: 12px;
-  overflow: hidden;
+.soul-age-number-radar-legend-item .survey-radar-dot {
+  background: #5c9167;
 }
 
-.soul-poster-preview-loading {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  border: 1px dashed var(--soul-border);
-  background: rgba(255, 255, 255, 0.72);
-  display: grid;
-  place-items: center;
-  color: var(--soul-text-sub);
-  font-size: 13px;
+.soul-age-number-radar-legend-item.is-active {
+  border-color: rgba(91, 140, 100, 0.6);
+  background: linear-gradient(
+    140deg,
+    rgba(251, 254, 251, 0.98),
+    rgba(229, 241, 233, 0.96)
+  );
+  box-shadow: 0 10px 16px rgba(91, 140, 100, 0.1);
 }
 
-.survey-feedback-entry {
-  margin-top: 14px;
-  display: flex;
-  justify-content: center;
-}
-
-.survey-feedback-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  color: var(--soul-text-sub);
-  text-decoration: none;
-  border: 1px solid rgba(232, 213, 196, 0.9);
-  background: rgba(255, 255, 255, 0.7);
+.soul-age-number-ai-list {
+  margin-top: 10px;
 }
 
 .soul-card-swap-enter-active,
 .soul-card-swap-leave-active {
-  transition: opacity 300ms ease, transform 300ms ease;
+  transition: opacity 280ms ease, transform 280ms ease;
 }
 
 .soul-card-swap-enter-from,
 .soul-card-swap-leave-to {
-  opacity: 0.8;
-  transform: translateY(10px);
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 @keyframes soulSpin {
@@ -2490,7 +1812,11 @@ onBeforeUnmount(() => {
 
 @keyframes soulOptionPulse {
   0% {
-    transform: scale(1.02);
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.01);
   }
 
   100% {
@@ -2499,99 +1825,29 @@ onBeforeUnmount(() => {
 }
 
 @media (min-width: 900px) {
-  .soul-page {
-    padding-top: 34px;
-    padding-bottom: 48px;
-  }
-
-  .soul-cover {
-    min-height: 78vh;
-    padding-top: 56px;
-    padding-bottom: 56px;
-  }
-
-  .soul-cover-start-btn {
-    width: 300px;
-  }
-
-  .soul-fit-layout {
-    grid-template-columns: 1.25fr 0.95fr;
-    align-items: center;
-  }
-
-  .soul-radar-layout {
-    grid-template-columns: 300px minmax(0, 1fr);
-    align-items: center;
-  }
-
-  .soul-radar-svg {
-    width: 260px;
-  }
-
-  .soul-ai-columns {
-    grid-template-columns: 1fr 1fr;
+  .soul-age-number-radar-layout {
+    grid-template-columns: 280px minmax(0, 1fr);
+    align-items: start;
   }
 }
 
 @media (max-width: 768px) {
-  .soul-paper-texture {
-    opacity: 0.2;
-  }
-
-  .soul-tree-rings {
-    filter: none;
-  }
-
-  .soul-cover {
-    padding-top: 52px;
-    padding-bottom: 52px;
-  }
-
-  .soul-cover-title {
-    font-size: 28px;
-  }
-
-  .soul-cover-rule-grid,
-  .soul-cover-scale-grid,
-  .soul-age-scale-grid,
-  .soul-stat-grid {
+  .soul-age-number-cover-rule-grid,
+  .soul-age-number-cover-scale-grid,
+  .soul-age-number-scale-grid,
+  .soul-age-number-type-card-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .soul-question-card {
-    padding: 20px;
+  .soul-age-number-option {
+    grid-template-columns: 32px minmax(0, 1fr);
   }
 
-  .soul-option-item {
-    padding-right: 16px;
+  .soul-age-number-option-score {
+    grid-column: 2;
   }
 
-  .soul-option-score {
-    position: static;
-    transform: none;
-    display: block;
-    margin-top: 10px;
-  }
-
-  .soul-option-item.is-pulsing {
-    animation: none;
-  }
-
-  .soul-radar-svg {
-    width: 200px;
-  }
-
-  .soul-pie-wrap {
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 640px) {
-  .soul-survey-topline {
-    display: grid;
-  }
-
-  .soul-dimension-tabs {
+  .soul-age-number-pie-layout {
     grid-template-columns: 1fr;
   }
 }

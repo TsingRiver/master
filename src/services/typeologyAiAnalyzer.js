@@ -1,5 +1,6 @@
 import { requestBailianJson } from "./bailianClient";
 import { analyzeMbtiWithDeepInsight } from "./mbtiAiAnalyzer";
+import { sanitizeAiCopyList, sanitizeAiCopyText } from "./aiCopySanitizer.js";
 import {
   buildMbtiPersonalitySummary,
   buildTypeologyPersonalitySummary,
@@ -12,13 +13,16 @@ import {
 } from "./typeologyCopyUtils";
 
 /**
- * 将任意输入转为非空字符串。
+ * 将任意输入转为非空且非模板占位字符串。
  * @param {unknown} value 任意值。
  * @param {string} fallbackText 兜底文本。
  * @returns {string} 非空字符串。
  */
 function toSafeString(value, fallbackText) {
-  return typeof value === "string" && value.trim() ? value.trim() : fallbackText;
+  return sanitizeAiCopyText({
+    text: value,
+    fallbackText,
+  });
 }
 
 /**
@@ -29,16 +33,11 @@ function toSafeString(value, fallbackText) {
  * @returns {Array<string>} 归一化数组。
  */
 function toSafeStringArray(value, fallbackArray, limit) {
-  if (!Array.isArray(value)) {
-    return fallbackArray.slice(0, limit);
-  }
-
-  const normalizedArray = value
-    .map((item) => (typeof item === "string" ? item.trim() : ""))
-    .filter(Boolean)
-    .slice(0, limit);
-
-  return normalizedArray.length > 0 ? normalizedArray : fallbackArray.slice(0, limit);
+  return sanitizeAiCopyList({
+    textList: value,
+    fallbackList: fallbackArray,
+    limit,
+  });
 }
 
 /**
@@ -283,15 +282,22 @@ function buildGenericUserPrompt(testConfig, localResult) {
   return [
     "你是一位中文人格测评内容编辑，请根据测试结果输出结构化解读。",
     "只输出 JSON，不要输出任何额外说明。",
+    "shortSummary 必须是 80~120 字的一句话人格描述，只描述当前测试下的你，不写建议、不写 Top3 比较。",
     "JSON 字段格式：",
     JSON.stringify(
-        {
-        shortSummary: "80~120字的一句话人格描述，只描述当前测试下的你，不写建议、不写Top3比较",
-        title: "16字以内标题",
-        narrative: "150字以内总结",
-        strengths: ["优势1", "优势2", "优势3"],
-        risks: ["提醒1", "提醒2", "提醒3"],
-        suggestions: ["建议1", "建议2", "建议3"],
+      {
+        shortSummary:
+          "你整体给人的感觉更偏稳定清醒，做选择时会沿着一条相对鲜明的内在主线持续推进。",
+        title: "结果深看",
+        narrative:
+          "当前结果说明你的行为偏好已经有比较稳定的重心，但在边界场景里仍保留一定切换弹性。",
+        strengths: ["主线偏好清晰", "行为风格稳定", "场景切换有弹性"],
+        risks: ["高压下可能短暂失衡", "把一次结果误当长期定论", "忽略次高倾向的场景价值"],
+        suggestions: [
+          "把结果放回真实场景复盘",
+          "观察压力下的切换规律",
+          "把标签转成可执行动作",
+        ],
       },
       null,
       2,

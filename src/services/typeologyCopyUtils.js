@@ -1,3 +1,5 @@
+import { sanitizeAiCopyText } from "./aiCopySanitizer.js";
+
 /**
  * 去除句尾标点，便于拼接更自然的兜底文案。
  * @param {unknown} value 任意值。
@@ -17,9 +19,10 @@ export function stripTrailingPunctuation(value) {
  * @returns {string} 规范化后的短摘要。
  */
 export function normalizeTypeologyShortSummary(value, maxLength = 110) {
-  const normalizedText = String(value ?? "")
-    .replace(/\s+/g, " ")
-    .trim();
+  const normalizedText = sanitizeAiCopyText({
+    text: value,
+    fallbackText: "",
+  });
   if (!normalizedText) {
     return "";
   }

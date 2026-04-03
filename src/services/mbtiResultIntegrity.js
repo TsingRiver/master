@@ -1,4 +1,5 @@
 import { getTypeologyTestConfig } from "../data/typeologyCatalog";
+import { sanitizeAiCopyList, sanitizeAiCopyText } from "./aiCopySanitizer.js";
 import {
   buildMbtiPersonalitySummary,
   buildTypeologyPersonalitySummary,
@@ -115,8 +116,14 @@ export function hasForeignMbtiTypeReference(rawText, lockedTypeCode) {
  * @returns {string} 安全文案。
  */
 export function sanitizeMbtiCopyText({ text, lockedTypeCode, fallbackText }) {
-  const normalizedFallbackText = String(fallbackText ?? "").trim();
-  const normalizedText = String(text ?? "").trim();
+  const normalizedFallbackText = sanitizeAiCopyText({
+    text: fallbackText,
+    fallbackText: "",
+  });
+  const normalizedText = sanitizeAiCopyText({
+    text,
+    fallbackText: "",
+  });
   if (!normalizedText) {
     return normalizedFallbackText;
   }
@@ -146,21 +153,21 @@ export function sanitizeMbtiCopyList({
   limit = 3,
 }) {
   const safeLimit = Math.max(1, Math.floor(limit));
-  const normalizedFallbackList = Array.isArray(fallbackList)
-    ? fallbackList
-        .map((item) => String(item ?? "").trim())
-        .filter(Boolean)
-        .slice(0, safeLimit)
-    : [];
+  const normalizedFallbackList = sanitizeAiCopyList({
+    textList: fallbackList,
+    fallbackList: [],
+    limit: safeLimit,
+  });
 
   if (!Array.isArray(textList)) {
     return normalizedFallbackList;
   }
 
-  const normalizedTextList = textList
-    .map((item) => String(item ?? "").trim())
-    .filter(Boolean)
-    .slice(0, safeLimit);
+  const normalizedTextList = sanitizeAiCopyList({
+    textList,
+    fallbackList: [],
+    limit: safeLimit,
+  });
 
   if (normalizedTextList.length === 0) {
     return normalizedFallbackList;

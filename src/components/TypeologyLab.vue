@@ -904,6 +904,7 @@ import {
   buildTypeologyFinalProfile,
   resolveTypeologyFoundationMbti,
 } from "../services/typeologyProfileEngine";
+import { normalizeTypeologyShortSummary } from "../services/typeologyCopyUtils";
 import {
   clearAllTypeologyProgressCache as clearAllTypeologyProgressCacheStorage,
   clearTypeologyResultCache as clearTypeologyResultCacheStorage,
@@ -2715,7 +2716,7 @@ const canGenerateTypeologyProfileAiInsight = computed(
  * 关键逻辑：主结果摘要优先读取 `shortSummary`，让主卡也能随流式结果即时更新。
  */
 const aiStreamingShortSummaryText = computed(() =>
-  extractFieldPreviewFromJsonStream(aiInsightStreamRawText.value, "shortSummary"),
+  resolveAiShortSummaryPreviewText(aiInsightStreamRawText.value),
 );
 
 /**
@@ -2996,6 +2997,19 @@ function extractFieldPreviewFromJsonStream(streamRawText, fieldName) {
   }
 
   return decodePartialJsonStringSegment(matchedResult[1]);
+}
+
+/**
+ * 生成 AI 流式短摘要预览文本。
+ * 关键逻辑：对流式 `shortSummary` 也执行同一套脏词拦截，避免提示模板在主卡闪现。
+ * 复杂度评估：O(L)，L 为当前累计文本长度。
+ * @param {string} streamRawText 流式累计文本。
+ * @returns {string} 可展示短摘要。
+ */
+function resolveAiShortSummaryPreviewText(streamRawText) {
+  return normalizeTypeologyShortSummary(
+    extractFieldPreviewFromJsonStream(streamRawText, "shortSummary"),
+  );
 }
 
 /**
@@ -3952,9 +3966,7 @@ async function runAiInsightGeneration({
       return;
     }
 
-    const hasShortSummary = Boolean(
-      extractFieldPreviewFromJsonStream(streamRawText, "shortSummary"),
-    );
+    const hasShortSummary = Boolean(resolveAiShortSummaryPreviewText(streamRawText));
     const hasNarrative = Boolean(resolveAiNarrativePreviewText(streamRawText));
     const hasTag = extractStringArrayPreviewFromJsonStream(streamRawText, "strengths", 1).length > 0;
     const hasAction =

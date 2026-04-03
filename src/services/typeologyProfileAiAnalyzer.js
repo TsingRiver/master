@@ -1,4 +1,5 @@
 import { requestBailianJson } from "./bailianClient";
+import { sanitizeAiCopyText } from "./aiCopySanitizer.js";
 
 /**
  * 规范化非空字符串。
@@ -7,7 +8,10 @@ import { requestBailianJson } from "./bailianClient";
  * @returns {string} 非空字符串。
  */
 function toSafeString(value, fallbackText) {
-  return typeof value === "string" && value.trim() ? value.trim() : fallbackText;
+  return sanitizeAiCopyText({
+    text: value,
+    fallbackText,
+  });
 }
 
 /**
@@ -32,10 +36,10 @@ function buildTypeologyProfileSystemPrompt() {
     "必须严格输出 JSON，不要输出任何额外说明。JSON 结构如下：",
     JSON.stringify(
       {
-        title: "12字以内标题",
-        corePortrait: "第一段：核心侧写",
-        tensionAnalysis: "第二段：矛盾与张力分析",
-        growthAdvice: "第三段：破局建议",
+        title: "稀有张力型",
+        corePortrait: "你的人格底盘有清晰主线，同时保留少见的复合信号。",
+        tensionAnalysis: "这些看似相反的特质并不是误差，而是你在不同场景调度心理资源的证据。",
+        growthAdvice: "真正的成长不是抹平张力，而是学会识别何时放大优势、何时收束能量。",
       },
       null,
       2,
