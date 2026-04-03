@@ -7497,7 +7497,7 @@ body {
 }
 
 .theme-animal-lover.animal-lover-result-kitten {
-  --animal-lover-result-bg: url("/animal-lover/奶猫.png") center center / cover
+  --animal-lover-result-bg: url("/animal-lover/奶猫.jpeg") center center / cover
     no-repeat;
 }
 
@@ -7532,7 +7532,7 @@ body {
 }
 
 .theme-animal-lover.animal-lover-result-cheetah {
-  --animal-lover-result-bg: url("/animal-lover/猎豹.png") center center / cover
+  --animal-lover-result-bg: url("/animal-lover/猎豹.jpeg") center center / cover
     no-repeat;
 }
 

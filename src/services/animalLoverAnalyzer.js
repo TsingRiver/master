@@ -38,7 +38,7 @@ const ANIMAL_LOVER_OPTION_META = Object.freeze({
  * 动物系恋人结果区间规则：
  * 关键逻辑：
  * 1. 主结果始终以 20 题总分区间为准，保证 8 种动物结果与需求稿严格一致。
- * 2. themeVariantClass 同时挂载“风格类 + 动物类”，便于结果页按动物切换背景图。
+ * 2. themeVariantClass 负责给结果页挂载动物背景类名，保证背景图切换逻辑稳定且可维护。
  */
 const ANIMAL_LOVER_RESULT_RULES = Object.freeze([
   {

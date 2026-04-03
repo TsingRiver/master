@@ -1,6 +1,6 @@
 <template>
   <div
-    class="soul-page"
+    class="soul-page soul-number-page"
     :class="[
       themeConfig.theme.className,
       { 'soul-page-perf-ready': isVisualEffectsReady },
@@ -14,14 +14,42 @@
         <a class="soul-portal-back-link" :href="portalHomeHref">返回主题中心</a>
       </div>
 
-      <section v-if="stage === 'cover'" class="soul-cover">
+      <section v-if="stage === 'cover'" class="soul-cover soul-number-cover">
         <p class="soul-cover-kicker">SOUL AGE NUMBER TEST</p>
-        <h1 class="soul-cover-title">
-          <span class="soul-deco soul-deco-left" aria-hidden="true">❦</span>
-          你的「灵魂年龄」是几岁？
-          <span class="soul-deco soul-deco-right" aria-hidden="true">❧</span>
-        </h1>
-        <p class="soul-cover-subtitle">完成固定 20 题，看看你的灵魂年龄是 12、16、18、25、30、35、42 还是 50 岁</p>
+        <h1 class="soul-cover-title">你的「灵魂年龄」是几岁？</h1>
+        <p class="soul-cover-subtitle">
+          固定 20 题，A=1、B=2、C=3、D=4。不是模糊标签，而是直接落到 8 档具体年龄数字。
+        </p>
+
+        <div class="soul-cover-rule-grid" aria-label="答题计分规则">
+          <div class="soul-cover-rule-card">
+            <span class="soul-cover-rule-key">A</span>
+            <span class="soul-cover-rule-value">1 分</span>
+          </div>
+          <div class="soul-cover-rule-card">
+            <span class="soul-cover-rule-key">B</span>
+            <span class="soul-cover-rule-value">2 分</span>
+          </div>
+          <div class="soul-cover-rule-card">
+            <span class="soul-cover-rule-key">C</span>
+            <span class="soul-cover-rule-value">3 分</span>
+          </div>
+          <div class="soul-cover-rule-card">
+            <span class="soul-cover-rule-key">D</span>
+            <span class="soul-cover-rule-value">4 分</span>
+          </div>
+        </div>
+
+        <div class="soul-cover-scale-grid" aria-label="灵魂年龄档位">
+          <div
+            v-for="scaleItem in SOUL_AGE_YEAR_SCALE"
+            :key="`cover-scale-${scaleItem.age}`"
+            class="soul-cover-scale-item"
+          >
+            <p class="soul-cover-scale-age">{{ scaleItem.age }}</p>
+            <p class="soul-cover-scale-range">{{ scaleItem.rangeLabel }}</p>
+          </div>
+        </div>
 
         <div class="soul-cover-age-input-wrap">
           <label for="actual-age-input" class="soul-cover-age-label">
@@ -39,35 +67,60 @@
           />
         </div>
 
-        <button class="soul-btn soul-btn-primary soul-cover-start-btn" type="button" @click="startSurvey">
+        <button
+          class="soul-btn soul-btn-primary soul-cover-start-btn"
+          type="button"
+          @click="startSurvey"
+        >
           开始测试 →
         </button>
 
-        <!-- 来唠两句入口 -->
+        <p class="soul-cover-note">
+          结果会展示年龄阶梯、6 维雷达画像、现实年龄契合度、AI 深度解读和可保存分享卡片。
+        </p>
+
         <div v-if="enableActiveFeedback" class="survey-feedback-entry">
           <a
             class="survey-feedback-link"
             href="javascript:void(0)"
             @click="isSuggestionVisible = true"
           >
-            💬 来唠两句
+            来唠两句
           </a>
         </div>
       </section>
 
-      <section v-else-if="stage === 'survey' && currentQuestion" class="soul-survey">
+      <section v-else-if="stage === 'survey' && currentQuestion" class="soul-survey soul-number-survey">
         <header class="soul-survey-top">
-          <div class="soul-progress-wrap">
-            <div class="soul-progress-track" role="progressbar" :aria-valuemin="0" :aria-valuemax="100" :aria-valuenow="progressPercent">
-              <div class="soul-progress-fill" :style="{ width: `${progressPercent}%` }"></div>
+          <div class="soul-survey-topline">
+            <div class="soul-progress-wrap">
+              <div
+                class="soul-progress-track"
+                role="progressbar"
+                :aria-valuemin="0"
+                :aria-valuemax="100"
+                :aria-valuenow="progressPercent"
+              >
+                <div class="soul-progress-fill" :style="{ width: `${progressPercent}%` }"></div>
+              </div>
+              <p class="soul-progress-text">
+                第 {{ currentQuestionNumber }} 题 / 共 {{ questionCount }} 题
+              </p>
             </div>
-            <p class="soul-progress-text">第 {{ currentQuestionNumber }} 题 / 共 {{ questionCount }} 题</p>
+
+            <p class="soul-question-dimension-pill">
+              {{ currentQuestion.dimensionLabel }}
+            </p>
           </div>
         </header>
 
         <transition name="soul-card-swap" mode="out-in">
           <article :key="currentQuestion.id" class="soul-question-card">
+            <p class="soul-question-order">
+              Q{{ String(currentQuestionNumber).padStart(2, "0") }}
+            </p>
             <h2 class="soul-question-title">{{ currentQuestion.title }}</h2>
+            <p class="soul-question-intro">{{ currentQuestion.description }}</p>
 
             <div class="soul-option-list" role="radiogroup" aria-label="灵魂年龄题目选项">
               <button
@@ -81,7 +134,9 @@
                 type="button"
                 @click="selectOption(option.id)"
               >
+                <span class="soul-option-tier">{{ option.tier }}</span>
                 <span class="soul-option-label">{{ option.label }}</span>
+                <span class="soul-option-score">{{ option.score }} 分</span>
               </button>
             </div>
           </article>
@@ -96,32 +151,73 @@
           >
             上一题
           </button>
-          <p class="soul-auto-next-tip">点击选项后将自动进入下一题</p>
+          <p class="soul-auto-next-tip">
+            点击后会自动进入下一题，最后一题会直接生成年龄结果。
+          </p>
         </footer>
 
-        <!-- 来唠两句入口 -->
         <div v-if="enableActiveFeedback" class="survey-feedback-entry">
           <a
             class="survey-feedback-link"
             href="javascript:void(0)"
             @click="isSuggestionVisible = true"
           >
-            💬 来唠两句
+            来唠两句
           </a>
         </div>
       </section>
 
-      <section v-else-if="stage === 'submitting'" class="soul-submitting-card" role="status" aria-live="polite">
+      <section
+        v-else-if="stage === 'submitting'"
+        class="soul-submitting-card"
+        role="status"
+        aria-live="polite"
+      >
         <div class="soul-submitting-spinner" aria-hidden="true"></div>
-        <p class="soul-submitting-text">正在解锁你的灵魂年龄...</p>
+        <p class="soul-submitting-text">正在解锁你的灵魂年龄坐标...</p>
       </section>
 
-      <section v-else-if="stage === 'result' && analysisResult" class="soul-result">
+      <section v-else-if="stage === 'result' && analysisResult" class="soul-result soul-number-result">
         <header class="soul-result-hero">
+          <p class="soul-result-score-line">
+            总分 {{ analysisResult.totalScore }} / 80 · 命中 {{ analysisResult.resultRangeText }}
+          </p>
           <p class="soul-result-age-number">{{ analysisResult.soulAge }}</p>
           <p class="soul-result-age-tag">{{ analysisResult.ageTagText }}</p>
+          <p class="soul-result-one-line">{{ analysisResult.ageOneLine }}</p>
           <p class="soul-result-summary">{{ analysisResult.summaryLine }}</p>
         </header>
+
+        <article class="soul-result-module soul-result-module-key soul-result-module-scale">
+          <h3 class="soul-result-module-title">
+            <span>灵魂年龄阶梯</span>
+            <span class="soul-module-pill">8 档</span>
+          </h3>
+
+          <div class="soul-age-scale-grid">
+            <div
+              v-for="scaleItem in resultAgeScaleItems"
+              :key="`result-scale-${scaleItem.age}`"
+              class="soul-age-scale-item"
+              :class="{ 'is-active': scaleItem.isActive }"
+            >
+              <p class="soul-age-scale-age">{{ scaleItem.age }}</p>
+              <p class="soul-age-scale-range">{{ scaleItem.rangeLabel }}</p>
+            </div>
+          </div>
+        </article>
+
+        <section class="soul-stat-grid">
+          <article
+            v-for="coordinateItem in resultCoordinateCards"
+            :key="coordinateItem.label"
+            class="soul-stat-card"
+          >
+            <p class="soul-stat-label">{{ coordinateItem.label }}</p>
+            <p class="soul-stat-value">{{ coordinateItem.value }}</p>
+            <p class="soul-stat-description">{{ coordinateItem.description }}</p>
+          </article>
+        </section>
 
         <article class="soul-result-module soul-result-module-key soul-result-module-core">
           <h3 class="soul-result-module-title">
@@ -129,72 +225,88 @@
             <span class="soul-module-pill">核心</span>
           </h3>
 
-          <div class="soul-radar-wrap">
-            <svg class="soul-radar-svg" :viewBox="radarViewBox" role="img" aria-label="灵魂特质雷达图">
-              <polygon
-                v-for="(gridPolygonPoints, gridIndex) in radarGridPolygons"
-                :key="`radar-grid-${gridIndex}`"
-                :points="gridPolygonPoints"
-                class="soul-radar-grid"
-              />
-
-              <line
-                v-for="(axisPoint, axisIndex) in radarAxisPoints"
-                :key="`radar-axis-${axisIndex}`"
-                :x1="radarCenterPoint"
-                :y1="radarCenterPoint"
-                :x2="axisPoint.outerX"
-                :y2="axisPoint.outerY"
-                class="soul-radar-axis"
-              />
-
-              <polygon :points="radarDataPolygonPoints" class="soul-radar-data"></polygon>
-
-              <g
-                v-for="(axisPoint, pointIndex) in radarAxisPoints"
-                :key="`radar-point-${pointIndex}`"
-              >
-                <circle
-                  class="soul-radar-point"
-                  :cx="axisPoint.valueX"
-                  :cy="axisPoint.valueY"
-                  r="4"
-                  @mouseenter="setActiveRadarDimension(axisPoint.key)"
-                  @focus="setActiveRadarDimension(axisPoint.key)"
-                  @click="setActiveRadarDimension(axisPoint.key)"
+          <div class="soul-radar-layout">
+            <div class="soul-radar-wrap">
+              <svg class="soul-radar-svg" :viewBox="radarViewBox" role="img" aria-label="灵魂特质雷达图">
+                <polygon
+                  v-for="(gridPolygonPoints, gridIndex) in radarGridPolygons"
+                  :key="`radar-grid-${gridIndex}`"
+                  :points="gridPolygonPoints"
+                  class="soul-radar-grid"
                 />
-                <circle
-                  class="soul-radar-point-hit"
-                  :cx="axisPoint.valueX"
-                  :cy="axisPoint.valueY"
-                  r="12"
-                  tabindex="0"
-                  @mouseenter="setActiveRadarDimension(axisPoint.key)"
-                  @focus="setActiveRadarDimension(axisPoint.key)"
-                  @click="setActiveRadarDimension(axisPoint.key)"
-                />
-              </g>
 
-              <text
-                v-for="(labelPoint, labelIndex) in radarLabelPoints"
-                :key="`radar-label-${labelIndex}`"
-                :x="labelPoint.x"
-                :y="labelPoint.y"
-                class="soul-radar-label"
+                <line
+                  v-for="(axisPoint, axisIndex) in radarAxisPoints"
+                  :key="`radar-axis-${axisIndex}`"
+                  :x1="radarCenterPoint"
+                  :y1="radarCenterPoint"
+                  :x2="axisPoint.outerX"
+                  :y2="axisPoint.outerY"
+                  class="soul-radar-axis"
+                />
+
+                <polygon :points="radarDataPolygonPoints" class="soul-radar-data"></polygon>
+
+                <g
+                  v-for="(axisPoint, pointIndex) in radarAxisPoints"
+                  :key="`radar-point-${pointIndex}`"
+                >
+                  <circle
+                    class="soul-radar-point"
+                    :cx="axisPoint.valueX"
+                    :cy="axisPoint.valueY"
+                    r="4"
+                  />
+                  <circle
+                    class="soul-radar-point-hit"
+                    :cx="axisPoint.valueX"
+                    :cy="axisPoint.valueY"
+                    r="12"
+                    tabindex="0"
+                    @mouseenter="setActiveRadarDimension(axisPoint.key)"
+                    @focus="setActiveRadarDimension(axisPoint.key)"
+                    @click="setActiveRadarDimension(axisPoint.key)"
+                  />
+                </g>
+
+                <text
+                  v-for="(labelPoint, labelIndex) in radarLabelPoints"
+                  :key="`radar-label-${labelIndex}`"
+                  :x="labelPoint.x"
+                  :y="labelPoint.y"
+                  class="soul-radar-label"
+                >
+                  {{ labelPoint.label }}
+                </text>
+              </svg>
+            </div>
+
+            <div class="soul-radar-side">
+              <div class="soul-dimension-tabs">
+                <button
+                  v-for="axisPoint in radarAxisPoints"
+                  :key="`dimension-${axisPoint.key}`"
+                  class="soul-dimension-tab"
+                  :class="{ 'is-active': activeRadarDimensionKey === axisPoint.key }"
+                  type="button"
+                  @click="setActiveRadarDimension(axisPoint.key)"
+                >
+                  <span>{{ axisPoint.label }}</span>
+                  <strong>{{ axisPoint.score }}</strong>
+                </button>
+              </div>
+
+              <p class="soul-radar-insight">{{ activeRadarInsightLine }}</p>
+
+              <p
+                v-for="(descriptionLine, descriptionIndex) in analysisResult.coreDescriptionLines"
+                :key="`core-line-${descriptionIndex}`"
+                class="soul-core-line"
               >
-                {{ labelPoint.label }}
-              </text>
-            </svg>
+                {{ descriptionLine }}
+              </p>
+            </div>
           </div>
-
-          <p class="soul-radar-insight">{{ activeRadarInsightLine }}</p>
-          <p
-            v-for="(descriptionLine, descriptionIndex) in analysisResult.coreDescriptionLines"
-            :key="`core-line-${descriptionIndex}`"
-            class="soul-core-line"
-          >
-            {{ descriptionLine }}
-          </p>
         </article>
 
         <article class="soul-result-module">
@@ -220,10 +332,21 @@
           <div class="soul-fit-layout">
             <div class="soul-fit-copy">
               <p class="soul-fit-line">{{ analysisResult.compatibility.line }}</p>
-              <div class="soul-fit-progress-track" role="progressbar" :aria-valuemin="0" :aria-valuemax="100" :aria-valuenow="analysisResult.compatibility.fitPercent">
-                <div class="soul-fit-progress-fill" :style="{ width: `${analysisResult.compatibility.fitPercent}%` }"></div>
+              <div
+                class="soul-fit-progress-track"
+                role="progressbar"
+                :aria-valuemin="0"
+                :aria-valuemax="100"
+                :aria-valuenow="analysisResult.compatibility.fitPercent"
+              >
+                <div
+                  class="soul-fit-progress-fill"
+                  :style="{ width: `${analysisResult.compatibility.fitPercent}%` }"
+                ></div>
               </div>
-              <p class="soul-fit-progress-text">契合度 {{ analysisResult.compatibility.fitPercent }}%</p>
+              <p class="soul-fit-progress-text">
+                契合度 {{ analysisResult.compatibility.fitPercent }}%
+              </p>
             </div>
 
             <div class="soul-pie-wrap">
@@ -270,7 +393,7 @@
             <span class="soul-module-pill">AI</span>
           </h3>
           <p v-if="aiInsightStatus === 'loading'" class="soul-ai-status">
-            AI 正在结合你的答卷生成更细致的解读...
+            AI 正在结合你的完整 20 题作答路径、总分区间和维度波形生成更细的解读...
           </p>
           <template v-else-if="aiInsightStatus === 'success' && aiInsightResult">
             <p class="soul-ai-paragraph">{{ aiInsightResult.deepInsight }}</p>
@@ -307,28 +430,32 @@
         </article>
 
         <footer class="soul-result-actions">
-          <button class="soul-btn soul-btn-primary" type="button" :disabled="isGeneratingPoster" @click="saveResultPoster">
+          <button
+            class="soul-btn soul-btn-primary"
+            type="button"
+            :disabled="isGeneratingPoster"
+            @click="saveResultPoster"
+          >
             {{ isGeneratingPoster ? "正在生成..." : "保存结果卡片" }}
           </button>
           <button class="soul-btn soul-btn-secondary" type="button" @click="shareResultToFriend">
             分享给朋友，测 TA 的灵魂年龄
           </button>
           <p class="soul-flow-copy">
-            测试结果已保存至账户，可随时查看～
+            这是固定 20 题的完整总分制结果，重测会重新走完整答题流程。
           </p>
           <button class="soul-btn soul-btn-text" type="button" @click="restartSurvey">
             重新测试
           </button>
           <p v-if="interactionFeedback" class="soul-interaction-feedback">{{ interactionFeedback }}</p>
 
-          <!-- 来唠两句入口 -->
           <div v-if="enableActiveFeedback" class="survey-feedback-entry">
             <a
               class="survey-feedback-link"
               href="javascript:void(0)"
               @click="isSuggestionVisible = true"
             >
-              💬 来唠两句
+              来唠两句
             </a>
           </div>
         </footer>
@@ -354,14 +481,12 @@
     </main>
   </div>
 
-  <!-- 评价弹窗 -->
   <Like
     :visible="isLikeVisible"
     :module-path="feedbackModulePath"
     @close="isLikeVisible = false"
   />
 
-  <!-- 建议弹窗 -->
   <Suggestion
     :visible="isSuggestionVisible"
     :module-path="feedbackModulePath"
@@ -378,13 +503,28 @@ import { shouldShowFeedback, markFeedbackShown } from "../utils/feedbackTrigger"
 import Like from "./Like.vue";
 import Suggestion from "./Suggestion.vue";
 
-const enableActiveFeedback = import.meta.env.VITE_ENABLE_ACTIVE_FEEDBACK !== 'false';
+const enableActiveFeedback = import.meta.env.VITE_ENABLE_ACTIVE_FEEDBACK !== "false";
 
 /**
  * 雷达图默认激活维度：
- * 关键逻辑：结果页首屏优先落在“应变稳度”，避免默认 key 与新题库维度不一致。
+ * 关键逻辑：结果页首次进入时优先展示“应变稳度”，保证首屏解释落在最通用维度。
  */
 const DEFAULT_SOUL_AGE_RADAR_DIMENSION_KEY = "stress-response";
+
+/**
+ * 灵魂年龄档位刻度：
+ * 关键逻辑：封面与结果页共用同一份年龄阶梯定义，避免展示文案漂移。
+ */
+const SOUL_AGE_YEAR_SCALE = Object.freeze([
+  { age: 12, rangeLabel: "20-27 分" },
+  { age: 16, rangeLabel: "28-35 分" },
+  { age: 18, rangeLabel: "36-43 分" },
+  { age: 25, rangeLabel: "44-51 分" },
+  { age: 30, rangeLabel: "52-59 分" },
+  { age: 35, rangeLabel: "60-67 分" },
+  { age: 42, rangeLabel: "68-75 分" },
+  { age: 50, rangeLabel: "76-80 分" },
+]);
 
 /**
  * 组件参数定义。
@@ -440,7 +580,7 @@ watch(
         String(props.themeConfig?.key ?? "").trim() || "soul-age-number";
       if (shouldShowFeedback(themeKey)) {
         markFeedbackShown(themeKey);
-        setTimeout(() => {
+        window.setTimeout(() => {
           isLikeVisible.value = true;
         }, 1500);
       }
@@ -450,7 +590,7 @@ watch(
 
 /**
  * 首屏视觉增强开关：
- * 关键逻辑：首帧先渲染核心内容，再启用纹理与装饰层，降低初始绘制压力。
+ * 关键逻辑：首帧先输出主体结构，再启用纹理层，降低首屏合成压力。
  */
 const isVisualEffectsReady = ref(false);
 
@@ -458,7 +598,7 @@ const isVisualEffectsReady = ref(false);
  * 作答状态。
  */
 const questionPool = SOUL_AGE_QUESTION_BANK;
-// 关键逻辑：总分区间严格依赖完整 20 题，因此必须保留题目原始顺序与全量题集。
+// 关键逻辑：本主题是固定 20 题总分制，必须完整保留题库顺序。
 const selectedQuestionBank = ref([]);
 const currentQuestionIndex = ref(0);
 const answers = ref([]);
@@ -515,7 +655,7 @@ const posterContainerStyle = computed(() => ({
 
 /**
  * 进度百分比：
- * 关键逻辑：进度按“当前题号 / 总题数”展示，视觉更稳定。
+ * 复杂度评估：O(1)。
  */
 const progressPercent = computed(() => {
   if (questionCount.value <= 0) {
@@ -524,6 +664,59 @@ const progressPercent = computed(() => {
 
   const percentValue = (currentQuestionNumber.value / questionCount.value) * 100;
   return Math.round(percentValue);
+});
+
+/**
+ * 年龄阶梯高亮视图模型。
+ * 复杂度评估：O(A)
+ * A 为年龄档位数量（当前固定 8）。
+ */
+const resultAgeScaleItems = computed(() => {
+  const currentSoulAge = Number(analysisResult.value?.soulAge ?? 0);
+  return SOUL_AGE_YEAR_SCALE.map((scaleItem) => ({
+    ...scaleItem,
+    isActive: scaleItem.age === currentSoulAge,
+  }));
+});
+
+/**
+ * 结果坐标卡片。
+ * 复杂度评估：O(1)。
+ */
+const resultCoordinateCards = computed(() => {
+  if (!analysisResult.value) {
+    return [];
+  }
+
+  const compatibilityModel = analysisResult.value.compatibility;
+  const actualAgeLabel = compatibilityModel.isUserProvided
+    ? `${compatibilityModel.actualAge} 岁`
+    : `默认 ${compatibilityModel.actualAge} 岁`;
+
+  return [
+    {
+      label: "TOTAL SCORE",
+      value: `${analysisResult.value.totalScore} / 80`,
+      description: "固定 20 题总分制，A=1、B=2、C=3、D=4。",
+    },
+    {
+      label: "AGE RANGE",
+      value: analysisResult.value.resultRangeText,
+      description: "本次命中的分数区间，对应 8 档具体灵魂年龄中的一个落点。",
+    },
+    {
+      label: "FIT PERCENT",
+      value: `${compatibilityModel.fitPercent}%`,
+      description: "现实年龄与灵魂年龄的贴合程度。",
+    },
+    {
+      label: "REAL AGE",
+      value: actualAgeLabel,
+      description: compatibilityModel.isUserProvided
+        ? "你填写了实际年龄，系统已按真实年龄计算契合度。"
+        : "未填写实际年龄，系统已按默认 25 岁估算。",
+    },
+  ];
 });
 
 /**
@@ -594,6 +787,8 @@ const radarAxisPoints = computed(() => {
 
 /**
  * 雷达图网格多边形。
+ * 复杂度评估：O(D * L)
+ * D 为维度数，L 为网格层数（固定 4）。
  */
 const radarGridPolygons = computed(() => {
   if (radarAxisPoints.value.length < 3) {
@@ -613,6 +808,8 @@ const radarGridPolygons = computed(() => {
 
 /**
  * 雷达图数据面多边形。
+ * 复杂度评估：O(D)
+ * D 为维度数（固定 6）。
  */
 const radarDataPolygonPoints = computed(() =>
   radarAxisPoints.value
@@ -622,6 +819,7 @@ const radarDataPolygonPoints = computed(() =>
 
 /**
  * 雷达图标签点位。
+ * 复杂度评估：O(D)。
  */
 const radarLabelPoints = computed(() =>
   radarAxisPoints.value.map((axisPoint) => ({
@@ -640,10 +838,10 @@ const activeRadarInsightLine = computed(() => {
   );
 
   if (!matchedItem) {
-    return "将鼠标移动到雷达图维度点位，可查看每项得分与解读。";
+    return "点击或聚焦雷达图任一维度，可查看当前维度分值与解读。";
   }
 
-  return `${matchedItem.label} ${matchedItem.score} 分 -> ${matchedItem.insight}`;
+  return `${matchedItem.label} ${matchedItem.score} 分 · ${matchedItem.insight}`;
 });
 
 /**
@@ -686,7 +884,7 @@ const aiAvoidSignalsForView = computed(() => {
 });
 
 /**
- * 饼图背景样式（手绘不规则感）。
+ * 饼图背景样式。
  * 复杂度评估：O(S)
  * S 为饼图分段数（固定 3，常数级）。
  */
@@ -755,22 +953,21 @@ function startSurvey() {
   resetAiInsightState();
 
   const nextQuestionBank = Array.isArray(questionPool) ? [...questionPool] : [];
-
   if (nextQuestionBank.length === 0) {
     interactionFeedback.value = "题库加载失败，请刷新页面后重试。";
     return;
   }
 
-  // 关键逻辑：固定载入完整 20 题，确保总分与年龄区间映射稳定一致。
+  // 关键逻辑：固定载入完整 20 题，确保总分与年龄映射绝对稳定。
   selectedQuestionBank.value = nextQuestionBank;
-  // 关键逻辑：每次开始都重置状态，避免重测串数据。
   currentQuestionIndex.value = 0;
-  answers.value = Array.from({ length: selectedQuestionBank.value.length }, () => null);
+  answers.value = Array.from({ length: nextQuestionBank.length }, () => null);
   analysisResult.value = null;
   posterPreviewUrl.value = "";
   interactionFeedback.value = "";
   activeRadarDimensionKey.value = DEFAULT_SOUL_AGE_RADAR_DIMENSION_KEY;
   stage.value = "survey";
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /**
@@ -828,8 +1025,8 @@ function clearAutoAdvanceTimer() {
 
 /**
  * 首帧后启用视觉增强层。
- * 关键逻辑：双 requestAnimationFrame 确保关键内容先绘制，再打开纹理层。
- * 复杂度评估：O(1)，仅固定次数回调调度。
+ * 关键逻辑：双 requestAnimationFrame 确保主体先绘制，再挂装饰层。
+ * 复杂度评估：O(1)。
  */
 function enableVisualEffectsAfterFirstPaint() {
   window.requestAnimationFrame(() => {
@@ -854,7 +1051,7 @@ function selectOption(optionId) {
     }
   }, 220);
 
-  // 关键逻辑：选项点击后自动进入下一题；最后一题点选后直接提交。
+  // 关键逻辑：点击选项后自动进入下一题；最后一题直接提交。
   clearAutoAdvanceTimer();
   autoAdvanceTimer = window.setTimeout(async () => {
     if (stage.value !== "survey") {
@@ -903,6 +1100,7 @@ async function submitSurveyResult() {
     analysisResult.value?.radarItems?.[0]?.key ??
     DEFAULT_SOUL_AGE_RADAR_DIMENSION_KEY;
   stage.value = "result";
+  window.scrollTo({ top: 0, behavior: "smooth" });
 
   // 关键逻辑：结果页先展示本地稳定结果，再异步追加 AI 深度解读。
   void requestAiInsight(localResult);
@@ -913,7 +1111,7 @@ async function submitSurveyResult() {
  * @param {string} dimensionKey 维度 key。
  */
 function setActiveRadarDimension(dimensionKey) {
-  activeRadarDimensionKey.value = dimensionKey;
+  activeRadarDimensionKey.value = String(dimensionKey ?? "").trim();
 }
 
 /**
@@ -1040,7 +1238,6 @@ function drawPseudoQrCode(context, startX, startY, size) {
         (rowIndex < 7 && colIndex < 7) ||
         (rowIndex < 7 && colIndex >= 14) ||
         (rowIndex >= 14 && colIndex < 7);
-
       const hashSeed = (rowIndex * 17 + colIndex * 31 + 13) % 7;
       const shouldFill = isFinderCorner || hashSeed <= 2;
 
@@ -1082,7 +1279,7 @@ async function generatePosterDataUrl() {
   context.fillStyle = "#F8F5F2";
   context.fillRect(0, 0, posterWidth, posterHeight);
 
-  // 关键逻辑：添加轻纹理噪点，保留复古纸张质感。
+  // 关键逻辑：加入轻纹理噪点，维持纸感海报的层次。
   context.fillStyle = "rgba(193, 154, 107, 0.07)";
   for (let index = 0; index < 1100; index += 1) {
     const pointX = Math.random() * posterWidth;
@@ -1107,12 +1304,14 @@ async function generatePosterDataUrl() {
   context.font = "700 46px 'PingFang SC', sans-serif";
   context.fillText(resultData.ageTagText, 120, 486);
 
-  /**
-   * 关键逻辑：海报雷达图下移并轻微缩小，
-   * 避免顶部维度标签与年龄标题区域发生重叠。
-   */
+  context.fillStyle = "#8B7D6B";
+  context.font = "500 30px 'PingFang SC', sans-serif";
+  context.fillText(`总分 ${resultData.totalScore}/80 · 命中 ${resultData.resultRangeText}`, 120, 548);
+  context.fillText(resultData.summaryLine, 120, 602);
+
+  // 关键逻辑：海报雷达图下移并适度缩小，避免顶部标题区域拥挤。
   const posterRadarCenterX = posterWidth / 2;
-  const posterRadarCenterY = 828;
+  const posterRadarCenterY = 860;
   const posterRadarRadius = 198;
   drawPosterRadar(
     context,
@@ -1124,11 +1323,11 @@ async function generatePosterDataUrl() {
 
   context.fillStyle = "#5A4B3E";
   context.font = "700 44px 'Source Han Serif SC', serif";
-  context.fillText("核心关键词", 120, 1120);
+  context.fillText("核心关键词", 120, 1148);
 
   context.font = "600 38px 'PingFang SC', sans-serif";
   resultData.keywordCards.forEach((keywordItem, keywordIndex) => {
-    const itemY = 1190 + keywordIndex * 70;
+    const itemY = 1218 + keywordIndex * 70;
     context.fillStyle = "#5A4B3E";
     context.fillText(`${keywordIndex + 1}. ${keywordItem.keyword}`, 130, itemY);
     context.fillStyle = "#8B7D6B";
@@ -1148,7 +1347,7 @@ async function generatePosterDataUrl() {
 
   context.fillStyle = "#8B7D6B";
   context.font = "500 28px 'PingFang SC', sans-serif";
-  context.fillText("固定 20 题总分制 · 8 档具体年龄结果", 120, 1740);
+  context.fillText("固定 20 题总分制 · 8 档具体数字年龄结果", 120, 1740);
   context.fillText("结果仅供娱乐与自我觉察参考", 120, 1790);
 
   return canvas.toDataURL("image/png");
@@ -1281,8 +1480,6 @@ onBeforeUnmount(() => {
   z-index: 0;
 }
 
-/* 首屏性能策略：
- * 关键逻辑：首帧先输出结构与文本，纹理装饰层延后启用，减少首屏合成负担。 */
 .soul-page:not(.soul-page-perf-ready) .soul-paper-texture,
 .soul-page:not(.soul-page-perf-ready) .soul-tree-rings {
   display: none;
@@ -1320,7 +1517,7 @@ onBeforeUnmount(() => {
 }
 
 .soul-cover {
-  min-height: min(76vh, 740px);
+  min-height: min(78vh, 780px);
   border-radius: 18px;
   border: 1px solid rgba(232, 213, 196, 0.9);
   background: rgba(248, 245, 242, 0.92);
@@ -1343,32 +1540,78 @@ onBeforeUnmount(() => {
 .soul-cover-title {
   margin: 18px 0 10px;
   font-family: "Source Han Serif SC", "Songti SC", serif;
-  font-size: clamp(28px, 5.1vw, 36px);
+  font-size: clamp(28px, 5.1vw, 38px);
   line-height: 1.35;
   color: var(--soul-text-main);
   font-weight: 700;
 }
 
-.soul-deco {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--soul-gold);
-  font-size: clamp(20px, 3.4vw, 24px);
-}
-
-.soul-deco-left {
-  margin-right: 8px;
-}
-
-.soul-deco-right {
-  margin-left: 8px;
-}
-
 .soul-cover-subtitle {
   margin: 0;
+  max-width: 720px;
   font-size: 16px;
+  line-height: 1.7;
   color: var(--soul-text-sub);
+}
+
+.soul-cover-rule-grid,
+.soul-cover-scale-grid {
+  width: min(100%, 760px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.soul-cover-rule-grid {
+  margin-top: 28px;
+}
+
+.soul-cover-scale-grid {
+  margin-top: 16px;
+}
+
+.soul-cover-rule-card,
+.soul-cover-scale-item {
+  border-radius: 14px;
+  border: 1px solid rgba(232, 213, 196, 0.92);
+  background: rgba(255, 255, 255, 0.76);
+  padding: 14px 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.soul-cover-rule-key,
+.soul-stat-label {
+  margin: 0;
+  display: block;
+  color: var(--soul-text-sub);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.soul-cover-rule-value {
+  display: block;
+  margin-top: 6px;
+  color: var(--soul-text-main);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.soul-cover-scale-age,
+.soul-age-scale-age {
+  margin: 0;
+  color: var(--soul-brown);
+  font-family: "Source Han Serif SC", "Songti SC", serif;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.soul-cover-scale-range,
+.soul-age-scale-range {
+  margin: 8px 0 0;
+  color: var(--soul-text-sub);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .soul-cover-age-input-wrap {
@@ -1430,13 +1673,26 @@ onBeforeUnmount(() => {
   min-height: 52px;
 }
 
+.soul-cover-note {
+  margin: 14px 0 0;
+  max-width: 720px;
+  color: var(--soul-text-sub);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
 .soul-survey {
   display: grid;
   gap: 16px;
+  max-width: 780px;
+  margin: 0 auto;
 }
 
-.soul-survey-top {
-  display: block;
+.soul-survey-topline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .soul-progress-wrap {
@@ -1464,6 +1720,18 @@ onBeforeUnmount(() => {
   font-size: 14px;
 }
 
+.soul-question-dimension-pill {
+  margin: 0;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid rgba(193, 154, 107, 0.45);
+  background: rgba(212, 185, 150, 0.3);
+  color: var(--soul-text-main);
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1;
+}
+
 .soul-question-card {
   background: #fff;
   border-radius: 12px;
@@ -1472,13 +1740,28 @@ onBeforeUnmount(() => {
   padding: 24px;
 }
 
-.soul-question-title {
+.soul-question-order {
   margin: 0;
+  color: var(--soul-text-sub);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+
+.soul-question-title {
+  margin: 12px 0 0;
   color: var(--soul-text-main);
-  font-size: clamp(18px, 3.2vw, 20px);
+  font-size: clamp(18px, 3.2vw, 22px);
   line-height: 1.5;
   text-align: center;
   font-family: "Source Han Serif SC", "Songti SC", serif;
+}
+
+.soul-question-intro {
+  margin: 10px 0 0;
+  text-align: center;
+  color: var(--soul-text-sub);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .soul-option-list {
@@ -1489,14 +1772,15 @@ onBeforeUnmount(() => {
 }
 
 .soul-option-item {
+  position: relative;
   border: 1px solid var(--soul-border);
-  border-radius: 6px;
+  border-radius: 10px;
   background: #fff;
   text-align: left;
-  padding: 14px 16px;
-  min-height: 54px;
+  padding: 16px 80px 16px 64px;
+  min-height: 58px;
   font-size: 16px;
-  line-height: 1.4;
+  line-height: 1.55;
   color: var(--soul-text-sub);
   transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease;
 }
@@ -1506,7 +1790,7 @@ onBeforeUnmount(() => {
 }
 
 .soul-option-item.is-selected {
-  background: var(--soul-border);
+  background: rgba(232, 213, 196, 0.42);
   color: var(--soul-text-main);
   border-width: 1.5px;
   border-color: var(--soul-brown);
@@ -1514,6 +1798,37 @@ onBeforeUnmount(() => {
 
 .soul-option-item.is-pulsing {
   animation: soulOptionPulse 200ms ease;
+}
+
+.soul-option-tier {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(212, 185, 150, 0.36);
+  color: var(--soul-text-main);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.soul-option-label {
+  display: block;
+}
+
+.soul-option-score {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--soul-brown);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .soul-survey-bottom {
@@ -1525,6 +1840,16 @@ onBeforeUnmount(() => {
   width: min(100%, 320px);
   min-height: 46px;
   margin: 0 auto;
+}
+
+.soul-btn-secondary {
+  border: 1px solid var(--soul-border);
+  background: #fff;
+  color: var(--soul-text-main);
+}
+
+.soul-btn-secondary:hover:not(:disabled) {
+  background: #f5f0eb;
 }
 
 .soul-auto-next-tip {
@@ -1575,8 +1900,15 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 
-.soul-result-age-number {
+.soul-result-score-line {
   margin: 0;
+  color: var(--soul-text-sub);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+.soul-result-age-number {
+  margin: 8px 0 0;
   color: var(--soul-brown);
   font-size: clamp(48px, 8vw, 60px);
   font-weight: 800;
@@ -1595,11 +1927,19 @@ onBeforeUnmount(() => {
   font-size: 18px;
 }
 
-.soul-result-summary {
+.soul-result-one-line {
   margin: 12px auto 0;
-  color: var(--soul-text-sub);
+  max-width: 760px;
+  color: var(--soul-text-main);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.7;
+}
+
+.soul-result-summary {
+  margin: 10px auto 0;
+  color: var(--soul-text-sub);
+  font-size: 15px;
+  line-height: 1.6;
   max-width: 760px;
 }
 
@@ -1685,12 +2025,64 @@ onBeforeUnmount(() => {
     rgba(248, 245, 242, 0.95);
 }
 
-.soul-result-module-fit .soul-fit-progress-fill {
-  background: linear-gradient(90deg, #8fb8cc, #d4b996);
+.soul-age-scale-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.soul-age-scale-item {
+  border-radius: 12px;
+  border: 1px solid rgba(232, 213, 196, 0.92);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 14px 12px;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.soul-age-scale-item.is-active {
+  border-color: rgba(193, 154, 107, 0.88);
+  background: rgba(232, 213, 196, 0.45);
+  box-shadow: 0 10px 20px rgba(193, 154, 107, 0.16);
+  transform: translateY(-1px);
+}
+
+.soul-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.soul-stat-card {
+  border-radius: 14px;
+  border: 1px solid rgba(232, 213, 196, 0.86);
+  background: rgba(248, 245, 242, 0.95);
+  padding: 16px;
+  box-shadow: 0 10px 26px rgba(90, 75, 62, 0.08);
+}
+
+.soul-stat-value {
+  margin: 8px 0 0;
+  color: var(--soul-text-main);
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.soul-stat-description {
+  margin: 8px 0 0;
+  color: var(--soul-text-sub);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.soul-radar-layout {
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
 }
 
 .soul-radar-wrap {
-  margin-top: 14px;
   display: flex;
   justify-content: center;
 }
@@ -1733,8 +2125,43 @@ onBeforeUnmount(() => {
   text-anchor: middle;
 }
 
+.soul-radar-side {
+  display: grid;
+  gap: 10px;
+}
+
+.soul-dimension-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.soul-dimension-tab {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 213, 196, 0.88);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--soul-text-main);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.soul-dimension-tab strong {
+  color: var(--soul-brown);
+  font-size: 16px;
+}
+
+.soul-dimension-tab.is-active {
+  background: rgba(232, 213, 196, 0.45);
+  border-color: rgba(193, 154, 107, 0.88);
+}
+
 .soul-radar-insight {
-  margin: 10px 0 0;
+  margin: 0;
   font-size: 14px;
   line-height: 1.5;
   color: var(--soul-text-main);
@@ -1744,9 +2171,9 @@ onBeforeUnmount(() => {
 }
 
 .soul-core-line {
-  margin: 8px 0 0;
+  margin: 0;
   color: var(--soul-text-main);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
 }
 
@@ -1815,7 +2242,7 @@ onBeforeUnmount(() => {
 
 .soul-fit-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #d4b996, #c19a6b);
+  background: linear-gradient(90deg, #8fb8cc, #d4b996);
   transition: width 300ms ease;
 }
 
@@ -1962,16 +2389,6 @@ onBeforeUnmount(() => {
   font-size: 16px;
 }
 
-.soul-btn-secondary {
-  border: 1px solid var(--soul-border);
-  background: #fff;
-  color: var(--soul-text-main);
-}
-
-.soul-btn-secondary:hover {
-  background: #f5f0eb;
-}
-
 .soul-flow-copy {
   margin: 2px 0 0;
   color: var(--soul-text-sub);
@@ -2035,12 +2452,28 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
+.survey-feedback-entry {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.survey-feedback-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--soul-text-sub);
+  text-decoration: none;
+  border: 1px solid rgba(232, 213, 196, 0.9);
+  background: rgba(255, 255, 255, 0.7);
+}
+
 .soul-card-swap-enter-active,
 .soul-card-swap-leave-active {
-  /* 关键逻辑：仅过渡 transform/opacity，避免 `all` 引发多余重排。 */
-  transition:
-    opacity 300ms ease,
-    transform 300ms ease;
+  transition: opacity 300ms ease, transform 300ms ease;
 }
 
 .soul-card-swap-enter-from,
@@ -2059,6 +2492,7 @@ onBeforeUnmount(() => {
   0% {
     transform: scale(1.02);
   }
+
   100% {
     transform: scale(1);
   }
@@ -2085,13 +2519,13 @@ onBeforeUnmount(() => {
     align-items: center;
   }
 
-  .soul-radar-svg {
-    width: 260px;
+  .soul-radar-layout {
+    grid-template-columns: 300px minmax(0, 1fr);
+    align-items: center;
   }
 
-  .soul-survey {
-    max-width: 780px;
-    margin: 0 auto;
+  .soul-radar-svg {
+    width: 260px;
   }
 
   .soul-ai-columns {
@@ -2117,12 +2551,26 @@ onBeforeUnmount(() => {
     font-size: 28px;
   }
 
+  .soul-cover-rule-grid,
+  .soul-cover-scale-grid,
+  .soul-age-scale-grid,
+  .soul-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .soul-question-card {
     padding: 20px;
   }
 
   .soul-option-item {
-    font-size: 15px;
+    padding-right: 16px;
+  }
+
+  .soul-option-score {
+    position: static;
+    transform: none;
+    display: block;
+    margin-top: 10px;
   }
 
   .soul-option-item.is-pulsing {
@@ -2135,6 +2583,16 @@ onBeforeUnmount(() => {
 
   .soul-pie-wrap {
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .soul-survey-topline {
+    display: grid;
+  }
+
+  .soul-dimension-tabs {
+    grid-template-columns: 1fr;
   }
 }
 </style>
