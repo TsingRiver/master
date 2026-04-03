@@ -4042,7 +4042,8 @@ async function runAiInsightGeneration({
     }
 
     if (showErrorToast) {
-      showToast(error?.message ?? "进阶解读暂不可用，请稍后重试");
+      // 关键逻辑：页面层不直出底层网络错误，统一收口为稳定用户文案。
+      showToast("进阶解读暂不可用，请稍后重试");
     }
 
     finalResultForRemoteSync = isTypeologyDevOverrideResult

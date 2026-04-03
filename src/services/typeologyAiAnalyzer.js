@@ -394,6 +394,28 @@ function normalizeMbtiAiInsight(deepResult, localResult) {
 }
 
 /**
+ * 构建类型学进阶解读的稳定兜底结果。
+ * 关键逻辑：
+ * 1. 当 AI 接口超时、断网或返回异常时，统一回退到同结构的 `aiInsight` 对象；
+ * 2. 页面层无需区分“AI 结果”与“本地兜底”，只消费同一份结果结构；
+ * 3. 兜底仅在请求失败时触发，不会覆盖已成功返回的 AI 内容。
+ * @param {object} params 参数对象。
+ * @param {object} params.testConfig 测试配置。
+ * @param {object} params.localResult 本地结果。
+ * @returns {object} 可直接写入结果缓存的进阶解读对象。
+ */
+function buildTypeologyAiFallbackInsight({
+  testConfig,
+  localResult,
+}) {
+  if (testConfig?.key === "mbti" && localResult?.mbtiLocalResult) {
+    return normalizeMbtiAiInsight(null, localResult);
+  }
+
+  return normalizeGenericAiInsight(null, testConfig, localResult);
+}
+
+/**
  * 执行类型学进阶解读。
  * @param {object} params 参数对象。
  * @param {object} params.testConfig 测试配置。
@@ -410,27 +432,40 @@ export async function analyzeTypeologyWithAi({
   onStreamText,
   abortSignal,
 }) {
-  if (testConfig?.key === "mbti" && localResult?.mbtiLocalResult) {
-    const deepResult = await analyzeMbtiWithDeepInsight(
-      buildMbtiDeepPayload(localResult),
-      {
-        timeoutMs,
-        onStreamText,
-        abortSignal,
-      },
-    );
+  try {
+    if (testConfig?.key === "mbti" && localResult?.mbtiLocalResult) {
+      const deepResult = await analyzeMbtiWithDeepInsight(
+        buildMbtiDeepPayload(localResult),
+        {
+          timeoutMs,
+          onStreamText,
+          abortSignal,
+        },
+      );
 
-    return normalizeMbtiAiInsight(deepResult, localResult);
+      return normalizeMbtiAiInsight(deepResult, localResult);
+    }
+
+    const aiData = await requestBailianJson({
+      systemPrompt: "请严格根据要求输出 JSON，不要包含任何多余文字或 Markdown 代码块标记（如 ```json）。",
+      userPrompt: buildGenericUserPrompt(testConfig, localResult),
+      timeoutMs,
+      temperature: 0.35,
+      onTextUpdate: onStreamText,
+      signal: abortSignal,
+    });
+
+    return normalizeGenericAiInsight(aiData, testConfig, localResult);
+  } catch (error) {
+    const normalizedErrorMessage = String(error?.message ?? "").trim();
+    if (abortSignal?.aborted || normalizedErrorMessage.includes("请求已取消")) {
+      throw error;
+    }
+
+    // 关键逻辑：接口失败时仍返回同结构解读对象，避免结果页出现空白“进阶解读”模块。
+    return buildTypeologyAiFallbackInsight({
+      testConfig,
+      localResult,
+    });
   }
-
-  const aiData = await requestBailianJson({
-    systemPrompt: "请严格根据要求输出 JSON，不要包含任何多余文字或 Markdown 代码块标记（如 ```json）。",
-    userPrompt: buildGenericUserPrompt(testConfig, localResult),
-    timeoutMs,
-    temperature: 0.35,
-    onTextUpdate: onStreamText,
-    signal: abortSignal,
-  });
-
-  return normalizeGenericAiInsight(aiData, testConfig, localResult);
 }
