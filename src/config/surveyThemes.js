@@ -3243,9 +3243,6 @@ function buildGentleWildUnifiedResult(result, sourceType) {
     ? result.optionDistribution
     : [];
   const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
-  const topCoreScenarios = Array.isArray(result?.topCoreScenarios)
-    ? result.topCoreScenarios
-    : [];
   const summaryLines = Array.isArray(result?.summaryLines)
     ? result.summaryLines
     : [];
@@ -3799,6 +3796,8 @@ function buildInnerChildDeepPayload(localResult) {
  * @returns {object} 统一结果对象。
  */
 function buildInnerChildUnifiedResult(result, sourceType) {
+  // 关键逻辑：结果页显式去除“最像你的童年场景”，避免结果模块信息过长、分散主结论。
+  const hiddenDetailSectionTitles = new Set(["最像你的童年场景"]);
   const resultRule = result?.resultRule ?? {};
   const majorityProfile = result?.majorityProfile ?? {};
   const scoreValue = Number(result?.score ?? 0);
@@ -3838,18 +3837,6 @@ function buildInnerChildUnifiedResult(result, sourceType) {
         ].filter((value, index, sourceItems) => {
           return Boolean(value) && sourceItems.indexOf(value) === index;
         });
-  const coreScenarioLines =
-    topCoreScenarios.length > 0
-      ? topCoreScenarios.map((scenarioItem) => {
-          const optionText = String(scenarioItem?.optionLabel ?? "").trim();
-          const scenarioName = String(scenarioItem?.name ?? "").trim();
-          const dimensionLabel = String(
-            scenarioItem?.dimensionLabel ?? "稳定观察",
-          ).trim();
-
-          return `「${scenarioName}」里你更容易选择“${optionText || "待观察"}”，说明你的 ${dimensionLabel} 已经很贴近当前这类内在小孩的本能反应。`;
-        })
-      : ["当前样本仍偏少，建议完整作答后再看最像你的童年场景。"];
   const defaultDetailSections = [
     {
       title: "结果说明",
@@ -3860,10 +3847,6 @@ function buildInnerChildUnifiedResult(result, sourceType) {
           ? `多数选项画像：${majorityProfile.description}`
           : "多数选项画像仍在整理中。",
       ],
-    },
-    {
-      title: "最像你的童年场景",
-      items: coreScenarioLines,
     },
     {
       title: "自我照顾提醒",
@@ -3885,7 +3868,10 @@ function buildInnerChildUnifiedResult(result, sourceType) {
             : [],
         }))
         .filter(
-          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+          (sectionItem) =>
+            sectionItem.title &&
+            sectionItem.items.length > 0 &&
+            !hiddenDetailSectionTitles.has(sectionItem.title),
         )
     : [];
   const resolvedDetailSections =

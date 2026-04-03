@@ -811,7 +811,25 @@ body {
 }
 
 .theme-inner-child {
-  --page-bg: linear-gradient(145deg, #fff8f1 0%, #fff0d8 44%, #ebf6ff 100%);
+  --page-bg: url("/inner-child.jpg") center center / cover no-repeat;
+  --page-overlay-one: linear-gradient(
+    180deg,
+    rgba(78, 54, 33, 0.28) 0%,
+    rgba(95, 68, 43, 0.16) 24%,
+    rgba(108, 76, 49, 0.14) 52%,
+    rgba(62, 43, 28, 0.26) 100%
+  );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 18% 16%,
+      rgba(255, 247, 236, 0.22),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 82% 80%,
+      rgba(214, 232, 255, 0.18),
+      transparent 34%
+    );
   --text-main: #594236;
   --text-muted: #8e7462;
   --surface: rgba(255, 255, 255, 0.93);
@@ -4029,6 +4047,19 @@ body {
   color: #a56c41;
 }
 
+.theme-inner-child .survey-cover-kicker {
+  /* 关键逻辑：封面卡片透明度提升后，kicker 需要单独压深颜色提升图片背景上的可读性。 */
+  color: rgba(88, 52, 30, 0.96);
+  text-shadow:
+    0 1px 10px rgba(255, 250, 244, 0.42),
+    0 1px 1px rgba(55, 32, 17, 0.18);
+}
+
+.theme-inner-child .survey-aura,
+.theme-inner-child .survey-noise {
+  display: none;
+}
+
 .theme-inner-child .survey-cover-card {
   display: flex;
   flex-direction: column;
@@ -4039,18 +4070,19 @@ body {
   padding: clamp(32px, 6vw, 38px) clamp(24px, 5.6vw, 34px)
     clamp(30px, 7vw, 44px);
   border-radius: 28px;
-  border-color: rgba(246, 226, 204, 0.48);
+  border-color: rgba(255, 255, 255, 0.26);
   background: linear-gradient(
-    180deg,
-    rgba(255, 252, 247, 0.58) 0%,
-    rgba(255, 245, 231, 0.5) 28%,
-    rgba(239, 248, 255, 0.54) 64%,
-    rgba(250, 252, 255, 0.68) 100%
+    145deg,
+    rgba(255, 255, 255, 0.24) 0%,
+    rgba(255, 244, 228, 0.17) 38%,
+    rgba(227, 238, 252, 0.16) 100%
   );
   box-shadow:
-    0 30px 64px rgba(188, 138, 95, 0.17),
-    inset 0 1px 0 rgba(255, 255, 255, 0.38);
-  backdrop-filter: blur(10px) saturate(1.05);
+    0 28px 68px rgba(57, 36, 18, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(0px) saturate(1.22);
+  -webkit-backdrop-filter: blur(0px) saturate(1.22);
 }
 
 .theme-inner-child.survey-stage-cover .survey-header {
@@ -4077,19 +4109,19 @@ body {
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.18) 0%,
-      rgba(255, 249, 240, 0.08) 22%,
-      rgba(255, 238, 216, 0.14) 48%,
-      rgba(239, 247, 255, 0.28) 100%
+      rgba(255, 255, 255, 0.28) 0%,
+      rgba(255, 248, 237, 0.12) 24%,
+      rgba(255, 238, 216, 0.08) 52%,
+      rgba(233, 244, 255, 0.18) 100%
     ),
     linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.12),
-      transparent 34%,
-      rgba(165, 205, 246, 0.16) 70%,
+      135deg,
+      rgba(255, 255, 255, 0.16),
+      transparent 36%,
+      rgba(170, 208, 246, 0.14) 72%,
       transparent 100%
     );
-  opacity: 0.86;
+  opacity: 0.94;
 }
 
 .theme-inner-child .survey-cover-card > * {
@@ -4105,8 +4137,89 @@ body {
     0 1px 0 rgba(255, 255, 255, 0.46);
 }
 
+.theme-inner-child .survey-cover-points {
+  gap: 10px;
+}
+
+.theme-inner-child .survey-cover-points li {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 248, 239, 0.18),
+    rgba(237, 246, 255, 0.1)
+  );
+  color: rgba(92, 62, 40, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 8px 18px rgba(64, 39, 20, 0.08);
+  backdrop-filter: blur(8px) saturate(1.08);
+  -webkit-backdrop-filter: blur(8px) saturate(1.08);
+}
+
+.theme-inner-child .survey-cover-actions {
+  gap: 10px;
+}
+
+.theme-inner-child .survey-btn-primary {
+  /* 关键逻辑：主按钮改为浅棕色，和封面主画面的暖色区域保持一致，降低操作区突兀感。 */
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(181, 141, 109, 0.84),
+    rgba(208, 171, 137, 0.8)
+  ) !important;
+  color: rgba(255, 250, 244, 0.98) !important;
+  box-shadow:
+    0 14px 30px rgba(96, 67, 43, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.theme-inner-child .survey-btn-secondary {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 248, 240, 0.26),
+    rgba(244, 232, 219, 0.18)
+  ) !important;
+  color: rgba(109, 79, 56, 0.97) !important;
+  box-shadow:
+    0 12px 24px rgba(92, 64, 39, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+  backdrop-filter: blur(10px) saturate(1.08);
+  -webkit-backdrop-filter: blur(10px) saturate(1.08);
+}
+
 .theme-inner-child .survey-option {
-  background: linear-gradient(180deg, #fffefd, #fff8f0);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 251, 246, 0.48),
+    rgba(248, 240, 229, 0.2)
+  );
+}
+
+.theme-inner-child .survey-option-selected {
+  border-color: rgba(223, 189, 155, 0.62);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 247, 238, 0.26),
+    rgba(244, 231, 216, 0.18)
+  );
+  box-shadow: 0 12px 22px rgba(103, 72, 46, 0.12);
+}
+
+.theme-inner-child.survey-stage-survey .survey-question-card {
+  /* 关键逻辑：仅在答题阶段给问题卡加透明度，保证结果页信息卡仍保持更高可读性。 */
+  border-color: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 251, 246, 0.2),
+    rgba(238, 246, 253, 0.12)
+  );
+  box-shadow:
+    0 24px 52px rgba(59, 37, 20, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(0px) saturate(1.08);
+  -webkit-backdrop-filter: blur(0px) saturate(1.08);
 }
 
 .theme-inner-child .survey-main-title,
@@ -4171,6 +4284,107 @@ body {
 .theme-inner-child .survey-detail-wrap h3,
 .theme-inner-child .survey-summary-wrap h3 {
   color: #9b6d4c;
+}
+
+.theme-inner-child.survey-stage-loading .survey-result-card,
+.theme-inner-child.survey-stage-analyzing .survey-result-card,
+.theme-inner-child.survey-stage-result .survey-result-card {
+  /* 关键逻辑：结果卡改成透明壳，避免整块实心底把背景图完全盖住。 */
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: blur(0px) saturate(1.02);
+  -webkit-backdrop-filter: blur(0px) saturate(1.02);
+}
+
+.theme-inner-child.survey-stage-loading .survey-loading-wrap,
+.theme-inner-child.survey-stage-analyzing .survey-loading-wrap {
+  padding: 32px 6px;
+}
+
+.theme-inner-child.survey-stage-loading .survey-loading-wrap p,
+.theme-inner-child.survey-stage-analyzing .survey-loading-wrap p {
+  color: rgba(96, 68, 46, 0.92);
+  text-shadow: 0 1px 10px rgba(255, 250, 242, 0.24);
+}
+
+.theme-inner-child.survey-stage-loading .survey-loading-wrap .survey-btn-primary,
+.theme-inner-child.survey-stage-analyzing .survey-loading-wrap .survey-btn-primary {
+  width: min(100%, 240px);
+}
+
+.theme-inner-child.survey-stage-result .survey-result-prefix,
+.theme-inner-child.survey-stage-result .survey-hero-artwork-caption,
+.theme-inner-child.survey-stage-result .survey-type-card-label,
+.theme-inner-child.survey-stage-result .survey-radar-name,
+.theme-inner-child.survey-stage-result .survey-radar-score,
+.theme-inner-child.survey-stage-result .survey-insight,
+.theme-inner-child.survey-stage-result .survey-easter-egg {
+  color: rgba(96, 68, 46, 0.92);
+}
+
+.theme-inner-child.survey-stage-result .survey-main-score,
+.theme-inner-child.survey-stage-result .survey-main-tag-item,
+.theme-inner-child.survey-stage-result .survey-tag-item,
+.theme-inner-child.survey-stage-result .survey-top-tag-item,
+.theme-inner-child.survey-stage-result .survey-highlight-box h3,
+.theme-inner-child.survey-stage-result .survey-highlight-box p,
+.theme-inner-child.survey-stage-result .survey-top-item-score {
+  color: rgba(85, 57, 36, 0.95);
+}
+
+.theme-inner-child.survey-stage-result .survey-main-tag-item,
+.theme-inner-child.survey-stage-result .survey-tag-item,
+.theme-inner-child.survey-stage-result .survey-top-tag-item {
+  /* 关键逻辑：标签改成轻透明态，和结果卡透明壳保持一致，不再形成高饱和小色块。 */
+  background: rgba(255, 249, 242, 0.08);
+  border-color: rgba(255, 244, 231, 0.28);
+  box-shadow: none;
+  backdrop-filter: blur(0px) saturate(1.02);
+  -webkit-backdrop-filter: blur(0px) saturate(1.02);
+}
+
+.theme-inner-child.survey-stage-result .survey-highlight-box,
+.theme-inner-child.survey-stage-result .survey-type-card-wrap,
+.theme-inner-child.survey-stage-result .survey-distribution-wrap,
+.theme-inner-child.survey-stage-result .survey-radar-wrap,
+.theme-inner-child.survey-stage-result .survey-top-wrap,
+.theme-inner-child.survey-stage-result .survey-detail-wrap,
+.theme-inner-child.survey-stage-result .survey-easter-egg,
+.theme-inner-child.survey-stage-result .survey-summary-wrap {
+  /* 关键逻辑：结果内部大模块统一降为透明层，避免外层透明、内层实心造成视觉割裂。 */
+  background: linear-gradient(
+    145deg,
+    rgba(255, 250, 244, 0.7),
+    rgba(241, 247, 253, 0.16)
+  );
+  border-color: rgba(255, 243, 229, 0.22);
+  box-shadow: none;
+  backdrop-filter: blur(10px) saturate(1.22);
+  -webkit-backdrop-filter: blur(10px) saturate(1.22);
+}
+
+.theme-inner-child.survey-stage-result .survey-type-card-item,
+.theme-inner-child.survey-stage-result .survey-top-item,
+.theme-inner-child.survey-stage-result .survey-radar-legend-item,
+.theme-inner-child.survey-stage-result .survey-bullet-list li,
+.theme-inner-child.survey-stage-result .survey-summary-item,
+.theme-inner-child.survey-stage-result .survey-summary-toggle-btn {
+  background: rgba(255, 251, 246, 0.06);
+  border-color: rgba(255, 244, 231, 0.2);
+  box-shadow: none;
+  backdrop-filter: blur(0px) saturate(1.02);
+  -webkit-backdrop-filter: blur(0px) saturate(1.02);
+}
+
+.theme-inner-child.survey-stage-result .survey-type-card-value,
+.theme-inner-child.survey-stage-result .survey-top-item-title,
+.theme-inner-child.survey-stage-result .survey-distribution-meta,
+.theme-inner-child.survey-stage-result .survey-bullet-list li,
+.theme-inner-child.survey-stage-result .survey-summary-item,
+.theme-inner-child.survey-stage-result .survey-summary-toggle-btn {
+  color: rgba(86, 59, 39, 0.94);
 }
 
 /* 关键逻辑：答题卡作为绝对定位参照系，保证头像浮层不参与文档流。 */
@@ -5782,6 +5996,7 @@ body {
   line-height: 1.68;
   color: var(--text-muted);
   text-align: center;
+  border-radius: 8px;
 }
 
 /* 城市结果页重点增强：
