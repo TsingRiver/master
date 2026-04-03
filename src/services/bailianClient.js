@@ -1,16 +1,13 @@
 /**
- * 百炼基础配置：
- * 统一由 Vite 环境变量注入，便于多个测试页面共享。
+ * 统一 AI 提供方配置：
+ * 1. 通过 `VITE_AI_PROVIDER` 选择当前生效的提供方。
+ * 2. 保留既有 `VITE_BAILIAN_*` 配置，避免影响现有 Qwen/百炼接入。
+ * 3. 为 GLM 增加独立配置块，保证切换回 Qwen 时无需改业务代码。
  */
-const BAILIAN_ENDPOINT =
-  import.meta.env.VITE_BAILIAN_ENDPOINT ??
-  "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
-const BAILIAN_MODEL =
-  import.meta.env.VITE_BAILIAN_MODEL ?? "qwen3.5-plus-2026-02-15";
-const BAILIAN_MODEL_FALLBACKS =
-  import.meta.env.VITE_BAILIAN_MODEL_FALLBACKS ?? "";
-const BAILIAN_MODEL_PRIORITY = import.meta.env.VITE_BAILIAN_MODEL_PRIORITY ?? "";
-const BAILIAN_API_KEY = import.meta.env.VITE_BAILIAN_API_KEY ?? "";
+const DEFAULT_AI_PROVIDER = "qwen";
+const ACTIVE_AI_PROVIDER_KEY = normalizeProviderKey(
+  import.meta.env.VITE_AI_PROVIDER ?? DEFAULT_AI_PROVIDER,
+);
 
 /**
  * 解析布尔配置值。
@@ -31,14 +28,31 @@ function parseBooleanValue(rawValue, fallbackValue) {
   return fallbackValue;
 }
 
-const BAILIAN_ENABLE_THINKING_DEFAULT = parseBooleanValue(
-  import.meta.env.VITE_BAILIAN_ENABLE_THINKING,
-  false,
-);
-const BAILIAN_STREAM_DEFAULT = parseBooleanValue(
-  import.meta.env.VITE_BAILIAN_STREAM,
-  true,
-);
+/**
+ * 归一化 AI 提供方标识：
+ * 兼容历史/别名写法，降低配置切换时的误配风险。
+ * @param {unknown} rawProviderKey 原始提供方标识。
+ * @returns {string} 归一化后的提供方标识。
+ */
+function normalizeProviderKey(rawProviderKey) {
+  const normalizedProviderKey = String(rawProviderKey ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalizedProviderKey) {
+    return DEFAULT_AI_PROVIDER;
+  }
+
+  if (["qwen", "bailian", "dashscope", "aliyun", "tongyi"].includes(normalizedProviderKey)) {
+    return "qwen";
+  }
+
+  if (["glm", "zhipu", "bigmodel"].includes(normalizedProviderKey)) {
+    return "glm";
+  }
+
+  return normalizedProviderKey;
+}
 
 /**
  * 解析正整数配置值。
@@ -58,16 +72,17 @@ function parsePositiveInteger(rawValue, fallbackValue) {
  * 1. 可通过环境变量覆盖。
  * 2. 用于提升移动网络和高峰期接口稳定性。
  */
-const BAILIAN_TIMEOUT_DEFAULT_MS = parsePositiveInteger(
-  import.meta.env.VITE_BAILIAN_TIMEOUT_MS,
+const AI_TIMEOUT_DEFAULT_MS = parsePositiveInteger(
+  import.meta.env.VITE_AI_TIMEOUT_MS ?? import.meta.env.VITE_BAILIAN_TIMEOUT_MS,
   26000,
 );
-const BAILIAN_RETRY_COUNT_DEFAULT = parsePositiveInteger(
-  import.meta.env.VITE_BAILIAN_RETRY_COUNT,
+const AI_RETRY_COUNT_DEFAULT = parsePositiveInteger(
+  import.meta.env.VITE_AI_RETRY_COUNT ?? import.meta.env.VITE_BAILIAN_RETRY_COUNT,
   1,
 );
-const BAILIAN_RETRY_DELAY_DEFAULT_MS = parsePositiveInteger(
-  import.meta.env.VITE_BAILIAN_RETRY_DELAY_MS,
+const AI_RETRY_DELAY_DEFAULT_MS = parsePositiveInteger(
+  import.meta.env.VITE_AI_RETRY_DELAY_MS ??
+    import.meta.env.VITE_BAILIAN_RETRY_DELAY_MS,
   650,
 );
 
@@ -107,28 +122,197 @@ function dedupeModelList(modelList) {
 }
 
 /**
+ * AI 提供方配置字典：
+ * 1. `qwen` 继续复用既有百炼环境变量，保证历史配置零迁移。
+ * 2. `glm` 使用智谱 OpenAI 兼容接口，支持独立模型与 API Key。
+ */
+const AI_PROVIDER_CONFIG_MAP = Object.freeze({
+  qwen: {
+    providerKey: "qwen",
+    displayName: "Qwen（阿里百炼）",
+    endpoint:
+      import.meta.env.VITE_BAILIAN_ENDPOINT ??
+      "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+    apiKey: import.meta.env.VITE_BAILIAN_API_KEY ?? "",
+    apiKeyEnvName: "VITE_BAILIAN_API_KEY",
+    model: import.meta.env.VITE_BAILIAN_MODEL ?? "qwen3.5-plus-2026-02-15",
+    modelFallbacks: import.meta.env.VITE_BAILIAN_MODEL_FALLBACKS ?? "",
+    modelPriority: import.meta.env.VITE_BAILIAN_MODEL_PRIORITY ?? "",
+    enableThinkingDefault: parseBooleanValue(
+      import.meta.env.VITE_BAILIAN_ENABLE_THINKING ??
+        import.meta.env.VITE_AI_ENABLE_THINKING,
+      false,
+    ),
+    streamDefault: parseBooleanValue(
+      import.meta.env.VITE_BAILIAN_STREAM ?? import.meta.env.VITE_AI_STREAM,
+      true,
+    ),
+    defaultFallbackModels: ["qwen3.5-plus", "qwen-turbo"],
+    /**
+     * 构建 Qwen/百炼专属请求扩展字段。
+     * @param {boolean} enableThinking 是否启用思考模式。
+     * @returns {object} 请求扩展字段。
+     */
+    buildExtraRequestBody(enableThinking) {
+      return {
+        enable_thinking: Boolean(enableThinking),
+      };
+    },
+  },
+  glm: {
+    providerKey: "glm",
+    displayName: "GLM（智谱 AI）",
+    endpoint:
+      import.meta.env.VITE_GLM_ENDPOINT ??
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    apiKey: import.meta.env.VITE_GLM_API_KEY ?? "",
+    apiKeyEnvName: "VITE_GLM_API_KEY",
+    model: import.meta.env.VITE_GLM_MODEL ?? "glm-4.5-air",
+    modelFallbacks: import.meta.env.VITE_GLM_MODEL_FALLBACKS ?? "",
+    modelPriority: import.meta.env.VITE_GLM_MODEL_PRIORITY ?? "",
+    enableThinkingDefault: parseBooleanValue(
+      import.meta.env.VITE_GLM_ENABLE_THINKING ??
+        import.meta.env.VITE_AI_ENABLE_THINKING,
+      false,
+    ),
+    streamDefault: parseBooleanValue(
+      import.meta.env.VITE_GLM_STREAM ?? import.meta.env.VITE_AI_STREAM,
+      true,
+    ),
+    defaultFallbackModels: [],
+    /**
+     * 构建 GLM 专属请求扩展字段。
+     * 关键逻辑：GLM OpenAI 兼容接口使用 `thinking.type` 控制思考模式。
+     * @param {boolean} enableThinking 是否启用思考模式。
+     * @returns {object} 请求扩展字段。
+     */
+    buildExtraRequestBody(enableThinking) {
+      return {
+        thinking: {
+          type: Boolean(enableThinking) ? "enabled" : "disabled",
+        },
+      };
+    },
+  },
+});
+
+/**
+ * 解析当前生效的 AI 提供方配置。
+ * @returns {object | null} 提供方配置；若配置不支持则返回 null。
+ */
+function resolveActiveProviderConfig() {
+  return AI_PROVIDER_CONFIG_MAP[ACTIVE_AI_PROVIDER_KEY] ?? null;
+}
+
+/**
+ * 判断 API Key 是否仍为占位值。
+ * @param {string} apiKey 已归一化的 API Key。
+ * @returns {boolean} 是否为占位值。
+ */
+function isPlaceholderApiKey(apiKey) {
+  return (
+    apiKey === "your_api_key" ||
+    apiKey === "your_bailian_api_key" ||
+    apiKey === "your_glm_api_key" ||
+    apiKey.toLowerCase().includes("your_api_key") ||
+    apiKey.toLowerCase().includes("your_bailian_api_key") ||
+    apiKey.toLowerCase().includes("your_glm_api_key")
+  );
+}
+
+/**
+ * 校验提供方是否具备可执行条件。
+ * 关键逻辑：Provider 级兜底场景下，这里返回字符串而不是直接抛错，
+ * 便于 GLM 不可用时继续回退到 Qwen。
+ * @param {object | null} providerConfig 当前提供方配置。
+ * @returns {string} 空字符串表示可执行；非空表示不可执行原因。
+ */
+function resolveProviderValidationError(providerConfig) {
+  if (!providerConfig) {
+    return `VITE_AI_PROVIDER=${ACTIVE_AI_PROVIDER_KEY} 不受支持，请改为 qwen 或 glm`;
+  }
+
+  const activeApiKey = String(providerConfig.apiKey ?? "").trim();
+  if (!activeApiKey) {
+    return `缺少 ${providerConfig.apiKeyEnvName}，无法调用 ${providerConfig.displayName} 接口`;
+  }
+
+  if (isPlaceholderApiKey(activeApiKey)) {
+    return `${providerConfig.apiKeyEnvName} 仍是占位值，请在 .env 中替换为真实 ${providerConfig.displayName} API Key`;
+  }
+
+  return "";
+}
+
+/**
  * 构建全局模型候选序列：
- * 1. `VITE_BAILIAN_MODEL_PRIORITY`（完整优先级）优先级最高。
- * 2. 若未配置，则使用 `VITE_BAILIAN_MODEL + VITE_BAILIAN_MODEL_FALLBACKS`。
+ * 1. `MODEL_PRIORITY`（完整优先级）优先级最高。
+ * 2. 若未配置，则使用 `主模型 + 备用模型列表`。
  * 3. 最后补默认降级模型，避免单模型不可用时直接失败。
+ * @param {object | null} providerConfig 当前提供方配置。
  * @returns {Array<string>} 全局模型候选序列。
  */
-function resolveGlobalModelCandidates() {
-  const priorityModels = dedupeModelList(parseModelList(BAILIAN_MODEL_PRIORITY));
+function resolveGlobalModelCandidates(providerConfig) {
+  if (!providerConfig) {
+    return [];
+  }
+
+  const priorityModels = dedupeModelList(
+    parseModelList(providerConfig.modelPriority),
+  );
   if (priorityModels.length > 0) {
     return priorityModels;
   }
 
-  const fallbackModels = dedupeModelList(parseModelList(BAILIAN_MODEL_FALLBACKS));
-  const defaultFallbackModels = ["qwen3.5-plus", "qwen-turbo"];
-
-  return dedupeModelList([BAILIAN_MODEL, ...fallbackModels, ...defaultFallbackModels]);
+  const fallbackModels = dedupeModelList(
+    parseModelList(providerConfig.modelFallbacks),
+  );
+  return dedupeModelList([
+    providerConfig.model,
+    ...fallbackModels,
+    ...(providerConfig.defaultFallbackModels ?? []),
+  ]);
 }
 
 /**
- * 当前会话的全局模型候选序列。
+ * 构建提供方执行计划。
+ * 关键逻辑：
+ * 1. 默认只执行当前 provider。
+ * 2. 当当前 provider 为 GLM 时，自动追加 Qwen 作为兜底 provider。
+ * 3. Qwen 兜底阶段禁用请求级模型覆盖，强制按 `VITE_BAILIAN_MODEL -> VITE_BAILIAN_MODEL_FALLBACKS` 规则尝试。
+ * @param {object | null} activeProviderConfig 当前主提供方配置。
+ * @returns {Array<object>} 提供方执行计划。
  */
-const BAILIAN_MODEL_CANDIDATES = resolveGlobalModelCandidates();
+function resolveProviderExecutionPlan(activeProviderConfig) {
+  if (!activeProviderConfig) {
+    return [];
+  }
+
+  const providerExecutionPlan = [
+    {
+      providerConfig: activeProviderConfig,
+      allowRequestModelOverride: true,
+      forceAdvanceToNextModelOnFailure: false,
+    },
+  ];
+
+  if (activeProviderConfig.providerKey === "glm") {
+    providerExecutionPlan.push({
+      providerConfig: AI_PROVIDER_CONFIG_MAP.qwen ?? null,
+      allowRequestModelOverride: false,
+      forceAdvanceToNextModelOnFailure: true,
+    });
+  }
+
+  return providerExecutionPlan.filter((planItem) => Boolean(planItem.providerConfig));
+}
+
+/**
+ * 当前会话的主提供方与执行计划。
+ */
+const ACTIVE_PROVIDER_CONFIG = resolveActiveProviderConfig();
+const ACTIVE_PROVIDER_EXECUTION_PLAN =
+  resolveProviderExecutionPlan(ACTIVE_PROVIDER_CONFIG);
 
 /**
  * 从模型返回文本中提取 JSON。
@@ -353,7 +537,7 @@ async function readAssistantTextFromSseStream(response, onTextUpdate) {
 }
 
 /**
- * 读取百炼响应中的助手文本，兼容 JSON 与 SSE 两种返回格式。
+ * 读取 AI 提供方响应中的助手文本，兼容 JSON 与 SSE 两种返回格式。
  * @param {Response} response fetch 响应对象。
  * @param {(fullText: string, deltaText: string) => void} [onTextUpdate] 流式文本回调。
  * @returns {Promise<string>} 助手文本。
@@ -475,24 +659,32 @@ function shouldSwitchToNextModel(error) {
  * 归一化错误输出文本。
  * @param {unknown} error 错误对象。
  * @param {number} timeoutMs 本轮超时（毫秒）。
+ * @param {object | null} providerConfig 当前提供方配置。
  * @returns {string} 友好错误文本。
  */
-function resolveReadableErrorMessage(error, timeoutMs) {
+function resolveReadableErrorMessage(error, timeoutMs, providerConfig) {
+  const providerDisplayName = providerConfig?.displayName ?? "AI";
+
   if (isTimeoutError(error)) {
-    return `百炼接口请求超时（${timeoutMs}ms），请稍后重试`;
+    return `${providerDisplayName} 接口请求超时（${timeoutMs}ms），请稍后重试`;
   }
 
   const rawMessage = String(error?.message ?? "").trim();
-  return rawMessage || "百炼接口调用失败，请稍后重试";
+  return rawMessage || `${providerDisplayName} 接口调用失败，请稍后重试`;
 }
 
 /**
  * 解析本次请求使用的模型候选序列。
  * @param {string | undefined} model 单模型覆盖配置（可选）。
  * @param {Array<string> | undefined} modelCandidates 多模型覆盖配置（可选）。
+ * @param {Array<string>} defaultModelCandidates 当前提供方的默认模型候选序列。
  * @returns {Array<string>} 归一化模型候选序列。
  */
-function resolveRequestModelCandidates(model, modelCandidates) {
+function resolveRequestModelCandidates(
+  model,
+  modelCandidates,
+  defaultModelCandidates,
+) {
   if (Array.isArray(modelCandidates) && modelCandidates.length > 0) {
     const normalizedModelCandidates = dedupeModelList(modelCandidates);
     if (normalizedModelCandidates.length > 0) {
@@ -505,11 +697,54 @@ function resolveRequestModelCandidates(model, modelCandidates) {
     return [singleModel];
   }
 
-  return BAILIAN_MODEL_CANDIDATES;
+  return defaultModelCandidates;
 }
 
 /**
- * 百炼 chat/completions 通用请求。
+ * 构建聊天补全请求体。
+ * @param {object} params 请求参数。
+ * @param {object} params.providerConfig 当前提供方配置。
+ * @param {string} params.activeModelName 当前模型名。
+ * @param {string} params.systemPrompt 系统提示词。
+ * @param {string} params.userPrompt 用户提示词。
+ * @param {number} params.temperature 采样温度。
+ * @param {boolean} params.stream 是否启用流式输出。
+ * @param {number} params.safeMaxTokens 输出 token 上限。
+ * @param {boolean} params.enableThinking 是否启用思考模式。
+ * @returns {object} 标准化后的请求体。
+ */
+function buildChatCompletionRequestBody({
+  providerConfig,
+  activeModelName,
+  systemPrompt,
+  userPrompt,
+  temperature,
+  stream,
+  safeMaxTokens,
+  enableThinking,
+}) {
+  return {
+    model: activeModelName,
+    temperature,
+    stream: Boolean(stream),
+    ...(safeMaxTokens > 0 ? { max_tokens: safeMaxTokens } : {}),
+    ...(typeof providerConfig?.buildExtraRequestBody === "function"
+      ? providerConfig.buildExtraRequestBody(enableThinking)
+      : {}),
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+  };
+}
+
+/**
+ * AI chat/completions 通用请求。
+ * 关键逻辑：为兼容既有业务调用，继续保留 `requestBailianJson` 导出名。
+ * Provider 兜底规则：
+ * 1. 默认仅调用当前 `VITE_AI_PROVIDER`。
+ * 2. 当 `VITE_AI_PROVIDER=glm` 时，GLM 失败后会自动回退到 Qwen。
+ * 3. Qwen 兜底阶段优先使用 `VITE_BAILIAN_MODEL`，失败后再按 `VITE_BAILIAN_MODEL_FALLBACKS` 顺序降级。
  * @param {object} params 请求参数对象。
  * @param {string} params.systemPrompt 系统提示词。
  * @param {string} params.userPrompt 用户提示词。
@@ -530,30 +765,22 @@ function resolveRequestModelCandidates(model, modelCandidates) {
 export async function requestBailianJson({
   systemPrompt,
   userPrompt,
-  timeoutMs = BAILIAN_TIMEOUT_DEFAULT_MS,
+  timeoutMs = AI_TIMEOUT_DEFAULT_MS,
   temperature = 0.2,
-  retryCount = BAILIAN_RETRY_COUNT_DEFAULT,
-  retryDelayMs = BAILIAN_RETRY_DELAY_DEFAULT_MS,
+  retryCount = AI_RETRY_COUNT_DEFAULT,
+  retryDelayMs = AI_RETRY_DELAY_DEFAULT_MS,
   model,
   modelCandidates,
   maxTokens,
   switchModelOnTimeout = false,
-  enableThinking = BAILIAN_ENABLE_THINKING_DEFAULT,
-  stream = BAILIAN_STREAM_DEFAULT,
+  enableThinking = ACTIVE_PROVIDER_CONFIG?.enableThinkingDefault ?? false,
+  stream = ACTIVE_PROVIDER_CONFIG?.streamDefault ?? true,
   onTextUpdate,
   signal,
 }) {
-  if (!BAILIAN_API_KEY) {
-    throw new Error("缺少 VITE_BAILIAN_API_KEY，无法调用百炼接口");
-  }
-
-  // 关键逻辑：识别常见占位符，避免请求发出后才得到 401。
-  if (
-    BAILIAN_API_KEY === "your_bailian_api_key" ||
-    BAILIAN_API_KEY.toLowerCase().includes("your_bailian_api_key")
-  ) {
+  if (!ACTIVE_PROVIDER_CONFIG) {
     throw new Error(
-      "VITE_BAILIAN_API_KEY 仍是占位值，请在 .env 中替换为真实百炼 API Key",
+      `VITE_AI_PROVIDER=${ACTIVE_AI_PROVIDER_KEY} 不受支持，请改为 qwen 或 glm`,
     );
   }
 
@@ -566,138 +793,199 @@ export async function requestBailianJson({
     0,
     Number.parseInt(String(maxTokens ?? ""), 10) || 0,
   );
-  const activeModelCandidates = resolveRequestModelCandidates(model, modelCandidates);
-
-  let lastError = null;
+  const providerFailureMessageList = [];
 
   /**
-   * 重试复杂度评估：O(M * R)
-   * M 为模型候选数量，R 为每个模型的重试总次数（retryCount + 1）。
-   * 默认 M<=3，R=2，总尝试次数常量级。
+   * 总复杂度评估：O(P * M * R)
+   * P 为 provider 数量，M 为每个 provider 的模型候选数，R 为单模型重试次数（retryCount + 1）。
+   * 当前仅支持 glm -> qwen 双 provider 兜底，默认 P<=2，属于可控常量级扩展。
    */
   for (
-    let modelIndex = 0;
-    modelIndex < activeModelCandidates.length;
-    modelIndex += 1
+    let providerIndex = 0;
+    providerIndex < ACTIVE_PROVIDER_EXECUTION_PLAN.length;
+    providerIndex += 1
   ) {
-    const activeModelName = activeModelCandidates[modelIndex];
-    const hasNextModel = modelIndex < activeModelCandidates.length - 1;
-    let switchedByModelStrategy = false;
+    const providerExecutionItem = ACTIVE_PROVIDER_EXECUTION_PLAN[providerIndex];
+    const activeProviderConfig = providerExecutionItem.providerConfig;
+    const activeProviderDisplayName = activeProviderConfig.displayName;
+    const providerValidationError = resolveProviderValidationError(
+      activeProviderConfig,
+    );
 
-    for (let attemptIndex = 0; attemptIndex <= safeRetryCount; attemptIndex += 1) {
-      if (signal?.aborted) {
-        throw new Error("请求已取消");
-      }
-
-      // 关键逻辑：每次重试按比例放宽超时，避免首轮边缘超时后仍然过早取消。
-      const attemptTimeoutMs =
-        attemptIndex === 0
-          ? timeoutMs
-          : Math.round(timeoutMs * (1 + attemptIndex * 0.55));
-
-      const requestAbortController = new AbortController();
-      let removeExternalAbortListener = null;
-      if (signal && typeof signal.addEventListener === "function") {
-        if (signal.aborted) {
-          requestAbortController.abort();
-        } else {
-          const handleExternalAbort = () => {
-            requestAbortController.abort();
-          };
-          signal.addEventListener("abort", handleExternalAbort, { once: true });
-          removeExternalAbortListener = () => {
-            signal.removeEventListener("abort", handleExternalAbort);
-          };
-        }
-      }
-
-      const timeoutHandle = setTimeout(
-        () => requestAbortController.abort(),
-        attemptTimeoutMs,
+    if (providerValidationError) {
+      providerFailureMessageList.push(
+        `${activeProviderDisplayName} 未执行：${providerValidationError}`,
       );
+      continue;
+    }
 
-      try {
-        const response = await fetch(BAILIAN_ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${BAILIAN_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: activeModelName,
-            temperature,
-            stream: Boolean(stream),
-            enable_thinking: Boolean(enableThinking),
-            ...(safeMaxTokens > 0 ? { max_tokens: safeMaxTokens } : {}),
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: userPrompt },
-            ],
-          }),
-          signal: requestAbortController.signal,
-        });
+    const activeApiKey = String(activeProviderConfig.apiKey ?? "").trim();
+    const activeModelCandidates = resolveRequestModelCandidates(
+      providerExecutionItem.allowRequestModelOverride ? model : undefined,
+      providerExecutionItem.allowRequestModelOverride
+        ? modelCandidates
+        : undefined,
+      resolveGlobalModelCandidates(activeProviderConfig),
+    );
+    let providerLastError = null;
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          const requestError = new Error(
-            `百炼接口调用失败（HTTP ${response.status}，模型 ${activeModelName}）：${errorText}`,
-          );
+    for (
+      let modelIndex = 0;
+      modelIndex < activeModelCandidates.length;
+      modelIndex += 1
+    ) {
+      const activeModelName = activeModelCandidates[modelIndex];
+      const hasNextModel = modelIndex < activeModelCandidates.length - 1;
+      let switchedByModelStrategy = false;
+      let stopCurrentProviderStrategy = false;
 
-          // 关键逻辑：将 HTTP 状态与模型信息挂到错误对象，供重试与降级策略判定。
-          requestError.status = response.status;
-          requestError.model = activeModelName;
-          requestError.errorText = errorText;
-          throw requestError;
-        }
-
-        const textContent = await readAssistantTextFromResponse(response, onTextUpdate);
-        return parseJsonFromText(textContent);
-      } catch (error) {
-        lastError = error;
-
+      for (let attemptIndex = 0; attemptIndex <= safeRetryCount; attemptIndex += 1) {
         if (signal?.aborted) {
           throw new Error("请求已取消");
         }
 
-        // 关键逻辑：额度/模型不可用等场景触发自动切模型，减少 403 直接失败。
-        if (hasNextModel && shouldSwitchToNextModel(error)) {
-          switchedByModelStrategy = true;
-          if (safeRetryDelayMs > 0) {
-            await sleep(Math.round(safeRetryDelayMs * 0.5));
+        // 关键逻辑：每次重试按比例放宽超时，避免首轮边缘超时后仍然过早取消。
+        const attemptTimeoutMs =
+          attemptIndex === 0
+            ? timeoutMs
+            : Math.round(timeoutMs * (1 + attemptIndex * 0.55));
+
+        const requestAbortController = new AbortController();
+        let removeExternalAbortListener = null;
+        if (signal && typeof signal.addEventListener === "function") {
+          if (signal.aborted) {
+            requestAbortController.abort();
+          } else {
+            const handleExternalAbort = () => {
+              requestAbortController.abort();
+            };
+            signal.addEventListener("abort", handleExternalAbort, { once: true });
+            removeExternalAbortListener = () => {
+              signal.removeEventListener("abort", handleExternalAbort);
+            };
           }
-          break;
         }
 
-        // 关键逻辑：当主模型响应过慢时，允许自动切换到后备模型以降低总等待时长。
-        if (hasNextModel && switchModelOnTimeout && isTimeoutError(error)) {
-          switchedByModelStrategy = true;
-          if (safeRetryDelayMs > 0) {
-            await sleep(Math.round(safeRetryDelayMs * 0.4));
+        const timeoutHandle = setTimeout(
+          () => requestAbortController.abort(),
+          attemptTimeoutMs,
+        );
+
+        try {
+          const response = await fetch(activeProviderConfig.endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${activeApiKey}`,
+            },
+            body: JSON.stringify(
+              buildChatCompletionRequestBody({
+                providerConfig: activeProviderConfig,
+                activeModelName,
+                systemPrompt,
+                userPrompt,
+                temperature,
+                stream,
+                safeMaxTokens,
+                enableThinking,
+              }),
+            ),
+            signal: requestAbortController.signal,
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            const requestError = new Error(
+              `${activeProviderDisplayName} 接口调用失败（HTTP ${response.status}，模型 ${activeModelName}）：${errorText}`,
+            );
+
+            // 关键逻辑：将 HTTP 状态与模型信息挂到错误对象，供重试与降级策略判定。
+            requestError.status = response.status;
+            requestError.model = activeModelName;
+            requestError.errorText = errorText;
+            throw requestError;
           }
+
+          const textContent = await readAssistantTextFromResponse(
+            response,
+            onTextUpdate,
+          );
+          return parseJsonFromText(textContent);
+        } catch (error) {
+          providerLastError = error;
+
+          if (signal?.aborted) {
+            throw new Error("请求已取消");
+          }
+
+          // 关键逻辑：额度/模型不可用等场景触发自动切模型，减少 403 直接失败。
+          if (hasNextModel && shouldSwitchToNextModel(error)) {
+            switchedByModelStrategy = true;
+            if (safeRetryDelayMs > 0) {
+              await sleep(Math.round(safeRetryDelayMs * 0.5));
+            }
+            break;
+          }
+
+          // 关键逻辑：当主模型响应过慢时，允许自动切换到后备模型以降低总等待时长。
+          if (hasNextModel && switchModelOnTimeout && isTimeoutError(error)) {
+            switchedByModelStrategy = true;
+            if (safeRetryDelayMs > 0) {
+              await sleep(Math.round(safeRetryDelayMs * 0.4));
+            }
+            break;
+          }
+
+          // 关键逻辑：Qwen 兜底阶段按模型序列强制降级，确保先试主模型，再试 fallback 列表。
+          if (
+            hasNextModel &&
+            providerExecutionItem.forceAdvanceToNextModelOnFailure
+          ) {
+            switchedByModelStrategy = true;
+            if (safeRetryDelayMs > 0) {
+              await sleep(Math.round(safeRetryDelayMs * 0.35));
+            }
+            break;
+          }
+
+          const hasNextAttempt = attemptIndex < safeRetryCount;
+          if (hasNextAttempt && isRetriableError(error)) {
+            await sleep(safeRetryDelayMs * (attemptIndex + 1));
+            continue;
+          }
+
+          // 关键逻辑：主 provider 在当前模型最终失败后，结束本 provider，
+          // 由外层 provider 兜底链决定是否切换到下一个 provider。
+          stopCurrentProviderStrategy = true;
           break;
+        } finally {
+          clearTimeout(timeoutHandle);
+          if (typeof removeExternalAbortListener === "function") {
+            removeExternalAbortListener();
+          }
         }
+      }
 
-        const hasNextAttempt = attemptIndex < safeRetryCount;
-        if (!hasNextAttempt || !isRetriableError(error)) {
-          throw new Error(resolveReadableErrorMessage(error, attemptTimeoutMs));
-        }
+      if (switchedByModelStrategy) {
+        continue;
+      }
 
-        await sleep(safeRetryDelayMs * (attemptIndex + 1));
-      } finally {
-        clearTimeout(timeoutHandle);
-        if (typeof removeExternalAbortListener === "function") {
-          removeExternalAbortListener();
-        }
+      if (stopCurrentProviderStrategy) {
+        break;
       }
     }
 
-    if (switchedByModelStrategy) {
-      continue;
-    }
+    const readableLastError = resolveReadableErrorMessage(
+      providerLastError,
+      timeoutMs,
+      activeProviderConfig,
+    );
+    providerFailureMessageList.push(
+      `${activeProviderDisplayName}（已尝试：${activeModelCandidates.join(" -> ")}）：${readableLastError}`,
+    );
   }
 
-  const readableLastError = resolveReadableErrorMessage(lastError, timeoutMs);
   throw new Error(
-    `百炼模型调用失败（已尝试：${activeModelCandidates.join(" -> ")}）：${readableLastError}`,
+    `AI 模型调用失败：${providerFailureMessageList.join("；随后回退到下一个 provider 仍失败：")}`,
   );
 }

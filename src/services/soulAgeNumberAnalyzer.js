@@ -73,8 +73,8 @@ const RADAR_DIMENSION_QUESTION_MAP = Object.freeze({
 });
 
 /**
- * 灵魂年龄结果区间：
- * 关键逻辑：严格按 20 题总分区间映射到 8 个具体年龄，不再做连续年龄估算。
+ * 灵魂年龄文案分层区间：
+ * 关键逻辑：这里继续负责标题与摘要文案分层；最终展示年龄改为 12~58 岁连续估算。
  */
 const SOUL_AGE_RESULT_RULES = Object.freeze([
   {
@@ -166,6 +166,15 @@ const SOUL_AGE_RESULT_RULES = Object.freeze([
       "你的灵魂很松弛，很多外界评价和波动已经很难真正打乱你，更在意内在自由与通透。",
   },
 ]);
+
+/**
+ * 连续年龄映射边界。
+ * 关键逻辑：总分仍然严格使用 20~80 分，但结果年龄改为连续映射到 12~58 岁。
+ */
+const SOUL_AGE_SCORE_MIN = 20;
+const SOUL_AGE_SCORE_MAX = 80;
+const SOUL_AGE_OUTPUT_MIN = 12;
+const SOUL_AGE_OUTPUT_MAX = 58;
 
 /**
  * 关键词标签映射。
@@ -314,6 +323,28 @@ function resolveSoulAgeRule(totalScore) {
   );
 
   return matchedRule ?? SOUL_AGE_RESULT_RULES[0];
+}
+
+/**
+ * 按总分计算连续灵魂年龄。
+ * 复杂度评估：O(1)。
+ * @param {number} totalScore 总分。
+ * @returns {number} 12~58 岁之间的整数年龄。
+ */
+function resolveContinuousSoulAge(totalScore) {
+  const safeScore = clamp(
+    Math.round(toSafeNumber(totalScore, SOUL_AGE_SCORE_MIN)),
+    SOUL_AGE_SCORE_MIN,
+    SOUL_AGE_SCORE_MAX,
+  );
+  const normalizedRatio =
+    (safeScore - SOUL_AGE_SCORE_MIN) /
+    (SOUL_AGE_SCORE_MAX - SOUL_AGE_SCORE_MIN);
+  const continuousSoulAge =
+    SOUL_AGE_OUTPUT_MIN +
+    normalizedRatio * (SOUL_AGE_OUTPUT_MAX - SOUL_AGE_OUTPUT_MIN);
+
+  return Math.round(continuousSoulAge);
 }
 
 /**
@@ -767,19 +798,19 @@ function buildAdviceCards(dimensionScoreMap, compatibilityModel) {
  * @returns {string} 同频描述。
  */
 function buildResonanceLine(soulAge) {
-  if (soulAge <= 16) {
+  if (soulAge <= 20) {
     return "你和热烈直接、愿意带你体验世界的人最容易玩到一起。";
   }
 
-  if (soulAge <= 25) {
+  if (soulAge <= 30) {
     return "你和清醒上进、又保留一点少年感的人更容易互相吸引。";
   }
 
-  if (soulAge <= 35) {
+  if (soulAge <= 40) {
     return "你和成熟稳重、能把生活过踏实的人更容易长期同频。";
   }
 
-  if (soulAge <= 42) {
+  if (soulAge <= 50) {
     return "你和情绪稳定、边界清晰、说话有分寸的人最能彼此理解。";
   }
 
@@ -820,22 +851,23 @@ export function analyzeSoulAgeLocally(payload) {
   const summaryLines = buildSummaryLines(answerSummary);
   const totalScore = buildTotalScore(answerSummary);
   const soulAgeRule = resolveSoulAgeRule(totalScore);
+  const soulAge = resolveContinuousSoulAge(totalScore);
   const dimensionScoreMap = buildDimensionScoreMap(answerSummary);
   const radarItems = buildRadarItems(dimensionScoreMap);
   const pieDistribution = buildPieDistribution(answerSummary);
   const keywordCards = buildKeywordCards(dimensionScoreMap);
-  const compatibility = buildCompatibilityModel(soulAgeRule.soulAge, actualAge);
+  const compatibility = buildCompatibilityModel(soulAge, actualAge);
   const coreDescriptionLines = buildCoreDescriptionLines(dimensionScoreMap);
   const adviceCards = buildAdviceCards(dimensionScoreMap, compatibility);
-  const resonanceLine = buildResonanceLine(soulAgeRule.soulAge);
+  const resonanceLine = buildResonanceLine(soulAge);
 
   return {
     totalScore,
     resultRangeText: `${soulAgeRule.min}-${soulAgeRule.max} 分`,
-    soulAge: soulAgeRule.soulAge,
+    soulAge,
     ageTitle: soulAgeRule.title,
     ageOneLine: soulAgeRule.oneLine,
-    ageTagText: `灵魂年龄 ${soulAgeRule.soulAge} 岁 · ${soulAgeRule.title}`,
+    ageTagText: `灵魂年龄 ${soulAge} 岁 · ${soulAgeRule.title}`,
     summaryLine: soulAgeRule.summary,
     radarItems,
     coreDescriptionLines,

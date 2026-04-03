@@ -6101,19 +6101,19 @@ export const SURVEY_THEME_CONFIGS = [
       title: "你的「灵魂年龄」是几岁？",
       description:
         "通过 20 道日常情境题，观察你在情绪、关系、节奏与人生取向上的自然反应，看看你的内在状态更接近哪一个灵魂年龄阶段。",
-      progressColor: "linear-gradient(90deg, #d4b996, #c19a6b)",
-      progressTrackColor: "rgba(193, 154, 107, 0.22)",
-      checkedColor: "#c19a6b",
+      progressColor: "linear-gradient(90deg, #d2ad72, #b78653)",
+      progressTrackColor: "rgba(210, 173, 114, 0.24)",
+      checkedColor: "#b78653",
       sourceTag: {
         deep: {
           label: "灵魂年龄结果",
-          color: "#f5eee7",
-          textColor: "#6f5846",
+          color: "#fbf2e4",
+          textColor: "#76563a",
         },
         local: {
           label: "灵魂年龄结果",
-          color: "#f5eee7",
-          textColor: "#6f5846",
+          color: "#fbf2e4",
+          textColor: "#76563a",
         },
       },
       loadingMessages: [

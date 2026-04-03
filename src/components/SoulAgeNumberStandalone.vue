@@ -108,7 +108,11 @@
           ></div>
         </div>
 
-        <transition name="soul-card-swap" mode="out-in">
+        <transition
+          name="soul-card-swap"
+          mode="out-in"
+          @before-enter="handleQuestionBeforeEnter"
+        >
           <div :key="currentQuestion.id" class="survey-question-wrap">
             <p class="soul-age-number-question-kicker">
               {{ currentQuestion.dimensionLabel }}
@@ -131,8 +135,10 @@
                   'survey-option-selected':
                     currentSelectedOptionId === option.id,
                   'is-pulsing': lastTappedOptionId === option.id,
+                  'is-locked': isOptionInteractionLocked,
                 }"
                 type="button"
+                :disabled="isOptionInteractionLocked"
                 @click="selectOption(option.id)"
               >
                 <span class="soul-age-number-option-label">{{
@@ -147,7 +153,7 @@
           <button
             class="survey-btn survey-btn-secondary"
             type="button"
-            :disabled="currentQuestionIndex === 0"
+            :disabled="currentQuestionIndex === 0 || isOptionInteractionLocked"
             @click="goPrevQuestion"
           >
             上一题
@@ -588,6 +594,7 @@ const selectedQuestionBank = ref([]);
 const currentQuestionIndex = ref(0);
 const answers = ref([]);
 const lastTappedOptionId = ref("");
+const isOptionInteractionLocked = ref(false);
 const actualAgeInput = ref("");
 const analysisResult = ref(null);
 
@@ -957,6 +964,7 @@ function startSurvey() {
   currentQuestionIndex.value = 0;
   answers.value = Array.from({ length: nextQuestionBank.length }, () => null);
   analysisResult.value = null;
+  isOptionInteractionLocked.value = false;
   activeRadarDimensionKey.value = DEFAULT_SOUL_AGE_RADAR_DIMENSION_KEY;
   stage.value = "survey";
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -990,12 +998,28 @@ function enableVisualEffectsAfterFirstPaint() {
  * @param {string} optionId 选项 ID。
  */
 function selectOption(optionId) {
-  answers.value[currentQuestionIndex.value] = optionId;
-  lastTappedOptionId.value = optionId;
+  if (isOptionInteractionLocked.value || !currentQuestion.value) {
+    return;
+  }
+
+  const matchedOption = Array.isArray(currentQuestion.value.options)
+    ? currentQuestion.value.options.find(
+        (optionItem) => optionItem.id === optionId,
+      )
+    : null;
+  // 关键逻辑：只允许写入当前题真实存在的选项，防止过渡动画期间旧题按钮把下一题答案写成无效 ID。
+  if (!matchedOption) {
+    return;
+  }
+
+  answers.value[currentQuestionIndex.value] = matchedOption.id;
+  lastTappedOptionId.value = matchedOption.id;
+  // 关键逻辑：一旦选中当前题，先锁住交互直到新题挂载，避免快点连击造成漏计分。
+  isOptionInteractionLocked.value = true;
 
   // 关键逻辑：短时清理脉冲状态，避免动画类常驻。
   window.setTimeout(() => {
-    if (lastTappedOptionId.value === optionId) {
+    if (lastTappedOptionId.value === matchedOption.id) {
       lastTappedOptionId.value = "";
     }
   }, 220);
@@ -1026,6 +1050,7 @@ function goPrevQuestion() {
     return;
   }
 
+  isOptionInteractionLocked.value = false;
   currentQuestionIndex.value -= 1;
 }
 
@@ -1036,6 +1061,7 @@ function goPrevQuestion() {
 async function submitSurveyResult() {
   clearAutoAdvanceTimer();
   stage.value = "submitting";
+  isOptionInteractionLocked.value = false;
   await wait(1200);
 
   const localResult = analyzeSoulAgeLocally({
@@ -1061,6 +1087,14 @@ function setActiveRadarDimension(dimensionKey) {
 }
 
 /**
+ * 新题目开始进入时解锁交互。
+ * 关键逻辑：使用 before-enter 而不是 after-enter，既能避开旧题退场阶段的误触，又不会额外拖慢答题节奏。
+ */
+function handleQuestionBeforeEnter() {
+  isOptionInteractionLocked.value = false;
+}
+
+/**
  * 重新开始测试。
  */
 function restartSurvey() {
@@ -1070,6 +1104,7 @@ function restartSurvey() {
   currentQuestionIndex.value = 0;
   answers.value = [];
   analysisResult.value = null;
+  isOptionInteractionLocked.value = false;
   activeRadarDimensionKey.value = DEFAULT_SOUL_AGE_RADAR_DIMENSION_KEY;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1090,6 +1125,147 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.soul-age-number-page {
+  /* 关键逻辑：主题色从背景图的奶白、暖金、焦糖棕和雾褐阴影中提取，避免沿用旧的绿蓝配色。 */
+  --soul-age-number-ink: #5c4739;
+  --soul-age-number-ink-strong: #483528;
+  --soul-age-number-muted: #8d7866;
+  --soul-age-number-line: #e5d4bd;
+  --soul-age-number-paper: rgba(255, 249, 241, 0.88);
+  --soul-age-number-paper-strong: rgba(255, 252, 246, 0.94);
+  --soul-age-number-shadow: rgba(127, 98, 71, 0.16);
+  --soul-age-number-accent: #d2ad72;
+  --soul-age-number-accent-strong: #b78653;
+  --soul-age-number-accent-soft: #efddbf;
+  --soul-age-number-radar-line: rgba(180, 151, 115, 0.3);
+  --soul-age-number-radar-fill: rgba(210, 173, 114, 0.24);
+  --soul-age-number-radar-stroke: rgba(172, 124, 73, 0.88);
+  /* 关键逻辑：背景图改由固定伪元素承载，避免结果页随着内容高度增长而把背景拉长。 */
+  --page-bg: none;
+  /* 关键逻辑：去掉首层整页遮罩，避免背景图再被泛白处理。 */
+  --page-overlay-one: none;
+  /* 关键逻辑：去掉第二层局部光雾遮罩，确保整页只展示原始背景图。 */
+  --page-overlay-two: none;
+  --text-main: var(--soul-age-number-ink);
+  --text-muted: var(--soul-age-number-muted);
+  --surface: var(--soul-age-number-paper);
+  --surface-border: rgba(226, 210, 185, 0.88);
+  --shadow: 0 24px 54px var(--soul-age-number-shadow);
+  --primary: var(--soul-age-number-accent);
+  --primary-dark: var(--soul-age-number-accent-strong);
+  --aura-left: radial-gradient(circle at 34% 34%, #fff3d6, #e0bb7b);
+  --aura-right: radial-gradient(circle at 34% 34%, #f8e5c8, #c69a68);
+  --noise-dot: rgba(134, 109, 84, 0.14);
+  --option-border: var(--soul-age-number-line);
+  --option-selected-border: #c79a64;
+  --option-selected-bg: linear-gradient(180deg, #fffdf8, #f8efe0);
+  --option-selected-shadow: rgba(183, 134, 83, 0.16);
+  --detail-border: #e6d8c6;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 252, 246, 0.96),
+    rgba(248, 239, 226, 0.98)
+  );
+  --highlight-border: #e4d2b5;
+  --highlight-bg: linear-gradient(145deg, #fffcf6, #f7eddc);
+  isolation: isolate;
+}
+
+.soul-age-number-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* 关键逻辑：背景图固定到当前视口尺寸，结果页滚动时始终保持 100vw × 100dvh，不跟随内容拉长。 */
+  background: url("/soul-age-number.jpg") center top / 100vw 100dvh no-repeat;
+}
+
+.soul-age-number-page .survey-badge {
+  color: #8d6b45;
+}
+
+.soul-age-number-page .survey-cover-card {
+  border-color: rgba(230, 214, 191, 0.48);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 253, 248, 0.5) 0%,
+    rgba(251, 245, 235, 0.42) 24%,
+    rgba(245, 234, 217, 0.5) 60%,
+    rgba(255, 251, 245, 0.66) 100%
+  );
+  box-shadow:
+    0 30px 64px rgba(123, 94, 66, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  backdrop-filter: none;
+}
+
+.soul-age-number-page .survey-cover-card::before {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(253, 249, 242, 0.1) 18%,
+      rgba(239, 224, 196, 0.12) 42%,
+      rgba(255, 252, 247, 0.38) 100%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.08),
+      transparent 34%,
+      rgba(201, 164, 111, 0.16) 68%,
+      transparent 100%
+    );
+}
+
+.soul-age-number-page .survey-cover-title-main {
+  color: var(--soul-age-number-ink-strong);
+  text-shadow:
+    0 3px 14px rgba(255, 255, 255, 0.74),
+    0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.soul-age-number-page .survey-option {
+  background: linear-gradient(180deg, #fffdf9, #f7efe2);
+}
+
+.soul-age-number-page .survey-main-title,
+.soul-age-number-page .survey-question-title {
+  color: var(--soul-age-number-ink);
+}
+
+.soul-age-number-page .survey-type-card-value {
+  color: var(--soul-age-number-ink-strong);
+}
+
+.soul-age-number-page .survey-type-card-label {
+  color: var(--soul-age-number-muted);
+}
+
+.soul-age-number-page .survey-radar-grid,
+.soul-age-number-page .survey-radar-axis {
+  stroke: var(--soul-age-number-radar-line);
+}
+
+.soul-age-number-page .survey-radar-data {
+  fill: var(--soul-age-number-radar-fill);
+  stroke: var(--soul-age-number-radar-stroke);
+}
+
+.soul-age-number-page .survey-radar-label,
+.soul-age-number-page .survey-radar-name,
+.soul-age-number-page .survey-radar-score,
+.soul-age-number-page .survey-distribution-meta span,
+.soul-age-number-page .survey-type-card-wrap h3,
+.soul-age-number-page .survey-distribution-wrap h3,
+.soul-age-number-page .survey-radar-wrap h3,
+.soul-age-number-page .survey-top-wrap h3,
+.soul-age-number-page .survey-detail-wrap h3,
+.soul-age-number-page .survey-summary-wrap h3 {
+  color: #7e6856;
+  fill: #7e6856;
+}
+
 .soul-age-number-page .survey-shell {
   width: min(100%, 620px);
 }
@@ -1100,7 +1276,7 @@ onBeforeUnmount(() => {
 }
 
 .soul-age-number-cover-input-label {
-  color: #4f6d5b;
+  color: var(--soul-age-number-muted);
   font-size: 12px;
   font-weight: 700;
 }
@@ -1109,37 +1285,41 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: 42px;
   border-radius: 12px;
-  border: 1px solid rgba(170, 205, 181, 0.56);
-  background: rgba(255, 255, 255, 0.92);
-  color: #355446;
+  border: 1px solid rgba(212, 191, 160, 0.62);
+  background: rgba(255, 252, 247, 0.92);
+  color: var(--soul-age-number-ink);
   padding: 0 12px;
   font-size: 14px;
 }
 
 .soul-age-number-cover-input:focus {
   outline: none;
-  border-color: rgba(103, 170, 129, 0.7);
-  box-shadow: 0 0 0 3px rgba(103, 170, 129, 0.12);
+  border-color: rgba(183, 134, 83, 0.72);
+  box-shadow: 0 0 0 3px rgba(210, 173, 114, 0.16);
 }
 
 .soul-age-number-progress-track {
   height: 10px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(201, 219, 207, 0.7);
+  background: rgba(233, 219, 198, 0.78);
 }
 
 .soul-age-number-progress-fill,
 .soul-age-number-fit-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #6fa77d, #8bc095);
+  background: linear-gradient(
+    90deg,
+    var(--soul-age-number-accent),
+    var(--soul-age-number-accent-strong)
+  );
   transition: width 260ms ease;
 }
 
 .soul-age-number-question-kicker {
   margin: 0 0 10px;
-  color: #4f6d5b;
+  color: var(--soul-age-number-accent-strong);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1162,7 +1342,7 @@ onBeforeUnmount(() => {
 
 .soul-age-number-option-label {
   display: block;
-  color: #355445;
+  color: var(--soul-age-number-ink);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -1176,7 +1356,7 @@ onBeforeUnmount(() => {
 .soul-age-number-poster-feedback,
 .soul-age-number-type-card-desc {
   margin: 8px 0 0;
-  color: #638071;
+  color: var(--soul-age-number-muted);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -1203,7 +1383,7 @@ onBeforeUnmount(() => {
 }
 
 .soul-age-number-result-title {
-  color: #25382d;
+  color: var(--soul-age-number-ink-strong);
   font-size: clamp(28px, 4.8vw, 36px);
   font-weight: 800;
   line-height: 1.2;
@@ -1215,8 +1395,8 @@ onBeforeUnmount(() => {
   justify-self: center;
   padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(224, 238, 228, 0.92);
-  color: #4f6d5b;
+  background: rgba(247, 237, 220, 0.94);
+  color: var(--soul-age-number-accent-strong);
   font-size: 13px;
   font-weight: 700;
   line-height: 1;
@@ -1233,14 +1413,14 @@ onBeforeUnmount(() => {
   background:
     radial-gradient(
       circle at 30% 25%,
-      rgba(255, 255, 255, 0.34),
+      rgba(255, 255, 255, 0.32),
       transparent 38%
     ),
-    linear-gradient(160deg, #8fb3ee, #79a6e8 52%, #5f89d4);
+    linear-gradient(160deg, #e5c996, #d3a56e 52%, #ab7548);
   border: 6px solid rgba(255, 255, 255, 0.42);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.2),
-    0 18px 34px rgba(111, 139, 202, 0.22);
+    0 18px 34px rgba(151, 110, 72, 0.2);
   text-align: center;
 }
 
@@ -1259,7 +1439,7 @@ onBeforeUnmount(() => {
 }
 
 .soul-age-number-age-diff-line {
-  color: #25382d;
+  color: var(--soul-age-number-ink-strong);
   font-size: clamp(22px, 4.1vw, 30px);
   font-weight: 800;
   line-height: 1.45;
@@ -1268,7 +1448,7 @@ onBeforeUnmount(() => {
 
 .soul-age-number-age-diff-note,
 .soul-age-number-result-meta {
-  color: #638071;
+  color: var(--soul-age-number-muted);
   font-size: 13px;
   line-height: 1.7;
   text-align: center;
@@ -1287,17 +1467,17 @@ onBeforeUnmount(() => {
   padding: 0 62px;
   overflow: hidden;
   border-radius: 999px;
-  background: linear-gradient(180deg, #edf3fb, #dfe9f8);
+  background: linear-gradient(180deg, #fbf4ea, #f1dfc7);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 10px 20px rgba(114, 139, 184, 0.12);
+    0 10px 20px rgba(136, 104, 74, 0.12);
 }
 
 .soul-age-number-age-range-fill {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, #5c87cd, #8cb1ef);
+  background: linear-gradient(90deg, #dfba83, #bf8654);
   opacity: 0.9;
 }
 
@@ -1307,9 +1487,9 @@ onBeforeUnmount(() => {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: #5a85cb;
+  background: #b37c4f;
   box-shadow:
-    0 10px 18px rgba(90, 133, 203, 0.28),
+    0 10px 18px rgba(155, 111, 66, 0.24),
     0 0 0 4px rgba(255, 255, 255, 0.55);
   transform: translate(-50%, -50%);
 }
@@ -1327,11 +1507,11 @@ onBeforeUnmount(() => {
   top: 50%;
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.82);
-  color: #5d7695;
+  background: rgba(255, 251, 245, 0.84);
+  color: #8c725a;
   font-size: 13px;
   transform: translateY(-50%);
-  box-shadow: 0 6px 14px rgba(114, 139, 184, 0.12);
+  box-shadow: 0 6px 14px rgba(136, 104, 74, 0.1);
 }
 
 .soul-age-number-age-range-bound.is-min {
@@ -1345,15 +1525,15 @@ onBeforeUnmount(() => {
 .soul-age-number-age-range-value {
   color: #ffffff;
   font-size: clamp(18px, 4.4vw, 30px);
-  text-shadow: 0 1px 2px rgba(73, 103, 157, 0.25);
+  text-shadow: 0 1px 2px rgba(112, 78, 48, 0.22);
 }
 
 .soul-age-number-spinner {
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  border: 3px solid rgba(111, 167, 125, 0.18);
-  border-top-color: #5c9167;
+  border: 3px solid rgba(210, 173, 114, 0.2);
+  border-top-color: var(--soul-age-number-accent-strong);
   animation: soulSpin 0.9s linear infinite;
 }
 
@@ -1374,7 +1554,7 @@ onBeforeUnmount(() => {
 .soul-age-number-radar-insight,
 .soul-age-number-detail-copy {
   margin: 0;
-  color: #355446;
+  color: var(--soul-age-number-ink);
   font-size: 13px;
   line-height: 1.7;
 }
@@ -1383,7 +1563,7 @@ onBeforeUnmount(() => {
 .soul-age-number-segment-bar {
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(211, 228, 216, 0.78);
+  background: rgba(235, 223, 205, 0.84);
 }
 
 .soul-age-number-fit-track {
@@ -1414,7 +1594,7 @@ onBeforeUnmount(() => {
   aspect-ratio: 1 / 1;
   justify-self: center;
   border-radius: 54% 46% 58% 42% / 44% 56% 48% 52%;
-  border: 2px dashed rgba(91, 140, 100, 0.5);
+  border: 2px dashed rgba(183, 134, 83, 0.42);
   box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.7);
 }
 
@@ -1429,7 +1609,7 @@ onBeforeUnmount(() => {
 }
 
 .soul-age-number-radar-point {
-  fill: #5c9167;
+  fill: var(--soul-age-number-accent-strong);
 }
 
 .soul-age-number-radar-point-hit {
@@ -1448,17 +1628,17 @@ onBeforeUnmount(() => {
 }
 
 .soul-age-number-radar-legend-item .survey-radar-dot {
-  background: #5c9167;
+  background: var(--soul-age-number-accent-strong);
 }
 
 .soul-age-number-radar-legend-item.is-active {
-  border-color: rgba(91, 140, 100, 0.6);
+  border-color: rgba(183, 134, 83, 0.52);
   background: linear-gradient(
     140deg,
-    rgba(251, 254, 251, 0.98),
-    rgba(229, 241, 233, 0.96)
+    rgba(255, 253, 248, 0.98),
+    rgba(247, 236, 217, 0.96)
   );
-  box-shadow: 0 10px 16px rgba(91, 140, 100, 0.1);
+  box-shadow: 0 10px 16px rgba(136, 104, 74, 0.1);
 }
 
 .soul-card-swap-enter-active,
