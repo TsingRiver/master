@@ -31,14 +31,7 @@ export const LICENSE_SCOPE_DEFINITIONS = Object.freeze([
     scopePath: "/mbti",
     aliases: ["/mbti", "/mbti16", "/mbti.html"],
   },
-  {
-    /**
-     * `mymbti` 蓝色主题版独立授权范围：
-     * 关键逻辑：与 `/mbti` 拆分为不同 canonical scope，避免两个页面的授权状态互相串用。
-     */
-    scopePath: "/shmbti",
-    aliases: ["/shmbti", "/shmbti.html"],
-  },
+  // 关键逻辑：`/shmbti` 已从授权范围中移除，无需授权码即可直接访问。
 ]);
 
 /**
