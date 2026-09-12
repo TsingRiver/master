@@ -18,6 +18,7 @@ export const UNIFIED_RESULT_TEMPLATE = {
   source: "deep",
   themeVariantClass: "",
   prefixLabel: "",
+  tagSectionTitle: "",
   scoreLabel: "",
   scoreSuffix: "%",
   main: { name: "", score: 0 },
@@ -106,10 +107,11 @@ const SOUL_CAT_COVER_ARTWORK_POOL = Object.freeze(
  * @param {"deep"|"local"} payload.source 结果来源。
  * @param {string} [payload.themeVariantClass] 结果页视觉变体类名（可选）。
  * @param {string} payload.prefixLabel 主结果前缀文案。
+ * @param {string} [payload.tagSectionTitle] 标签模块标题（可选）。
  * @param {string} payload.scoreLabel 分值文案。
  * @param {string} [payload.scoreSuffix="%"] 主结果分值后缀。
  * @param {{ name: string, score: number, tags?: Array<string>, secondaryName?: string }} payload.main 主结果对象。
- * @param {{ url: string, alt: string, caption?: string } | null} [payload.heroArtwork] 主视觉插画（可选）。
+ * @param {{ url: string, alt: string, caption?: string, placement?: string, presentation?: string } | null} [payload.heroArtwork] 主视觉插画（可选）。
  * @param {{ title: string, content: string }} payload.highlightCard 高亮卡片。
  * @param {string} payload.insight 解释文案。
  * @param {string} [payload.easterEggText] 彩蛋文案（可选）。
@@ -2909,8 +2911,7 @@ function buildInnateGiftUnifiedResult(result, sourceType) {
     {
       title: "天赋说明",
       items: [
-        String(resultRule.summary ?? "").trim() ||
-          "你的天赋类型正在整理中。",
+        String(resultRule.summary ?? "").trim() || "你的天赋类型正在整理中。",
         dominantProfile?.description
           ? `主导反应：${dominantProfile.description}`
           : "主导反应仍在整理中。",
@@ -2996,10 +2997,9 @@ function buildInnateGiftUnifiedResult(result, sourceType) {
       String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
     summaryLines,
     restartButtonText: "再测一次天赋类型",
-    easterEggText:
-      String(resultRule.giftLabel ?? "").trim()
-        ? `你的天赋不是突然出现的，它一直藏在你最自然的「${resultRule.giftLabel}」里。`
-        : "",
+    easterEggText: String(resultRule.giftLabel ?? "").trim()
+      ? `你的天赋不是突然出现的，它一直藏在你最自然的「${resultRule.giftLabel}」里。`
+      : "",
   });
 }
 
@@ -3215,6 +3215,212 @@ function buildPeoplePleaserLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 季节系人格主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildSeasonPersonalityDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 季节系人格主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildSeasonPersonalityUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 48);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const topSeasonSignals = Array.isArray(result?.topSeasonSignals)
+    ? result.topSeasonSignals
+    : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const signalLines =
+    topSeasonSignals.length > 0
+      ? topSeasonSignals.map((signalItem) => {
+          const optionText = String(signalItem?.optionLabel ?? "").trim();
+          const responseText =
+            String(signalItem?.responseName ?? "").trim() ||
+            String(signalItem?.traitLabel ?? "").trim() ||
+            "稳定观察中";
+
+          return `「${String(signalItem?.name ?? "").trim()}」：你选了“${optionText || "待观察"}”，这道线索明显带出${responseText}的反应底色。`;
+        })
+      : ["当前样本仍偏少，建议完整作答后再看最能代表你的季节线索。"];
+  const defaultDetailSections = [
+    {
+      title: "结果说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你正在慢慢看清自己更偏向哪一种季节感人格。",
+        majorityProfile?.description
+          ? `多数选项画像：${majorityProfile.description}`
+          : "多数选项画像仍在整理中。",
+      ],
+    },
+    {
+      title: "最强季节线索",
+      items: signalLines,
+    },
+    {
+      title: "状态提醒",
+      items:
+        Array.isArray(result?.actionTips) && result.actionTips.length > 0
+          ? result.actionTips
+          : Array.isArray(resultRule.actionTips)
+            ? resultRule.actionTips
+            : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+
+  return createUnifiedResult({
+    source: sourceType,
+    themeVariantClass: String(
+      result?.themeVariantClass ?? resultRule.themeVariantClass ?? "",
+    ).trim(),
+    prefixLabel: "你的季节结果",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 48}`,
+    main: {
+      name: resultRule.levelName ?? "季节系人格待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "季节判定",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的季节系人格侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "季节档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 48}` },
+        {
+          label: "多数选项",
+          value: `${majorityProfile.label ?? "A 暖阳外放向"}（${majorityProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均反应",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "当前气质",
+          value: resultRule.statusLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答倾向",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "季节人格图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次季节人格",
+    easterEggText: String(resultRule.easterEggText ?? "").trim(),
+  });
+}
+
+/**
+ * 季节系人格主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildSeasonPersonalityDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildSeasonPersonalityUnifiedResult(
+    normalizedResult,
+    resolvedSourceType,
+  );
+}
+
+/**
+ * 季节系人格主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildSeasonPersonalityLocalUnifiedResult(localResult) {
+  return buildSeasonPersonalityUnifiedResult(localResult, "local");
+}
+
+/**
  * 温柔 / 野性底色主题：构建深度分析请求负载。
  * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
  * @param {object} localResult 本地分析结果。
@@ -3243,6 +3449,9 @@ function buildGentleWildUnifiedResult(result, sourceType) {
     ? result.optionDistribution
     : [];
   const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const topCoreScenarios = Array.isArray(result?.topCoreScenarios)
+    ? result.topCoreScenarios
+    : [];
   const summaryLines = Array.isArray(result?.summaryLines)
     ? result.summaryLines
     : [];
@@ -3311,11 +3520,12 @@ function buildGentleWildUnifiedResult(result, sourceType) {
     },
     {
       title: "相处提醒",
-      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
-        ? result.actionTips
-        : Array.isArray(resultRule.actionTips)
-          ? resultRule.actionTips
-          : [],
+      items:
+        Array.isArray(result?.actionTips) && result.actionTips.length > 0
+          ? result.actionTips
+          : Array.isArray(resultRule.actionTips)
+            ? resultRule.actionTips
+            : [],
     },
   ];
   const normalizedDetailSections = Array.isArray(result?.detailSections)
@@ -3426,6 +3636,233 @@ function buildGentleWildLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 甜品系人格主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildDessertPersonaDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 甜品系人格结果图映射：
+ * 关键逻辑：结果 key 与静态资源路径一一对应，避免在页面组件中维护业务映射。
+ */
+const DESSERT_PERSONA_HERO_ARTWORK_MAP = Object.freeze({
+  macaron: "/dessert-images/Macarons.jpg",
+  "strawberry-cake": "/dessert-images/StrawberryCake.jpg",
+  pudding: "/dessert-images/Pudding.jpg",
+  cheesecake: "/dessert-images/Cheesecake.jpg",
+  "dark-chocolate": "/dessert-images/Chocolate.jpg",
+  "ice-cream": "/dessert-images/IceCream.jpg",
+});
+
+/**
+ * 解析甜品系人格结果图。
+ * @param {string} resultKey 结果键。
+ * @param {string} resultName 结果名称。
+ * @returns {{ url: string, alt: string, placement: string, presentation: string } | null} 主视觉配置。
+ */
+function resolveDessertPersonaHeroArtwork(resultKey, resultName) {
+  const normalizedResultKey = String(resultKey ?? "").trim();
+  const artworkUrl = String(
+    DESSERT_PERSONA_HERO_ARTWORK_MAP[normalizedResultKey] ?? "",
+  ).trim();
+
+  if (!artworkUrl) {
+    return null;
+  }
+
+  return {
+    url: artworkUrl,
+    alt: `${String(resultName ?? "甜品人格").trim() || "甜品人格"}结果图`,
+    // 关键逻辑：甜品主题要求把结果图置于标题上方，且透明图直接裸显，不加卡片容器语义。
+    placement: "above-title",
+    presentation: "plain",
+  };
+}
+
+/**
+ * 甜品系人格主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildDessertPersonaUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 48);
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const personaLabels = Array.isArray(resultRule?.personaLabels)
+    ? resultRule.personaLabels
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const coreTemperament =
+    String(resultRule?.coreTemperament ?? "").trim() ||
+    String(resultRule?.summary ?? "").trim();
+  const deepTraits = Array.isArray(resultRule?.deepTraits)
+    ? resultRule.deepTraits
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const relationshipTraits = Array.isArray(resultRule?.relationshipTraits)
+    ? resultRule.relationshipTraits
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const contrastTraits = Array.isArray(resultRule?.contrastTraits)
+    ? resultRule.contrastTraits
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const bestMatchNames = Array.isArray(resultRule?.bestMatchNames)
+    ? resultRule.bestMatchNames
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const avoidMatchNotes = Array.isArray(resultRule?.avoidMatchNotes)
+    ? resultRule.avoidMatchNotes
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+    : [];
+  const signatureLine = String(resultRule?.signatureLine ?? "").trim();
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : personaLabels.filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        })
+        .slice(0, 4);
+  const defaultDetailSections = [
+    {
+      title: "性格深度解析",
+      items:
+        deepTraits.length > 0
+          ? deepTraits
+          : [String(resultRule.summary ?? "").trim() || "你的甜品人格线索仍在整理中。"],
+    },
+    {
+      title: "在恋爱 / 友情里的样子",
+      items: relationshipTraits,
+    },
+    {
+      title: "你的反差隐藏面",
+      items: contrastTraits,
+    },
+    {
+      title: "最合拍搭子",
+      items: bestMatchNames,
+    },
+    {
+      title: "容易合不来",
+      items: avoidMatchNotes,
+    },
+    {
+      title: "专属小判词",
+      items: signatureLine ? [signatureLine] : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+  const heroArtwork = resolveDessertPersonaHeroArtwork(
+    resultRule.key,
+    resultRule.levelName,
+  );
+
+  return createUnifiedResult({
+    source: sourceType,
+    themeVariantClass: String(
+      result?.themeVariantClass ?? resultRule.themeVariantClass ?? "",
+    ).trim(),
+    prefixLabel: "你的甜品人格是",
+    tagSectionTitle: "人格标签",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 48}`,
+    main: {
+      name: resultRule.levelName ?? "甜品人格待判定",
+      score: scoreValue,
+      tags: [],
+    },
+    heroArtwork,
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "你的核心气质",
+      content:
+        normalizedHighlightCard?.content ||
+        coreTemperament ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的甜品人格侧写。"}`,
+    },
+    insight: "",
+    tagChips: resolvedTagChips,
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle: "",
+    summaryLines: [],
+    restartButtonText: "再测一次甜品人格",
+    easterEggText: "",
+  });
+}
+
+/**
+ * 甜品系人格主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildDessertPersonaDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildDessertPersonaUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 甜品系人格主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildDessertPersonaLocalUnifiedResult(localResult) {
+  return buildDessertPersonaUnifiedResult(localResult, "local");
+}
+
+/**
  * 动物系恋人主题：构建深度分析请求负载。
  * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
  * @param {object} localResult 本地分析结果。
@@ -3480,11 +3917,12 @@ function buildAnimalLoverUnifiedResult(result, sourceType) {
   const defaultDetailSections = [
     {
       title: "相处提醒",
-      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
-        ? result.actionTips
-        : Array.isArray(resultRule.actionTips)
-          ? resultRule.actionTips
-          : [],
+      items:
+        Array.isArray(result?.actionTips) && result.actionTips.length > 0
+          ? result.actionTips
+          : Array.isArray(resultRule.actionTips)
+            ? resultRule.actionTips
+            : [],
     },
   ];
   const normalizedDetailSections = Array.isArray(result?.detailSections)
@@ -3579,6 +4017,195 @@ function buildAnimalLoverLocalUnifiedResult(localResult) {
 }
 
 /**
+ * 狗狗系人格主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildDogPersonalityDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 狗狗系人格主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildDogPersonalityUnifiedResult(result, sourceType) {
+  // 关键逻辑：结果页显式去除“最像你的狗狗时刻”，避免在 12 题轻量主题里拉长阅读链路。
+  const hiddenDetailSectionTitles = new Set(["最像你的狗狗时刻"]);
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 48);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const radarItems = Array.isArray(result?.radarItems) ? result.radarItems : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const defaultDetailSections = [
+    {
+      title: "结果说明",
+      items: [
+        String(resultRule.summary ?? "").trim() ||
+          "你正在慢慢看见自己更自然的社交和相处方式。",
+        majorityProfile?.description
+          ? `多数选项画像：${majorityProfile.description}`
+          : "多数选项画像仍在整理中。",
+      ],
+    },
+    {
+      title: "相处提醒",
+      items:
+        Array.isArray(result?.actionTips) && result.actionTips.length > 0
+          ? result.actionTips
+          : Array.isArray(resultRule.actionTips)
+            ? resultRule.actionTips
+            : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) =>
+            sectionItem.title &&
+            sectionItem.items.length > 0 &&
+            !hiddenDetailSectionTitles.has(sectionItem.title),
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+
+  return createUnifiedResult({
+    source: sourceType,
+    themeVariantClass: String(
+      result?.themeVariantClass ?? resultRule.themeVariantClass ?? "",
+    ).trim(),
+    prefixLabel: "你的狗狗系人格是",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 48}`,
+    main: {
+      name: resultRule.levelName ?? "狗狗人格待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "人格判定",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的狗狗系人格侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "狗狗人格档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 48}` },
+        {
+          label: "多数选项",
+          value: `${majorityProfile.label ?? "A 热情外放向"}（${majorityProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均反应",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "当前状态",
+          value: resultRule.statusLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答倾向",
+      items: optionDistribution,
+    },
+    radarChart: {
+      title: "狗狗人格图谱",
+      maxScore: 100,
+      items: radarItems,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮作答回放").trim() || "本轮作答回放",
+    summaryLines,
+    restartButtonText: "再测一次狗狗系人格",
+    easterEggText: String(resultRule.easterEggText ?? "").trim(),
+  });
+}
+
+/**
+ * 狗狗系人格主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildDogPersonalityDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildDogPersonalityUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 狗狗系人格主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildDogPersonalityLocalUnifiedResult(localResult) {
+  return buildDogPersonalityUnifiedResult(localResult, "local");
+}
+
+/**
  * 城市气质主题：构建深度分析请求负载。
  * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
  * @param {object} localResult 本地分析结果。
@@ -3662,11 +4289,12 @@ function buildCityVibeUnifiedResult(result, sourceType) {
     },
     {
       title: "适配建议",
-      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
-        ? result.actionTips
-        : Array.isArray(resultRule.actionTips)
-          ? resultRule.actionTips
-          : [],
+      items:
+        Array.isArray(result?.actionTips) && result.actionTips.length > 0
+          ? result.actionTips
+          : Array.isArray(resultRule.actionTips)
+            ? resultRule.actionTips
+            : [],
     },
   ];
   const normalizedDetailSections = Array.isArray(result?.detailSections)
@@ -3850,11 +4478,12 @@ function buildInnerChildUnifiedResult(result, sourceType) {
     },
     {
       title: "自我照顾提醒",
-      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
-        ? result.actionTips
-        : Array.isArray(resultRule.actionTips)
-          ? resultRule.actionTips
-          : [],
+      items:
+        Array.isArray(result?.actionTips) && result.actionTips.length > 0
+          ? result.actionTips
+          : Array.isArray(resultRule.actionTips)
+            ? resultRule.actionTips
+            : [],
     },
   ];
   const normalizedDetailSections = Array.isArray(result?.detailSections)
@@ -4052,11 +4681,12 @@ function buildLoveDestinyUnifiedResult(result, sourceType) {
     },
     {
       title: "避坑提醒",
-      items: Array.isArray(result?.actionTips) && result.actionTips.length > 0
-        ? result.actionTips
-        : Array.isArray(resultRule.actionTips)
-          ? resultRule.actionTips
-          : [],
+      items:
+        Array.isArray(result?.actionTips) && result.actionTips.length > 0
+          ? result.actionTips
+          : Array.isArray(resultRule.actionTips)
+            ? resultRule.actionTips
+            : [],
     },
   ];
   const normalizedDetailSections = Array.isArray(result?.detailSections)
@@ -4164,6 +4794,184 @@ function buildLoveDestinyDeepUnifiedResult(deepResult, localResult) {
  */
 function buildLoveDestinyLocalUnifiedResult(localResult) {
   return buildLoveDestinyUnifiedResult(localResult, "local");
+}
+
+/**
+ * 猫猫人格主题：构建深度分析请求负载。
+ * 关键逻辑：当前主题默认走本地稳定分析，预留 analysisSource 便于后续平滑接入 AI。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 深度分析负载。
+ */
+function buildCatPersonalityDeepPayload(localResult) {
+  return {
+    ...localResult,
+    analysisSource: "local",
+  };
+}
+
+/**
+ * 猫猫人格主题：组装统一结果模型。
+ * @param {object} result 分析结果。
+ * @param {"deep"|"local"} sourceType 结果来源。
+ * @returns {object} 统一结果对象。
+ */
+function buildCatPersonalityUnifiedResult(result, sourceType) {
+  const resultRule = result?.resultRule ?? {};
+  const majorityProfile = result?.majorityProfile ?? {};
+  const scoreValue = Number(result?.score ?? 0);
+  const maxScoreValue = Number(result?.maxScore ?? 48);
+  const answeredCount = Number(result?.answeredCount ?? 0);
+  const optionDistribution = Array.isArray(result?.optionDistribution)
+    ? result.optionDistribution
+    : [];
+  const summaryLines = Array.isArray(result?.summaryLines)
+    ? result.summaryLines
+    : [];
+  const insightText = String(
+    result?.localNarrative ?? result?.insight ?? "",
+  ).trim();
+  const averageScore =
+    answeredCount > 0 ? (scoreValue / answeredCount).toFixed(1) : "0.0";
+  const normalizedHighlightCard =
+    result?.highlightCard && typeof result.highlightCard === "object"
+      ? {
+          title: String(result.highlightCard.title ?? "").trim(),
+          content: String(result.highlightCard.content ?? "").trim(),
+        }
+      : null;
+  const normalizedTagChips = Array.isArray(result?.tagChips)
+    ? result.tagChips.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const resolvedTagChips =
+    normalizedTagChips.length > 0
+      ? normalizedTagChips
+      : [
+          ...(Array.isArray(resultRule.tagChips) ? resultRule.tagChips : []),
+          String(majorityProfile.name ?? "").trim(),
+        ].filter((value, index, sourceItems) => {
+          return Boolean(value) && sourceItems.indexOf(value) === index;
+        });
+  const defaultDetailSections = [
+    {
+      title: "猫系人格说明",
+      items: [
+        String(resultRule.summary ?? "").trim() || "你的猫系人格正在整理中。",
+        majorityProfile?.description
+          ? `多数作答画像：${majorityProfile.description}`
+          : "多数作答画像仍在整理中。",
+      ],
+    },
+    {
+      title: "和你相处的正确方式",
+      items:
+        Array.isArray(result?.actionTips) && result.actionTips.length > 0
+          ? result.actionTips
+          : Array.isArray(resultRule.companionTips)
+            ? resultRule.companionTips
+            : [],
+    },
+  ];
+  const normalizedDetailSections = Array.isArray(result?.detailSections)
+    ? result.detailSections
+        .map((sectionItem) => ({
+          title: String(sectionItem?.title ?? "").trim(),
+          items: Array.isArray(sectionItem?.items)
+            ? sectionItem.items
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+            : [],
+        }))
+        .filter(
+          (sectionItem) => sectionItem.title && sectionItem.items.length > 0,
+        )
+    : [];
+  const resolvedDetailSections =
+    normalizedDetailSections.length > 0
+      ? normalizedDetailSections
+      : defaultDetailSections.filter(
+          (sectionItem) => sectionItem.items.length > 0,
+        );
+
+  return createUnifiedResult({
+    source: sourceType,
+    prefixLabel: "你的猫猫人格",
+    scoreLabel: "总分",
+    scoreSuffix: `/${maxScoreValue || 48}`,
+    main: {
+      name: resultRule.levelName ?? "猫猫人格待判定",
+      score: scoreValue,
+      tags: [String(resultRule.coreTag ?? "").trim()].filter(Boolean),
+    },
+    heroArtwork:
+      result?.heroArtwork && typeof result.heroArtwork === "object"
+        ? result.heroArtwork
+        : null,
+    highlightCard: {
+      title: normalizedHighlightCard?.title || "猫系气场",
+      content:
+        normalizedHighlightCard?.content ||
+        `${resultRule.levelName ?? "稳定观察中"}：${resultRule.summary ?? "正在整理你的猫系人格侧写。"}`,
+    },
+    insight: insightText,
+    tagChips: resolvedTagChips,
+    typeCard: {
+      title: "猫系档案",
+      items: [
+        { label: "总分区间", value: `${scoreValue}/${maxScoreValue || 48}` },
+        {
+          label: "多数选项",
+          value: `${majorityProfile.label ?? "A 1分"}（${majorityProfile.count ?? 0} 题）`,
+        },
+        {
+          label: "平均得分",
+          value: `${averageScore}/4`,
+        },
+        {
+          label: "相处气场",
+          value: resultRule.atmosphereLabel ?? "稳定观察中",
+        },
+      ],
+    },
+    distributionChart: {
+      title: "作答分布",
+      items: optionDistribution,
+    },
+    topThreeTitle: "",
+    topThree: [],
+    detailSections: resolvedDetailSections,
+    summaryTitle:
+      String(result?.summaryTitle ?? "本轮猫系回放").trim() || "本轮猫系回放",
+    summaryLines,
+    restartButtonText: "再测一次猫猫人格",
+    easterEggText: String(resultRule.easterEggText ?? "").trim(),
+  });
+}
+
+/**
+ * 猫猫人格主题：构建深度结果展示模型。
+ * @param {object} deepResult 深度分析结果。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildCatPersonalityDeepUnifiedResult(deepResult, localResult) {
+  const normalizedResult = {
+    ...(localResult ?? {}),
+    ...(deepResult ?? {}),
+  };
+  const resolvedSourceType =
+    String(deepResult?.analysisSource ?? "").trim() === "deep"
+      ? "deep"
+      : "local";
+  return buildCatPersonalityUnifiedResult(normalizedResult, resolvedSourceType);
+}
+
+/**
+ * 猫猫人格主题：构建本地兜底展示模型。
+ * @param {object} localResult 本地分析结果。
+ * @returns {object} 统一结果对象。
+ */
+function buildCatPersonalityLocalUnifiedResult(localResult) {
+  return buildCatPersonalityUnifiedResult(localResult, "local");
 }
 
 /**
@@ -5485,6 +6293,94 @@ export const SURVEY_THEME_CONFIGS = [
     },
   },
   {
+    key: "season-personality",
+    routePaths: [
+      "/season-personality",
+      "/season-personality.html",
+      "/season-test",
+      "/seasonal-personality",
+    ],
+    pageMeta: {
+      title: "测一测｜你是哪种季节系人格？12题超准",
+      description:
+        "12 道固定题测出你的季节系人格，看看你更像盛夏、暖春、初秋、凉秋、深冬还是雪冬。",
+    },
+    theme: {
+      className: "theme-season-personality",
+      badge: "SEASON PERSONALITY TEST",
+      title: "测一测｜你是哪种季节系人格？",
+      description:
+        "12 题识别你的季节能量、社交距离、氛围审美与内心底色，看看你更偏向哪一种季节系人格。",
+      progressColor: "linear-gradient(90deg, #f3b35a, #d79a84, #8ba1c5)",
+      progressTrackColor: "rgba(171, 135, 105, 0.16)",
+      checkedColor: "#d39757",
+      sourceTag: {
+        deep: {
+          label: "季节深度解读",
+          color: "#fff7ef",
+          textColor: "#9a6a46",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#f8f6fb",
+          textColor: "#6d6486",
+        },
+      },
+      loadingMessages: [
+        "正在校准你的季节气场...",
+        "正在计算你的情绪温度...",
+        "正在整理你的季节人格档案...",
+      ],
+      submitButtonText: "查看我的季节结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { SEASON_PERSONALITY_QUESTION_BANK } =
+          await import("../data/seasonPersonalityQuestionBank");
+        return SEASON_PERSONALITY_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 12,
+        maxCount: 12,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "趣味小测试",
+        titleMain: "你是哪种\n季节系人格？",
+        intro: "每题选一个答案，最后算总分",
+        points: [
+          "A=1分 ｜ B=2分",
+          "C=3分 ｜ D=4分",
+          "共12题，算完总分看结果！",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeSeasonPersonalityLocally } =
+          await import("../services/seasonPersonalityAnalyzer");
+        return analyzeSeasonPersonalityLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildSeasonPersonalityDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildSeasonPersonalityDeepUnifiedResult,
+      buildLocalUnifiedResult: buildSeasonPersonalityLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
     key: "gentle-wild",
     routePaths: [
       "/gentle-wild",
@@ -5574,13 +6470,97 @@ export const SURVEY_THEME_CONFIGS = [
     },
   },
   {
-    key: "city-vibe",
+    key: "dessert-persona",
     routePaths: [
-      "/city-vibe",
-      "/urban-vibe",
-      "/which-city-vibe",
-      "/city-aura",
+      "/dessert-persona",
+      "/dessert",
+      "/dessert-test",
+      "/sweet-persona",
     ],
+    pageMeta: {
+      title: "测一测｜你是哪种甜品系人格？",
+      description:
+        "12 道固定题测出你的甜品系人格，看看你是马卡龙人格、草莓蛋糕人格，还是黑巧克力人格。",
+    },
+    theme: {
+      className: "theme-dessert-persona",
+      badge: "DESSERT PERSONA TEST",
+      title: "测一测｜你是哪种甜品系人格？",
+      description:
+        "治愈系人格测试，12 题从情绪治愈、人际甜感、生活风味与内在回甘识别你的甜品系人格。",
+      progressColor: "linear-gradient(90deg, #ef86a6, #f6bfd0, #f1d27d)",
+      progressTrackColor: "rgba(246, 191, 208, 0.24)",
+      checkedColor: "#ef86a6",
+      sourceTag: {
+        deep: {
+          label: "甜品人格解读",
+          color: "#fff2f6",
+          textColor: "#ad627f",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#fff8fb",
+          textColor: "#ad627f",
+        },
+      },
+      loadingMessages: [
+        "正在校准你的甜品气质坐标...",
+        "正在计算你的回甘型人格...",
+        "正在整理你的甜品系档案...",
+      ],
+      submitButtonText: "查看我的甜品结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { DESSERT_PERSONA_QUESTION_BANK } =
+          await import("../data/dessertPersonaQuestionBank");
+        return DESSERT_PERSONA_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 12,
+        maxCount: 12,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1200,
+      cover: {
+        enabled: true,
+        kicker: "治愈系人格测试",
+        titleMain: "测一测｜你是哪种\n甜品系人格？",
+        intro: "玩法说明",
+        points: [
+          "每题选最符合你的答案",
+          "A=1分 ｜ B=2分 ｜ C=3分 ｜ D=4分",
+          "共12题，最后按总分看结果",
+          "6种甜品人格：马卡龙、草莓蛋糕、布丁、芝士蛋糕、黑巧克力、冰淇淋",
+        ],
+        startButtonText: "开始测试",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeDessertPersonaLocally } =
+          await import("../services/dessertPersonaAnalyzer");
+        return analyzeDessertPersonaLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildDessertPersonaDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildDessertPersonaDeepUnifiedResult,
+      buildLocalUnifiedResult: buildDessertPersonaLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "city-vibe",
+    routePaths: ["/city-vibe", "/urban-vibe", "/which-city-vibe", "/city-aura"],
     pageMeta: {
       title: "测测你是「哪种城市气质」？",
       description:
@@ -5748,6 +6728,94 @@ export const SURVEY_THEME_CONFIGS = [
       },
       buildDeepUnifiedResult: buildAnimalLoverDeepUnifiedResult,
       buildLocalUnifiedResult: buildAnimalLoverLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
+    },
+  },
+  {
+    key: "dog-personality",
+    routePaths: [
+      "/dog-personality",
+      "/dog-personality-test",
+      "/dog-persona",
+      "/dog-vibe",
+    ],
+    pageMeta: {
+      title: "测一测｜你是哪种狗狗系人格？12 题超准🐶",
+      description:
+        "12 道固定题按总分区间匹配 6 种狗狗系人格，看看你更像金毛、萨摩耶、柯基、柴犬、边牧还是哈士奇。",
+    },
+    theme: {
+      className: "theme-dog-personality",
+      badge: "DOG PERSONA TEST",
+      title: "测一测｜你是哪种\n狗狗系人格？12题超准🐶",
+      description:
+        "12题固定分值，识别你的社交温度、陪伴表达、边界安全感与内核节奏，看看你更像哪一种狗狗系人格。",
+      progressColor: "linear-gradient(90deg, #f1a35a, #f0c979, #80a7d8)",
+      progressTrackColor: "rgba(241, 163, 90, 0.18)",
+      checkedColor: "#f1a35a",
+      sourceTag: {
+        deep: {
+          label: "狗狗人格深度解读",
+          color: "#fff8ef",
+          textColor: "#a36e3f",
+        },
+        local: {
+          label: "稳定本地结果",
+          color: "#f4f8ff",
+          textColor: "#637da8",
+        },
+      },
+      loadingMessages: [
+        "正在整理你的狗狗人格信号...",
+        "正在匹配最像你的狗狗系气质...",
+        "正在生成你的相处风格档案...",
+      ],
+      submitButtonText: "查看我的狗狗系结果",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { DOG_PERSONALITY_QUESTION_BANK } =
+          await import("../data/dogPersonalityQuestionBank");
+        return DOG_PERSONALITY_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 12,
+        maxCount: 12,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1000,
+      cover: {
+        enabled: true,
+        // 关键逻辑：固定分值型轻量测试直接在封面补充计分说明，减少用户进入答题后再理解规则的成本。
+        promoTag: "记分规则 A=1 · B=2 · C=3 · D=4",
+        kicker: "狗狗系人格测试",
+        titleMain: "测一测｜你是哪种\n狗狗系人格？12题超准🐶",
+        intro:
+          "12道情境题会从你的社交反应、陪伴方式和边界感里，判断你最像哪一种狗狗系人格，看看你的可爱底色究竟更偏治愈黏人，还是清醒自由。",
+        points: [],
+        startButtonText: "开始测试",
+        tip: "共12题 · 约1分钟",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeDogPersonalityLocally } =
+          await import("../services/dogPersonalityAnalyzer");
+        return analyzeDogPersonalityLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildDogPersonalityDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildDogPersonalityDeepUnifiedResult,
+      buildLocalUnifiedResult: buildDogPersonalityLocalUnifiedResult,
       deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
     },
   },
@@ -6017,6 +7085,100 @@ export const SURVEY_THEME_CONFIGS = [
       buildDeepUnifiedResult: buildSoulCatDeepUnifiedResult,
       buildLocalUnifiedResult: buildSoulCatLocalUnifiedResult,
       deepFailToast: "解读服务暂不可用，已切换稳定结果",
+    },
+  },
+  {
+    key: "cat-personality",
+    routePaths: [
+      "/cat-personality",
+      "/cat-personality.html",
+      "/cat-personality-test",
+      "/cat-persona",
+    ],
+    pageMeta: {
+      title: "测一测｜你是哪种猫猫人格？🐱",
+      description: "超萌猫咪人格测试，12题固定计分，测出你是哪种猫猫人格。",
+    },
+    theme: {
+      className: "theme-soul-cat",
+      badge: "CAT PERSONALITY TEST",
+      title: "测一测｜你是哪种猫猫人格？🐱",
+      description:
+        "超萌猫咪人格测试🔥 共12题，A=1分到D=4分，最后按总分判定 6 种猫猫人格。",
+      progressColor: "linear-gradient(90deg, #f6c98f, #ef9fb0)",
+      progressTrackColor: "rgba(145, 125, 124, 0.15)",
+      checkedColor: "#d99db0",
+      sourceTag: {
+        deep: {
+          label: "猫猫人格结果",
+          color: "#f8edf2",
+          textColor: "#8a5769",
+        },
+        local: {
+          label: "猫猫人格结果",
+          color: "#f8edf2",
+          textColor: "#8a5769",
+        },
+      },
+      loadingMessages: [
+        "正在收集你的猫系人格信号...",
+        "正在计算你的猫咪总分区间...",
+        "正在匹配你的专属猫猫人格...",
+      ],
+      submitButtonText: "查看我的猫猫人格",
+      nextButtonText: "下一题",
+    },
+    survey: {
+      questions: async () => {
+        const { CAT_PERSONALITY_QUESTION_BANK } =
+          await import("../data/catPersonalityQuestionBank");
+        return CAT_PERSONALITY_QUESTION_BANK;
+      },
+      questionSelection: {
+        minCount: 12,
+        maxCount: 12,
+      },
+      autoAdvanceOnSelect: true,
+      useSequentialQuestionOrder: true,
+      minimumAnalyzingDurationMs: 1000,
+      cover: {
+        enabled: true,
+        kicker: "超萌猫咪人格测试🔥",
+        titleEmphasis: "测一测",
+        titleMain: "你是哪种猫猫人格？",
+        intro: "计分规则",
+        points: [
+          "每题选一个答案，最后算总分。",
+          "A=1 分 ｜ B=2 分 ｜ C=3 分 ｜ D=4 分",
+          "共12题，结果对应 6 种猫猫人格。",
+        ],
+        heroArtwork: {
+          url: "/cats/cover-cat.svg",
+          alt: "猫猫人格测试封面插画",
+          maxWidth: 236,
+        },
+        startButtonText: "开始测试",
+        tip: "共12题 · 约1分钟",
+      },
+      runLocalAnalysis: async (selectedQuestions, answerIds) => {
+        const { analyzeCatPersonalityLocally } =
+          await import("../services/catPersonalityAnalyzer");
+        return analyzeCatPersonalityLocally({
+          questions: selectedQuestions,
+          answerIds,
+        });
+      },
+      buildDeepPayload: buildCatPersonalityDeepPayload,
+      runDeepAnalysis: async (payload) => {
+        return {
+          ...payload,
+          // 关键逻辑：当前主题先走本地稳定结果链路，后续若接 AI 只需把 source 切为 deep。
+          analysisSource: "local",
+        };
+      },
+      buildDeepUnifiedResult: buildCatPersonalityDeepUnifiedResult,
+      buildLocalUnifiedResult: buildCatPersonalityLocalUnifiedResult,
+      deepFailToast: "深度解读暂不可用，已切换本地稳定结果",
     },
   },
   {

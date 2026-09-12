@@ -664,6 +664,86 @@ body {
   --highlight-bg: linear-gradient(145deg, #fbfcfd, #edf2f6);
 }
 
+.theme-season-personality {
+  --page-bg:
+    radial-gradient(
+      circle at 14% 14%,
+      rgba(255, 248, 236, 0.86),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 84% 18%,
+      rgba(201, 185, 232, 0.2),
+      transparent 28%
+    ),
+    linear-gradient(145deg, #fffaf2 0%, #f8efe5 48%, #eff3fb 100%);
+  --text-main: #56473d;
+  --text-muted: #817066;
+  --surface: rgba(255, 252, 248, 0.9);
+  --surface-border: rgba(237, 224, 211, 0.88);
+  --shadow: 0 24px 58px rgba(136, 112, 90, 0.14);
+  --primary: #d39757;
+  --primary-dark: #8da3c6;
+  --aura-left: radial-gradient(circle at 30% 30%, #ffdca0, #f4b76a);
+  --aura-right: radial-gradient(circle at 30% 30%, #d8cbea, #a2b0d3);
+  --noise-dot: rgba(118, 101, 87, 0.18);
+  --option-border: #e9dccf;
+  --option-selected-border: #d9a16c;
+  --option-selected-bg: linear-gradient(180deg, #fffdf9, #fdf3e8);
+  --option-selected-shadow: rgba(182, 131, 83, 0.18);
+  --detail-border: #eadfd2;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(249, 242, 235, 0.99)
+  );
+  --highlight-border: #e7d8cb;
+  --highlight-bg: linear-gradient(145deg, #fffaf4, #f4edf8);
+  --title-font: var(--survey-font-title);
+}
+
+.theme-season-personality.theme-season-personality-bright {
+  --primary: #e2a24c;
+  --primary-dark: #f0c57a;
+  --highlight-border: #efd8b6;
+  --highlight-bg: linear-gradient(145deg, #fff9ef, #ffedd2);
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 245, 228, 0.98)
+  );
+}
+
+.theme-season-personality.theme-season-personality-mellow {
+  --primary: #cd8f70;
+  --primary-dark: #dcb3a1;
+  --highlight-border: #e8d5cb;
+  --highlight-bg: linear-gradient(145deg, #fffaf7, #f6ece6);
+  --detail-border: #e7d8cf;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(247, 239, 233, 0.99)
+  );
+}
+
+.theme-season-personality.theme-season-personality-cool {
+  --primary: #8da0c0;
+  --primary-dark: #b7c3d8;
+  --shadow: 0 24px 58px rgba(109, 126, 154, 0.14);
+  --option-selected-border: #9bacc8;
+  --option-selected-bg: linear-gradient(180deg, #fcfdff, #f0f4f9);
+  --option-selected-shadow: rgba(125, 143, 180, 0.16);
+  --detail-border: #dbe2ec;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(241, 245, 250, 0.99)
+  );
+  --highlight-border: #d7e0eb;
+  --highlight-bg: linear-gradient(145deg, #fbfcff, #edf2f7);
+}
+
 .theme-city-vibe {
   --page-overlay-one:
     radial-gradient(
@@ -742,6 +822,114 @@ body {
   --highlight-bg: linear-gradient(145deg, #fbfcff, #eef2f8);
 }
 
+.theme-dog-personality {
+  --page-overlay-one:
+    radial-gradient(
+      circle at 14% 14%,
+      rgba(255, 255, 255, 0.68),
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 245, 232, 0.54) 0%,
+      rgba(255, 250, 242, 0.26) 42%,
+      rgba(237, 245, 255, 0.54) 100%
+    );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 84% 18%,
+      rgba(240, 201, 121, 0.18),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 20% 84%,
+      rgba(128, 167, 216, 0.14),
+      transparent 30%
+    );
+  --page-bg: linear-gradient(145deg, #fff7ef 0%, #fffaf2 42%, #eff6ff 100%);
+  --text-main: #4f3e34;
+  --text-muted: #7d6b5f;
+  --surface: rgba(255, 252, 246, 0.94);
+  --surface-border: rgba(239, 223, 205, 0.9);
+  --shadow: 0 24px 58px rgba(126, 97, 77, 0.14);
+  --primary: #f1a35a;
+  --primary-dark: #80a7d8;
+  --aura-left: radial-gradient(circle at 30% 30%, #ffe0b9, #f3b36a);
+  --aura-right: radial-gradient(circle at 30% 30%, #dcecff, #9fc2ef);
+  --noise-dot: rgba(126, 97, 77, 0.2);
+  --option-border: #ecdccc;
+  --option-selected-border: #e2a062;
+  --option-selected-bg: linear-gradient(180deg, #fffdf9, #fff4e8);
+  --option-selected-shadow: rgba(226, 160, 98, 0.16);
+  --detail-border: #edddd0;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 247, 239, 0.99)
+  );
+  --highlight-border: #edd9ca;
+  --highlight-bg: linear-gradient(145deg, #fffdf9, #fff2e5);
+  --title-font: var(--survey-font-title);
+}
+
+.theme-dog-personality.theme-dog-personality-golden {
+  --primary: #e4a54f;
+  --primary-dark: #d7bf76;
+  --highlight-border: #eedcbc;
+  --highlight-bg: linear-gradient(145deg, #fffdf8, #fff2df);
+}
+
+.theme-dog-personality.theme-dog-personality-samoyed {
+  --primary: #efc66b;
+  --primary-dark: #92add7;
+  --option-selected-border: #d8c378;
+  --option-selected-bg: linear-gradient(180deg, #fffefb, #f8fbff);
+  --highlight-border: #e7e2d1;
+  --highlight-bg: linear-gradient(145deg, #fffefb, #f4f8ff);
+}
+
+.theme-dog-personality.theme-dog-personality-corgi {
+  --primary: #e8955b;
+  --primary-dark: #d3a163;
+  --detail-border: #ecd7c8;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 244, 235, 0.99)
+  );
+}
+
+.theme-dog-personality.theme-dog-personality-shiba {
+  --primary: #d98b56;
+  --primary-dark: #9b7a63;
+  --shadow: 0 24px 58px rgba(121, 90, 71, 0.15);
+  --highlight-border: #e7d3c5;
+  --highlight-bg: linear-gradient(145deg, #fffaf6, #fff0e5);
+}
+
+.theme-dog-personality.theme-dog-personality-border {
+  --primary: #7f9dd1;
+  --primary-dark: #a3bbde;
+  --option-selected-border: #89a7d2;
+  --option-selected-bg: linear-gradient(180deg, #fffefe, #f2f7ff);
+  --highlight-border: #dbe4f2;
+  --highlight-bg: linear-gradient(145deg, #fbfcff, #eef4fb);
+}
+
+.theme-dog-personality.theme-dog-personality-husky {
+  --primary: #6f93cb;
+  --primary-dark: #b6c8e5;
+  --shadow: 0 24px 60px rgba(93, 115, 149, 0.16);
+  --detail-border: #d9e3f2;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(241, 246, 255, 0.99)
+  );
+  --highlight-border: #d6e2f2;
+  --highlight-bg: linear-gradient(145deg, #fbfdff, #eef5ff);
+}
+
 .theme-gentle-wild {
   --page-overlay-one: linear-gradient(
     180deg,
@@ -808,6 +996,95 @@ body {
   --option-selected-shadow: rgba(71, 121, 91, 0.16);
   --highlight-border: #cadcce;
   --highlight-bg: linear-gradient(145deg, #f7fbf8, #e8f1ea);
+}
+
+.theme-dessert-persona {
+  --page-overlay-one: linear-gradient(
+    180deg,
+    rgba(255, 248, 251, 0.58) 0%,
+    rgba(255, 241, 246, 0.32) 28%,
+    rgba(255, 244, 233, 0.34) 62%,
+    rgba(255, 250, 244, 0.78) 100%
+  );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 14% 16%,
+      rgba(255, 255, 255, 0.58),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 82% 20%,
+      rgba(255, 231, 239, 0.32),
+      transparent 32%
+    );
+  --page-bg: linear-gradient(140deg, #fffafc 0%, #fff2f7 42%, #fff9ef 100%);
+  --text-main: #6b4653;
+  --text-muted: #9a6f7f;
+  --surface: rgba(255, 253, 252, 0.94);
+  --surface-border: rgba(246, 213, 224, 0.92);
+  --shadow: 0 24px 60px rgba(214, 150, 174, 0.16);
+  --primary: #ef86a6;
+  --primary-dark: #f7d3de;
+  --aura-left: radial-gradient(circle at 30% 30%, #ffdce8, #f6b6ca);
+  --aura-right: radial-gradient(circle at 30% 30%, #fff0c8, #f0d27d);
+  --noise-dot: rgba(150, 95, 116, 0.18);
+  --option-border: #f2dbe3;
+  --option-selected-border: #ef86a6;
+  --option-selected-bg: linear-gradient(180deg, #fffefe, #fff4f8);
+  --option-selected-shadow: rgba(239, 134, 166, 0.18);
+  --detail-border: #f3dfe7;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 247, 250, 0.99)
+  );
+  --highlight-border: #f1d6e0;
+  --highlight-bg: linear-gradient(145deg, #fffdfd, #fff2f6);
+  --title-font: var(--survey-font-title);
+}
+
+.theme-dessert-persona.theme-dessert-persona-soft {
+  --primary: #ef88aa;
+  --primary-dark: #f8d7e3;
+  --highlight-border: #f4d8e2;
+  --highlight-bg: linear-gradient(145deg, #fffdfd, #fff3f7);
+}
+
+.theme-dessert-persona.theme-dessert-persona-creamy {
+  --primary: #e2b96d;
+  --primary-dark: #f5e1af;
+  --option-selected-border: #ddb15f;
+  --option-selected-bg: linear-gradient(180deg, #fffefb, #fff8ea);
+  --option-selected-shadow: rgba(226, 185, 109, 0.16);
+  --detail-border: #f0e0ba;
+  --detail-bg: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    rgba(255, 249, 235, 0.99)
+  );
+}
+
+.theme-dessert-persona.theme-dessert-persona-cocoa {
+  --primary: #8b5e4f;
+  --primary-dark: #dcc4bc;
+  --text-main: #5d433c;
+  --text-muted: #83655d;
+  --shadow: 0 24px 60px rgba(107, 77, 68, 0.16);
+  --option-selected-border: #8b5e4f;
+  --option-selected-bg: linear-gradient(180deg, #fffdfc, #f8f0ed);
+  --option-selected-shadow: rgba(139, 94, 79, 0.16);
+}
+
+.theme-dessert-persona.theme-dessert-persona-cool {
+  --primary: #6eb8cf;
+  --primary-dark: #cfeaf4;
+  --text-main: #4c6775;
+  --text-muted: #6f8c99;
+  --option-selected-border: #6eb8cf;
+  --option-selected-bg: linear-gradient(180deg, #fcfeff, #eef8fb);
+  --option-selected-shadow: rgba(110, 184, 207, 0.16);
+  --highlight-border: #d5eaf1;
+  --highlight-bg: linear-gradient(145deg, #fbfeff, #eff8fb);
 }
 
 .theme-inner-child {
@@ -3882,6 +4159,91 @@ body {
   color: #7d655b;
 }
 
+.theme-dog-personality .survey-badge {
+  color: #a17048;
+}
+
+.theme-dog-personality .survey-cover-card {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.88),
+    rgba(255, 248, 239, 0.9)
+  );
+}
+
+.theme-dog-personality .survey-cover-title-main {
+  white-space: pre-line;
+  color: #5c4537;
+}
+
+.theme-dog-personality .survey-header h1 {
+  white-space: pre-line;
+}
+
+.theme-dog-personality .survey-main-title,
+.theme-dog-personality .survey-question-title {
+  color: #5d4739;
+}
+
+.theme-dog-personality .survey-result-prefix {
+  color: #a27049;
+}
+
+.theme-dog-personality .survey-main-score {
+  color: #d18c48;
+}
+
+.theme-dog-personality .survey-main-tag-item {
+  color: #694d3a;
+  border-color: rgba(239, 195, 122, 0.48);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 251, 245, 0.98),
+    rgba(255, 240, 220, 0.96)
+  );
+}
+
+.theme-dog-personality .survey-tag-item {
+  color: #6d5443;
+  border-color: rgba(145, 173, 214, 0.42);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 252, 246, 0.98),
+    rgba(242, 247, 255, 0.96)
+  );
+}
+
+.theme-dog-personality .survey-type-card-value {
+  color: #684b38;
+}
+
+.theme-dog-personality .survey-type-card-label {
+  color: #92715b;
+}
+
+.theme-dog-personality .survey-radar-grid,
+.theme-dog-personality .survey-radar-axis {
+  stroke: rgba(241, 163, 90, 0.22);
+}
+
+.theme-dog-personality .survey-radar-data {
+  fill: rgba(128, 167, 216, 0.16);
+  stroke: rgba(103, 146, 205, 0.88);
+}
+
+.theme-dog-personality .survey-radar-label,
+.theme-dog-personality .survey-radar-name,
+.theme-dog-personality .survey-radar-score,
+.theme-dog-personality .survey-distribution-meta span,
+.theme-dog-personality .survey-type-card-wrap h3,
+.theme-dog-personality .survey-distribution-wrap h3,
+.theme-dog-personality .survey-radar-wrap h3,
+.theme-dog-personality .survey-top-wrap h3,
+.theme-dog-personality .survey-detail-wrap h3,
+.theme-dog-personality .survey-summary-wrap h3 {
+  color: #a27049;
+}
+
 .theme-gentle-wild .survey-badge {
   color: #4f765d;
 }
@@ -4041,6 +4403,226 @@ body {
 .theme-gentle-wild .survey-detail-wrap h3,
 .theme-gentle-wild .survey-summary-wrap h3 {
   color: #557463;
+}
+
+.theme-dessert-persona .survey-badge {
+  color: #b36a82;
+}
+
+.theme-dessert-persona .survey-aura,
+.theme-dessert-persona .survey-noise {
+  display: none;
+}
+
+.theme-dessert-persona.survey-stage-cover {
+  /* 关键逻辑：封面阶段单独切换为甜品主题主视觉图，答题与结果阶段仍保留原有轻甜配色背景。 */
+  --page-bg: url("/dessert.jpg") center center / cover no-repeat;
+  --page-overlay-one: linear-gradient(
+    180deg,
+    rgba(86, 47, 61, 0.14) 0%,
+    rgba(255, 244, 248, 0.12) 26%,
+    rgba(255, 248, 238, 0.16) 58%,
+    rgba(250, 242, 246, 0.28) 100%
+  );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 16% 14%,
+      rgba(255, 255, 255, 0.24),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 84% 22%,
+      rgba(247, 214, 225, 0.18),
+      transparent 30%
+    );
+}
+
+.theme-dessert-persona .survey-cover-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  /* 关键逻辑：压缩封面卡片最小高度与上下内边距，减少甜品主题封面的空白感。 */
+  min-height: clamp(420px, 60vh, 620px);
+  padding: clamp(22px, 4.4vw, 28px) clamp(18px, 4.8vw, 26px)
+    clamp(22px, 5vw, 30px);
+  border-radius: 28px;
+  border-color: rgba(255, 255, 255, 0.26);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 245, 249, 0.16) 28%,
+      rgba(255, 244, 233, 0.12) 72%,
+      rgba(255, 250, 244, 0.2) 100%
+    ),
+    rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 26px 56px rgba(97, 57, 71, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(0px) saturate(1.16);
+  -webkit-backdrop-filter: blur(0px) saturate(1.16);
+}
+
+.theme-dessert-persona.survey-stage-cover .survey-header {
+  display: none;
+}
+
+.theme-dessert-persona.survey-stage-cover .survey-shell {
+  width: min(100%, 620px);
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+}
+
+.theme-dessert-persona.survey-stage-cover .survey-cover-card {
+  width: 100%;
+  margin: auto 0;
+}
+
+.theme-dessert-persona.survey-stage-survey {
+  /* 关键逻辑：仅答题阶段切换为 dessert-bg 主视觉，避免影响封面与结果页的独立背景设计。 */
+  --page-bg: url("/dessert-bg.jpg") center center / cover no-repeat;
+  --page-overlay-one: linear-gradient(
+    180deg,
+    rgba(255, 247, 250, 0.38) 0%,
+    rgba(255, 241, 246, 0.24) 28%,
+    rgba(255, 246, 236, 0.18) 62%,
+    rgba(255, 250, 244, 0.46) 100%
+  );
+  --page-overlay-two:
+    radial-gradient(
+      circle at 14% 18%,
+      rgba(255, 255, 255, 0.22),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 84% 20%,
+      rgba(247, 214, 225, 0.14),
+      transparent 30%
+    );
+}
+
+/* 关键逻辑：答题阶段只调整当前主题布局，不影响其他主题的通用容器行为。 */
+.theme-dessert-persona.survey-stage-survey .survey-shell {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.theme-dessert-persona .survey-cover-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.24) 0%,
+      rgba(255, 247, 251, 0.16) 24%,
+      rgba(255, 241, 233, 0.1) 56%,
+      rgba(255, 250, 244, 0.18) 100%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.18),
+      transparent 32%,
+      rgba(246, 197, 214, 0.14) 68%,
+      transparent 100%
+    );
+  opacity: 0.92;
+}
+
+.theme-dessert-persona .survey-cover-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.theme-dessert-persona .survey-cover-title-main {
+  color: #774e5f;
+  white-space: pre-line;
+  text-shadow:
+    0 3px 14px rgba(255, 255, 255, 0.72),
+    0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.theme-dessert-persona .survey-option {
+  background: linear-gradient(180deg, #fffefe, #fff5f8);
+}
+
+.theme-dessert-persona .survey-main-title,
+.theme-dessert-persona .survey-question-title {
+  color: #694553;
+}
+
+.theme-dessert-persona .survey-result-prefix {
+  color: #9a6780;
+}
+
+.theme-dessert-persona .survey-main-score {
+  color: #6a4654;
+}
+
+.theme-dessert-persona .survey-main-tag-item {
+  color: #744e5f;
+  border-color: rgba(238, 169, 192, 0.48);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 254, 254, 0.98),
+    rgba(255, 240, 246, 0.96)
+  );
+}
+
+.theme-dessert-persona .survey-tag-item {
+  color: #7e5969;
+  border-color: rgba(241, 191, 206, 0.54);
+  background: linear-gradient(
+    140deg,
+    rgba(255, 254, 254, 0.98),
+    rgba(255, 244, 248, 0.96)
+  );
+}
+
+.theme-dessert-persona .survey-type-card-value {
+  color: #694552;
+}
+
+.theme-dessert-persona .survey-type-card-label {
+  color: #9a7483;
+}
+
+.theme-dessert-persona .survey-radar-grid,
+.theme-dessert-persona .survey-radar-axis {
+  stroke: rgba(239, 134, 166, 0.2);
+}
+
+.theme-dessert-persona .survey-radar-data {
+  fill: rgba(239, 134, 166, 0.18);
+  stroke: rgba(223, 122, 155, 0.86);
+}
+
+.theme-dessert-persona .survey-radar-label,
+.theme-dessert-persona .survey-radar-name,
+.theme-dessert-persona .survey-radar-score,
+.theme-dessert-persona .survey-distribution-meta span,
+.theme-dessert-persona .survey-type-card-wrap h3,
+.theme-dessert-persona .survey-distribution-wrap h3,
+.theme-dessert-persona .survey-radar-wrap h3,
+.theme-dessert-persona .survey-top-wrap h3,
+.theme-dessert-persona .survey-detail-wrap h3,
+.theme-dessert-persona .survey-summary-wrap h3 {
+  color: #93687a;
+}
+
+.theme-dessert-persona .survey-hero-artwork-wrap.is-above-title {
+  margin: 0 auto 8px;
+}
+
+.theme-dessert-persona .survey-hero-artwork-image.is-plain {
+  width: min(100%, 260px);
+  max-height: 220px;
 }
 
 .theme-inner-child .survey-badge {
@@ -4309,8 +4891,12 @@ body {
   text-shadow: 0 1px 10px rgba(255, 250, 242, 0.24);
 }
 
-.theme-inner-child.survey-stage-loading .survey-loading-wrap .survey-btn-primary,
-.theme-inner-child.survey-stage-analyzing .survey-loading-wrap .survey-btn-primary {
+.theme-inner-child.survey-stage-loading
+  .survey-loading-wrap
+  .survey-btn-primary,
+.theme-inner-child.survey-stage-analyzing
+  .survey-loading-wrap
+  .survey-btn-primary {
   width: min(100%, 240px);
 }
 
@@ -5389,10 +5975,25 @@ body {
   margin-bottom: 12px;
 }
 
+.survey-hero-artwork-wrap.is-above-title {
+  width: 100%;
+  margin: 0 auto 12px;
+  display: grid;
+  justify-items: center;
+}
+
 .survey-hero-artwork-image {
   width: 100%;
   display: block;
   border-radius: 14px;
+}
+
+.survey-hero-artwork-image.is-plain {
+  width: min(100%, 240px);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  object-fit: contain;
 }
 
 .survey-hero-artwork-caption {
@@ -5400,6 +6001,10 @@ body {
   font-size: 12px;
   line-height: 1.55;
   color: var(--text-muted);
+}
+
+.survey-hero-artwork-wrap.is-above-title .survey-hero-artwork-caption {
+  text-align: center;
 }
 
 .survey-soul-cat-compat-wrap {

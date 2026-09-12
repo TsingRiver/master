@@ -415,6 +415,24 @@
             </van-tag>
           </div> -->
 
+          <div
+            v-if="shouldShowResultHeroArtworkAboveTitle"
+            class="survey-hero-artwork-wrap"
+            :class="resultHeroArtworkWrapClass"
+          >
+            <img
+              class="survey-hero-artwork-image"
+              :class="resultHeroArtworkImageClass"
+              :src="resultHeroArtwork.url"
+              :alt="resultHeroArtwork.alt || `${unifiedResult.main.name}视觉图`"
+              loading="lazy"
+              decoding="async"
+            />
+            <p v-if="resultHeroArtwork.caption" class="survey-hero-artwork-caption">
+              {{ resultHeroArtwork.caption }}
+            </p>
+          </div>
+
           <p class="survey-result-prefix">{{ unifiedResult.prefixLabel }}</p>
           <div class="survey-main-title-row">
             <h2 class="survey-main-title">
@@ -493,17 +511,20 @@
           </div>
 
           <div
-            v-if="unifiedResult.heroArtwork?.url"
+            v-if="shouldShowResultHeroArtworkBelowTitle"
             class="survey-hero-artwork-wrap"
+            :class="resultHeroArtworkWrapClass"
           >
             <img
               class="survey-hero-artwork-image"
-              :src="unifiedResult.heroArtwork.url"
-              :alt="unifiedResult.heroArtwork.alt || `${unifiedResult.main.name}视觉图`"
+              :class="resultHeroArtworkImageClass"
+              :src="resultHeroArtwork.url"
+              :alt="resultHeroArtwork.alt || `${unifiedResult.main.name}视觉图`"
               loading="lazy"
+              decoding="async"
             />
-            <p v-if="unifiedResult.heroArtwork.caption" class="survey-hero-artwork-caption">
-              {{ unifiedResult.heroArtwork.caption }}
+            <p v-if="resultHeroArtwork.caption" class="survey-hero-artwork-caption">
+              {{ resultHeroArtwork.caption }}
             </p>
           </div>
 
@@ -515,13 +536,13 @@
             <p>{{ unifiedResult.highlightCard.content }}</p>
           </div>
 
-          <p class="survey-insight">{{ unifiedResult.insight }}</p>
+          <p v-if="unifiedResult.insight" class="survey-insight">{{ unifiedResult.insight }}</p>
 
           <div
             v-if="unifiedResult.tagChips?.length"
             class="survey-tag-wrap"
           >
-            <h3>类型标签</h3>
+            <h3>{{ resolvedTagSectionTitle }}</h3>
             <div class="survey-tag-grid">
               <span
                 v-for="(tagItem, tagIndex) in unifiedResult.tagChips"
@@ -2434,6 +2455,70 @@ const resolvedMainPrimaryTitle = computed(() => {
 const resolvedMainSecondaryTitle = computed(() =>
   String(unifiedResult.value?.main?.secondaryName ?? "").trim(),
 );
+
+/**
+ * 标签区标题文案。
+ * 关键逻辑：默认回退到“类型标签”，仅在主题显式覆盖时替换模块标题，避免影响历史主题。
+ */
+const resolvedTagSectionTitle = computed(() => {
+  const customTitle = String(unifiedResult.value?.tagSectionTitle ?? "").trim();
+  return customTitle || "类型标签";
+});
+
+/**
+ * 结果页主视觉对象。
+ * 关键逻辑：统一把主题自定义结果图收敛成单一对象，避免模板层到处直接读取深层字段。
+ */
+const resultHeroArtwork = computed(() => {
+  const heroArtwork = unifiedResult.value?.heroArtwork;
+  return heroArtwork && typeof heroArtwork === "object" ? heroArtwork : null;
+});
+
+/**
+ * 是否在标题上方展示结果主视觉。
+ * 关键逻辑：通过 placement 控制渲染位置，保证同一套结果模板可复用到不同主题。
+ */
+const shouldShowResultHeroArtworkAboveTitle = computed(() => {
+  const artworkUrl = String(resultHeroArtwork.value?.url ?? "").trim();
+  const artworkPlacement = String(resultHeroArtwork.value?.placement ?? "").trim();
+  return Boolean(artworkUrl) && artworkPlacement === "above-title";
+});
+
+/**
+ * 是否在标题下方展示结果主视觉。
+ * 关键逻辑：未显式声明上置时默认保留历史渲染位置，避免已有主题视觉回归。
+ */
+const shouldShowResultHeroArtworkBelowTitle = computed(() => {
+  const artworkUrl = String(resultHeroArtwork.value?.url ?? "").trim();
+  return Boolean(artworkUrl) && !shouldShowResultHeroArtworkAboveTitle.value;
+});
+
+/**
+ * 结果主视觉容器类名。
+ * 关键逻辑：把“位置”和“展示风格”拆成独立修饰类，便于主题样式按需覆盖。
+ */
+const resultHeroArtworkWrapClass = computed(() => {
+  const artworkPresentation = String(
+    resultHeroArtwork.value?.presentation ?? "",
+  ).trim();
+  return {
+    "is-above-title": shouldShowResultHeroArtworkAboveTitle.value,
+    "is-plain": artworkPresentation === "plain",
+  };
+});
+
+/**
+ * 结果主视觉图片类名。
+ * 关键逻辑：透明背景图片需要移除默认圆角与卡片感，因此单独提供 plain 变体。
+ */
+const resultHeroArtworkImageClass = computed(() => {
+  const artworkPresentation = String(
+    resultHeroArtwork.value?.presentation ?? "",
+  ).trim();
+  return {
+    "is-plain": artworkPresentation === "plain",
+  };
+});
 
 /**
  * 是否为城市主题。

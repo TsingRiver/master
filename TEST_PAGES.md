@@ -12,12 +12,15 @@
 - `/#/love-brain`：恋爱脑指数测试（心理学内核 + 梗文化，13-14题随机 + 长图）
 - `/#/love-destiny`：你容易吸引正缘还是烂桃花（12题固定 + 桃花风险图谱）
 - `/#/gentle-wild`：测测你骨子里是「温柔」还是「野性」？（20题固定 + 8种结果 + 柔野张力图谱）
+- `/#/dessert-persona`：测一测｜你是哪种甜品系人格？（12题固定 + 6种甜品人格 + 甜品人格图谱）
+- `/#/dog-personality`：测一测｜你是哪种狗狗系人格？（12题固定 + 6种结果 + 狗狗人格图谱）
 - `/#/city-vibe`：测测你是「哪种城市气质」？（20题固定 + 8种结果 + 城市偏好图谱）
 - `/#/inner-child`：你的「内在小孩」是什么类型？（20题固定 + 8种结果 + 童心图谱）
 - `/#/love`：恋爱心理测试（依恋类型 + AI报告主题）
 - `/#/five-elements-city`：五行推测 + 城市匹配度心理测试（20题 + 五行能量图谱 + 城市Top3 + AI解读）
 - `/#/soul-age`：灵魂年龄测试（20题题库随机抽12题 + 雷达图 + AI深度解读 + 分享海报）
 - `/#/soul-cat`：灵魂猫咪测试（16题固定 + 猫生剧本结果）
+- `/#/cat-personality`：测一测｜你是哪种猫猫人格？🐱（12题固定 + 6种猫猫人格）
 - `/#/mbti`：类型学卡片中心（12 类类型学测试）
   支持：MBTI（72/32）、九型人格（120/36）、社会人格（64）、理想型（64）、经典荣格（60）、DISC（60）、态度心理（64）、体液气质（60）、大五人格（60）、DnD 阵营（60）、依恋类型（24）、霍兰德（60），每轮题量按模式基础值上下浮动 10 题。
 
@@ -33,12 +36,15 @@
 - `/love-brain`：恋爱脑指数测试（13-14题随机 + 长图）
 - `/love-destiny`：你容易吸引正缘还是烂桃花（12题固定 + 桃花风险图谱）
 - `/gentle-wild`：测测你骨子里是「温柔」还是「野性」？（20题固定 + 8种结果 + 柔野张力图谱）
+- `/dessert-persona`：测一测｜你是哪种甜品系人格？（12题固定 + 6种甜品人格 + 甜品人格图谱）
+- `/dog-personality`：测一测｜你是哪种狗狗系人格？（12题固定 + 6种结果 + 狗狗人格图谱）
 - `/city-vibe`：测测你是「哪种城市气质」？（20题固定 + 8种结果 + 城市偏好图谱）
 - `/inner-child`：你的「内在小孩」是什么类型？（20题固定 + 8种结果 + 童心图谱）
 - `/love`：恋爱心理测试（依恋类型 + AI报告主题）
 - `/five-elements-city`：五行推测 + 城市匹配度心理测试（20题 + 五行能量图谱 + 城市Top3 + AI解读）
 - `/soul-age`：灵魂年龄测试（20题题库随机抽12题 + 结果图表 + AI深度解读 + 分享海报）
 - `/soul-cat`：灵魂猫咪测试（16题固定 + 猫生剧本结果）
+- `/cat-personality`：测一测｜你是哪种猫猫人格？🐱（12题固定 + 6种猫猫人格）
 - `/mbti`：类型学卡片中心（12 类类型学测试，动态题量）
 
 ## 隐藏主题中心（特定方式访问）
@@ -59,12 +65,15 @@
 - 恋爱脑指数：`/love-brain.html`、`/lovebrain`、`/love-brain-index`
 - 桃花体质：`/destiny-or-redflag`、`/good-love-or-redflag`、`/love-filter`
 - 温柔 / 野性底色：`/gentle-or-wild`、`/soft-or-wild`、`/wild-core`
+- 甜品系人格：`/dessert`、`/dessert-test`、`/sweet-persona`
+- 狗狗系人格：`/dog-personality-test`、`/dog-persona`、`/dog-vibe`
 - 城市气质：`/urban-vibe`、`/which-city-vibe`、`/city-aura`
 - 内在小孩：`/inner-child-test`、`/inner-kid`、`/childhood-heart`
 - 恋爱心理：`/love-attachment`、`/love-psych`、`/love-test`
 - 五行城市：`/five-elements-city.html`、`/wuxing-city`、`/wuxing-city.html`
 - 灵魂年龄：`/soul-age.html`、`/soul-age-test`、`/soul`、`/soul-test`
 - 灵魂猫咪：`/soul-cat.html`、`/cat`、`/cat-test`、`/soul-cat-test`
+- 猫猫人格：`/cat-personality.html`、`/cat-personality-test`、`/cat-persona`
 - 十六型人格：`/mbti16`、`/mbti.html`
 
 ## 新增主题标准流程
