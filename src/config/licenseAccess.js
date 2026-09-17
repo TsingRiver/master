@@ -26,8 +26,13 @@ export const DEFAULT_LICENSE_SCOPE_PATH = "/mbti";
  * 1. `scopePath` 为统一存储和校验的 canonical path。
  * 2. `aliases` 兼容当前项目已有的多入口别名。
  */
-// 临时关闭授权码访问控制：MBTI 及其别名可直接访问。
-export const LICENSE_SCOPE_DEFINITIONS = Object.freeze([]);
+export const LICENSE_SCOPE_DEFINITIONS = Object.freeze([
+  {
+    scopePath: "/mbti",
+    aliases: ["/mbti", "/mbti16", "/mbti.html"],
+  },
+  // 关键逻辑：`/shmbti` 已从授权范围中移除，无需授权码即可直接访问。
+]);
 
 /**
  * 规范化路径。
