@@ -1,0 +1,28 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 12 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e219]:
+      - paragraph [ref=e220]: 最近 7 天
+      - paragraph [ref=e222]: 今天的心情余额
+      - heading "一天结束，你还有精力做自己想做的事情吗？" [level=1] [ref=e223]
+      - radiogroup "一天结束，你还有精力做自己想做的事情吗？" [ref=e224]:
+        - radio "大多有，能做点喜欢的事" [ref=e225] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e226]: A
+          - generic [aria-hidden] [ref=e228]: ✓
+        - radio "有时有，看当天状态" [ref=e229] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e230]: B
+          - generic [aria-hidden] [ref=e232]: ✓
+        - radio "只想躺平，啥也不干" [ref=e233] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e234]: C
+          - generic [aria-hidden] [ref=e236]: ✓
+      - button "看看我的气团" [disabled] [ref=e237]
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

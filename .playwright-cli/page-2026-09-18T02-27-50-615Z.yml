@@ -1,0 +1,27 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 08 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e147]:
+      - paragraph [ref=e148]: 最近 7 天
+      - paragraph [ref=e150]: 一点小插曲
+      - heading "等电梯、排队这类小事，会让你烦躁吗？" [level=1] [ref=e151]
+      - radiogroup "等电梯、排队这类小事，会让你烦躁吗？" [ref=e152]:
+        - radio "大多没什么感觉" [ref=e153] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e154]: A
+          - generic [aria-hidden] [ref=e156]: ✓
+        - radio "有时会，过会儿就好" [ref=e157] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e158]: B
+          - generic [aria-hidden] [ref=e160]: ✓
+        - radio "经常会，很想赶紧结束" [ref=e161] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e162]: C
+          - generic [aria-hidden] [ref=e164]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

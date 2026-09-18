@@ -1,0 +1,27 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 09 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e165]:
+      - paragraph [ref=e166]: 最近 7 天
+      - paragraph [ref=e168]: 给今天按暂停
+      - heading "终于有空休息，你能真正放松下来吗？" [level=1] [ref=e169]
+      - radiogroup "终于有空休息，你能真正放松下来吗？" [ref=e170]:
+        - radio "大多能，休息挺舒服" [ref=e171] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e172]: A
+          - generic [aria-hidden] [ref=e174]: ✓
+        - radio "要缓一阵，才能松下来" [ref=e175] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e176]: B
+          - generic [aria-hidden] [ref=e178]: ✓
+        - radio "不太能，闲着也紧绷" [ref=e179] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e180]: C
+          - generic [aria-hidden] [ref=e182]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

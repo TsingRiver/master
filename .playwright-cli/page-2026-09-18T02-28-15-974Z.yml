@@ -1,0 +1,27 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 11 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e201]:
+      - paragraph [ref=e202]: 最近 7 天
+      - paragraph [ref=e204]: 临时加点事
+      - heading "计划外多了一件小事，你通常觉得？" [level=1] [ref=e205]
+      - radiogroup "计划外多了一件小事，你通常觉得？" [ref=e206]:
+        - radio "还好，调整一下就行" [ref=e207] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e208]: A
+          - generic [aria-hidden] [ref=e210]: ✓
+        - radio "虽然...但是还能应付得过来" [ref=e211] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e212]: B
+          - generic [aria-hidden] [ref=e214]: ✓
+        - radio "按计划，其他的加不了一点" [ref=e215] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e216]: C
+          - generic [aria-hidden] [ref=e218]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

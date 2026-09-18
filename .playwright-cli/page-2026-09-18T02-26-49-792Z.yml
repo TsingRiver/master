@@ -1,0 +1,26 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 02 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e44]:
+      - paragraph [ref=e46]: 手指又跑过去了
+      - heading "等人或想事情时，会不自觉啃手指、抠指甲吗？" [level=1] [ref=e47]
+      - radiogroup "等人或想事情时，会不自觉啃手指、抠指甲吗？" [ref=e48]:
+        - radio "会，反应过来才发现" [ref=e49] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e50]: A
+          - generic [aria-hidden] [ref=e52]: ✓
+        - radio "偶尔会，没太注意" [ref=e53] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e54]: B
+          - generic [aria-hidden] [ref=e56]: ✓
+        - radio "基本不会" [ref=e57] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e58]: C
+          - generic [aria-hidden] [ref=e60]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

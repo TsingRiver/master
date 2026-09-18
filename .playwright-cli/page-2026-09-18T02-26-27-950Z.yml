@@ -1,0 +1,26 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 01 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e27]:
+      - paragraph [ref=e29]: 方便面，危！
+      - heading "自己买的方便面还没拆，你会想捏两下吗？" [level=1] [ref=e30]
+      - radiogroup "自己买的方便面还没拆，你会想捏两下吗？" [ref=e31]:
+        - radio "想，咔嚓一下很满足" [ref=e32] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e33]: A
+          - generic [aria-hidden] [ref=e35]: ✓
+        - radio "偶尔，手闲着就想捏" [ref=e36] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e37]: B
+          - generic [aria-hidden] [ref=e39]: ✓
+        - radio "不会，我只想煮着吃" [ref=e40] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e41]: C
+          - generic [aria-hidden] [ref=e43]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

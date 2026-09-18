@@ -1,0 +1,27 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 07 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e129]:
+      - paragraph [ref=e130]: 接下来，想想最近 7 天
+      - paragraph [ref=e132]: 脑袋里的待办
+      - heading "事情暂时放下后，你的脑袋还在想待办吗？" [level=1] [ref=e133]
+      - radiogroup "事情暂时放下后，你的脑袋还在想待办吗？" [ref=e134]:
+        - radio "直接躺平，啥也不想" [ref=e135] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e136]: A
+          - generic [aria-hidden] [ref=e138]: ✓
+        - radio "偶尔想起，但是很快会放松" [ref=e139] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e140]: B
+          - generic [aria-hidden] [ref=e142]: ✓
+        - radio "脑子里一直在想" [ref=e143] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e144]: C
+          - generic [aria-hidden] [ref=e146]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

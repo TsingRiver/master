@@ -1,0 +1,26 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 04 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e78]:
+      - paragraph [ref=e80]: 快递里的隐藏赠品
+      - heading "拆出一张气泡膜，你会顺手捏几颗吗？" [level=1] [ref=e81]
+      - radiogroup "拆出一张气泡膜，你会顺手捏几颗吗？" [ref=e82]:
+        - radio "会，捏起来停不下手" [ref=e83] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e84]: A
+          - generic [aria-hidden] [ref=e86]: ✓
+        - radio "看心情，偶尔捏两颗" [ref=e87] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e88]: B
+          - generic [aria-hidden] [ref=e90]: ✓
+        - radio "不会，直接收拾掉" [ref=e91] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e92]: C
+          - generic [aria-hidden] [ref=e94]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

@@ -25,6 +25,7 @@
       :theme-configs="themeConfigs"
       :build-theme-href="buildThemeHref"
     />
+    <PressureReliefStandalone v-else-if="isPressureReliefTheme" />
     <TypeologyLab
       v-else-if="isTypeologyLabTheme"
       :theme-config="activeThemeConfig"
@@ -147,6 +148,9 @@ const SoulAgeStandalone = defineAsyncComponent(
 const SoulAgeNumberStandalone = defineAsyncComponent(
   () => import("./components/SoulAgeNumberStandalone.vue"),
 );
+const PressureReliefStandalone = defineAsyncComponent(
+  () => import("./components/PressureReliefStandalone.vue"),
+);
 const LicenseAccessPage = defineAsyncComponent(
   () => import("./components/LicenseAccessPage.vue"),
 );
@@ -172,7 +176,7 @@ let clientLicenseGuardRunToken = 0;
  * 主题中心隐藏项：
  * 关键逻辑：仅影响 app-center 展示层，不影响实际主题路由解析。
  */
-const HUB_HIDDEN_THEME_KEYS = new Set(["mbti"]);
+const HUB_HIDDEN_THEME_KEYS = new Set(["mbti", "pressure-relief"]);
 const themeConfigs = computed(() =>
   SURVEY_THEME_CONFIGS.filter(
     (themeConfig) =>
@@ -326,6 +330,14 @@ const isSoulAgeStandaloneTheme = computed(
  */
 const isSoulAgeNumberStandaloneTheme = computed(
   () => activeThemeConfig.value?.key === "soul-age-number",
+);
+
+/**
+ * 是否走脑袋放气站独立组件：
+ * 关键逻辑：该测试有单独的题库、结果快照、分享卡与手绘视觉，不复用通用 SurveyEngine。
+ */
+const isPressureReliefTheme = computed(
+  () => activeThemeConfig.value?.key === "pressure-relief",
 );
 
 /**

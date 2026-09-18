@@ -1,0 +1,26 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 05 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e95]:
+      - paragraph [ref=e97]: 这支笔有点忙
+      - heading "想事情时，会下意识转笔或摆弄笔帽吗？" [level=1] [ref=e98]
+      - radiogroup "想事情时，会下意识转笔或摆弄笔帽吗？" [ref=e99]:
+        - radio "会，手上总要有点事" [ref=e100] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e101]: A
+          - generic [aria-hidden] [ref=e103]: ✓
+        - radio "偶尔会" [ref=e104] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e105]: B
+          - generic [aria-hidden] [ref=e107]: ✓
+        - radio "基本不会" [ref=e108] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e109]: C
+          - generic [aria-hidden] [ref=e111]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

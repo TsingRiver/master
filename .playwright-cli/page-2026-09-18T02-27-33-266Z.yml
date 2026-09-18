@@ -1,0 +1,26 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 06 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e112]:
+      - paragraph [ref=e114]: 衣角被你发现了
+      - heading "发呆时，会无意识搓衣角或摸袖口吗？" [level=1] [ref=e115]
+      - radiogroup "发呆时，会无意识搓衣角或摸袖口吗？" [ref=e116]:
+        - radio "会，手下意识就过去了" [ref=e117] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e118]: A
+          - generic [aria-hidden] [ref=e120]: ✓
+        - radio "偶尔会摸两下" [ref=e121] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e122]: B
+          - generic [aria-hidden] [ref=e124]: ✓
+        - radio "好像没有这个习惯" [ref=e125] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e126]: C
+          - generic [aria-hidden] [ref=e128]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

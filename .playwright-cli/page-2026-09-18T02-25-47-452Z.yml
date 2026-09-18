@@ -1,0 +1,18 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - paragraph [ref=e7]: 脑袋放气站
+      - heading "你的脑袋， 该放放气了吗？" [level=1] [ref=e8]: 你的脑袋，该放放气了吗？
+      - paragraph [ref=e9]: 想捏方便面、啃手指、摸摸米粒？从几个小动作，看看你最近的状态。
+    - region "测试简介" [ref=e10]:
+      - img "趴在软垫上的小气团，身边有解压球和方便面" [ref=e11]
+      - paragraph [ref=e12]: 12 道小题 · 约 1 分钟 · 附一份放松小建议
+      - button "看看我是哪颗气团" [ref=e13] [cursor=pointer]
+      - paragraph [ref=e14]: 按第一反应选就好，没有标准答案。
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

@@ -1,0 +1,45 @@
+- generic [ref=f2e3]:
+  - main [ref=f2e5]:
+    - generic [ref=f2e6]:
+      - paragraph [ref=f2e7]: 脑袋放气站
+      - heading "待放气小气团" [level=1] [ref=f2e8]
+      - img "靠在软垫上休息的待放气小气团" [ref=f2e9]
+      - paragraph [ref=f2e10]: 今天，想给脑袋留点空隙
+    - region "当下趣味压力值" [ref=f2e11]:
+      - generic [ref=f2e12]:
+        - paragraph [ref=f2e13]: 当下趣味压力值
+        - strong [ref=f2e14]: 100 / 100
+      - meter "当下趣味压力值" [ref=f2e15]
+      - generic [aria-hidden] [ref=f2e17]:
+        - generic [ref=f2e18]: 0 · 比较松弛
+        - generic [ref=f2e19]: 100 · 压力满格，需要释放
+      - paragraph [ref=f2e20]: 根据本次回答换算，仅作趣味参考。
+    - paragraph [ref=f2e21]: 小动作随缘派
+    - generic [ref=f2e22]:
+      - paragraph [ref=f2e23]: 这次的当下天气
+      - generic [ref=f2e24]:
+        - paragraph [ref=f2e25]: 如果最近很多事同时涌来，感到吃力并不是一种失败。这里不需要你继续证明自己能扛。
+        - paragraph [ref=f2e26]: 数值偏高不是说你马上会出问题，它只是本次回答的趣味换算，不能替代对真实生活的了解。
+    - generic [ref=f2e27]:
+      - generic [ref=f2e29]:
+        - paragraph [ref=f2e30]: 今天的小建议
+        - heading "先给自己一点空隙" [level=2] [ref=f2e31]
+      - list [ref=f2e33]:
+        - listitem [ref=f2e34]: 允许一件不重要的事做到够用，不继续追着它修改。
+        - listitem [ref=f2e35]: 如果方便，挪到一个让自己更舒服的地方，先安顿一下。
+    - generic [ref=f2e36]:
+      - paragraph [ref=f2e37]: 你的小动作偏好
+      - heading "小动作随缘派" [level=2] [ref=f2e38]
+      - paragraph [ref=f2e39]: 这些动作对你吸引力不大。没有同款小动作，也不代表你一定没有压力。
+    - blockquote [ref=f2e40]: “现在慢一点，也可以。”
+    - region "结果操作" [ref=f2e41]:
+      - button "保存结果卡" [ref=f2e42] [cursor=pointer]
+      - button "再测一次" [ref=f2e43] [cursor=pointer]
+    - paragraph [ref=f2e46]: 如果紧绷感持续困扰你，或已经影响日常生活，可以考虑寻求专业支持。
+    - paragraph [ref=f2e47]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=f2e48]:
+    - generic [ref=f2e49]:
+      - link "浙ICP备2026013019号" [ref=f2e50] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=f2e51] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

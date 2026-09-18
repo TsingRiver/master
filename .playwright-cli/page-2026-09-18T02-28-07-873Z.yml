@@ -1,0 +1,27 @@
+- generic [ref=e3]:
+  - main [ref=e5]:
+    - generic [ref=e22]:
+      - button "上一题" [ref=e23] [cursor=pointer]: ← 上一题
+      - paragraph [ref=e24]: 10 / 12
+    - progressbar "答题进度" [ref=e25]
+    - generic [ref=e183]:
+      - paragraph [ref=e184]: 最近 7 天
+      - paragraph [ref=e186]: 消息又亮了
+      - heading "手头正忙，又来一条待处理消息，你会？" [level=1] [ref=e187]
+      - radiogroup "手头正忙，又来一条待处理消息，你会？" [ref=e188]:
+        - radio "大多能按顺序处理" [ref=e189] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e190]: A
+          - generic [aria-hidden] [ref=e192]: ✓
+        - radio "有点烦，但是还顾得过来" [ref=e193] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e194]: B
+          - generic [aria-hidden] [ref=e196]: ✓
+        - radio "我要炸了！" [ref=e197] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e198]: C
+          - generic [aria-hidden] [ref=e200]: ✓
+    - paragraph [ref=e15]: 趣味自查，仅供了解当下感受，不是心理诊断。
+  - contentinfo [ref=e16]:
+    - generic [ref=e17]:
+      - link "浙ICP备2026013019号" [ref=e18] [cursor=pointer]:
+        - /url: https://beian.miit.gov.cn/
+      - link "浙公网安备33010902004517号" [ref=e20] [cursor=pointer]:
+        - /url: https://beian.mps.gov.cn/#/query/webSearch?code=33010902004517

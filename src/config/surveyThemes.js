@@ -7279,6 +7279,47 @@ export const SURVEY_THEME_CONFIGS = [
      */
   },
   {
+    key: "pressure-relief",
+    routePaths: [
+      "/pressure-relief",
+      "/pressure-relief.html",
+      "/brain-relief",
+    ],
+    pageMeta: {
+      title: "脑袋放气站｜1 分钟趣味小测",
+      description:
+        "12 道生活小题，看看你当下是哪颗小气团。趣味自查，仅供了解当下感受，不是心理诊断。",
+    },
+    theme: {
+      className: "theme-pressure-relief",
+      badge: "PRESSURE RELIEF TEST",
+      title: "脑袋放气站",
+      description:
+        "12 道小题，看看你最近的状态和小动作偏好。趣味自查，仅供了解当下感受。",
+      progressColor: "linear-gradient(90deg, #DDEAD6, #FFD180)",
+      progressTrackColor: "rgba(143, 122, 96, 0.16)",
+      checkedColor: "#A96E42",
+      sourceTag: {
+        deep: {
+          label: "趣味自查结果",
+          color: "#FFF5E6",
+          textColor: "#76593E",
+        },
+        local: {
+          label: "趣味自查结果",
+          color: "#FFF5E6",
+          textColor: "#76593E",
+        },
+      },
+      loadingMessages: [],
+      submitButtonText: "看看我的气团",
+      nextButtonText: "下一题",
+    },
+    /**
+     * 关键逻辑：脑袋放气站使用独立组件，避免继承通用问卷的页面结构和视觉样式。
+     */
+  },
+  {
     key: "mbti",
     routePaths: ["/mbti", "/mbti16", "/mbti.html"],
     pageMeta: {
