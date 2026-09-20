@@ -92,7 +92,7 @@ const checkingSession = ref(false);
 const statusMessage = ref("");
 const statusType = ref("");
 const MBTI_PURCHASE_TARGET_PATH = "/mbti";
-const MBTI_PURCHASE_URL = "https://xhslink.com/m/LAhHZO3Ekd";
+const MBTI_PURCHASE_URL = "https://xhslink.com/m/9F5VYtxFDde";
 
 /**
  * 状态文案样式类。
