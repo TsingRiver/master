@@ -135,7 +135,8 @@ const AI_PROVIDER_CONFIG_MAP = Object.freeze({
       "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
     apiKey: import.meta.env.VITE_BAILIAN_API_KEY ?? "",
     apiKeyEnvName: "VITE_BAILIAN_API_KEY",
-    model: import.meta.env.VITE_BAILIAN_MODEL ?? "qwen3.5-plus-2026-02-15",
+    // 短文本和 JSON 文案优先使用 Flash，避免未配置主模型时直接使用较慢的 Plus。
+    model: import.meta.env.VITE_BAILIAN_MODEL ?? "qwen3.7-flash",
     modelFallbacks: import.meta.env.VITE_BAILIAN_MODEL_FALLBACKS ?? "",
     modelPriority: import.meta.env.VITE_BAILIAN_MODEL_PRIORITY ?? "",
     enableThinkingDefault: parseBooleanValue(
@@ -147,7 +148,8 @@ const AI_PROVIDER_CONFIG_MAP = Object.freeze({
       import.meta.env.VITE_BAILIAN_STREAM ?? import.meta.env.VITE_AI_STREAM,
       true,
     ),
-    defaultFallbackModels: ["qwen3.5-plus", "qwen-turbo"],
+    // Flash 序列不可用后再用 Plus 兜底，保留结构化文案能力且避免补回已下线型号。
+    defaultFallbackModels: ["qwen3.7-plus"],
     /**
      * 构建 Qwen/百炼专属请求扩展字段。
      * @param {boolean} enableThinking 是否启用思考模式。
