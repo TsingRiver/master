@@ -31,7 +31,10 @@ export const LICENSE_SCOPE_DEFINITIONS = Object.freeze([
     scopePath: "/mbti",
     aliases: ["/mbti", "/mbti16", "/mbti.html"],
   },
-  // 关键逻辑：`/shmbti` 已从授权范围中移除，无需授权码即可直接访问。
+  {
+    scopePath: "/shmbti",
+    aliases: ["/shmbti", "/shmbti.html"],
+  },
 ]);
 
 /**
